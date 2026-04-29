@@ -95,11 +95,11 @@
   .progress-fill { height: 8px; border-radius: 4px; transition: width 0.3s; }
 
   /* INVENTORY SIZE TABLE */
-  .inv-size-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; font-size: 12px; }
-  .inv-size-label { width: 38px; color: var(--muted); }
-  .inv-bar-track { flex: 1; background: var(--border); border-radius: 2px; height: 6px; }
-  .inv-bar { height: 6px; border-radius: 2px; }
-  .inv-count { width: 36px; text-align: right; font-variant-numeric: tabular-nums; }
+  .inv-size-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; font-size: 12px; }
+  .inv-size-label { width: 48px; color: var(--muted); }
+  .inv-bar-track { flex: 1; background: var(--border); border-radius: 3px; height: 10px; }
+  .inv-bar { height: 10px; border-radius: 3px; transition: width 0.3s; }
+  .inv-count { width: 50px; text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
 </style>
 </head>
 <body>
@@ -111,10 +111,11 @@
 </header>
 
 <div class="tabs">
-  <div class="tab active" onclick="showPage('overview')">전체 출고</div>
-  <div class="tab" onclick="showPage('platform')">커머스 허브</div>
-  <div class="tab" onclick="showPage('stock')">재고 현황 & 재발주</div>
-  <div class="tab" onclick="showPage('gift')" style="color:#555;">증정 현황</div>
+  <div class="tab active" onclick="showPage('overview', event)">전체 출고</div>
+  <div class="tab" onclick="showPage('platform', event)">커머스 허브</div>
+  <div class="tab" onclick="showPage('stock', event)">KR 재고 & 재발주</div>
+  <div class="tab" onclick="showPage('hk', event)">HK 재고 & 투두</div>
+  <div class="tab" onclick="showPage('gift', event)">증정 현황</div>
 </div>
 
 <!-- ===== ALERT BANNER (always visible on overview) ===== -->
@@ -301,8 +302,8 @@ IF(OR(C2="킥스타터",
     </div>
   </div>
 
-  <!-- 채널 점유율 + 경제성 + 팀 -->
-  <div class="grid-3" style="margin-top:1px;">
+  <!-- 채널 점유율 + 경제성 -->
+  <div class="grid-2" style="margin-top:1px; grid-template-columns: 1fr 1fr;">
     <div class="card">
       <div class="card-title">채널 점유율 (4월 누계 · 전체 133켤레)</div>
       <div class="chart-wrap medium"><canvas id="platformShareChart"></canvas></div>
@@ -318,41 +319,21 @@ IF(OR(C2="킥스타터",
           <tr><td>카카오톡</td><td class="num" style="color:#facc15;">10%</td><td class="num">4,000</td><td class="num green">~48%</td></tr>
           <tr><td>B2B</td><td class="num" style="color:#555;">0%</td><td class="num">협의</td><td class="num" style="color:#a78bfa;">직협</td></tr>
           <tr style="border-top:2px solid #facc15;"><td><strong style="color:#facc15;">로하스 시티</strong></td><td class="num" style="color:#facc15;">25~35%</td><td class="num" style="color:#facc15;">입점</td><td class="num" style="color:#facc15;">계획중</td></tr>
+          <tr style="border-top:1px solid #333;"><td><strong style="color:#7c9bb5;">HK D2C (Shopify)</strong></td><td class="num" style="color:#7c9bb5;">2.9%+ACI</td><td class="num" style="color:#7c9bb5;">$5~10</td><td class="num" style="color:#7c9bb5;">~55%</td></tr>
         </tbody>
       </table>
-      <div style="margin-top:8px; font-size:10px; color:#555; line-height:1.7;">*공헌이익 = (판매가 − COGS 6만 − 수수료 − 배송비) ÷ 판매가<br>로하스 시티: 매출 구간별 차등 수수료 (입점 계약 시 확정)</div>
-    </div>
-    <div class="card">
-      <div class="card-title">팀 리소스 <span style="background:#1a1a1a; border:1px solid #333; font-size:10px; padding:2px 6px; border-radius:4px; color:#555; margin-left:4px;">Sheets 연동 준비중</span></div>
-      <div style="font-size:12px; margin-top:4px;">
-        <div style="display:flex; gap:6px; align-items:center; padding:8px 0; border-bottom:1px solid #222;">
-          <span style="width:6px;height:6px;background:#4ade80;border-radius:50%;flex-shrink:0;"></span>
-          <span style="color:var(--muted);width:52px;flex-shrink:0;">Builder</span>
-          <span>대시보드 업데이트 · 주간보고</span>
-        </div>
-        <div style="display:flex; gap:6px; align-items:center; padding:8px 0; border-bottom:1px solid #222;">
-          <span style="width:6px;height:6px;background:#facc15;border-radius:50%;flex-shrink:0;"></span>
-          <span style="color:var(--muted);width:52px;flex-shrink:0;">지운</span>
-          <span>DARI 비주얼 레이어2 · DR.PEPTI</span>
-        </div>
-        <div style="display:flex; gap:6px; align-items:center; padding:8px 0; border-bottom:1px solid #222;">
-          <span style="width:6px;height:6px;background:#a78bfa;border-radius:50%;flex-shrink:0;"></span>
-          <span style="color:var(--muted);width:52px;flex-shrink:0;">Matt</span>
-          <span>소상공인 도약 · 시스템파리 제안서</span>
-        </div>
-        <div style="margin-top:10px; font-size:10px; color:#555;">향후: Sheets 할일 시트 → 담당자별 진행률 자동화</div>
-      </div>
+      <div style="margin-top:8px; font-size:10px; color:#555; line-height:1.7;">*공헌이익 = (판매가 − COGS 6만 − 수수료 − 배송비) ÷ 판매가<br>HK 거점은 글로벌 D2C 전용 — 자세한 사항은 HK 재고 & 투두 탭 참조</div>
     </div>
   </div>
 
 </div>
 
-<!-- ===== PAGE 3: 재고 현황 & 재발주 ===== -->
+<!-- ===== PAGE 3: KR 재고 & 재발주 ===== -->
 <div id="page-stock" class="page">
 
   <div class="kpi-row" style="grid-template-columns: repeat(5, 1fr);">
     <div class="kpi">
-      <div class="kpi-label">전체 잔여재고</div>
+      <div class="kpi-label">KR 잔여재고</div>
       <div class="kpi-value" id="kpi-total-stock">529</div>
       <div class="kpi-sub">켤레 (GREY 367 + BEIGE 162)</div>
     </div>
@@ -378,32 +359,31 @@ IF(OR(C2="킥스타터",
     </div>
   </div>
 
-  <div class="grid-2">
+  <!-- GREY 사이즈별 잔여 (full width) -->
+  <div class="grid-full">
     <div class="card">
-      <div class="card-title">잔여재고 소진 진행률</div>
-      <div style="margin-bottom: 24px;">
-        <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--muted); margin-bottom:6px;">
-          <span>초기 재고 기준 소진률</span>
-          <span id="burn-pct-label">—</span>
-        </div>
-        <div class="progress-track">
-          <div class="progress-fill" id="burn-progress" style="width:0%; background: linear-gradient(90deg, #4ade80, #facc15);"></div>
-        </div>
+      <div class="card-title">
+        <span style="color:var(--grey)">●</span> GREY 사이즈별 잔여
+        <span style="color:#555; font-size:10px; margin-left:6px;">총 367켤레</span>
       </div>
-      <div style="margin-top: 20px;">
-        <div class="card-title" style="margin-bottom:16px;"><span style="color:var(--grey)">●</span> GREY 사이즈별 잔여</div>
-        <div id="grey-inv-bars"></div>
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-title">소진 타임라인</div>
-      <div class="chart-wrap tall"><canvas id="burndownChart"></canvas></div>
+      <div id="grey-inv-bars" style="margin-top:14px;"></div>
     </div>
   </div>
 
-  <!-- 사이즈×색상별 소진 속도 테이블 -->
+  <!-- BEIGE 사이즈별 잔여 (full width) -->
   <div class="grid-full" style="margin-top:1px;">
     <div class="card">
+      <div class="card-title">
+        <span style="color:var(--beige)">●</span> BEIGE 사이즈별 잔여
+        <span style="color:#555; font-size:10px; margin-left:6px;">총 162켤레</span>
+      </div>
+      <div id="beige-inv-bars" style="margin-top:14px;"></div>
+    </div>
+  </div>
+
+  <!-- 사이즈×색상 테이블 + 색상 비율 도넛 -->
+  <div class="grid-3" style="margin-top:1px;">
+    <div class="card" style="grid-column: span 2;">
       <div class="card-title">사이즈 × 색상별 잔여재고 & 소진 예상 <span style="color:#555; font-size:10px; margin-left:6px;">실판매 기준 · 9 출고일 평균</span></div>
       <div style="overflow-x:auto; margin-top:4px;">
         <table class="data-table" id="size-burndown-table">
@@ -429,17 +409,48 @@ IF(OR(C2="킥스타터",
         <span><span style="background:#1a1a1a; color:#888; padding:2px 8px; border-radius:3px;">30일 초과</span> 모니터링</span>
       </div>
     </div>
+    <div class="card">
+      <div class="card-title">색상 비율 <span style="color:#555; font-size:10px; margin-left:6px;">잔여 기준</span></div>
+      <div class="chart-wrap medium"><canvas id="colorRatioChart"></canvas></div>
+      <div style="margin-top:14px; font-size:11px; line-height:2;">
+        <div style="display:flex; justify-content:space-between; color:#aaa;">
+          <span><span style="color:var(--grey)">●</span> GREY</span><span><strong>367</strong> · 69%</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; color:#aaa;">
+          <span><span style="color:var(--beige)">●</span> BEIGE</span><span><strong>162</strong> · 31%</span>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <div class="grid-3">
+  <!-- 번다운 + 진행률 + 사이즈 비율 -->
+  <div class="grid-2" style="margin-top:1px;">
     <div class="card">
-      <div class="card-title"><span style="color:var(--beige)">●</span> BEIGE 사이즈별 잔여</div>
-      <div id="beige-inv-bars"></div>
+      <div class="card-title">소진 타임라인</div>
+      <div class="chart-wrap tall"><canvas id="burndownChart"></canvas></div>
     </div>
-    <div class="card" style="grid-column: span 2;">
+    <div class="card">
+      <div class="card-title">잔여재고 소진 진행률</div>
+      <div style="margin-bottom: 24px;">
+        <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--muted); margin-bottom:6px;">
+          <span>초기 재고 기준 소진률</span>
+          <span id="burn-pct-label">—</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="burn-progress" style="width:0%; background: linear-gradient(90deg, #4ade80, #facc15);"></div>
+        </div>
+      </div>
+      <div class="card-title" style="margin-top:24px; margin-bottom:8px;">사이즈 비율 <span style="color:#555; font-size:10px; margin-left:6px;">잔여 기준</span></div>
+      <div class="chart-wrap short"><canvas id="sizeRatioChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- 재발주 체크리스트 (full width) -->
+  <div class="grid-full" style="margin-top:1px;">
+    <div class="card">
       <div class="card-title">재발주 체크리스트</div>
       <div style="font-size: 12px; line-height: 2.2;">
-        <div id="reorder-check-1">📦 <strong>잔여재고 529켤레</strong> — 현재 소진 속도 유지 시 약 <strong id="reorder-weeks">7주</strong> 후 소진</div>
+        <div id="reorder-check-1">📦 <strong>KR 잔여재고 529켤레</strong> + HK 305 GREY = 합산 834켤레 — KR 단독 약 <strong id="reorder-weeks">7주</strong> 후 소진</div>
         <div id="reorder-check-2">⏱️ <strong>생산 리드타임</strong> — 공장 발주 → 입고까지 약 60일 (8~9주)</div>
         <div id="reorder-check-3" style="color: var(--red);">🚨 <strong>재발주 권장 기한 이미 지남</strong> — 즉시 발주 검토 필요</div>
         <div style="margin-top: 12px; padding: 12px; background: #111; border-radius: 6px; border-left: 3px solid var(--yellow);">
@@ -453,7 +464,122 @@ IF(OR(C2="킥스타터",
 
 </div>
 
-<!-- ===== PAGE 4: 증정 현황 ===== -->
+<!-- ===== PAGE 4: HK 재고 & 투두 ===== -->
+<div id="page-hk" class="page">
+
+  <div class="kpi-row" style="grid-template-columns: repeat(5, 1fr);">
+    <div class="kpi">
+      <div class="kpi-label">HK 잔여 (입고 기준)</div>
+      <div class="kpi-value">305</div>
+      <div class="kpi-sub">GREY only · KS 발송 후 차감 필요</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">예상 KS 해외 발송</div>
+      <div class="kpi-value yellow">~42</div>
+      <div class="kpi-sub">5월 배송 예정 · 백커 대응</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">미국 바이럴 시딩</div>
+      <div class="kpi-value purple">~20</div>
+      <div class="kpi-sub">LA 라스트마일 · 인플루언서</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">D2C 가용 (예상)</div>
+      <div class="kpi-value green">~243</div>
+      <div class="kpi-sub">Shopify 글로벌 판매 풀</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">활성 투두</div>
+      <div class="kpi-value yellow" id="kpi-todo-active">—</div>
+      <div class="kpi-sub" id="kpi-todo-urgent-sub">진행 중인 업무</div>
+    </div>
+  </div>
+
+  <!-- HK 거점 설명 -->
+  <div class="grid-full">
+    <div class="card" style="background:#0d1620; border-left:3px solid #7c9bb5;">
+      <div style="display:flex; gap:16px; align-items:flex-start; font-size:12px; line-height:1.8;">
+        <div style="font-size:24px;">🇭🇰</div>
+        <div style="flex:1;">
+          <div style="color:var(--text); font-weight:600; margin-bottom:4px;">홍콩 물류창고 — 글로벌 D2C 거점</div>
+          <div style="color:#aaa;">
+            진강 공장 → 홍콩 ACI 3PL (5팔레트 305족 GREY).
+            <strong style="color:#fff;">KS 해외 백커 직배송</strong> + <strong style="color:#fff;">미국 바이럴 시딩</strong> + <strong style="color:#fff;">Shopify D2C</strong> 3가지 용도.
+            한국 채널과 분리 운영 — HKG→US 운임 우월 (ACI 데이터 기준).
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HK GREY 사이즈별 -->
+  <div class="grid-full" style="margin-top:1px;">
+    <div class="card">
+      <div class="card-title">
+        <span style="color:var(--grey)">●</span> HK GREY 사이즈별 잔여
+        <span style="color:#555; font-size:10px; margin-left:6px;">총 305켤레 · 입고 기준 (1차 lot)</span>
+      </div>
+      <div id="hk-grey-inv-bars" style="margin-top:14px;"></div>
+    </div>
+  </div>
+
+  <!-- HK 사이즈×색상 테이블 + 사이즈 비율 -->
+  <div class="grid-3" style="margin-top:1px;">
+    <div class="card" style="grid-column: span 2;">
+      <div class="card-title">HK 사이즈별 잔여 상세 <span style="color:#555; font-size:10px; margin-left:6px;">팔레트별 구성 포함</span></div>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>사이즈</th>
+            <th class="num">Full Pkg (HK#1)</th>
+            <th class="num">Shoe-only (HK#2~5)</th>
+            <th class="num" style="color:var(--grey);">합계 GREY</th>
+            <th class="num">비중</th>
+          </tr>
+        </thead>
+        <tbody id="hk-size-body"></tbody>
+      </table>
+      <div style="margin-top:12px; font-size:10px; color:#555; line-height:1.7;">
+        팔레트 구성 — HK#1: 풀세트 72족 / HK#2: 260mm×6 / HK#3: 270mm×6 / HK#4~5: 89족 (마지막 17족)
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">HK 사이즈 비율</div>
+      <div class="chart-wrap medium"><canvas id="hkSizeRatioChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- 투두 리스트 -->
+  <div class="grid-full" style="margin-top:1px;">
+    <div class="card">
+      <div class="card-title">팀 투두 리스트 <span style="color:#555; font-size:10px; margin-left:6px;">담당 · 카테고리 · 상태 · 마감일</span></div>
+      <div style="overflow-x:auto;">
+        <table class="data-table" style="margin-top:8px; min-width:680px;">
+          <thead>
+            <tr>
+              <th style="width:70px;">담당</th>
+              <th>업무</th>
+              <th style="width:80px;">카테고리</th>
+              <th style="width:80px;">상태</th>
+              <th class="num" style="width:70px;">D-day</th>
+              <th>비고</th>
+            </tr>
+          </thead>
+          <tbody id="todo-body"></tbody>
+        </table>
+      </div>
+      <div style="margin-top:14px; padding:12px; background:#111; border-radius:6px; border-left:3px solid var(--yellow); font-size:11px; color:#888; line-height:1.8;">
+        <strong style="color:var(--yellow);">자동화 로드맵 (Phase 2)</strong>
+        <div>· Google Sheets 투두 시트 → CSV gviz fetch</div>
+        <div>· 마감 7일 이내 자동 알림 + 담당자별 진행률</div>
+        <div>· Slack #all-darimati 임박 마감 푸시</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ===== PAGE 5: 증정 현황 ===== -->
 <div id="page-gift" class="page">
 
   <div class="kpi-row" style="grid-template-columns: repeat(4, 1fr);">
@@ -537,11 +663,12 @@ IF(OR(C2="킥스타터",
 
 <script>
 // ── 탭 전환 ──
-function showPage(id) {
+function showPage(id, ev) {
+  ev = ev || window.event;
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.getElementById('page-' + id).classList.add('active');
-  event.target.classList.add('active');
+  if (ev && ev.target) ev.target.classList.add('active');
 }
 
 const DATES = ['4/17','4/20','4/21','4/22','4/23','4/24','4/27','4/28','4/29'];
@@ -794,25 +921,6 @@ new Chart(document.getElementById('platformShareChart'), {
   }
 });
 
-// ── 채널별 컬러 비중 ──
-new Chart(document.getElementById('colorByChannelChart'), {
-  type: 'bar',
-  data: {
-    labels: ['킥스타터', '메이커스', '네이버'],
-    datasets: [
-      { label: 'Grey', data: [38, 40, 5], backgroundColor: '#b0c4d8', borderRadius: 2 },
-      { label: 'Beige', data: [9, 8, 1], backgroundColor: '#d4b896', borderRadius: 2 },
-    ]
-  },
-  options: {
-    scales: {
-      x: { ...axisDefaults.x, stacked: true },
-      y: { ...axisDefaults.y, stacked: true }
-    },
-    plugins: { legend: { labels: { color: '#888', font: { size: 10 }, boxWidth: 8, padding: 10 } } }
-  }
-});
-
 // ── 증정 일별 차트 ──
 new Chart(document.getElementById('giftDailyChart'), {
   type: 'bar',
@@ -898,8 +1006,11 @@ if (daysUntilReorder <= 0) {
 
 // ── 잔여 사이즈 바 렌더 ──
 function renderInvBars(containerId, remObj, color) {
-  const maxVal = Math.max(...Object.values(remObj));
   const el = document.getElementById(containerId);
+  if (!el) return;
+  const values = Object.values(remObj);
+  const maxVal = Math.max(...values, 1);
+  el.innerHTML = '';
   SIZES.forEach(s => {
     const v = remObj[s] || 0;
     const pct = (v / maxVal * 100).toFixed(0);
@@ -912,6 +1023,133 @@ function renderInvBars(containerId, remObj, color) {
 }
 renderInvBars('grey-inv-bars',  GREY_REM,  '#b0c4d8');
 renderInvBars('beige-inv-bars', BEIGE_REM, '#d4b896');
+
+// ── 색상 비율 도넛 (KR 재고) ──
+new Chart(document.getElementById('colorRatioChart'), {
+  type: 'doughnut',
+  data: {
+    labels: ['GREY', 'BEIGE'],
+    datasets: [{ data: [TOTAL_GREY, TOTAL_BEIGE], backgroundColor: ['#b0c4d8', '#d4b896'], borderWidth: 0, hoverOffset: 6 }]
+  },
+  options: {
+    cutout: '65%',
+    plugins: {
+      legend: { display: false },
+      tooltip: { callbacks: { label: c => ` ${c.parsed}켤레 (${(c.parsed/(TOTAL_GREY+TOTAL_BEIGE)*100).toFixed(0)}%)` } }
+    }
+  }
+});
+
+// ── 사이즈 비율 도넛 (KR 재고) ──
+const SIZE_TOTALS = SIZES.map(s => (GREY_REM[s] || 0) + (BEIGE_REM[s] || 0));
+new Chart(document.getElementById('sizeRatioChart'), {
+  type: 'doughnut',
+  data: {
+    labels: SIZES.map((s,i) => `${s}mm (${SIZE_TOTALS[i]})`),
+    datasets: [{ data: SIZE_TOTALS, backgroundColor: ['#5a7d99', '#7c9bb5', '#b0c4d8', '#c4d4e0', '#dde6ec'], borderWidth: 0, hoverOffset: 4 }]
+  },
+  options: {
+    cutout: '60%',
+    plugins: {
+      legend: { position: 'bottom', labels: { color: '#888', font: { size: 10 }, padding: 6, boxWidth: 8 } },
+      tooltip: { callbacks: { label: c => ` ${c.parsed}켤레` } }
+    }
+  }
+});
+
+// ── HK 재고 (입고 기준 305 GREY only · 진강→홍콩 1차 lot) ──
+const HK_GREY_FULL    = { 240: 3,  250: 15, 260: 18, 270: 18, 280: 18 };  // HK#1 풀패키지
+const HK_GREY_SINGLE  = { 240: 2,  250: 35, 260: 82, 270: 82, 280: 32 };  // HK#2~5 단품
+const HK_GREY_TOTAL   = { 240: 5,  250: 50, 260: 100, 270: 100, 280: 50 };
+const HK_TOTAL = Object.values(HK_GREY_TOTAL).reduce((a,b)=>a+b,0);  // 305
+
+renderInvBars('hk-grey-inv-bars', HK_GREY_TOTAL, '#b0c4d8');
+
+// HK 사이즈별 테이블
+const hkBody = document.getElementById('hk-size-body');
+SIZES.forEach(s => {
+  const full = HK_GREY_FULL[s];
+  const single = HK_GREY_SINGLE[s];
+  const total = HK_GREY_TOTAL[s];
+  const pct = (total / HK_TOTAL * 100).toFixed(0);
+  hkBody.innerHTML += `<tr>
+    <td style="font-weight:600;">${s}mm</td>
+    <td class="num" style="color:#888;">${full}</td>
+    <td class="num" style="color:#888;">${single}</td>
+    <td class="num" style="color:var(--grey); font-weight:700;">${total}</td>
+    <td class="num" style="color:#666;">${pct}%</td>
+  </tr>`;
+});
+hkBody.innerHTML += `<tr class="total">
+  <td>합계</td>
+  <td class="num">72</td>
+  <td class="num">233</td>
+  <td class="num" style="color:var(--grey);">${HK_TOTAL}</td>
+  <td class="num">100%</td>
+</tr>`;
+
+// HK 사이즈 비율 도넛
+new Chart(document.getElementById('hkSizeRatioChart'), {
+  type: 'doughnut',
+  data: {
+    labels: SIZES.map(s => `${s}mm (${HK_GREY_TOTAL[s]})`),
+    datasets: [{
+      data: SIZES.map(s => HK_GREY_TOTAL[s]),
+      backgroundColor: ['#5a7d99', '#7c9bb5', '#b0c4d8', '#c4d4e0', '#dde6ec'],
+      borderWidth: 0, hoverOffset: 6
+    }]
+  },
+  options: {
+    cutout: '60%',
+    plugins: {
+      legend: { position: 'bottom', labels: { color: '#888', font: { size: 10 }, padding: 6, boxWidth: 8 } },
+      tooltip: { callbacks: { label: c => ` ${c.parsed}켤레 (${(c.parsed/HK_TOTAL*100).toFixed(0)}%)` } }
+    }
+  }
+});
+
+// ── 팀 투두 리스트 ──
+const TODOS = [
+  { owner: 'Matt',    task: '소상공인 도약 사업계획서 초안',         cat: '지원사업', status: '진행중', dday: '5/2',  memo: 'sbiz24.kr 접속 먼저' },
+  { owner: 'Matt',    task: '시스템파리 명동 팝업 제안서',           cat: '영업',     status: '진행중', dday: '—',    memo: '현대백화점 시스템 파리' },
+  { owner: '지운',    task: 'DARI 매거진 비주얼 레이어2',            cat: '디자인',   status: '진행중', dday: '—',    memo: '한남대교 편 (5월 출간)' },
+  { owner: '지운',    task: 'DR.PEPTI 패키지 디자인',                cat: '디자인',   status: '진행중', dday: '—',    memo: '' },
+  { owner: 'Builder', task: 'KS 해외 발송 후 HK 재고 차감',          cat: '재고',     status: '대기',  dday: '5/15', memo: 'KS 1차 배송 완료 후' },
+  { owner: 'Builder', task: '대시보드 Sheets 자동 연동 (Phase 2)',   cat: '개발',     status: '대기',  dday: '—',    memo: 'gviz API' },
+  { owner: 'Builder', task: '대시보드 정산 표시 (Phase 2)',          cat: '개발',     status: '대기',  dday: '—',    memo: '수수료율 자동 계산' },
+  { owner: 'Builder', task: '대시보드 보안 (로그인 게이트)',         cat: '개발',     status: '대기',  dday: '—',    memo: 'D 수준 → A/B 전환 시' },
+];
+const STATUS_BG = { '진행중': '#facc1522', '대기': '#88888822', '완료': '#4ade8022', '블로커': '#f8717122' };
+const STATUS_FG = { '진행중': '#facc15',   '대기': '#888',      '완료': '#4ade80',   '블로커': '#f87171' };
+const OWNER_FG  = { 'Matt': '#a78bfa', '지운': '#facc15', 'Builder': '#4ade80' };
+
+const todoBody = document.getElementById('todo-body');
+let activeCnt = 0, urgentCnt = 0;
+const TODAY = new Date('2026-04-29');
+TODOS.forEach(t => {
+  if (t.status === '진행중' || t.status === '대기') activeCnt++;
+  let ddayDisplay = t.dday;
+  let ddayColor = '#888';
+  if (/^\d+\/\d+$/.test(t.dday)) {
+    const [m,d] = t.dday.split('/').map(Number);
+    const due = new Date(2026, m-1, d);
+    const diff = Math.ceil((due - TODAY) / 86400000);
+    if (diff < 0) { ddayColor = '#f87171'; ddayDisplay = `${t.dday} (D+${-diff})`; urgentCnt++; }
+    else if (diff <= 7) { ddayColor = '#f87171'; ddayDisplay = `${t.dday} (D-${diff})`; urgentCnt++; }
+    else if (diff <= 14) { ddayColor = '#facc15'; ddayDisplay = `${t.dday} (D-${diff})`; }
+    else ddayDisplay = `${t.dday} (D-${diff})`;
+  }
+  todoBody.innerHTML += `<tr>
+    <td><span style="color:${OWNER_FG[t.owner] || '#888'}; font-weight:600;">${t.owner}</span></td>
+    <td>${t.task}</td>
+    <td style="color:#888; font-size:11px;">${t.cat}</td>
+    <td><span style="background:${STATUS_BG[t.status]}; color:${STATUS_FG[t.status]}; padding:2px 8px; border-radius:3px; font-size:11px;">${t.status}</span></td>
+    <td class="num" style="color:${ddayColor}; font-size:11px;">${ddayDisplay}</td>
+    <td style="color:#666; font-size:11px;">${t.memo}</td>
+  </tr>`;
+});
+document.getElementById('kpi-todo-active').textContent = activeCnt;
+document.getElementById('kpi-todo-urgent-sub').textContent = `진행/대기 ${activeCnt} · 임박 ${urgentCnt}`;
 
 // ── 사이즈×색상별 소진 속도 테이블 ──
 const SALE_BY_SIZE = {
