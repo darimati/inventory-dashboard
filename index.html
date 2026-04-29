@@ -238,100 +238,109 @@ IF(OR(C2="킥스타터",
   <!-- 월간 누계 + 채널별 KPI -->
   <div class="kpi-row" style="grid-template-columns: repeat(5,1fr);">
     <div class="kpi" style="border-right: 1px solid #333;">
-      <div class="kpi-label">4월 누계 실판매</div>
-      <div class="kpi-value green" style="font-size:40px;">103</div>
-      <div class="kpi-sub">켤레 · 4/17 ~ 4/29</div>
+      <div class="kpi-label">4월 누계 판매</div>
+      <div class="kpi-value green" style="font-size:40px;">133</div>
+      <div class="kpi-sub" style="line-height:1.9;">실판매 <strong style="color:#4ade80;">103</strong> + B2B <strong style="color:#a78bfa;">30</strong> · 4/17~4/29</div>
     </div>
     <div class="kpi">
       <div class="kpi-label">킥스타터</div>
       <div class="kpi-value">47</div>
-      <div class="kpi-sub">46% · 크라우드펀딩</div>
+      <div class="kpi-sub">35% · 크라우드펀딩</div>
     </div>
     <div class="kpi">
       <div class="kpi-label">카카오메이커스</div>
       <div class="kpi-value green">48</div>
-      <div class="kpi-sub">47% · 최다 채널</div>
+      <div class="kpi-sub">36% · 최다 채널</div>
     </div>
     <div class="kpi">
-      <div class="kpi-label">네이버</div>
-      <div class="kpi-value yellow">6</div>
-      <div class="kpi-sub">6% · 러닝클래스</div>
+      <div class="kpi-label">네이버 + 카카오톡</div>
+      <div class="kpi-value yellow">8</div>
+      <div class="kpi-sub">6% · 소셜/검색 채널</div>
     </div>
     <div class="kpi">
-      <div class="kpi-label">카카오톡스토어</div>
-      <div class="kpi-value" style="color:var(--beige)">2</div>
-      <div class="kpi-sub">2% · 신규</div>
+      <div class="kpi-label">B2B · 마야크루</div>
+      <div class="kpi-value purple">30</div>
+      <div class="kpi-sub">23% · 단체 직접 주문</div>
     </div>
   </div>
 
-  <!-- 주별 판매 속도 + 점유율 -->
-  <div class="grid-2">
+  <!-- 주별 판매 속도 — 풀 너비 -->
+  <div class="grid-full" style="margin-top:1px;">
     <div class="card">
-      <div class="card-title">주별 실판매 속도 <span style="color:#555; font-size:10px; margin-left:6px;">누적 켤레 (막대) · 일평균 (선)</span></div>
-      <div class="chart-wrap tall"><canvas id="weeklyVelocityChart"></canvas></div>
-    </div>
-    <div class="card">
-      <div class="card-title">채널 점유율 (4월 누계 · 실판매 기준)</div>
-      <div class="chart-wrap tall"><canvas id="platformShareChart"></canvas></div>
+      <div class="card-title" style="margin-bottom:6px;">
+        주별 판매 속도
+        <span style="color:#555; font-size:10px; margin-left:8px;">주간 누적 켤레 (막대 · 실판매+B2B) · 실판매 일평균 (노란선)</span>
+      </div>
+      <div style="position:relative; height:280px;"><canvas id="weeklyVelocityChart"></canvas></div>
     </div>
   </div>
 
-  <!-- 정산·채널·팀 리소스 -->
-  <div class="grid-3">
+  <!-- 일별 상세 시트 — 풀 너비 -->
+  <div class="grid-full" style="margin-top:1px;">
     <div class="card">
-      <div class="card-title">정산 현황 <span style="background:#1a1a1a; border:1px solid #333; font-size:10px; padding:2px 6px; border-radius:4px; color:#555; margin-left:4px;">API 연동 준비중</span></div>
-      <div style="margin-top: 8px;">
-        <table class="data-table">
-          <thead><tr><th>채널</th><th>수수료율</th><th>정산 주기</th><th>이번 달 예상</th></tr></thead>
-          <tbody>
-            <tr><td>킥스타터</td><td class="num">5%</td><td>완료 후</td><td class="num" style="color:#555;">—</td></tr>
-            <tr><td>카카오메이커스</td><td class="num">15%</td><td>월 1회</td><td class="num" style="color:#555;">—</td></tr>
-            <tr><td>네이버</td><td class="num">3%</td><td>월 2회</td><td class="num" style="color:#555;">—</td></tr>
-            <tr><td>카카오톡스토어</td><td class="num">10%</td><td>월 1회</td><td class="num" style="color:#555;">—</td></tr>
-          </tbody>
+      <div class="card-title" style="margin-bottom:12px;">일별 출고 상세 <span style="color:#555; font-size:10px; margin-left:6px;">채널별 · 주별 소계 포함</span></div>
+      <div style="overflow-x:auto;">
+        <table class="data-table" style="min-width:700px;">
+          <thead>
+            <tr>
+              <th style="width:60px;">날짜</th>
+              <th style="width:32px; color:#555;">주</th>
+              <th class="num" style="color:#b0c4d8;">킥스타터</th>
+              <th class="num" style="color:#d4b896;">카카오<br>메이커스</th>
+              <th class="num" style="color:#7c9bb5;">네이버</th>
+              <th class="num" style="color:#a0a0a0;">카카오톡<br>스토어</th>
+              <th class="num" style="color:#4ade80; font-weight:700;">실판매<br>소계</th>
+              <th class="num" style="color:#a78bfa;">B2B</th>
+              <th class="num" style="color:#6b7280;">증정</th>
+              <th class="num" style="font-weight:700;">일 합계</th>
+            </tr>
+          </thead>
+          <tbody id="daily-sheet-body"></tbody>
         </table>
-        <div style="margin-top:12px; padding:10px; background:#111; border-radius:6px; font-size:11px; color:#555; line-height:1.8;">
-          실제 정산 금액은 각 채널 판매자 센터에서 확인<br>
-          향후: 정산 API 연동 → 매출·수수료 자동 집계 예정
-        </div>
       </div>
     </div>
+  </div>
+
+  <!-- 채널 점유율 + 경제성 + 팀 -->
+  <div class="grid-3" style="margin-top:1px;">
     <div class="card">
-      <div class="card-title">채널별 선호 사이즈 Top 3</div>
-      <table class="data-table" style="margin-bottom:16px;">
-        <thead><tr><th>채널</th><th>1위</th><th>2위</th><th>3위</th></tr></thead>
-        <tbody>
-          <tr><td><span class="badge sale">킥스타터</span></td><td>260mm</td><td>270mm</td><td>250mm</td></tr>
-          <tr><td><span class="badge sale">카카오메이커스</span></td><td>240mm</td><td>270mm</td><td>250mm</td></tr>
-          <tr><td><span class="badge sale">네이버</span></td><td>240mm</td><td>270mm</td><td>240mm</td></tr>
-          <tr><td><span class="badge b2b">마야크루</span></td><td>240mm</td><td>250mm</td><td>260mm</td></tr>
-        </tbody>
-      </table>
-      <div class="card-title" style="margin-top:16px;">채널별 컬러 비중</div>
-      <div class="chart-wrap" style="position:relative;height:120px;"><canvas id="colorByChannelChart"></canvas></div>
+      <div class="card-title">채널 점유율 (4월 누계 · 전체 133켤레)</div>
+      <div class="chart-wrap medium"><canvas id="platformShareChart"></canvas></div>
     </div>
     <div class="card">
-      <div class="card-title">팀 리소스 & 할일 <span style="background:#1a1a1a; border:1px solid #333; font-size:10px; padding:2px 6px; border-radius:4px; color:#555; margin-left:4px;">Sheets 연동 준비중</span></div>
+      <div class="card-title">채널 경제성 <span style="background:#1a1a1a; border:1px solid #333; font-size:10px; padding:2px 6px; border-radius:4px; color:#555; margin-left:4px;">계획 기준</span></div>
+      <table class="data-table" style="font-size:11px;">
+        <thead><tr><th>채널</th><th class="num">수수료</th><th class="num">배송비</th><th class="num" style="color:#4ade80;">공헌이익*</th></tr></thead>
+        <tbody>
+          <tr><td>킥스타터</td><td class="num" style="color:#f87171;">5%+PG</td><td class="num">ACI</td><td class="num green">~65%</td></tr>
+          <tr><td>카카오메이커스</td><td class="num" style="color:#f87171;">15%</td><td class="num">4,000</td><td class="num green">~42%</td></tr>
+          <tr><td>네이버</td><td class="num" style="color:#facc15;">3%</td><td class="num">4,000</td><td class="num green">~54%</td></tr>
+          <tr><td>카카오톡</td><td class="num" style="color:#facc15;">10%</td><td class="num">4,000</td><td class="num green">~48%</td></tr>
+          <tr><td>B2B</td><td class="num" style="color:#555;">0%</td><td class="num">협의</td><td class="num" style="color:#a78bfa;">직협</td></tr>
+          <tr style="border-top:2px solid #facc15;"><td><strong style="color:#facc15;">로하스 시티</strong></td><td class="num" style="color:#facc15;">25~35%</td><td class="num" style="color:#facc15;">입점</td><td class="num" style="color:#facc15;">계획중</td></tr>
+        </tbody>
+      </table>
+      <div style="margin-top:8px; font-size:10px; color:#555; line-height:1.7;">*공헌이익 = (판매가 − COGS 6만 − 수수료 − 배송비) ÷ 판매가<br>로하스 시티: 매출 구간별 차등 수수료 (입점 계약 시 확정)</div>
+    </div>
+    <div class="card">
+      <div class="card-title">팀 리소스 <span style="background:#1a1a1a; border:1px solid #333; font-size:10px; padding:2px 6px; border-radius:4px; color:#555; margin-left:4px;">Sheets 연동 준비중</span></div>
       <div style="font-size:12px; margin-top:4px;">
         <div style="display:flex; gap:6px; align-items:center; padding:8px 0; border-bottom:1px solid #222;">
           <span style="width:6px;height:6px;background:#4ade80;border-radius:50%;flex-shrink:0;"></span>
           <span style="color:var(--muted);width:52px;flex-shrink:0;">Builder</span>
-          <span>대시보드 업데이트 · 주간보고 자동화</span>
+          <span>대시보드 업데이트 · 주간보고</span>
         </div>
         <div style="display:flex; gap:6px; align-items:center; padding:8px 0; border-bottom:1px solid #222;">
           <span style="width:6px;height:6px;background:#facc15;border-radius:50%;flex-shrink:0;"></span>
           <span style="color:var(--muted);width:52px;flex-shrink:0;">지운</span>
-          <span>DARI 비주얼 레이어2 · DR.PEPTI 2차 콜드메일</span>
+          <span>DARI 비주얼 레이어2 · DR.PEPTI</span>
         </div>
         <div style="display:flex; gap:6px; align-items:center; padding:8px 0; border-bottom:1px solid #222;">
           <span style="width:6px;height:6px;background:#a78bfa;border-radius:50%;flex-shrink:0;"></span>
           <span style="color:var(--muted);width:52px;flex-shrink:0;">Matt</span>
-          <span>소상공인 도약 사업계획서 · 시스템파리 제안서</span>
+          <span>소상공인 도약 · 시스템파리 제안서</span>
         </div>
-        <div style="margin-top:12px; padding:10px; background:#111; border-radius:6px; font-size:11px; color:#555; line-height:1.8;">
-          향후: Google Sheets 할일 시트 연동 →<br>
-          담당자별 진행률 자동 표시 예정
-        </div>
+        <div style="margin-top:10px; font-size:10px; color:#555;">향후: Sheets 할일 시트 → 담당자별 진행률 자동화</div>
       </div>
     </div>
   </div>
@@ -389,6 +398,36 @@ IF(OR(C2="킥스타터",
     <div class="card">
       <div class="card-title">소진 타임라인</div>
       <div class="chart-wrap tall"><canvas id="burndownChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- 사이즈×색상별 소진 속도 테이블 -->
+  <div class="grid-full" style="margin-top:1px;">
+    <div class="card">
+      <div class="card-title">사이즈 × 색상별 잔여재고 & 소진 예상 <span style="color:#555; font-size:10px; margin-left:6px;">실판매 기준 · 9 출고일 평균</span></div>
+      <div style="overflow-x:auto; margin-top:4px;">
+        <table class="data-table" id="size-burndown-table">
+          <thead>
+            <tr>
+              <th>사이즈</th>
+              <th class="num" style="color:var(--grey);">G 잔여</th>
+              <th class="num" style="color:var(--grey);">G 일평균</th>
+              <th class="num" style="color:var(--grey);">G 소진예상</th>
+              <th class="num" style="color:var(--beige);">B 잔여</th>
+              <th class="num" style="color:var(--beige);">B 일평균</th>
+              <th class="num" style="color:var(--beige);">B 소진예상</th>
+              <th class="num">합계 잔여</th>
+              <th class="num">전체 소진예상</th>
+            </tr>
+          </thead>
+          <tbody id="size-burndown-body"></tbody>
+        </table>
+      </div>
+      <div style="display:flex; gap:20px; margin-top:12px; font-size:10px; color:#555;">
+        <span><span style="background:#4a0a0a; color:#f87171; padding:2px 8px; border-radius:3px;">15일 이내</span> 즉시 발주 필요</span>
+        <span><span style="background:#3a3000; color:#facc15; padding:2px 8px; border-radius:3px;">30일 이내</span> 발주 준비</span>
+        <span><span style="background:#1a1a1a; color:#888; padding:2px 8px; border-radius:3px;">30일 초과</span> 모니터링</span>
+      </div>
     </div>
   </div>
 
@@ -639,66 +678,118 @@ new Chart(document.getElementById('beigeChart'), {
   options: sizeOpts('#d4b896')
 });
 
-// ── 주별 실판매 속도 (누적 + 일평균) ──
-// W1=4/17(1일), W2=4/20~4/24(5일), W3=4/27~4/29(3일,진행중)
-const weekLabels  = ['W1\n(4/17)', 'W2\n(4/20~24)', 'W3\n(4/27~, 진행중)'];
-const weekTotal   = [22, 36, 42];
-const weekDailyRate = [22.0, 7.2, 14.0];
+// ── 주별 판매 속도 (실판매+B2B 스택 + 일평균 선) ──
+const weekLabels = ['W1  (4/17)', 'W2  (4/20~24)', 'W3  (4/27~, 진행중)'];
+// 실판매: W1=22, W2=36, W3=42 | B2B: W1=0, W2=30, W3=0
+const weekSale = [22, 36, 42];
+const weekB2B  = [0,  30,  0];
+const weekDays = [1,   5,  3];  // 출고일 수
+const weekRate = weekSale.map((s,i) => +(s/weekDays[i]).toFixed(1));
+
 new Chart(document.getElementById('weeklyVelocityChart'), {
   type: 'bar',
   data: {
     labels: weekLabels,
     datasets: [
-      {
-        label: '주별 누적 실판매 (켤레)',
-        data: weekTotal,
-        backgroundColor: ['#2a5c3a', '#2a5c3a', '#1a3a2a'],
-        borderColor: ['#4ade80', '#4ade80', '#2a7a4a'],
-        borderWidth: 1,
-        borderRadius: 4,
-        yAxisID: 'y',
-      },
-      {
-        label: '일평균 속도 (켤레/일)',
-        data: weekDailyRate,
-        type: 'line',
-        borderColor: '#facc15',
-        backgroundColor: 'transparent',
-        pointBackgroundColor: '#facc15',
-        pointRadius: 5,
-        tension: 0.2,
-        yAxisID: 'y2',
-      }
+      { label: '실판매',   data: weekSale, backgroundColor: '#2a5c3a', borderColor: '#4ade80', borderWidth: 1, borderRadius: 3, stack: 'w', yAxisID: 'y' },
+      { label: 'B2B',     data: weekB2B,  backgroundColor: '#2a1a4a', borderColor: '#a78bfa', borderWidth: 1, borderRadius: 3, stack: 'w', yAxisID: 'y' },
+      { label: '실판매 일평균 (켤레/일)', data: weekRate, type: 'line', borderColor: '#facc15', backgroundColor: 'transparent',
+        pointBackgroundColor: '#facc15', pointRadius: 7, pointHoverRadius: 9, tension: 0, yAxisID: 'y2' }
     ]
   },
   options: {
     scales: {
-      x: { ...axisDefaults.x },
-      y: { ...axisDefaults.y, title: { display: true, text: '누적 (켤레)', color: '#555', font: { size: 10 } } },
-      y2: { position: 'right', grid: { display: false }, ticks: { color: '#facc15', font: { size: 10 } }, title: { display: true, text: '일평균', color: '#facc15', font: { size: 10 } }, beginAtZero: true }
+      x: { ...axisDefaults.x, ticks: { color: '#888', font: { size: 12 } } },
+      y: { ...axisDefaults.y, stacked: true, title: { display: true, text: '주간 누계 (켤레)', color: '#555', font: { size: 11 } } },
+      y2: { position: 'right', grid: { display: false }, beginAtZero: true,
+            ticks: { color: '#facc15', font: { size: 11 } },
+            title: { display: true, text: '일평균 (켤레/일)', color: '#facc15', font: { size: 11 } } }
     },
     plugins: {
-      legend: { labels: { color: '#888', font: { size: 11 }, boxWidth: 10, padding: 12 } },
-      tooltip: { callbacks: { label: c => c.datasetIndex === 0 ? ` 누계: ${c.parsed.y}켤레` : ` 일평균: ${c.parsed.y}켤레/일` } }
+      legend: { labels: { color: '#888', font: { size: 12 }, boxWidth: 12, padding: 16 } },
+      tooltip: { callbacks: { label: c => c.datasetIndex < 2 ? ` ${c.dataset.label}: ${c.parsed.y}켤레` : ` 일평균: ${c.parsed.y}켤레/일` } }
     }
   }
 });
 
-// ── 플랫폼 점유율 ──
+// ── 일별 출고 상세 시트 ──
+const DAILY_KCK  = [22, 1, 3, 3, 0, 2, 9, 3, 1];
+const DAILY_KKO  = [0, 14, 4, 1, 0, 1, 3, 2, 20];
+const DAILY_NAV  = [4,  1, 0, 0, 0, 1, 0, 0, 0];
+const DAILY_KTK  = [0,  0, 0, 0, 0, 2, 0, 0, 0];
+const WEEK_LABEL = ['W1','W2','W2','W2','W2','W2','W3','W3','W3'];
+const WEEK_TOTAL_ROWS = [
+  { after: 0, label: 'W1 소계', kck:22, kko:0,  nav:4, ktk:0, sale:26, b2b:0,  gift:6, total:32 },
+  { after: 5, label: 'W2 소계', kck:9,  kko:20, nav:2, ktk:2, sale:36, b2b:30, gift:1, total:67 },
+  { after: 8, label: 'W3 소계', kck:13, kko:24, nav:0, ktk:0, sale:42, b2b:0,  gift:1, total:43 },
+];
+
+const dsBody = document.getElementById('daily-sheet-body');
+let weekTotal_idx = 0;
+DATES.forEach((date, i) => {
+  const kck = DAILY_KCK[i], kko = DAILY_KKO[i], nav = DAILY_NAV[i], ktk = DAILY_KTK[i];
+  const sale = kck + kko + nav + ktk;
+  const b2b  = B2B_DAILY[i];
+  const gift = GIFT_DAILY[i];
+  const tot  = sale + b2b + gift;
+  const wk   = WEEK_LABEL[i];
+  dsBody.innerHTML += `<tr>
+    <td>${date}</td>
+    <td style="color:#555; font-size:10px;">${wk}</td>
+    <td class="num" style="color:#b0c4d8;">${kck || '—'}</td>
+    <td class="num" style="color:#d4b896;">${kko || '—'}</td>
+    <td class="num" style="color:#7c9bb5;">${nav || '—'}</td>
+    <td class="num" style="color:#a0a0a0;">${ktk || '—'}</td>
+    <td class="num" style="color:#4ade80; font-weight:600;">${sale}</td>
+    <td class="num" style="color:#a78bfa;">${b2b || '—'}</td>
+    <td class="num" style="color:#6b7280;">${gift || '—'}</td>
+    <td class="num" style="font-weight:700;">${tot}</td>
+  </tr>`;
+  // 주 소계 행
+  const wt = WEEK_TOTAL_ROWS.find(w => w.after === i);
+  if (wt) {
+    dsBody.innerHTML += `<tr style="background:#181818; border-top:1px solid #333; border-bottom:1px solid #333;">
+      <td colspan="2" style="color:#888; font-size:10px; font-weight:600; letter-spacing:0.05em;">${wt.label}</td>
+      <td class="num" style="color:#b0c4d8; font-weight:600;">${wt.kck}</td>
+      <td class="num" style="color:#d4b896; font-weight:600;">${wt.kko}</td>
+      <td class="num" style="color:#7c9bb5; font-weight:600;">${wt.nav}</td>
+      <td class="num" style="color:#a0a0a0; font-weight:600;">${wt.ktk}</td>
+      <td class="num" style="color:#4ade80; font-weight:700;">${wt.sale}</td>
+      <td class="num" style="color:#a78bfa; font-weight:700;">${wt.b2b || '—'}</td>
+      <td class="num" style="color:#6b7280; font-weight:600;">${wt.gift}</td>
+      <td class="num" style="font-weight:700;">${wt.total}</td>
+    </tr>`;
+  }
+});
+// 전체 합계 행
+dsBody.innerHTML += `<tr class="total">
+  <td colspan="2">전체</td>
+  <td class="num" style="color:#b0c4d8;">44</td>
+  <td class="num" style="color:#d4b896;">45</td>
+  <td class="num" style="color:#7c9bb5;">6</td>
+  <td class="num" style="color:#a0a0a0;">2</td>
+  <td class="num green">103</td>
+  <td class="num" style="color:#a78bfa;">30</td>
+  <td class="num" style="color:#6b7280;">9</td>
+  <td class="num">142</td>
+</tr>`;
+
+// ── 플랫폼 점유율 (B2B 포함 133켤레) ──
 new Chart(document.getElementById('platformShareChart'), {
   type: 'doughnut',
   data: {
-    labels: ['카카오메이커스', '킥스타터', '네이버', '카카오톡스토어'],
+    labels: ['카카오메이커스 (48)', '킥스타터 (47)', 'B2B 마야크루 (30)', '네이버 (6)', '카카오톡스토어 (2)'],
     datasets: [{
-      data: [48, 47, 6, 2],
-      backgroundColor: ['#d4b896', '#b0c4d8', '#7c9bb5', '#a0a0a0'],
+      data: [48, 47, 30, 6, 2],
+      backgroundColor: ['#d4b896', '#b0c4d8', '#a78bfa', '#7c9bb5', '#a0a0a0'],
       borderWidth: 0, hoverOffset: 6
     }]
   },
   options: {
-    cutout: '65%',
+    cutout: '60%',
     plugins: {
-      legend: { display: true, position: 'bottom', labels: { color: '#888', font: { size: 11 }, padding: 12, boxWidth: 10 } }
+      legend: { display: true, position: 'bottom', labels: { color: '#888', font: { size: 10 }, padding: 8, boxWidth: 9 } },
+      tooltip: { callbacks: { label: c => ` ${c.label}: ${((c.parsed/133)*100).toFixed(0)}%` } }
     }
   }
 });
@@ -821,6 +912,57 @@ function renderInvBars(containerId, remObj, color) {
 }
 renderInvBars('grey-inv-bars',  GREY_REM,  '#b0c4d8');
 renderInvBars('beige-inv-bars', BEIGE_REM, '#d4b896');
+
+// ── 사이즈×색상별 소진 속도 테이블 ──
+const SALE_BY_SIZE = {
+  GREY:  { 240:20, 250:17, 260:18, 270:19, 280:6  },
+  BEIGE: { 240:10, 250:4,  260:2,  270:3,  280:2  },
+};
+const BIZ_DAYS = 9;
+const LEAD = 60;
+
+function daysColor(d) {
+  if (d <= 15) return '#f87171';
+  if (d <= 30) return '#facc15';
+  return '#888';
+}
+function daysStyle(d) {
+  const c = daysColor(d);
+  const bg = d <= 15 ? '#3a0a0a' : d <= 30 ? '#2a2000' : 'transparent';
+  return `background:${bg}; color:${c}; padding:2px 6px; border-radius:3px; font-variant-numeric:tabular-nums;`;
+}
+
+const sbody = document.getElementById('size-burndown-body');
+let totalRem = 0, totalSalePerDay = 0;
+SIZES.forEach(s => {
+  const gRem = GREY_REM[s]  || 0;
+  const bRem = BEIGE_REM[s] || 0;
+  const gSold = SALE_BY_SIZE.GREY[s]  || 0;
+  const bSold = SALE_BY_SIZE.BEIGE[s] || 0;
+  const gRate = +(gSold / BIZ_DAYS).toFixed(1);
+  const bRate = +(bSold / BIZ_DAYS).toFixed(1);
+  const gDays = gRate > 0 ? Math.round(gRem / gRate) : 999;
+  const bDays = bRate > 0 ? Math.round(bRem / bRate) : 999;
+  const allRem = gRem + bRem;
+  const allRate = +((gSold + bSold) / BIZ_DAYS).toFixed(1);
+  const allDays = allRate > 0 ? Math.round(allRem / allRate) : 999;
+  totalRem += allRem;
+  totalSalePerDay += allRate;
+  const gShow = gDays >= 999 ? '—' : gDays + '일';
+  const bShow = bDays >= 999 ? '—' : bDays + '일';
+  const aShow = allDays >= 999 ? '—' : allDays + '일';
+  sbody.innerHTML += `<tr>
+    <td style="font-weight:600;">${s}mm</td>
+    <td class="num" style="color:var(--grey);">${gRem}</td>
+    <td class="num" style="color:#555;">${gRate}</td>
+    <td class="num"><span style="${daysStyle(gDays)}">${gShow}</span></td>
+    <td class="num" style="color:var(--beige);">${bRem}</td>
+    <td class="num" style="color:#555;">${bRate}</td>
+    <td class="num"><span style="${daysStyle(bDays)}">${bShow}</span></td>
+    <td class="num" style="font-weight:600;">${allRem}</td>
+    <td class="num"><span style="${daysStyle(allDays)}">${aShow}</span></td>
+  </tr>`;
+});
 
 // ── 번다운 차트 ──
 const burnLabels = [];
