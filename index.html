@@ -513,11 +513,11 @@ IF(OR(C2="킥스타터",
           </tr>
         </thead>
         <tbody>
-          <tr><td>카카오메이커스</td><td class="num">159,000</td><td class="num" style="color:var(--red);">25%</td><td class="num">회사 (2,400원)</td><td class="num">월 1회</td><td style="color:#4ade80;">✓ 입력 완료</td></tr>
-          <tr><td>B2B (마야크루)</td><td class="num">110,000</td><td class="num">0%</td><td class="num">없음</td><td class="num">건별</td><td style="color:#4ade80;">✓ 입력 완료</td></tr>
+          <tr><td>카카오메이커스</td><td class="num">159,000 (풀세트)</td><td class="num" style="color:var(--red);">25%</td><td class="num">회사 (2,400원)</td><td class="num">월 1회</td><td style="color:#4ade80;">✓ 입력 완료</td></tr>
+          <tr><td>B2B (마야크루)</td><td class="num">110,000 (단품)</td><td class="num">0%</td><td class="num">없음</td><td class="num">건별</td><td style="color:#4ade80;">✓ 입력 완료</td></tr>
+          <tr><td>네이버 스마트스토어</td><td class="num">159,000 (단품) <span style="color:#facc15; font-size:10px;">*추정</span></td><td class="num" style="color:var(--yellow);">4%</td><td class="num">회사 (2,400원) <span style="color:#facc15; font-size:10px;">*추정</span></td><td class="num">월 2회</td><td style="color:#facc15;">⚠ 일부 추정</td></tr>
+          <tr><td>카카오톡스토어 (톡딜)</td><td class="num">159,000 (단품) <span style="color:#facc15; font-size:10px;">*추정</span></td><td class="num" style="color:var(--yellow);">4%</td><td class="num">회사 (2,400원) <span style="color:#facc15; font-size:10px;">*추정</span></td><td class="num">월 1회</td><td style="color:#facc15;">⚠ 일부 추정</td></tr>
           <tr><td>킥스타터</td><td class="num" style="color:#666;">미입력</td><td class="num" style="color:#666;">미입력</td><td class="num" style="color:#666;">미입력</td><td class="num" style="color:#666;">완료 후 일괄</td><td style="color:#888;">대기</td></tr>
-          <tr><td>네이버 스마트스토어</td><td class="num" style="color:#666;">미입력</td><td class="num" style="color:#666;">미입력</td><td class="num" style="color:#666;">미입력</td><td class="num">월 2회</td><td style="color:#888;">대기</td></tr>
-          <tr><td>카카오톡스토어</td><td class="num" style="color:#666;">미입력</td><td class="num" style="color:#666;">미입력</td><td class="num" style="color:#666;">미입력</td><td class="num">월 1회</td><td style="color:#888;">대기</td></tr>
         </tbody>
       </table>
       <div style="margin-top:10px; font-size:11px; color:#666;">
@@ -1459,17 +1459,25 @@ const SETTLEMENT_DEALS = {
     confirmed: true,
     note: '단체 직접 인도 · 배송 미발생 · 단품 가정 (구성 매트 확인 필요)'
   },
+  '네이버 스마트스토어': {
+    units: 6, unitPrice: 159000, feePct: 0.04,
+    shippingPerUnit: 2400, shippingByUs: true,
+    cogsPerUnit: COGS.unit,
+    composition: '단품',
+    confirmed: true,
+    note: 'DARI CLASS 출고도 네이버로 합산 · 단가/배송 메이커스와 동일 가정 (확인 필요)'
+  },
+  '카카오톡스토어': {
+    units: 2, unitPrice: 159000, feePct: 0.04,
+    shippingPerUnit: 2400, shippingByUs: true,
+    cogsPerUnit: COGS.unit,
+    composition: '단품',
+    confirmed: true,
+    note: '톡딜 4% · 단가/배송 메이커스와 동일 가정 (확인 필요)'
+  },
   '킥스타터': {
     units: 47, confirmed: false,
     note: '단가·정산·구성(단품 vs 풀세트) 입력 대기 · ACI 운임 별도'
-  },
-  '네이버 스마트스토어': {
-    units: 6, confirmed: false,
-    note: '거래조건·구성 입력 대기'
-  },
-  '카카오톡스토어': {
-    units: 2, confirmed: false,
-    note: '거래조건·구성 입력 대기'
   },
 };
 
