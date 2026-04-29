@@ -409,7 +409,7 @@ IF(OR(C2="킥스타터",
     <div class="kpi">
       <div class="kpi-label">COGS 합계</div>
       <div class="kpi-value" id="kpi-cogs-total" style="color:#aaa;">—</div>
-      <div class="kpi-sub">63,000원 × 켤레 (제품+부자재)</div>
+      <div class="kpi-sub">단품 68,455원 / 풀세트 90,614원 (검증값)</div>
     </div>
     <div class="kpi">
       <div class="kpi-label">수수료 + 배송비</div>
@@ -437,13 +437,15 @@ IF(OR(C2="킥스타터",
           <thead>
             <tr>
               <th>채널</th>
+              <th>구성</th>
               <th class="num">수량</th>
               <th class="num">단가 (₩)</th>
               <th class="num">매출 (₩)</th>
               <th class="num">수수료율</th>
               <th class="num" style="color:var(--red);">수수료 (₩)</th>
               <th class="num" style="color:var(--red);">배송비 (₩)</th>
-              <th class="num" style="color:#aaa;">COGS (₩)</th>
+              <th class="num" style="color:#aaa;">개당 원가</th>
+              <th class="num" style="color:#aaa;">총 COGS (₩)</th>
               <th class="num" style="color:#4ade80;">공헌이익 (₩)</th>
               <th class="num" style="color:#4ade80;">이익률</th>
               <th>비고</th>
@@ -1432,36 +1434,42 @@ new Chart(document.getElementById('hkSizeRatioChart'), {
 // 데이터 관리 모두 그쪽 시스템에서 처리 (tasks.json + 자체 UI).
 
 // === 정산 & ROAS (실측 거래조건 기반) ===
-// 출처: 04_운영/inventory/channel-economics.md (Obsidian) + 매트 직접 입력
-const COGS_PRODUCT   = 60000;  // 제품 원가 (BR-001 · 옵시디언 channel-economics.md)
-const COGS_PACKAGING =  3000;  // 부자재 (슈박스·행택)
-const COGS_PER_UNIT  = COGS_PRODUCT + COGS_PACKAGING;  // 63,000원/켤레
+// 출처: 04_운영/inventory/channel-economics.md (Obsidian) + Slack #builder-log 2026-04-20 검증값
+// 원가는 단품(신발+슈박스)과 풀패키지를 분리 — 채널/구성에 따라 적용
+const COGS = {
+  unit:    68455,  // 신발+슈박스 단품 (검증 — 직접 49,956 + 데빗노트 10,738 + 안분)
+  package: 90614,  // 풀패키지 = 단품 + 모자 7,056 + 슈백 5,635 + 타올 3,949 + 벨트 5,340 + 반사스티커 179
+};
 
 // 채널별 거래조건 (매트 입력 — 옵시디언과 동기화)
 const SETTLEMENT_DEALS = {
   '카카오메이커스': {
     units: 48, unitPrice: 159000, feePct: 0.25,
     shippingPerUnit: 2400, shippingByUs: true,
+    cogsPerUnit: COGS.package,  // ★ 풀세트 — 부자재 5종 포함
+    composition: '풀세트',
     confirmed: true,
-    note: '풀세트 단가 · 회사 배송비 부담 (한진/CJ 일괄)'
+    note: '풀세트(신발+모자+슈백+타올+벨트+스티커) · 회사 배송비 부담'
   },
   'B2B (마야크루)': {
     units: 30, unitPrice: 110000, feePct: 0,
     shippingPerUnit: 0, shippingByUs: false,
+    cogsPerUnit: COGS.unit,  // 단품 (구성 확인 필요)
+    composition: '단품',
     confirmed: true,
-    note: '단체 직접 인도 · 배송 미발생'
+    note: '단체 직접 인도 · 배송 미발생 · 단품 가정 (구성 매트 확인 필요)'
   },
   '킥스타터': {
     units: 47, confirmed: false,
-    note: 'USD 119/139 등 티어별 상이 · ACI 운임 별도 — 거래조건 입력 대기'
+    note: '단가·정산·구성(단품 vs 풀세트) 입력 대기 · ACI 운임 별도'
   },
   '네이버 스마트스토어': {
     units: 6, confirmed: false,
-    note: '거래조건(수수료·배송비) 입력 대기'
+    note: '거래조건·구성 입력 대기'
   },
   '카카오톡스토어': {
     units: 2, confirmed: false,
-    note: '거래조건(수수료·배송비) 입력 대기'
+    note: '거래조건·구성 입력 대기'
   },
 };
 
@@ -1473,7 +1481,9 @@ Object.entries(SETTLEMENT_DEALS).forEach(([name, d]) => {
   if (!d.confirmed) {
     sBody.innerHTML += `<tr style="opacity:0.55;">
       <td>${name}</td>
+      <td style="color:#555;">—</td>
       <td class="num">${d.units}</td>
+      <td class="num" style="color:#555;">—</td>
       <td class="num" style="color:#555;">—</td>
       <td class="num" style="color:#555;">—</td>
       <td class="num" style="color:#555;">—</td>
@@ -1489,18 +1499,23 @@ Object.entries(SETTLEMENT_DEALS).forEach(([name, d]) => {
   const revenue = d.units * d.unitPrice;
   const fee     = Math.round(revenue * d.feePct);
   const ship    = d.shippingByUs ? d.units * d.shippingPerUnit : 0;
-  const cogs    = d.units * COGS_PER_UNIT;
+  const cogs    = d.units * d.cogsPerUnit;
   const margin  = revenue - fee - ship - cogs;
   const mPct    = margin / revenue * 100;
   sumRev+=revenue; sumFee+=fee; sumShip+=ship; sumCogs+=cogs; sumMargin+=margin; sumUnits+=d.units;
+  const compBadge = d.composition === '풀세트'
+    ? '<span style="background:#1a3a2a; color:#4ade80; padding:2px 8px; border-radius:3px; font-size:11px; font-weight:600;">풀세트</span>'
+    : '<span style="background:#222; color:#aaa; padding:2px 8px; border-radius:3px; font-size:11px;">단품</span>';
   sBody.innerHTML += `<tr>
     <td><strong>${name}</strong></td>
+    <td>${compBadge}</td>
     <td class="num">${d.units}</td>
     <td class="num">${fmtKRW(d.unitPrice)}</td>
     <td class="num"><strong>${fmtKRW(revenue)}</strong></td>
     <td class="num" style="color:${d.feePct>0?'var(--red)':'#666'};">${(d.feePct*100).toFixed(0)}%</td>
     <td class="num" style="color:var(--red);">${fmtKRW(fee)}</td>
     <td class="num" style="color:var(--red);">${fmtKRW(ship)}</td>
+    <td class="num" style="color:#aaa;">${fmtKRW(d.cogsPerUnit)}</td>
     <td class="num" style="color:#aaa;">${fmtKRW(cogs)}</td>
     <td class="num" style="color:#4ade80; font-weight:700;">${fmtKRW(margin)}</td>
     <td class="num" style="color:#4ade80; font-weight:700;">${mPct.toFixed(1)}%</td>
@@ -1510,16 +1525,18 @@ Object.entries(SETTLEMENT_DEALS).forEach(([name, d]) => {
 const totPct = sumRev>0 ? sumMargin/sumRev*100 : 0;
 document.getElementById('settlement-foot').innerHTML = `<tr style="border-top:2px solid #333; font-weight:700; background:#0d0d0d;">
   <td>합계 (확정 채널)</td>
+  <td>—</td>
   <td class="num">${sumUnits}</td>
   <td class="num">—</td>
   <td class="num"><strong style="color:#fff;">${fmtKRW(sumRev)}</strong></td>
   <td class="num">—</td>
   <td class="num" style="color:var(--red);">${fmtKRW(sumFee)}</td>
   <td class="num" style="color:var(--red);">${fmtKRW(sumShip)}</td>
+  <td class="num">—</td>
   <td class="num" style="color:#aaa;">${fmtKRW(sumCogs)}</td>
   <td class="num" style="color:#4ade80;"><strong>${fmtKRW(sumMargin)}</strong></td>
   <td class="num" style="color:#4ade80;"><strong>${totPct.toFixed(1)}%</strong></td>
-  <td style="color:#888; font-size:11px;">메이커스 + B2B 합산</td>
+  <td style="color:#888; font-size:11px;">메이커스(풀세트) + B2B(단품)</td>
 </tr>`;
 
 // 정산 KPI
