@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DARIMATI · 출고 현황</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0f0f0f;
+    --card: #1a1a1a;
+    --border: #2a2a2a;
+    --text: #f0f0f0;
+    --muted: #888;
+    --grey: #b0c4d8;
+    --beige: #d4b896;
+    --accent: #e8e8e8;
+    --green: #4ade80;
+    --yellow: #facc15;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'Helvetica Neue', Arial, sans-serif; min-height: 100vh; }
+
+  header {
+    padding: 32px 40px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+  }
+  header h1 { font-size: 18px; font-weight: 600; letter-spacing: 0.08em; }
+  header span { font-size: 12px; color: var(--muted); letter-spacing: 0.05em; }
+
+  .updated { margin-left: auto; font-size: 11px; color: var(--muted); }
+
+  .kpi-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  .kpi {
+    background: var(--card);
+    padding: 28px 32px;
+  }
+  .kpi-label { font-size: 11px; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 10px; }
+  .kpi-value { font-size: 36px; font-weight: 700; letter-spacing: -0.02em; }
+  .kpi-sub { font-size: 12px; color: var(--muted); margin-top: 6px; }
+  .kpi-value.green { color: var(--green); }
+  .kpi-value.yellow { color: var(--yellow); }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 1px;
+    background: var(--border);
+    padding-top: 1px;
+  }
+  .grid-bottom {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1px;
+    background: var(--border);
+    margin-top: 1px;
+  }
+
+  .card {
+    background: var(--card);
+    padding: 28px 28px 24px;
+  }
+  .card-title {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+  .chart-wrap { position: relative; }
+  .chart-wrap.tall { height: 260px; }
+  .chart-wrap.medium { height: 220px; }
+  .chart-wrap.short { height: 180px; }
+
+  .size-table { width: 100%; border-collapse: collapse; }
+  .size-table th, .size-table td {
+    padding: 8px 0;
+    font-size: 13px;
+    border-bottom: 1px solid var(--border);
+  }
+  .size-table th { color: var(--muted); font-weight: 400; font-size: 11px; letter-spacing: 0.05em; text-align: left; }
+  .size-table td:last-child { text-align: right; }
+  .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 8px; vertical-align: middle; }
+  .dot.grey { background: var(--grey); }
+  .dot.beige { background: var(--beige); }
+
+  .bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; font-size: 12px; }
+  .bar-row .label { width: 72px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bar-track { flex: 1; background: var(--border); border-radius: 2px; height: 6px; }
+  .bar-fill { height: 6px; border-radius: 2px; }
+  .bar-row .count { width: 28px; text-align: right; font-size: 12px; }
+
+  footer { padding: 20px 40px; font-size: 11px; color: var(--muted); border-top: 1px solid var(--border); margin-top: 1px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>DARIMATI</h1>
+  <span>BR-001 출고 현황 대시보드</span>
+  <span class="updated" id="updated-at"></span>
+</header>
+
+<div class="kpi-row">
+  <div class="kpi">
+    <div class="kpi-label">누적 출고</div>
+    <div class="kpi-value">142</div>
+    <div class="kpi-sub">켤레 (4/17 ~ 4/29)</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-label">일평균 출고</div>
+    <div class="kpi-value green">15.8</div>
+    <div class="kpi-sub">켤레 / 출고일</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-label">최다 출고일</div>
+    <div class="kpi-value yellow">30</div>
+    <div class="kpi-sub">켤레 (4/17, 4/23)</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-label">채널 수</div>
+    <div class="kpi-value">6</div>
+    <div class="kpi-sub">킥스타터·메이커스·네이버 외</div>
+  </div>
+</div>
+
+<div class="grid">
+  <!-- 일별 출고량 -->
+  <div class="card">
+    <div class="card-title">일별 출고량</div>
+    <div class="chart-wrap tall">
+      <canvas id="dailyChart"></canvas>
+    </div>
+  </div>
+
+  <!-- 채널별 출고 -->
+  <div class="card">
+    <div class="card-title">채널별 출고</div>
+    <div class="chart-wrap tall">
+      <canvas id="channelChart"></canvas>
+    </div>
+  </div>
+</div>
+
+<div class="grid-bottom">
+  <!-- 컬러별 사이즈 분포 (그레이) -->
+  <div class="card">
+    <div class="card-title"><span class="dot grey"></span>Oyster Grey · 사이즈 분포</div>
+    <div class="chart-wrap medium">
+      <canvas id="greyChart"></canvas>
+    </div>
+  </div>
+
+  <!-- 컬러별 사이즈 분포 (베이지) -->
+  <div class="card">
+    <div class="card-title"><span class="dot beige"></span>Sand Beige · 사이즈 분포</div>
+    <div class="chart-wrap medium">
+      <canvas id="beigeChart"></canvas>
+    </div>
+  </div>
+
+  <!-- 사이즈 재고 현황 테이블 -->
+  <div class="card">
+    <div class="card-title">컬러×사이즈 누적 출고</div>
+    <table class="size-table">
+      <thead>
+        <tr>
+          <th>사이즈</th>
+          <th><span class="dot grey"></span>Grey</th>
+          <th><span class="dot beige"></span>Beige</th>
+          <th>합계</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>240mm</td><td>32</td><td>14</td><td><strong>46</strong></td></tr>
+        <tr><td>250mm</td><td>23</td><td>6</td><td><strong>29</strong></td></tr>
+        <tr><td>260mm</td><td>22</td><td>3</td><td><strong>25</strong></td></tr>
+        <tr><td>270mm</td><td>25</td><td>5</td><td><strong>30</strong></td></tr>
+        <tr><td>280mm</td><td>9</td><td>3</td><td><strong>12</strong></td></tr>
+        <tr style="border-top:1px solid #444">
+          <td><strong>합계</strong></td><td><strong>111</strong></td><td><strong>31</strong></td><td><strong>142</strong></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<footer>Data source: Google Sheets · BR-001 출고 관리 · 2026.04</footer>
+
+<script>
+const C = Chart;
+const defaults = {
+  plugins: { legend: { display: false } },
+  scales: {
+    x: { grid: { color: '#2a2a2a' }, ticks: { color: '#888', font: { size: 11 } } },
+    y: { grid: { color: '#2a2a2a' }, ticks: { color: '#888', font: { size: 11 } }, beginAtZero: true }
+  }
+};
+
+// 일별 출고
+new C(document.getElementById('dailyChart'), {
+  type: 'bar',
+  data: {
+    labels: ['4/17','4/20','4/21','4/22','4/23','4/24','4/27','4/28','4/29'],
+    datasets: [{
+      data: [30, 20, 8, 7, 30, 5, 17, 5, 20],
+      backgroundColor: (ctx) => {
+        const v = ctx.parsed.y;
+        if (v >= 25) return '#facc15';
+        if (v >= 15) return '#b0c4d8';
+        return '#3a3a4a';
+      },
+      borderRadius: 3,
+      borderSkipped: false,
+    }]
+  },
+  options: {
+    ...defaults,
+    plugins: {
+      ...defaults.plugins,
+      tooltip: {
+        callbacks: { label: (c) => ` ${c.parsed.y}켤레` }
+      }
+    }
+  }
+});
+
+// 채널별 도넛
+new C(document.getElementById('channelChart'), {
+  type: 'doughnut',
+  data: {
+    labels: ['킥스타터','카카오메이커스','직접 주문','샘플','네이버','카카오톡스토어'],
+    datasets: [{
+      data: [47, 48, 30, 9, 6, 2],
+      backgroundColor: ['#b0c4d8','#d4b896','#7c9bb5','#6e8f78','#a0a0a0','#666'],
+      borderWidth: 0,
+      hoverOffset: 6
+    }]
+  },
+  options: {
+    cutout: '62%',
+    plugins: {
+      legend: {
+        display: true,
+        position: 'bottom',
+        labels: { color: '#888', font: { size: 11 }, padding: 12, boxWidth: 10 }
+      },
+      tooltip: {
+        callbacks: { label: (c) => ` ${c.label}: ${c.parsed}켤레` }
+      }
+    }
+  }
+});
+
+// Grey 사이즈
+new C(document.getElementById('greyChart'), {
+  type: 'bar',
+  data: {
+    labels: ['240','250','260','270','280'],
+    datasets: [{
+      data: [32, 23, 22, 25, 9],
+      backgroundColor: '#b0c4d8',
+      borderRadius: 3,
+      borderSkipped: false,
+    }]
+  },
+  options: { ...defaults, indexAxis: 'y' }
+});
+
+// Beige 사이즈
+new C(document.getElementById('beigeChart'), {
+  type: 'bar',
+  data: {
+    labels: ['240','250','260','270','280'],
+    datasets: [{
+      data: [14, 6, 3, 5, 3],
+      backgroundColor: '#d4b896',
+      borderRadius: 3,
+      borderSkipped: false,
+    }]
+  },
+  options: { ...defaults, indexAxis: 'y' }
+});
+
+// timestamp
+document.getElementById('updated-at').textContent = '업데이트: ' + new Date().toLocaleDateString('ko-KR', {month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+</script>
+</body>
+</html>
