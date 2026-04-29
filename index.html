@@ -690,67 +690,18 @@ IF(OR(C2="킥스타터",
 
 </div>
 
-<!-- ===== PAGE 6: 투두 ===== -->
-<div id="page-todo" class="page">
-
-  <div class="kpi-row" style="grid-template-columns: repeat(4, 1fr);">
-    <div class="kpi">
-      <div class="kpi-label">전체 투두</div>
-      <div class="kpi-value" id="kpi-todo-total">—</div>
-      <div class="kpi-sub">등록된 업무</div>
-    </div>
-    <div class="kpi">
-      <div class="kpi-label">진행중</div>
-      <div class="kpi-value yellow" id="kpi-todo-progress">—</div>
-      <div class="kpi-sub">담당자별 액티브</div>
-    </div>
-    <div class="kpi">
-      <div class="kpi-label">대기</div>
-      <div class="kpi-value" id="kpi-todo-pending" style="color:#888;">—</div>
-      <div class="kpi-sub">착수 대기</div>
-    </div>
-    <div class="kpi">
-      <div class="kpi-label">임박 마감 (D-7)</div>
-      <div class="kpi-value red" id="kpi-todo-urgent">—</div>
-      <div class="kpi-sub">7일 이내 또는 경과</div>
-    </div>
+<!-- ===== PAGE 6: 투두 (matibot_todo · DARI BOARD 전체 이식) ===== -->
+<div id="page-todo" class="page" style="background:#f4f5f7;">
+  <iframe
+    src="https://matteeee-code.github.io/matibot_todo/"
+    title="DARI BOARD"
+    style="display:block; width:100%; height:calc(100vh - 110px); border:0; background:#f4f5f7;"
+    loading="lazy">
+  </iframe>
+  <div style="padding:6px 14px; background:#0f0f0f; color:#666; font-size:10px; border-top:1px solid #2a2a2a; display:flex; justify-content:space-between; align-items:center;">
+    <span>↑ DARI BOARD · matibot_todo 풀 페이지 임베드 (스타일·기능 전체 유지)</span>
+    <a href="https://matteeee-code.github.io/matibot_todo/" target="_blank" style="color:#888; text-decoration:none;">새 탭으로 열기 ↗</a>
   </div>
-
-  <!-- 투두 메인 테이블 -->
-  <div class="grid-full">
-    <div class="card">
-      <div class="card-title">팀 투두 리스트 <span style="color:#555; font-size:10px; margin-left:6px;">담당 · 카테고리 · 상태 · 마감일 · 비고</span></div>
-      <div style="overflow-x:auto;">
-        <table class="data-table" style="margin-top:8px; min-width:680px;">
-          <thead>
-            <tr>
-              <th style="width:70px;">담당</th>
-              <th>업무</th>
-              <th style="width:90px;">카테고리</th>
-              <th style="width:80px;">상태</th>
-              <th class="num" style="width:120px;">D-day</th>
-              <th>비고</th>
-            </tr>
-          </thead>
-          <tbody id="todo-body"></tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-
-  <!-- 자동화 로드맵 -->
-  <div class="grid-full" style="margin-top:1px;">
-    <div class="card">
-      <div class="card-title">자동화 로드맵 (Phase 2)</div>
-      <div style="font-size:12px; color:#aaa; line-height:2; margin-top:6px;">
-        <div>· Google Sheets 투두 시트 → CSV gviz / Apps Script fetch (실시간 갱신)</div>
-        <div>· 마감 7일 이내 항목 자동 알림 + 담당자별 진행률 게이지</div>
-        <div>· Slack <code style="background:#222; padding:2px 6px; border-radius:3px; color:#facc15;">#all-darimati</code> 임박 마감 푸시</div>
-        <div>· 완료 항목 자동 아카이브 (별도 시트 탭 이동)</div>
-      </div>
-    </div>
-  </div>
-
 </div>
 
 <footer>DARIMATI BR-001 출고 관리 · Data: Google Sheets · 2026.04 · <a href="https://docs.google.com/spreadsheets/d/1ibroQV42xuuvWg4P1kvaCw9RT_JxO9L-6lXVAgNjOhA" style="color:#555; text-decoration:none;">시트 열기 ↗</a></footer>
@@ -1318,52 +1269,8 @@ new Chart(document.getElementById('hkSizeRatioChart'), {
   }
 });
 
-// === 팀 투두 (별도 탭 · 풀 테이블) ===
-const TODOS = [
-  { owner: 'Matt',    task: '소상공인 도약 사업계획서 초안',           cat: '지원사업', status: '진행중', dday: '5/2',  memo: 'sbiz24.kr 접속 먼저' },
-  { owner: 'Matt',    task: '시스템파리 명동 팝업 제안서',             cat: '영업',     status: '진행중', dday: '—',    memo: '현대백화점 시스템 파리' },
-  { owner: '지운',    task: 'DARI 매거진 비주얼 레이어2',              cat: '디자인',   status: '진행중', dday: '—',    memo: '한남대교 편 (5월 출간)' },
-  { owner: '지운',    task: 'DR.PEPTI 패키지 디자인',                  cat: '디자인',   status: '진행중', dday: '—',    memo: '' },
-  { owner: 'Builder', task: 'KS 해외 발송 후 HK 재고 차감',            cat: '재고',     status: '대기',   dday: '5/15', memo: 'KS 1차 배송 완료 후' },
-  { owner: 'Builder', task: '대시보드 Sheets 자동 연동 (Apps Script)', cat: '개발',     status: '진행중', dday: '—',    memo: 'gviz/Apps Script' },
-  { owner: 'Builder', task: '대시보드 정산 표시 (Phase 2)',            cat: '개발',     status: '대기',   dday: '—',    memo: '수수료율 자동 계산' },
-  { owner: 'Builder', task: '대시보드 보안 게이트 (D → B Cloudflare)', cat: '개발',     status: '대기',   dday: '—',    memo: 'Cloudflare Access' },
-];
-const STATUS_BG = { '진행중': '#facc1522', '대기': '#88888822', '완료': '#4ade8022', '블로커': '#f8717122' };
-const STATUS_FG = { '진행중': '#facc15',   '대기': '#888',      '완료': '#4ade80',   '블로커': '#f87171' };
-const OWNER_FG  = { 'Matt': '#a78bfa', '지운': '#facc15', 'Builder': '#4ade80' };
-
-const todoBody = document.getElementById('todo-body');
-const TODAY_TODO = new Date('2026-04-29');
-let progressCnt = 0, pendingCnt = 0, urgentCnt = 0;
-TODOS.forEach(t => {
-  if (t.status === '진행중') progressCnt++;
-  else if (t.status === '대기') pendingCnt++;
-
-  let ddayDisplay = t.dday;
-  let ddayColor = '#888';
-  if (/^\d+\/\d+$/.test(t.dday)) {
-    const [m, d] = t.dday.split('/').map(Number);
-    const due = new Date(2026, m - 1, d);
-    const diff = Math.ceil((due - TODAY_TODO) / 86400000);
-    if (diff < 0)        { ddayColor = '#f87171'; ddayDisplay = `${t.dday} (D+${-diff})`; urgentCnt++; }
-    else if (diff <= 7)  { ddayColor = '#f87171'; ddayDisplay = `${t.dday} (D-${diff})`;  urgentCnt++; }
-    else if (diff <= 14) { ddayColor = '#facc15'; ddayDisplay = `${t.dday} (D-${diff})`; }
-    else                 { ddayDisplay = `${t.dday} (D-${diff})`; }
-  }
-  todoBody.innerHTML += `<tr>
-    <td><span style="color:${OWNER_FG[t.owner] || '#888'}; font-weight:600;">${t.owner}</span></td>
-    <td>${t.task}</td>
-    <td style="color:#888; font-size:11px;">${t.cat}</td>
-    <td><span style="background:${STATUS_BG[t.status]}; color:${STATUS_FG[t.status]}; padding:2px 8px; border-radius:3px; font-size:11px;">${t.status}</span></td>
-    <td class="num" style="color:${ddayColor}; font-size:11px;">${ddayDisplay}</td>
-    <td style="color:#666; font-size:11px;">${t.memo}</td>
-  </tr>`;
-});
-document.getElementById('kpi-todo-total').textContent    = TODOS.length;
-document.getElementById('kpi-todo-progress').textContent = progressCnt;
-document.getElementById('kpi-todo-pending').textContent  = pendingCnt;
-document.getElementById('kpi-todo-urgent').textContent   = urgentCnt;
+// 팀 투두는 matibot_todo (DARI BOARD)를 iframe으로 풀 임베드.
+// 데이터 관리 모두 그쪽 시스템에서 처리 (tasks.json + 자체 UI).
 
 // ── 사이즈×색상별 소진 속도 테이블 (skuList 활용) ──
 function daysColor(d) {
