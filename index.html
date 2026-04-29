@@ -428,9 +428,9 @@ IF(OR(C2="킥스타터",
       <div class="kpi-sub">켤레 (GREY 367 + BEIGE 162)</div>
     </div>
     <div class="kpi">
-      <div class="kpi-label">소진 예상 (실판매 기준)</div>
-      <div class="kpi-value yellow" id="kpi-days-sale">46</div>
-      <div class="kpi-sub">출고일 · 11.4켤레/일 기준</div>
+      <div class="kpi-label">최단 소진 (사이즈·컬러)</div>
+      <div class="kpi-value red" id="kpi-worst-stockout">—</div>
+      <div class="kpi-sub" id="kpi-worst-stockout-sub">—</div>
     </div>
     <div class="kpi">
       <div class="kpi-label">컬러별 잔여</div>
@@ -438,14 +438,14 @@ IF(OR(C2="킥스타터",
       <div class="kpi-sub">켤레 (GREY / BEIGE)</div>
     </div>
     <div class="kpi">
-      <div class="kpi-label">소진 예상일</div>
-      <div class="kpi-value" id="kpi-stockout-date">—</div>
-      <div class="kpi-sub">실판매 기준 (영업일 계산)</div>
+      <div class="kpi-label">임박 SKU (60일 미달)</div>
+      <div class="kpi-value yellow" id="kpi-urgent-count">—</div>
+      <div class="kpi-sub" id="kpi-urgent-count-sub">사이즈×컬러 조합</div>
     </div>
     <div class="kpi">
       <div class="kpi-label">재발주 권장 기한</div>
       <div class="kpi-value red" id="kpi-reorder-date">—</div>
-      <div class="kpi-sub">리드타임 60일 기준</div>
+      <div class="kpi-sub">리드타임 60일 · 최단 SKU 기준</div>
     </div>
   </div>
 
@@ -531,18 +531,19 @@ IF(OR(C2="킥스타터",
     </div>
   </div>
 
-  <!-- 재발주 체크리스트 (full width) -->
+  <!-- 재발주 체크리스트 (사이즈×컬러별) -->
   <div class="grid-full" style="margin-top:1px;">
     <div class="card">
-      <div class="card-title">재발주 체크리스트</div>
-      <div style="font-size: 12px; line-height: 2.2;">
-        <div id="reorder-check-1">📦 <strong>KR 잔여재고 529켤레</strong> + HK 305 GREY = 합산 834켤레 — KR 단독 약 <strong id="reorder-weeks">7주</strong> 후 소진</div>
-        <div id="reorder-check-2">⏱️ <strong>생산 리드타임</strong> — 공장 발주 → 입고까지 약 60일 (8~9주)</div>
-        <div id="reorder-check-3" style="color: var(--red);">🚨 <strong>재발주 권장 기한 이미 지남</strong> — 즉시 발주 검토 필요</div>
-        <div style="margin-top: 12px; padding: 12px; background: #111; border-radius: 6px; border-left: 3px solid var(--yellow);">
-          <div style="font-size: 11px; color: var(--muted); margin-bottom: 6px;">재발주 물량 가이드 (3개월치 기준)</div>
-          <div>실판매 11.4켤레/일 × 66일(영업일) ≈ <strong>750~800켤레</strong> 권장</div>
-          <div style="color: var(--muted); font-size: 11px; margin-top: 4px;">사이즈 배분: 240(20%) 250(20%) 260(25%) 270(25%) 280(10%)</div>
+      <div class="card-title">재발주 체크리스트 <span style="color:#555; font-size:10px; margin-left:6px;">사이즈 × 컬러별 · 리드타임 60일 기준</span></div>
+      <div id="reorder-detail-list" style="margin-top:10px;"></div>
+      <div style="margin-top:14px; padding:14px; background:#111; border-radius:6px; border-left:3px solid var(--yellow);">
+        <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px;">
+          <strong style="color:var(--yellow); font-size:12px;">재발주 권장 물량 (사이즈·컬러 차등)</strong>
+          <span style="color:#888; font-size:10px;">최근 9 출고일 일평균 × 66일</span>
+        </div>
+        <div id="reorder-quantity-grid" style="display:grid; grid-template-columns: repeat(5, 1fr); gap:8px; margin-top:10px; font-size:11px;"></div>
+        <div style="margin-top:12px; color:#888; font-size:10px; line-height:1.7;">
+          ※ 위 수치는 4월 출고 패턴 기반 추정. 실제 발주 시 시즌성·캠페인 등 추가 변수 반영 필요.
         </div>
       </div>
     </div>
@@ -1062,32 +1063,106 @@ function addBizDays(date, days) {
   return d;
 }
 
-const today = new Date('2026-04-27');
-const stockoutDate = addBizDays(today, Math.round(TOTAL_REM / DAILY_SALE));
-const reorderDate  = addBizDays(today, Math.max(0, Math.round(TOTAL_REM / DAILY_SALE) - LEAD_DAYS));
-const daysUntilReorder = Math.round((reorderDate - today) / 86400000);
+const today = new Date('2026-04-29');
 
-// KPI 업데이트
-const fmtDate = d => d.toLocaleDateString('ko-KR', {month:'2-digit', day:'2-digit'});
-document.getElementById('kpi-stockout-date').textContent = fmtDate(stockoutDate);
-document.getElementById('kpi-reorder-date').textContent  = daysUntilReorder <= 0 ? '지금 즉시' : fmtDate(reorderDate);
-document.getElementById('kpi-reorder-date').style.color  = daysUntilReorder <= 5 ? 'var(--red)' : 'var(--yellow)';
+// === 사이즈×컬러별 출고/소진 분석 (모든 알림·KPI·체크리스트의 기준) ===
+const SALE_BY_SIZE = {
+  GREY:  { 240: 20, 250: 17, 260: 18, 270: 19, 280: 6 },
+  BEIGE: { 240: 10, 250: 4,  260: 2,  270: 3,  280: 2 },
+};
+const BIZ_DAYS = 9;
 
-// 주차 계산
-const weeksLeft = Math.round(TOTAL_REM / DAILY_SALE / 5);
-document.getElementById('reorder-weeks').textContent = weeksLeft + '주';
+const skuList = [];  // 사이즈+컬러 단위 (SKU)
+SIZES.forEach(s => {
+  ['GREY', 'BEIGE'].forEach(c => {
+    const rem  = c === 'GREY' ? (GREY_REM[s]  || 0) : (BEIGE_REM[s]  || 0);
+    const sold = c === 'GREY' ? (SALE_BY_SIZE.GREY[s]  || 0) : (SALE_BY_SIZE.BEIGE[s]  || 0);
+    const rate = sold / BIZ_DAYS;
+    const days = rate > 0 ? Math.round(rem / rate) : 999;
+    const reorderQty = Math.max(0, Math.round(rate * 66));  // 3개월(66 영업일) 기준
+    skuList.push({ size: s, color: c, rem, sold, rate: +rate.toFixed(2), days, reorderQty });
+  });
+});
 
-// 소진률 프로그레스
+// 임박 분류 (리드타임 60일 미달 = 재발주 늦음)
+const skuCritical  = skuList.filter(x => x.days <= 15 && x.rem > 0).sort((a,b) => a.days - b.days);
+const skuWarning   = skuList.filter(x => x.days > 15 && x.days <= 30 && x.rem > 0).sort((a,b) => a.days - b.days);
+const skuLeadShort = skuList.filter(x => x.days > 30 && x.days < LEAD_DAYS && x.rem > 0).sort((a,b) => a.days - b.days);
+const skuUrgent    = [...skuCritical, ...skuWarning, ...skuLeadShort];
+
+// === KPI 채우기 ===
+const worst = skuUrgent[0];
+if (worst) {
+  document.getElementById('kpi-worst-stockout').textContent = `${worst.size}mm ${worst.color === 'GREY' ? 'G' : 'B'}`;
+  document.getElementById('kpi-worst-stockout-sub').textContent = `잔여 ${worst.rem} · 약 ${worst.days}일 후 품절`;
+}
+document.getElementById('kpi-urgent-count').textContent = skuUrgent.length;
+document.getElementById('kpi-urgent-count-sub').textContent =
+  `즉시 ${skuCritical.length} · 준비 ${skuWarning.length} · 리드타임 미달 ${skuLeadShort.length}`;
+document.getElementById('kpi-reorder-date').textContent = skuCritical.length > 0 ? '지금 즉시' : (worst ? '리드타임 미달' : '여유');
+document.getElementById('kpi-reorder-date').style.color = skuCritical.length > 0 ? 'var(--red)' : 'var(--yellow)';
+
+// 소진률 프로그레스 (전체 기준 — 시각적 참고용)
 const burnPct = Math.round((INITIAL - TOTAL_REM) / INITIAL * 100);
 document.getElementById('burn-progress').style.width = burnPct + '%';
 document.getElementById('burn-pct-label').textContent = `${burnPct}% 소진 (초기 ${INITIAL}켤레)`;
 
-// 알람 배너
-if (daysUntilReorder <= 0) {
-  document.getElementById('reorder-banner').style.display = 'flex';
-  document.getElementById('alert-msg').textContent =
-    `잔여 ${TOTAL_REM}켤레 · 실판매 기준 약 ${weeksLeft}주 후 소진 · 리드타임 60일 가정 시 재발주 기한 이미 경과 — 즉시 발주 검토 필요`;
+// === 알림 배너 (사이즈×컬러별) ===
+if (skuUrgent.length > 0) {
+  const banner = document.getElementById('reorder-banner');
+  banner.style.display = 'flex';
+  const formatList = arr => arr.map(u => `${u.size}mm ${u.color === 'GREY' ? 'G' : 'B'} <strong>${u.days}일</strong>`).join(' · ');
+  let parts = [];
+  if (skuCritical.length > 0)  parts.push(`<span style="color:#f87171;">🚨 즉시발주: ${formatList(skuCritical)}</span>`);
+  if (skuWarning.length > 0)   parts.push(`<span style="color:#facc15;">⏱️ 준비: ${formatList(skuWarning)}</span>`);
+  if (skuLeadShort.length > 0) parts.push(`<span style="color:#aaa;">📦 리드타임 미달: ${formatList(skuLeadShort)}</span>`);
+  document.getElementById('alert-msg').innerHTML = parts.join(' &nbsp;|&nbsp; ');
 }
+
+// === 재발주 체크리스트 (사이즈×컬러 row 단위) ===
+const detailList = document.getElementById('reorder-detail-list');
+skuList.filter(x => x.rem > 0).sort((a,b) => a.days - b.days).forEach(u => {
+  const colorHex = u.color === 'GREY' ? '#b0c4d8' : '#d4b896';
+  const tier = u.days <= 15 ? 'critical' : u.days <= 30 ? 'warning' : u.days < LEAD_DAYS ? 'lead' : 'safe';
+  const tierMap = {
+    critical: { bg:'#3a0a0a', fg:'#f87171', icon:'🚨', label:'즉시 발주' },
+    warning:  { bg:'#2a2000', fg:'#facc15', icon:'⏱️', label:'발주 준비' },
+    lead:     { bg:'#1a1a2a', fg:'#aaa',    icon:'📦', label:'리드타임 미달' },
+    safe:     { bg:'transparent', fg:'#666',icon:'✓',  label:'여유' },
+  };
+  const t = tierMap[tier];
+  const dayShow = u.days >= 999 ? '—' : `${u.days}일`;
+  detailList.innerHTML += `
+    <div style="display:flex; gap:14px; align-items:center; padding:10px 4px; border-bottom:1px solid #222;">
+      <span style="width:22px; text-align:center;">${t.icon}</span>
+      <span style="width:60px; font-weight:700; font-size:13px;">${u.size}mm</span>
+      <span style="display:flex; gap:6px; align-items:center; width:80px;">
+        <span style="width:10px;height:10px;background:${colorHex};border-radius:50%;"></span>
+        <span style="color:${colorHex}; font-weight:600;">${u.color}</span>
+      </span>
+      <span style="flex:1; color:#aaa; font-size:12px;">잔여 <strong style="color:#ddd;">${u.rem}</strong>켤레 · 일평균 ${u.rate.toFixed(1)}켤레</span>
+      <span style="background:${t.bg}; color:${t.fg}; padding:3px 10px; border-radius:4px; font-weight:700; font-size:12px; min-width:54px; text-align:center;">${dayShow}</span>
+      <span style="color:${t.fg}; font-size:11px; width:84px; text-align:right;">${t.label}</span>
+      <span style="width:90px; text-align:right; color:#888; font-size:11px;">권장 발주 <strong style="color:${u.reorderQty > 0 ? '#facc15' : '#555'};">${u.reorderQty}</strong></span>
+    </div>`;
+});
+
+// === 사이즈별 권장 발주 그리드 ===
+const qtyGrid = document.getElementById('reorder-quantity-grid');
+SIZES.forEach(s => {
+  const g = skuList.find(x => x.size === s && x.color === 'GREY');
+  const b = skuList.find(x => x.size === s && x.color === 'BEIGE');
+  const totalQty = (g?.reorderQty || 0) + (b?.reorderQty || 0);
+  qtyGrid.innerHTML += `
+    <div style="background:#0d0d0d; padding:10px; border-radius:4px; text-align:center;">
+      <div style="color:#888; font-size:10px; margin-bottom:4px;">${s}mm</div>
+      <div style="font-size:18px; font-weight:700; color:#fff;">${totalQty}</div>
+      <div style="display:flex; justify-content:center; gap:8px; margin-top:6px; font-size:10px;">
+        <span style="color:#b0c4d8;">G ${g?.reorderQty || 0}</span>
+        <span style="color:#d4b896;">B ${b?.reorderQty || 0}</span>
+      </div>
+    </div>`;
+});
 
 // ── 잔여 사이즈 바 렌더 ──
 function renderInvBars(containerId, remObj, color) {
@@ -1196,52 +1271,38 @@ new Chart(document.getElementById('hkSizeRatioChart'), {
 // 팀 투두는 커머스 허브의 단순 카드로 유지 (정적 HTML).
 // 향후 Apps Script 연동 시 별도 시트로 분리하여 연동 예정.
 
-// ── 사이즈×색상별 소진 속도 테이블 ──
-const SALE_BY_SIZE = {
-  GREY:  { 240:20, 250:17, 260:18, 270:19, 280:6  },
-  BEIGE: { 240:10, 250:4,  260:2,  270:3,  280:2  },
-};
-const BIZ_DAYS = 9;
-const LEAD = 60;
-
+// ── 사이즈×색상별 소진 속도 테이블 (skuList 활용) ──
 function daysColor(d) {
+  if (d >= 999) return '#666';
   if (d <= 15) return '#f87171';
   if (d <= 30) return '#facc15';
-  return '#888';
+  if (d < LEAD_DAYS) return '#aaa';
+  return '#4ade80';
 }
 function daysStyle(d) {
   const c = daysColor(d);
-  const bg = d <= 15 ? '#3a0a0a' : d <= 30 ? '#2a2000' : 'transparent';
+  const bg = d >= 999 ? 'transparent' : d <= 15 ? '#3a0a0a' : d <= 30 ? '#2a2000' : d < LEAD_DAYS ? '#1a1a2a' : 'transparent';
   return `background:${bg}; color:${c}; padding:2px 6px; border-radius:3px; font-variant-numeric:tabular-nums;`;
 }
 
 const sbody = document.getElementById('size-burndown-body');
-let totalRem = 0, totalSalePerDay = 0;
 SIZES.forEach(s => {
-  const gRem = GREY_REM[s]  || 0;
-  const bRem = BEIGE_REM[s] || 0;
-  const gSold = SALE_BY_SIZE.GREY[s]  || 0;
-  const bSold = SALE_BY_SIZE.BEIGE[s] || 0;
-  const gRate = +(gSold / BIZ_DAYS).toFixed(1);
-  const bRate = +(bSold / BIZ_DAYS).toFixed(1);
-  const gDays = gRate > 0 ? Math.round(gRem / gRate) : 999;
-  const bDays = bRate > 0 ? Math.round(bRem / bRate) : 999;
-  const allRem = gRem + bRem;
-  const allRate = +((gSold + bSold) / BIZ_DAYS).toFixed(1);
+  const g = skuList.find(x => x.size === s && x.color === 'GREY');
+  const b = skuList.find(x => x.size === s && x.color === 'BEIGE');
+  const allRem = (g?.rem || 0) + (b?.rem || 0);
+  const allRate = (g?.rate || 0) + (b?.rate || 0);
   const allDays = allRate > 0 ? Math.round(allRem / allRate) : 999;
-  totalRem += allRem;
-  totalSalePerDay += allRate;
-  const gShow = gDays >= 999 ? '—' : gDays + '일';
-  const bShow = bDays >= 999 ? '—' : bDays + '일';
+  const gShow = (g && g.days < 999) ? g.days + '일' : '—';
+  const bShow = (b && b.days < 999) ? b.days + '일' : '—';
   const aShow = allDays >= 999 ? '—' : allDays + '일';
   sbody.innerHTML += `<tr>
     <td style="font-weight:600;">${s}mm</td>
-    <td class="num" style="color:var(--grey);">${gRem}</td>
-    <td class="num" style="color:#555;">${gRate}</td>
-    <td class="num"><span style="${daysStyle(gDays)}">${gShow}</span></td>
-    <td class="num" style="color:var(--beige);">${bRem}</td>
-    <td class="num" style="color:#555;">${bRate}</td>
-    <td class="num"><span style="${daysStyle(bDays)}">${bShow}</span></td>
+    <td class="num" style="color:var(--grey);">${g?.rem || 0}</td>
+    <td class="num" style="color:#555;">${(g?.rate || 0).toFixed(1)}</td>
+    <td class="num"><span style="${daysStyle(g?.days || 999)}">${gShow}</span></td>
+    <td class="num" style="color:var(--beige);">${b?.rem || 0}</td>
+    <td class="num" style="color:#555;">${(b?.rate || 0).toFixed(1)}</td>
+    <td class="num"><span style="${daysStyle(b?.days || 999)}">${bShow}</span></td>
     <td class="num" style="font-weight:600;">${allRem}</td>
     <td class="num"><span style="${daysStyle(allDays)}">${aShow}</span></td>
   </tr>`;
