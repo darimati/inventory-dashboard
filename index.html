@@ -391,28 +391,12 @@ IF(OR(C2="킥스타터",
     </div>
   </div>
 
-  <!-- 팀 리소스 (full width, 단순 스타일) -->
+  <!-- 팀 투두 (full width, 기존 단순 스타일 유지) -->
   <div class="grid-full" style="margin-top:1px;">
     <div class="card">
-      <div class="card-title">팀 리소스 <span style="background:#1a1a1a; border:1px solid #333; font-size:10px; padding:2px 6px; border-radius:4px; color:#555; margin-left:4px;">Sheets 연동 준비중</span></div>
-      <div style="font-size:12px; margin-top:4px;">
-        <div style="display:flex; gap:10px; align-items:center; padding:8px 0; border-bottom:1px solid #222;">
-          <span style="width:6px;height:6px;background:#4ade80;border-radius:50%;flex-shrink:0;"></span>
-          <span style="color:var(--muted);width:64px;flex-shrink:0;">Builder</span>
-          <span>대시보드 업데이트 · 주간보고</span>
-        </div>
-        <div style="display:flex; gap:10px; align-items:center; padding:8px 0; border-bottom:1px solid #222;">
-          <span style="width:6px;height:6px;background:#facc15;border-radius:50%;flex-shrink:0;"></span>
-          <span style="color:var(--muted);width:64px;flex-shrink:0;">지운</span>
-          <span>DARI 비주얼 레이어2 · DR.PEPTI</span>
-        </div>
-        <div style="display:flex; gap:10px; align-items:center; padding:8px 0; border-bottom:1px solid #222;">
-          <span style="width:6px;height:6px;background:#a78bfa;border-radius:50%;flex-shrink:0;"></span>
-          <span style="color:var(--muted);width:64px;flex-shrink:0;">Matt</span>
-          <span>소상공인 도약 · 시스템파리 제안서</span>
-        </div>
-        <div style="margin-top:10px; font-size:10px; color:#555;">향후: Sheets 할일 시트 → 담당자별 진행률 자동화</div>
-      </div>
+      <div class="card-title">팀 투두 <span id="todo-count-badge" style="background:#1a1a1a; border:1px solid #333; font-size:10px; padding:2px 6px; border-radius:4px; color:#888; margin-left:4px;">—</span> <span style="background:#1a1a1a; border:1px solid #333; font-size:10px; padding:2px 6px; border-radius:4px; color:#555; margin-left:4px;">Sheets 연동 준비중</span></div>
+      <div id="todo-list" style="font-size:12px; margin-top:6px;"></div>
+      <div style="margin-top:10px; font-size:10px; color:#555;">향후: Google Sheets 할일 시트 → 담당자별 진행률 + 마감 자동 알림</div>
     </div>
   </div>
 
@@ -1272,8 +1256,47 @@ new Chart(document.getElementById('hkSizeRatioChart'), {
   }
 });
 
-// 팀 투두는 커머스 허브의 단순 카드로 유지 (정적 HTML).
-// 향후 Apps Script 연동 시 별도 시트로 분리하여 연동 예정.
+// === 팀 투두 (커머스 허브) ===
+const TODOS = [
+  { owner: 'Matt',    color: '#a78bfa', task: '소상공인 도약 사업계획서 초안',         dday: '5/2',  status: '진행중' },
+  { owner: 'Matt',    color: '#a78bfa', task: '시스템파리 명동 팝업 제안서',           dday: '—',    status: '진행중' },
+  { owner: '지운',    color: '#facc15', task: 'DARI 매거진 비주얼 레이어2 (한남대교 편)', dday: '—', status: '진행중' },
+  { owner: '지운',    color: '#facc15', task: 'DR.PEPTI 패키지 디자인',                dday: '—',    status: '진행중' },
+  { owner: 'Builder', color: '#4ade80', task: 'KS 해외 발송 후 HK 재고 차감',          dday: '5/15', status: '대기' },
+  { owner: 'Builder', color: '#4ade80', task: '대시보드 Sheets 자동 연동 (Apps Script)', dday: '—', status: '진행중' },
+  { owner: 'Builder', color: '#4ade80', task: '대시보드 정산 표시 (Phase 2)',          dday: '—',    status: '대기' },
+  { owner: 'Builder', color: '#4ade80', task: '대시보드 보안 게이트 (D → B Cloudflare)', dday: '—', status: '대기' },
+];
+const STATUS_FG = { '진행중': '#facc15', '대기': '#888', '완료': '#4ade80' };
+const todoListEl = document.getElementById('todo-list');
+const TODAY_TODO = new Date('2026-04-29');
+let activeTodoCount = 0;
+TODOS.forEach(t => {
+  if (t.status === '진행중' || t.status === '대기') activeTodoCount++;
+  let ddayHtml = '';
+  if (/^\d+\/\d+$/.test(t.dday)) {
+    const [m, d] = t.dday.split('/').map(Number);
+    const due = new Date(2026, m - 1, d);
+    const diff = Math.ceil((due - TODAY_TODO) / 86400000);
+    let color = '#888';
+    if (diff < 0) color = '#f87171';
+    else if (diff <= 7) color = '#f87171';
+    else if (diff <= 14) color = '#facc15';
+    const label = diff < 0 ? `${t.dday} (D+${-diff})` : `${t.dday} (D-${diff})`;
+    ddayHtml = `<span style="color:${color}; font-size:11px; width:90px; text-align:right; flex-shrink:0;">${label}</span>`;
+  } else {
+    ddayHtml = `<span style="color:#444; font-size:11px; width:90px; text-align:right; flex-shrink:0;">—</span>`;
+  }
+  todoListEl.innerHTML += `
+    <div style="display:flex; gap:10px; align-items:center; padding:8px 0; border-bottom:1px solid #222;">
+      <span style="width:6px; height:6px; background:${t.color}; border-radius:50%; flex-shrink:0;"></span>
+      <span style="color:var(--muted); width:64px; flex-shrink:0;">${t.owner}</span>
+      <span style="flex:1;">${t.task}</span>
+      <span style="background:${STATUS_FG[t.status]}22; color:${STATUS_FG[t.status]}; padding:2px 8px; border-radius:3px; font-size:10px; flex-shrink:0;">${t.status}</span>
+      ${ddayHtml}
+    </div>`;
+});
+document.getElementById('todo-count-badge').textContent = `진행 ${activeTodoCount} / 전체 ${TODOS.length}`;
 
 // ── 사이즈×색상별 소진 속도 테이블 (skuList 활용) ──
 function daysColor(d) {
