@@ -113,6 +113,7 @@
 <div class="tabs">
   <div class="tab active" onclick="showPage('overview', event)">전체 출고</div>
   <div class="tab" onclick="showPage('platform', event)">커머스 허브</div>
+  <div class="tab" onclick="showPage('settlement', event)">정산 & ROAS</div>
   <div class="tab" onclick="showPage('stock', event)">KR 재고 & 재발주</div>
   <div class="tab" onclick="showPage('hk', event)">HK 재고</div>
   <div class="tab" onclick="showPage('gift', event)">증정 현황</div>
@@ -395,7 +396,137 @@ IF(OR(C2="킥스타터",
 
 </div>
 
-<!-- ===== PAGE 3: KR 재고 & 재발주 ===== -->
+<!-- ===== PAGE 3: 정산 & ROAS ===== -->
+<div id="page-settlement" class="page">
+
+  <!-- 4월 정산 KPI -->
+  <div class="kpi-row" style="grid-template-columns: repeat(5, 1fr);">
+    <div class="kpi">
+      <div class="kpi-label">4월 매출 (확정 채널)</div>
+      <div class="kpi-value" id="kpi-rev-total">—</div>
+      <div class="kpi-sub" id="kpi-rev-sub">메이커스 + B2B 합산</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">COGS 합계</div>
+      <div class="kpi-value" id="kpi-cogs-total" style="color:#aaa;">—</div>
+      <div class="kpi-sub">63,000원 × 켤레 (제품+부자재)</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">수수료 + 배송비</div>
+      <div class="kpi-value" id="kpi-fee-total" style="color:var(--red);">—</div>
+      <div class="kpi-sub" id="kpi-fee-sub">수수료 매출 차감 + 배송 회사 부담</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">공헌이익</div>
+      <div class="kpi-value green" id="kpi-margin-total">—</div>
+      <div class="kpi-sub" id="kpi-margin-sub">매출 − 수수료 − 배송 − COGS</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">공헌이익률</div>
+      <div class="kpi-value yellow" id="kpi-margin-pct">—</div>
+      <div class="kpi-sub">평균 (가중)</div>
+    </div>
+  </div>
+
+  <!-- 채널별 정산 표 -->
+  <div class="grid-full">
+    <div class="card">
+      <div class="card-title">4월 채널별 정산 <span style="color:#555; font-size:10px; margin-left:6px;">실제 거래조건 기반 자동 계산 · COGS 63,000원/켤레 가정</span></div>
+      <div style="overflow-x:auto;">
+        <table class="data-table" style="margin-top:8px; font-size:12px; min-width:880px;">
+          <thead>
+            <tr>
+              <th>채널</th>
+              <th class="num">수량</th>
+              <th class="num">단가 (₩)</th>
+              <th class="num">매출 (₩)</th>
+              <th class="num">수수료율</th>
+              <th class="num" style="color:var(--red);">수수료 (₩)</th>
+              <th class="num" style="color:var(--red);">배송비 (₩)</th>
+              <th class="num" style="color:#aaa;">COGS (₩)</th>
+              <th class="num" style="color:#4ade80;">공헌이익 (₩)</th>
+              <th class="num" style="color:#4ade80;">이익률</th>
+              <th>비고</th>
+            </tr>
+          </thead>
+          <tbody id="settlement-body"></tbody>
+          <tfoot id="settlement-foot"></tfoot>
+        </table>
+      </div>
+      <div style="margin-top:14px; padding:12px; background:#0d1620; border-radius:6px; border-left:3px solid #4ade80; font-size:11px; color:#aaa; line-height:1.9;">
+        <strong style="color:#4ade80;">공헌이익 계산식</strong> = 매출 − 수수료 − 배송비(회사 부담분) − COGS<br/>
+        <span style="color:#888;">※ 단가·수수료·배송 조건은 거래조건 입력값. 데이터 미입력 채널은 회색 ─ 표시.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ROAS 섹션 -->
+  <div class="grid-full" style="margin-top:1px;">
+    <div class="card">
+      <div class="card-title">ROAS (광고 효율) <span style="background:#1a1a1a; border:1px solid #333; font-size:10px; padding:2px 6px; border-radius:4px; color:#facc15; margin-left:6px;">광고비 데이터 입력 대기</span></div>
+      <div style="overflow-x:auto;">
+        <table class="data-table" style="margin-top:8px; font-size:12px; min-width:780px;">
+          <thead>
+            <tr>
+              <th>광고 채널</th>
+              <th class="num">캠페인 기간</th>
+              <th class="num">광고비 (₩)</th>
+              <th class="num">기여 매출 (₩)</th>
+              <th class="num" style="color:var(--yellow);">ROAS</th>
+              <th class="num" style="color:#aaa;">손익분기 ROAS*</th>
+              <th class="num">상태</th>
+              <th>비고</th>
+            </tr>
+          </thead>
+          <tbody id="roas-body">
+            <tr>
+              <td colspan="8" style="text-align:center; padding:30px; color:#666; font-style:italic;">
+                광고 채널·캠페인·광고비·기여 매출 데이터 입력 후 자동 계산
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="margin-top:14px; padding:12px; background:#1a1500; border-radius:6px; border-left:3px solid var(--yellow); font-size:11px; color:#aaa; line-height:1.9;">
+        <strong style="color:var(--yellow);">ROAS 정의</strong>: 기여 매출 ÷ 광고비 (배수)<br/>
+        <strong style="color:var(--yellow);">손익분기 ROAS*</strong>: 1 / 공헌이익률 — 이 값을 넘어야 광고 ROI &gt; 0<br/>
+        예: 공헌이익률 36.5% → 손익분기 ROAS 약 <strong>2.74배</strong> (광고 1만원 → 매출 2.74만원 이상 나와야 손익분기)
+      </div>
+    </div>
+  </div>
+
+  <!-- 거래조건 / 데이터 입력 가이드 -->
+  <div class="grid-full" style="margin-top:1px;">
+    <div class="card">
+      <div class="card-title">거래조건 데이터 (Phase 2 자동 갱신 대기)</div>
+      <table class="data-table" style="font-size:12px; margin-top:6px;">
+        <thead>
+          <tr>
+            <th>채널</th>
+            <th class="num">단가</th>
+            <th class="num">수수료</th>
+            <th class="num">배송비 부담</th>
+            <th class="num">정산 주기</th>
+            <th>상태</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>카카오메이커스</td><td class="num">159,000</td><td class="num" style="color:var(--red);">25%</td><td class="num">회사 (2,400원)</td><td class="num">월 1회</td><td style="color:#4ade80;">✓ 입력 완료</td></tr>
+          <tr><td>B2B (마야크루)</td><td class="num">110,000</td><td class="num">0%</td><td class="num">없음</td><td class="num">건별</td><td style="color:#4ade80;">✓ 입력 완료</td></tr>
+          <tr><td>킥스타터</td><td class="num" style="color:#666;">미입력</td><td class="num" style="color:#666;">미입력</td><td class="num" style="color:#666;">미입력</td><td class="num" style="color:#666;">완료 후 일괄</td><td style="color:#888;">대기</td></tr>
+          <tr><td>네이버 스마트스토어</td><td class="num" style="color:#666;">미입력</td><td class="num" style="color:#666;">미입력</td><td class="num" style="color:#666;">미입력</td><td class="num">월 2회</td><td style="color:#888;">대기</td></tr>
+          <tr><td>카카오톡스토어</td><td class="num" style="color:#666;">미입력</td><td class="num" style="color:#666;">미입력</td><td class="num" style="color:#666;">미입력</td><td class="num">월 1회</td><td style="color:#888;">대기</td></tr>
+        </tbody>
+      </table>
+      <div style="margin-top:10px; font-size:11px; color:#666;">
+        Matt가 채널별 거래조건 알려주면 SETTLEMENT_DEALS 객체에 추가 → 자동으로 4월 정산 표·KPI에 반영됨.
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ===== PAGE 4: KR 재고 & 재발주 ===== -->
 <div id="page-stock" class="page">
 
   <div class="kpi-row" style="grid-template-columns: repeat(5, 1fr);">
@@ -1299,6 +1430,107 @@ new Chart(document.getElementById('hkSizeRatioChart'), {
 
 // 팀 투두는 matibot_todo (DARI BOARD)를 iframe으로 풀 임베드.
 // 데이터 관리 모두 그쪽 시스템에서 처리 (tasks.json + 자체 UI).
+
+// === 정산 & ROAS (실측 거래조건 기반) ===
+// 출처: 04_운영/inventory/channel-economics.md (Obsidian) + 매트 직접 입력
+const COGS_PRODUCT   = 60000;  // 제품 원가 (BR-001 · 옵시디언 channel-economics.md)
+const COGS_PACKAGING =  3000;  // 부자재 (슈박스·행택)
+const COGS_PER_UNIT  = COGS_PRODUCT + COGS_PACKAGING;  // 63,000원/켤레
+
+// 채널별 거래조건 (매트 입력 — 옵시디언과 동기화)
+const SETTLEMENT_DEALS = {
+  '카카오메이커스': {
+    units: 48, unitPrice: 159000, feePct: 0.25,
+    shippingPerUnit: 2400, shippingByUs: true,
+    confirmed: true,
+    note: '풀세트 단가 · 회사 배송비 부담 (한진/CJ 일괄)'
+  },
+  'B2B (마야크루)': {
+    units: 30, unitPrice: 110000, feePct: 0,
+    shippingPerUnit: 0, shippingByUs: false,
+    confirmed: true,
+    note: '단체 직접 인도 · 배송 미발생'
+  },
+  '킥스타터': {
+    units: 47, confirmed: false,
+    note: 'USD 119/139 등 티어별 상이 · ACI 운임 별도 — 거래조건 입력 대기'
+  },
+  '네이버 스마트스토어': {
+    units: 6, confirmed: false,
+    note: '거래조건(수수료·배송비) 입력 대기'
+  },
+  '카카오톡스토어': {
+    units: 2, confirmed: false,
+    note: '거래조건(수수료·배송비) 입력 대기'
+  },
+};
+
+const fmtKRW = n => n.toLocaleString('ko-KR');
+const sBody = document.getElementById('settlement-body');
+let sumRev=0, sumFee=0, sumShip=0, sumCogs=0, sumMargin=0, sumUnits=0;
+
+Object.entries(SETTLEMENT_DEALS).forEach(([name, d]) => {
+  if (!d.confirmed) {
+    sBody.innerHTML += `<tr style="opacity:0.55;">
+      <td>${name}</td>
+      <td class="num">${d.units}</td>
+      <td class="num" style="color:#555;">—</td>
+      <td class="num" style="color:#555;">—</td>
+      <td class="num" style="color:#555;">—</td>
+      <td class="num" style="color:#555;">—</td>
+      <td class="num" style="color:#555;">—</td>
+      <td class="num" style="color:#555;">—</td>
+      <td class="num" style="color:#555;">—</td>
+      <td class="num" style="color:#555;">—</td>
+      <td style="color:#666; font-size:11px; font-style:italic;">${d.note}</td>
+    </tr>`;
+    return;
+  }
+  const revenue = d.units * d.unitPrice;
+  const fee     = Math.round(revenue * d.feePct);
+  const ship    = d.shippingByUs ? d.units * d.shippingPerUnit : 0;
+  const cogs    = d.units * COGS_PER_UNIT;
+  const margin  = revenue - fee - ship - cogs;
+  const mPct    = margin / revenue * 100;
+  sumRev+=revenue; sumFee+=fee; sumShip+=ship; sumCogs+=cogs; sumMargin+=margin; sumUnits+=d.units;
+  sBody.innerHTML += `<tr>
+    <td><strong>${name}</strong></td>
+    <td class="num">${d.units}</td>
+    <td class="num">${fmtKRW(d.unitPrice)}</td>
+    <td class="num"><strong>${fmtKRW(revenue)}</strong></td>
+    <td class="num" style="color:${d.feePct>0?'var(--red)':'#666'};">${(d.feePct*100).toFixed(0)}%</td>
+    <td class="num" style="color:var(--red);">${fmtKRW(fee)}</td>
+    <td class="num" style="color:var(--red);">${fmtKRW(ship)}</td>
+    <td class="num" style="color:#aaa;">${fmtKRW(cogs)}</td>
+    <td class="num" style="color:#4ade80; font-weight:700;">${fmtKRW(margin)}</td>
+    <td class="num" style="color:#4ade80; font-weight:700;">${mPct.toFixed(1)}%</td>
+    <td style="color:#888; font-size:11px;">${d.note}</td>
+  </tr>`;
+});
+const totPct = sumRev>0 ? sumMargin/sumRev*100 : 0;
+document.getElementById('settlement-foot').innerHTML = `<tr style="border-top:2px solid #333; font-weight:700; background:#0d0d0d;">
+  <td>합계 (확정 채널)</td>
+  <td class="num">${sumUnits}</td>
+  <td class="num">—</td>
+  <td class="num"><strong style="color:#fff;">${fmtKRW(sumRev)}</strong></td>
+  <td class="num">—</td>
+  <td class="num" style="color:var(--red);">${fmtKRW(sumFee)}</td>
+  <td class="num" style="color:var(--red);">${fmtKRW(sumShip)}</td>
+  <td class="num" style="color:#aaa;">${fmtKRW(sumCogs)}</td>
+  <td class="num" style="color:#4ade80;"><strong>${fmtKRW(sumMargin)}</strong></td>
+  <td class="num" style="color:#4ade80;"><strong>${totPct.toFixed(1)}%</strong></td>
+  <td style="color:#888; font-size:11px;">메이커스 + B2B 합산</td>
+</tr>`;
+
+// 정산 KPI
+document.getElementById('kpi-rev-total').textContent     = fmtKRW(sumRev);
+document.getElementById('kpi-rev-sub').textContent       = `${sumUnits}켤레 · 메이커스 ${SETTLEMENT_DEALS['카카오메이커스'].units} + B2B ${SETTLEMENT_DEALS['B2B (마야크루)'].units}`;
+document.getElementById('kpi-cogs-total').textContent    = fmtKRW(sumCogs);
+document.getElementById('kpi-fee-total').textContent     = fmtKRW(sumFee + sumShip);
+document.getElementById('kpi-fee-sub').textContent       = `수수료 ${fmtKRW(sumFee)} + 배송 ${fmtKRW(sumShip)}`;
+document.getElementById('kpi-margin-total').textContent  = fmtKRW(sumMargin);
+document.getElementById('kpi-margin-sub').textContent    = `매출 대비 ${totPct.toFixed(1)}% · 손익분기 ROAS ${(100/totPct).toFixed(2)}배`;
+document.getElementById('kpi-margin-pct').textContent    = totPct.toFixed(1) + '%';
 
 // ── 사이즈×색상별 소진 속도 테이블 (skuList 활용) ──
 function daysColor(d) {
