@@ -1104,20 +1104,25 @@ const burnPct = Math.round((INITIAL - TOTAL_REM) / INITIAL * 100);
 document.getElementById('burn-progress').style.width = burnPct + '%';
 document.getElementById('burn-pct-label').textContent = `${burnPct}% 소진 (초기 ${INITIAL}켤레)`;
 
-// === 알림 배너 (전체 출고 탭) — 현재 재고 + 긴급 SKU만 ===
+// === 알림 배너 (전체 출고 탭) — 현재 재고 + 긴급 SKU (잔여 + 남은 일수) ===
 if (skuUrgent.length > 0) {
   document.getElementById('reorder-banner').style.display = 'flex';
   const formatSku = u => {
     const cBadge = u.color === 'GREY' ? 'G' : 'B';
     const cFg    = u.color === 'GREY' ? '#b0c4d8' : '#d4b896';
     const dayFg  = u.days <= 15 ? '#f87171' : u.days <= 30 ? '#facc15' : '#aaa';
-    return `<span style="color:#ddd;">${u.size}mm</span> <span style="color:${cFg};">${cBadge}</span> <span style="color:${dayFg}; font-weight:700;">${u.days}일</span>`;
+    return `<span style="color:#ddd;">${u.size}mm</span> ` +
+           `<span style="color:${cFg};">${cBadge}</span> ` +
+           `<span style="color:#888; font-size:11px;">잔여</span> ` +
+           `<span style="color:#ddd; font-weight:600;">${u.rem}</span> ` +
+           `<span style="color:#444;">·</span> ` +
+           `<span style="color:${dayFg}; font-weight:700;">${u.days}일</span>`;
   };
   document.getElementById('alert-msg').innerHTML =
     `현재 재고 <strong style="color:#fff;">KR ${TOTAL_REM}켤레</strong> ` +
     `(<span style="color:var(--grey);">G ${TOTAL_GREY}</span> · <span style="color:var(--beige);">B ${TOTAL_BEIGE}</span>) ` +
     `<span style="color:#666; margin:0 10px;">|</span> ` +
-    skuUrgent.map(formatSku).join(' <span style="color:#444;">·</span> ');
+    skuUrgent.map(formatSku).join(' &nbsp;<span style="color:#333;">|</span>&nbsp; ');
 }
 
 // === 재발주 체크리스트 (사이즈×컬러 row 단위) ===
