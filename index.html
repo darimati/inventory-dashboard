@@ -114,7 +114,7 @@
   <div class="tab active" onclick="showPage('overview', event)">전체 출고</div>
   <div class="tab" onclick="showPage('platform', event)">커머스 허브</div>
   <div class="tab" onclick="showPage('stock', event)">KR 재고 & 재발주</div>
-  <div class="tab" onclick="showPage('hk', event)">HK 재고 & 투두</div>
+  <div class="tab" onclick="showPage('hk', event)">HK 재고</div>
   <div class="tab" onclick="showPage('gift', event)">증정 현황</div>
 </div>
 
@@ -385,8 +385,33 @@ IF(OR(C2="킥스타터",
       </table>
       <div style="margin-top:10px; font-size:10px; color:#555; line-height:1.7;">
         *공헌이익 = (판매가 − COGS 6만 − 수수료 − 배송비) ÷ 판매가<br>
-        HK 거점은 글로벌 D2C 전용 — 자세한 사항은 HK 재고 & 투두 탭 참조<br>
+        HK 거점은 글로벌 D2C 전용 — 자세한 사항은 HK 재고 탭 참조<br>
         로하스 시티: 매출 구간별 차등 수수료 (입점 계약 시 확정)
+      </div>
+    </div>
+  </div>
+
+  <!-- 팀 리소스 (full width, 단순 스타일) -->
+  <div class="grid-full" style="margin-top:1px;">
+    <div class="card">
+      <div class="card-title">팀 리소스 <span style="background:#1a1a1a; border:1px solid #333; font-size:10px; padding:2px 6px; border-radius:4px; color:#555; margin-left:4px;">Sheets 연동 준비중</span></div>
+      <div style="font-size:12px; margin-top:4px;">
+        <div style="display:flex; gap:10px; align-items:center; padding:8px 0; border-bottom:1px solid #222;">
+          <span style="width:6px;height:6px;background:#4ade80;border-radius:50%;flex-shrink:0;"></span>
+          <span style="color:var(--muted);width:64px;flex-shrink:0;">Builder</span>
+          <span>대시보드 업데이트 · 주간보고</span>
+        </div>
+        <div style="display:flex; gap:10px; align-items:center; padding:8px 0; border-bottom:1px solid #222;">
+          <span style="width:6px;height:6px;background:#facc15;border-radius:50%;flex-shrink:0;"></span>
+          <span style="color:var(--muted);width:64px;flex-shrink:0;">지운</span>
+          <span>DARI 비주얼 레이어2 · DR.PEPTI</span>
+        </div>
+        <div style="display:flex; gap:10px; align-items:center; padding:8px 0; border-bottom:1px solid #222;">
+          <span style="width:6px;height:6px;background:#a78bfa;border-radius:50%;flex-shrink:0;"></span>
+          <span style="color:var(--muted);width:64px;flex-shrink:0;">Matt</span>
+          <span>소상공인 도약 · 시스템파리 제안서</span>
+        </div>
+        <div style="margin-top:10px; font-size:10px; color:#555;">향후: Sheets 할일 시트 → 담당자별 진행률 자동화</div>
       </div>
     </div>
   </div>
@@ -424,8 +449,8 @@ IF(OR(C2="킥스타터",
     </div>
   </div>
 
-  <!-- GREY 사이즈별 잔여 (full width) -->
-  <div class="grid-full">
+  <!-- GREY + BEIGE 사이즈별 잔여 (좌우 2단) -->
+  <div class="grid-2" style="grid-template-columns: 1fr 1fr;">
     <div class="card">
       <div class="card-title">
         <span style="color:var(--grey)">●</span> GREY 사이즈별 잔여
@@ -433,10 +458,6 @@ IF(OR(C2="킥스타터",
       </div>
       <div id="grey-inv-bars" style="margin-top:14px;"></div>
     </div>
-  </div>
-
-  <!-- BEIGE 사이즈별 잔여 (full width) -->
-  <div class="grid-full" style="margin-top:1px;">
     <div class="card">
       <div class="card-title">
         <span style="color:var(--beige)">●</span> BEIGE 사이즈별 잔여
@@ -529,10 +550,10 @@ IF(OR(C2="킥스타터",
 
 </div>
 
-<!-- ===== PAGE 4: HK 재고 & 투두 ===== -->
+<!-- ===== PAGE 4: HK 재고 ===== -->
 <div id="page-hk" class="page">
 
-  <div class="kpi-row" style="grid-template-columns: repeat(5, 1fr);">
+  <div class="kpi-row" style="grid-template-columns: repeat(4, 1fr);">
     <div class="kpi">
       <div class="kpi-label">HK 잔여 (입고 기준)</div>
       <div class="kpi-value">305</div>
@@ -552,11 +573,6 @@ IF(OR(C2="킥스타터",
       <div class="kpi-label">D2C 가용 (예상)</div>
       <div class="kpi-value green">~243</div>
       <div class="kpi-sub">Shopify 글로벌 판매 풀</div>
-    </div>
-    <div class="kpi">
-      <div class="kpi-label">활성 투두</div>
-      <div class="kpi-value yellow" id="kpi-todo-active">—</div>
-      <div class="kpi-sub" id="kpi-todo-urgent-sub">진행 중인 업무</div>
     </div>
   </div>
 
@@ -611,34 +627,6 @@ IF(OR(C2="킥스타터",
     <div class="card">
       <div class="card-title">HK 사이즈 비율</div>
       <div class="chart-wrap medium"><canvas id="hkSizeRatioChart"></canvas></div>
-    </div>
-  </div>
-
-  <!-- 투두 리스트 -->
-  <div class="grid-full" style="margin-top:1px;">
-    <div class="card">
-      <div class="card-title">팀 투두 리스트 <span style="color:#555; font-size:10px; margin-left:6px;">담당 · 카테고리 · 상태 · 마감일</span></div>
-      <div style="overflow-x:auto;">
-        <table class="data-table" style="margin-top:8px; min-width:680px;">
-          <thead>
-            <tr>
-              <th style="width:70px;">담당</th>
-              <th>업무</th>
-              <th style="width:80px;">카테고리</th>
-              <th style="width:80px;">상태</th>
-              <th class="num" style="width:70px;">D-day</th>
-              <th>비고</th>
-            </tr>
-          </thead>
-          <tbody id="todo-body"></tbody>
-        </table>
-      </div>
-      <div style="margin-top:14px; padding:12px; background:#111; border-radius:6px; border-left:3px solid var(--yellow); font-size:11px; color:#888; line-height:1.8;">
-        <strong style="color:var(--yellow);">자동화 로드맵 (Phase 2)</strong>
-        <div>· Google Sheets 투두 시트 → CSV gviz fetch</div>
-        <div>· 마감 7일 이내 자동 알림 + 담당자별 진행률</div>
-        <div>· Slack #all-darimati 임박 마감 푸시</div>
-      </div>
     </div>
   </div>
 
@@ -1205,48 +1193,8 @@ new Chart(document.getElementById('hkSizeRatioChart'), {
   }
 });
 
-// ── 팀 투두 리스트 ──
-const TODOS = [
-  { owner: 'Matt',    task: '소상공인 도약 사업계획서 초안',         cat: '지원사업', status: '진행중', dday: '5/2',  memo: 'sbiz24.kr 접속 먼저' },
-  { owner: 'Matt',    task: '시스템파리 명동 팝업 제안서',           cat: '영업',     status: '진행중', dday: '—',    memo: '현대백화점 시스템 파리' },
-  { owner: '지운',    task: 'DARI 매거진 비주얼 레이어2',            cat: '디자인',   status: '진행중', dday: '—',    memo: '한남대교 편 (5월 출간)' },
-  { owner: '지운',    task: 'DR.PEPTI 패키지 디자인',                cat: '디자인',   status: '진행중', dday: '—',    memo: '' },
-  { owner: 'Builder', task: 'KS 해외 발송 후 HK 재고 차감',          cat: '재고',     status: '대기',  dday: '5/15', memo: 'KS 1차 배송 완료 후' },
-  { owner: 'Builder', task: '대시보드 Sheets 자동 연동 (Phase 2)',   cat: '개발',     status: '대기',  dday: '—',    memo: 'gviz API' },
-  { owner: 'Builder', task: '대시보드 정산 표시 (Phase 2)',          cat: '개발',     status: '대기',  dday: '—',    memo: '수수료율 자동 계산' },
-  { owner: 'Builder', task: '대시보드 보안 (로그인 게이트)',         cat: '개발',     status: '대기',  dday: '—',    memo: 'D 수준 → A/B 전환 시' },
-];
-const STATUS_BG = { '진행중': '#facc1522', '대기': '#88888822', '완료': '#4ade8022', '블로커': '#f8717122' };
-const STATUS_FG = { '진행중': '#facc15',   '대기': '#888',      '완료': '#4ade80',   '블로커': '#f87171' };
-const OWNER_FG  = { 'Matt': '#a78bfa', '지운': '#facc15', 'Builder': '#4ade80' };
-
-const todoBody = document.getElementById('todo-body');
-let activeCnt = 0, urgentCnt = 0;
-const TODAY = new Date('2026-04-29');
-TODOS.forEach(t => {
-  if (t.status === '진행중' || t.status === '대기') activeCnt++;
-  let ddayDisplay = t.dday;
-  let ddayColor = '#888';
-  if (/^\d+\/\d+$/.test(t.dday)) {
-    const [m,d] = t.dday.split('/').map(Number);
-    const due = new Date(2026, m-1, d);
-    const diff = Math.ceil((due - TODAY) / 86400000);
-    if (diff < 0) { ddayColor = '#f87171'; ddayDisplay = `${t.dday} (D+${-diff})`; urgentCnt++; }
-    else if (diff <= 7) { ddayColor = '#f87171'; ddayDisplay = `${t.dday} (D-${diff})`; urgentCnt++; }
-    else if (diff <= 14) { ddayColor = '#facc15'; ddayDisplay = `${t.dday} (D-${diff})`; }
-    else ddayDisplay = `${t.dday} (D-${diff})`;
-  }
-  todoBody.innerHTML += `<tr>
-    <td><span style="color:${OWNER_FG[t.owner] || '#888'}; font-weight:600;">${t.owner}</span></td>
-    <td>${t.task}</td>
-    <td style="color:#888; font-size:11px;">${t.cat}</td>
-    <td><span style="background:${STATUS_BG[t.status]}; color:${STATUS_FG[t.status]}; padding:2px 8px; border-radius:3px; font-size:11px;">${t.status}</span></td>
-    <td class="num" style="color:${ddayColor}; font-size:11px;">${ddayDisplay}</td>
-    <td style="color:#666; font-size:11px;">${t.memo}</td>
-  </tr>`;
-});
-document.getElementById('kpi-todo-active').textContent = activeCnt;
-document.getElementById('kpi-todo-urgent-sub').textContent = `진행/대기 ${activeCnt} · 임박 ${urgentCnt}`;
+// 팀 투두는 커머스 허브의 단순 카드로 유지 (정적 HTML).
+// 향후 Apps Script 연동 시 별도 시트로 분리하여 연동 예정.
 
 // ── 사이즈×색상별 소진 속도 테이블 ──
 const SALE_BY_SIZE = {
