@@ -863,10 +863,33 @@ new Chart(document.getElementById('weeklyVelocityChart'), {
   data: {
     labels: weekLabels,
     datasets: [
-      { label: '실판매',   data: weekSale, backgroundColor: '#2a5c3a', borderColor: '#4ade80', borderWidth: 1, borderRadius: 3, stack: 'w', yAxisID: 'y' },
-      { label: 'B2B',     data: weekB2B,  backgroundColor: '#2a1a4a', borderColor: '#a78bfa', borderWidth: 1, borderRadius: 3, stack: 'w', yAxisID: 'y' },
-      { label: '실판매 일평균 (켤레/일)', data: weekRate, type: 'line', borderColor: '#facc15', backgroundColor: 'transparent',
-        pointBackgroundColor: '#facc15', pointRadius: 7, pointHoverRadius: 9, tension: 0, yAxisID: 'y2' }
+      {
+        label: '실판매', data: weekSale,
+        backgroundColor: 'rgba(74,222,128,0.22)', borderColor: 'rgba(74,222,128,0.85)',
+        borderWidth: 1.5, borderRadius: 3,
+        stack: 'w', yAxisID: 'y', order: 3
+      },
+      {
+        label: 'B2B', data: weekB2B,
+        backgroundColor: 'rgba(167,139,250,0.22)', borderColor: 'rgba(167,139,250,0.85)',
+        borderWidth: 1.5, borderRadius: 3,
+        stack: 'w', yAxisID: 'y', order: 3
+      },
+      {
+        label: '실판매 일평균 (켤레/일)', data: weekRate, type: 'line',
+        borderColor: '#facc15',
+        backgroundColor: 'rgba(250,204,21,0.05)',
+        borderWidth: 3.5,
+        pointBackgroundColor: '#facc15',
+        pointBorderColor: '#1a1a1a',
+        pointBorderWidth: 3,
+        pointRadius: 8,
+        pointHoverRadius: 11,
+        tension: 0.25,
+        yAxisID: 'y2',
+        order: 1,
+        clip: false
+      }
     ]
   },
   options: {
@@ -878,7 +901,7 @@ new Chart(document.getElementById('weeklyVelocityChart'), {
             title: { display: true, text: '일평균 (켤레/일)', color: '#facc15', font: { size: 11 } } }
     },
     plugins: {
-      legend: { labels: { color: '#888', font: { size: 12 }, boxWidth: 12, padding: 16 } },
+      legend: { labels: { color: '#bbb', font: { size: 12, weight: '600' }, boxWidth: 14, padding: 18, usePointStyle: false } },
       tooltip: { callbacks: { label: c => c.datasetIndex < 2 ? ` ${c.dataset.label}: ${c.parsed.y}켤레` : ` 일평균: ${c.parsed.y}켤레/일` } }
     }
   }
