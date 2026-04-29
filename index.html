@@ -265,14 +265,57 @@ IF(OR(C2="킥스타터",
     </div>
   </div>
 
-  <!-- 주별 판매 속도 — 풀 너비 -->
-  <div class="grid-full" style="margin-top:1px;">
+  <!-- 주별 판매 속도 + 모멘텀 사이드 카드 -->
+  <div class="grid-2" style="margin-top:1px;">
     <div class="card">
       <div class="card-title" style="margin-bottom:6px;">
         주별 판매 속도
         <span style="color:#555; font-size:10px; margin-left:8px;">주간 누적 켤레 (막대 · 실판매+B2B) · 실판매 일평균 (노란선)</span>
       </div>
       <div style="position:relative; height:280px;"><canvas id="weeklyVelocityChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">주차별 모멘텀 & 예측</div>
+      <div style="font-size:12px; line-height:1.6; margin-top:10px;">
+        <div style="display:flex; justify-content:space-between; align-items:baseline; padding:10px 0; border-bottom:1px solid #222;">
+          <div>
+            <div style="color:#888; font-size:10px; letter-spacing:0.04em;">W1 · 4/17</div>
+            <div style="font-size:18px; font-weight:700;">22<span style="font-size:11px; color:#888; font-weight:400;"> 켤레</span></div>
+          </div>
+          <div style="text-align:right;">
+            <div style="color:#888; font-size:10px;">일평균</div>
+            <div style="color:#aaa;">22.0</div>
+          </div>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:baseline; padding:10px 0; border-bottom:1px solid #222;">
+          <div>
+            <div style="color:#888; font-size:10px; letter-spacing:0.04em;">W2 · 4/20~24</div>
+            <div style="font-size:18px; font-weight:700;">36<span style="font-size:11px; color:#888; font-weight:400;"> 켤레</span></div>
+          </div>
+          <div style="text-align:right;">
+            <div style="color:#888; font-size:10px;">일평균</div>
+            <div style="color:#f87171;">7.2 ↓</div>
+          </div>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:baseline; padding:10px 0; border-bottom:1px solid #222;">
+          <div>
+            <div style="color:#888; font-size:10px; letter-spacing:0.04em;">W3 · 4/27~ (진행중)</div>
+            <div style="font-size:18px; font-weight:700;">42<span style="font-size:11px; color:#888; font-weight:400;"> 켤레</span></div>
+          </div>
+          <div style="text-align:right;">
+            <div style="color:#888; font-size:10px;">일평균</div>
+            <div style="color:#facc15;">14.0 ↑</div>
+          </div>
+        </div>
+        <div style="margin-top:14px; padding:14px; background:#0d1620; border-radius:6px; border-left:3px solid #4ade80;">
+          <div style="color:#aaa; font-size:10px; letter-spacing:0.04em; margin-bottom:6px;">5월 1주 예상 (W3 페이스 기준)</div>
+          <div style="font-size:22px; font-weight:700; color:#4ade80;">~70 <span style="font-size:11px; color:#888; font-weight:400;">켤레</span></div>
+          <div style="color:#555; font-size:10px; margin-top:4px;">14.0/일 × 5 영업일</div>
+        </div>
+        <div style="margin-top:10px; font-size:10px; color:#555; line-height:1.7;">
+          W2 일평균 하락은 B2B 30켤레 단발성으로 인한 기준 변동 영향. 실판매 모멘텀은 W3에서 회복.
+        </div>
+      </div>
     </div>
   </div>
 
@@ -302,27 +345,49 @@ IF(OR(C2="킥스타터",
     </div>
   </div>
 
-  <!-- 채널 점유율 + 경제성 -->
-  <div class="grid-2" style="margin-top:1px; grid-template-columns: 1fr 1fr;">
+  <!-- 채널 점유율 (full width) -->
+  <div class="grid-full" style="margin-top:1px;">
     <div class="card">
-      <div class="card-title">채널 점유율 (4월 누계 · 전체 133켤레)</div>
-      <div class="chart-wrap medium"><canvas id="platformShareChart"></canvas></div>
+      <div class="card-title">채널 점유율 <span style="color:#555; font-size:10px; margin-left:6px;">4월 누계 · 전체 133켤레 (실판매 103 + B2B 30)</span></div>
+      <div style="display:grid; grid-template-columns: 280px 1fr; gap:32px; align-items:center; margin-top:10px;">
+        <div style="position:relative; height:240px;"><canvas id="platformShareChart"></canvas></div>
+        <div id="platform-share-bars" style="font-size:12px; line-height:1.8;"></div>
+      </div>
     </div>
+  </div>
+
+  <!-- 채널 경제성 (full width) -->
+  <div class="grid-full" style="margin-top:1px;">
     <div class="card">
       <div class="card-title">채널 경제성 <span style="background:#1a1a1a; border:1px solid #333; font-size:10px; padding:2px 6px; border-radius:4px; color:#555; margin-left:4px;">계획 기준</span></div>
-      <table class="data-table" style="font-size:11px;">
-        <thead><tr><th>채널</th><th class="num">수수료</th><th class="num">배송비</th><th class="num" style="color:#4ade80;">공헌이익*</th></tr></thead>
+      <table class="data-table" style="font-size:12px; margin-top:6px;">
+        <thead>
+          <tr>
+            <th>채널</th>
+            <th>거점</th>
+            <th class="num">판매가 (₩)</th>
+            <th class="num">수수료</th>
+            <th class="num">배송비</th>
+            <th class="num">정산 주기</th>
+            <th class="num" style="color:#4ade80;">공헌이익*</th>
+            <th>비고</th>
+          </tr>
+        </thead>
         <tbody>
-          <tr><td>킥스타터</td><td class="num" style="color:#f87171;">5%+PG</td><td class="num">ACI</td><td class="num green">~65%</td></tr>
-          <tr><td>카카오메이커스</td><td class="num" style="color:#f87171;">15%</td><td class="num">4,000</td><td class="num green">~42%</td></tr>
-          <tr><td>네이버</td><td class="num" style="color:#facc15;">3%</td><td class="num">4,000</td><td class="num green">~54%</td></tr>
-          <tr><td>카카오톡</td><td class="num" style="color:#facc15;">10%</td><td class="num">4,000</td><td class="num green">~48%</td></tr>
-          <tr><td>B2B</td><td class="num" style="color:#555;">0%</td><td class="num">협의</td><td class="num" style="color:#a78bfa;">직협</td></tr>
-          <tr style="border-top:2px solid #facc15;"><td><strong style="color:#facc15;">로하스 시티</strong></td><td class="num" style="color:#facc15;">25~35%</td><td class="num" style="color:#facc15;">입점</td><td class="num" style="color:#facc15;">계획중</td></tr>
-          <tr style="border-top:1px solid #333;"><td><strong style="color:#7c9bb5;">HK D2C (Shopify)</strong></td><td class="num" style="color:#7c9bb5;">2.9%+ACI</td><td class="num" style="color:#7c9bb5;">$5~10</td><td class="num" style="color:#7c9bb5;">~55%</td></tr>
+          <tr><td><strong>킥스타터</strong></td><td style="color:#888;">KR/HK</td><td class="num">~$119</td><td class="num" style="color:#f87171;">5% + PG</td><td class="num">ACI</td><td class="num" style="color:#888;">완료 후</td><td class="num green">~65%</td><td style="color:#888; font-size:11px;">1차 배송 완료 · 해외 백커는 HK 거점</td></tr>
+          <tr><td><strong>카카오메이커스</strong></td><td style="color:#888;">KR</td><td class="num">159,000</td><td class="num" style="color:#f87171;">15%</td><td class="num">4,000</td><td class="num" style="color:#888;">월 1회</td><td class="num green">~42%</td><td style="color:#888; font-size:11px;">최다 채널 · 4월 48켤레</td></tr>
+          <tr><td><strong>네이버 스마트스토어</strong></td><td style="color:#888;">KR</td><td class="num">179,000</td><td class="num" style="color:#facc15;">3%</td><td class="num">4,000</td><td class="num" style="color:#888;">월 2회</td><td class="num green">~54%</td><td style="color:#888; font-size:11px;">고마진 채널 · 검색/오픈마켓</td></tr>
+          <tr><td><strong>카카오톡스토어</strong></td><td style="color:#888;">KR</td><td class="num">159,000</td><td class="num" style="color:#facc15;">10%</td><td class="num">4,000</td><td class="num" style="color:#888;">월 1회</td><td class="num green">~48%</td><td style="color:#888; font-size:11px;">런칭 초기 · 소셜 채널</td></tr>
+          <tr><td><strong>B2B (마야크루)</strong></td><td style="color:#888;">KR</td><td class="num" style="color:#888;">협의</td><td class="num" style="color:#888;">0%</td><td class="num">협의</td><td class="num" style="color:#888;">건별</td><td class="num" style="color:#a78bfa;">직협</td><td style="color:#888; font-size:11px;">단체 직접 주문 · 4월 30켤레</td></tr>
+          <tr style="border-top:2px solid #facc15;"><td><strong style="color:#facc15;">로하스 시티</strong></td><td style="color:#facc15;">KR</td><td class="num" style="color:#facc15;">179,000</td><td class="num" style="color:#facc15;">25~35%</td><td class="num" style="color:#facc15;">입점</td><td class="num" style="color:#888;">월 1회</td><td class="num" style="color:#facc15;">계획중</td><td style="color:#888; font-size:11px;">매출 구간 차등 · 입점 협상</td></tr>
+          <tr style="border-top:1px solid #333;"><td><strong style="color:#7c9bb5;">HK D2C (Shopify)</strong></td><td style="color:#7c9bb5;">HK</td><td class="num" style="color:#7c9bb5;">~$139</td><td class="num" style="color:#7c9bb5;">2.9% + ACI</td><td class="num" style="color:#7c9bb5;">$5~10</td><td class="num" style="color:#888;">즉시</td><td class="num" style="color:#7c9bb5;">~55%</td><td style="color:#888; font-size:11px;">글로벌 D2C 전용 · 런칭 준비</td></tr>
         </tbody>
       </table>
-      <div style="margin-top:8px; font-size:10px; color:#555; line-height:1.7;">*공헌이익 = (판매가 − COGS 6만 − 수수료 − 배송비) ÷ 판매가<br>HK 거점은 글로벌 D2C 전용 — 자세한 사항은 HK 재고 & 투두 탭 참조</div>
+      <div style="margin-top:10px; font-size:10px; color:#555; line-height:1.7;">
+        *공헌이익 = (판매가 − COGS 6만 − 수수료 − 배송비) ÷ 판매가<br>
+        HK 거점은 글로벌 D2C 전용 — 자세한 사항은 HK 재고 & 투두 탭 참조<br>
+        로하스 시티: 매출 구간별 차등 수수료 (입점 계약 시 확정)
+      </div>
     </div>
   </div>
 
@@ -901,24 +966,56 @@ dsBody.innerHTML += `<tr class="total">
   <td class="num">142</td>
 </tr>`;
 
-// ── 플랫폼 점유율 (B2B 포함 133켤레) ──
+// ── 플랫폼 점유율 (B2B 포함 133켤레) + 옆 막대 legend ──
+const PLATFORM_SHARE = [
+  { name: '카카오메이커스',   count: 48, color: '#d4b896' },
+  { name: '킥스타터',          count: 47, color: '#b0c4d8' },
+  { name: 'B2B · 마야크루',    count: 30, color: '#a78bfa' },
+  { name: '네이버',            count: 6,  color: '#7c9bb5' },
+  { name: '카카오톡스토어',    count: 2,  color: '#a0a0a0' },
+];
+const PLATFORM_TOTAL = PLATFORM_SHARE.reduce((s, p) => s + p.count, 0);
 new Chart(document.getElementById('platformShareChart'), {
   type: 'doughnut',
   data: {
-    labels: ['카카오메이커스 (48)', '킥스타터 (47)', 'B2B 마야크루 (30)', '네이버 (6)', '카카오톡스토어 (2)'],
+    labels: PLATFORM_SHARE.map(p => p.name),
     datasets: [{
-      data: [48, 47, 30, 6, 2],
-      backgroundColor: ['#d4b896', '#b0c4d8', '#a78bfa', '#7c9bb5', '#a0a0a0'],
+      data: PLATFORM_SHARE.map(p => p.count),
+      backgroundColor: PLATFORM_SHARE.map(p => p.color),
       borderWidth: 0, hoverOffset: 6
     }]
   },
   options: {
-    cutout: '60%',
+    cutout: '62%',
     plugins: {
-      legend: { display: true, position: 'bottom', labels: { color: '#888', font: { size: 10 }, padding: 8, boxWidth: 9 } },
-      tooltip: { callbacks: { label: c => ` ${c.label}: ${((c.parsed/133)*100).toFixed(0)}%` } }
+      legend: { display: false },
+      tooltip: { callbacks: { label: c => ` ${c.label}: ${c.parsed}켤레 (${((c.parsed/PLATFORM_TOTAL)*100).toFixed(0)}%)` } }
     }
   }
+});
+
+// 옆 막대 legend
+const psContainer = document.getElementById('platform-share-bars');
+const psMax = Math.max(...PLATFORM_SHARE.map(p => p.count));
+PLATFORM_SHARE.forEach(p => {
+  const pct = (p.count / PLATFORM_TOTAL * 100).toFixed(0);
+  const wPct = (p.count / psMax * 100).toFixed(0);
+  psContainer.innerHTML += `
+    <div style="display:flex; align-items:center; gap:14px; margin-bottom:14px;">
+      <div style="width:130px; flex-shrink:0;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="width:8px; height:8px; background:${p.color}; border-radius:50%; flex-shrink:0;"></span>
+          <span style="color:#ddd;">${p.name}</span>
+        </div>
+      </div>
+      <div style="flex:1; background:#222; border-radius:3px; height:10px; position:relative;">
+        <div style="width:${wPct}%; height:100%; background:${p.color}; border-radius:3px;"></div>
+      </div>
+      <div style="width:78px; text-align:right; font-variant-numeric:tabular-nums;">
+        <span style="font-weight:700;">${p.count}</span>
+        <span style="color:#888; font-size:10px; margin-left:4px;">${pct}%</span>
+      </div>
+    </div>`;
 });
 
 // ── 증정 일별 차트 ──
