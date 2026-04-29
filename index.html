@@ -14,92 +14,92 @@
     --muted: #888;
     --grey: #b0c4d8;
     --beige: #d4b896;
-    --accent: #e8e8e8;
     --green: #4ade80;
     --yellow: #facc15;
+    --red: #f87171;
+    --purple: #a78bfa;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { background: var(--bg); color: var(--text); font-family: 'Helvetica Neue', Arial, sans-serif; min-height: 100vh; }
 
-  header {
-    padding: 32px 40px 20px;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: baseline;
-    gap: 16px;
-  }
+  header { padding: 32px 40px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: baseline; gap: 16px; }
   header h1 { font-size: 18px; font-weight: 600; letter-spacing: 0.08em; }
   header span { font-size: 12px; color: var(--muted); letter-spacing: 0.05em; }
-
   .updated { margin-left: auto; font-size: 11px; color: var(--muted); }
 
-  .kpi-row {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 1px;
-    background: var(--border);
-    border-bottom: 1px solid var(--border);
-  }
-  .kpi {
-    background: var(--card);
-    padding: 28px 32px;
-  }
+  /* NAV TABS */
+  .tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); padding: 0 40px; }
+  .tab { padding: 12px 20px; font-size: 12px; letter-spacing: 0.05em; cursor: pointer; color: var(--muted); border-bottom: 2px solid transparent; transition: all 0.15s; }
+  .tab.active { color: var(--text); border-bottom-color: var(--text); }
+  .tab:hover { color: var(--text); }
+
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* KPIs */
+  .kpi-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1px; background: var(--border); border-bottom: 1px solid var(--border); }
+  .kpi { background: var(--card); padding: 24px 28px; }
   .kpi-label { font-size: 11px; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 10px; }
-  .kpi-value { font-size: 36px; font-weight: 700; letter-spacing: -0.02em; }
-  .kpi-sub { font-size: 12px; color: var(--muted); margin-top: 6px; }
+  .kpi-value { font-size: 32px; font-weight: 700; letter-spacing: -0.02em; }
+  .kpi-sub { font-size: 11px; color: var(--muted); margin-top: 6px; }
   .kpi-value.green { color: var(--green); }
   .kpi-value.yellow { color: var(--yellow); }
+  .kpi-value.red { color: var(--red); }
+  .kpi-value.purple { color: var(--purple); }
 
-  .grid {
-    display: grid;
-    grid-template-columns: 2fr 1fr;
-    gap: 1px;
-    background: var(--border);
-    padding-top: 1px;
-  }
-  .grid-bottom {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 1px;
-    background: var(--border);
-    margin-top: 1px;
-  }
+  .badge { display: inline-block; font-size: 10px; padding: 2px 7px; border-radius: 10px; font-weight: 600; vertical-align: middle; margin-left: 4px; }
+  .badge.sale { background: #1a3a2a; color: var(--green); }
+  .badge.gift { background: #2a1a1a; color: var(--red); }
+  .badge.b2b { background: #1a1a3a; color: var(--purple); }
 
-  .card {
-    background: var(--card);
-    padding: 28px 28px 24px;
-  }
-  .card-title {
-    font-size: 11px;
-    color: var(--muted);
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    margin-bottom: 20px;
-  }
-  .chart-wrap { position: relative; }
-  .chart-wrap.tall { height: 260px; }
-  .chart-wrap.medium { height: 220px; }
-  .chart-wrap.short { height: 180px; }
+  /* GRIDS */
+  .grid-2 { display: grid; grid-template-columns: 2fr 1fr; gap: 1px; background: var(--border); padding-top: 1px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1px; background: var(--border); margin-top: 1px; }
+  .grid-full { background: var(--border); margin-top: 1px; }
 
-  .size-table { width: 100%; border-collapse: collapse; }
-  .size-table th, .size-table td {
-    padding: 8px 0;
-    font-size: 13px;
-    border-bottom: 1px solid var(--border);
-  }
-  .size-table th { color: var(--muted); font-weight: 400; font-size: 11px; letter-spacing: 0.05em; text-align: left; }
-  .size-table td:last-child { text-align: right; }
-  .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 8px; vertical-align: middle; }
-  .dot.grey { background: var(--grey); }
-  .dot.beige { background: var(--beige); }
+  .card { background: var(--card); padding: 28px; }
+  .card-title { font-size: 11px; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
+  .chart-wrap.tall { position: relative; height: 260px; }
+  .chart-wrap.medium { position: relative; height: 220px; }
+  .chart-wrap.short { position: relative; height: 170px; }
 
-  .bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; font-size: 12px; }
-  .bar-row .label { width: 72px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .bar-track { flex: 1; background: var(--border); border-radius: 2px; height: 6px; }
-  .bar-fill { height: 6px; border-radius: 2px; }
-  .bar-row .count { width: 28px; text-align: right; font-size: 12px; }
+  /* TABLE */
+  .data-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .data-table th { padding: 8px 12px; color: var(--muted); font-weight: 400; font-size: 11px; letter-spacing: 0.05em; text-align: left; border-bottom: 1px solid var(--border); }
+  .data-table td { padding: 9px 12px; border-bottom: 1px solid #222; }
+  .data-table tr:last-child td { border-bottom: none; }
+  .data-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .data-table tr.total td { font-weight: 700; border-top: 1px solid #444; }
+
+  /* CHANNEL ROWS */
+  .ch-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; font-size: 12px; }
+  .ch-label { width: 90px; color: var(--text); }
+  .ch-bar-track { flex: 1; background: var(--border); border-radius: 2px; height: 5px; }
+  .ch-bar { height: 5px; border-radius: 2px; }
+  .ch-count { width: 32px; text-align: right; color: var(--muted); }
 
   footer { padding: 20px 40px; font-size: 11px; color: var(--muted); border-top: 1px solid var(--border); margin-top: 1px; }
+
+  /* ALERT BANNER */
+  .alert-banner { padding: 11px 40px; display: flex; align-items: center; gap: 14px; font-size: 12px; }
+  .alert-banner.red { background: #1f0a0a; border-bottom: 1px solid #4a1a1a; }
+  .alert-banner.yellow { background: #1a1500; border-bottom: 1px solid #3a3000; }
+  .alert-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; animation: pulse 1.5s infinite; }
+  .alert-dot.red { background: var(--red); }
+  .alert-dot.yellow { background: var(--yellow); }
+  @keyframes pulse { 0%,100%{ opacity:1; } 50%{ opacity:0.4; } }
+  .alert-title { font-weight: 700; margin-right: 10px; }
+
+  /* PROGRESS BAR */
+  .progress-track { background: var(--border); border-radius: 4px; height: 8px; width: 100%; margin-top: 8px; }
+  .progress-fill { height: 8px; border-radius: 4px; transition: width 0.3s; }
+
+  /* INVENTORY SIZE TABLE */
+  .inv-size-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; font-size: 12px; }
+  .inv-size-label { width: 38px; color: var(--muted); }
+  .inv-bar-track { flex: 1; background: var(--border); border-radius: 2px; height: 6px; }
+  .inv-bar { height: 6px; border-radius: 2px; }
+  .inv-count { width: 36px; text-align: right; font-variant-numeric: tabular-nums; }
 </style>
 </head>
 <body>
@@ -110,189 +110,534 @@
   <span class="updated" id="updated-at"></span>
 </header>
 
-<div class="kpi-row">
-  <div class="kpi">
-    <div class="kpi-label">누적 출고</div>
-    <div class="kpi-value">142</div>
-    <div class="kpi-sub">켤레 (4/17 ~ 4/29)</div>
-  </div>
-  <div class="kpi">
-    <div class="kpi-label">일평균 출고</div>
-    <div class="kpi-value green">15.8</div>
-    <div class="kpi-sub">켤레 / 출고일</div>
-  </div>
-  <div class="kpi">
-    <div class="kpi-label">최다 출고일</div>
-    <div class="kpi-value yellow">30</div>
-    <div class="kpi-sub">켤레 (4/17, 4/23)</div>
-  </div>
-  <div class="kpi">
-    <div class="kpi-label">채널 수</div>
-    <div class="kpi-value">6</div>
-    <div class="kpi-sub">킥스타터·메이커스·네이버 외</div>
-  </div>
+<div class="tabs">
+  <div class="tab active" onclick="showPage('overview')">전체 출고</div>
+  <div class="tab" onclick="showPage('platform')">플랫폼별 판매지수</div>
+  <div class="tab" onclick="showPage('stock')">재고 현황 & 재발주</div>
 </div>
 
-<div class="grid">
-  <!-- 일별 출고량 -->
-  <div class="card">
-    <div class="card-title">일별 출고량</div>
-    <div class="chart-wrap tall">
-      <canvas id="dailyChart"></canvas>
-    </div>
-  </div>
-
-  <!-- 채널별 출고 -->
-  <div class="card">
-    <div class="card-title">채널별 출고</div>
-    <div class="chart-wrap tall">
-      <canvas id="channelChart"></canvas>
-    </div>
-  </div>
+<!-- ===== ALERT BANNER (always visible on overview) ===== -->
+<div id="reorder-banner" class="alert-banner red" style="display:none;">
+  <div class="alert-dot red"></div>
+  <span class="alert-title" style="color:var(--red)">재발주 긴급</span>
+  <span id="alert-msg" style="color:#ccc;"></span>
 </div>
 
-<div class="grid-bottom">
-  <!-- 컬러별 사이즈 분포 (그레이) -->
-  <div class="card">
-    <div class="card-title"><span class="dot grey"></span>Oyster Grey · 사이즈 분포</div>
-    <div class="chart-wrap medium">
-      <canvas id="greyChart"></canvas>
+<!-- ===== PAGE 1: 전체 출고 ===== -->
+<div id="page-overview" class="page active">
+
+  <div class="kpi-row">
+    <div class="kpi">
+      <div class="kpi-label">누적 출고</div>
+      <div class="kpi-value">142</div>
+      <div class="kpi-sub">켤레 (4/17 ~ 4/29)</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">실판매 <span class="badge sale">SALE</span></div>
+      <div class="kpi-value green">103</div>
+      <div class="kpi-sub">킥스타터·메이커스·네이버·카카오</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">B2B·행사 <span class="badge b2b">B2B</span></div>
+      <div class="kpi-value purple">30</div>
+      <div class="kpi-sub">마야크루 직접 주문</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">증정·샘플 <span class="badge gift">GIFT</span></div>
+      <div class="kpi-value red">9</div>
+      <div class="kpi-sub">샘플·인플루언서·지인</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">일평균 실판매</div>
+      <div class="kpi-value yellow">11.4</div>
+      <div class="kpi-sub">켤레 / 출고일 (9일)</div>
     </div>
   </div>
 
-  <!-- 컬러별 사이즈 분포 (베이지) -->
-  <div class="card">
-    <div class="card-title"><span class="dot beige"></span>Sand Beige · 사이즈 분포</div>
-    <div class="chart-wrap medium">
-      <canvas id="beigeChart"></canvas>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">일별 출고 — 유형별 분류</div>
+      <div class="chart-wrap tall"><canvas id="dailyStackedChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">출고 유형 비중</div>
+      <div class="chart-wrap tall"><canvas id="typeChart"></canvas></div>
     </div>
   </div>
 
-  <!-- 사이즈 재고 현황 테이블 -->
-  <div class="card">
-    <div class="card-title">컬러×사이즈 누적 출고</div>
-    <table class="size-table">
-      <thead>
-        <tr>
-          <th>사이즈</th>
-          <th><span class="dot grey"></span>Grey</th>
-          <th><span class="dot beige"></span>Beige</th>
-          <th>합계</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr><td>240mm</td><td>32</td><td>14</td><td><strong>46</strong></td></tr>
-        <tr><td>250mm</td><td>23</td><td>6</td><td><strong>29</strong></td></tr>
-        <tr><td>260mm</td><td>22</td><td>3</td><td><strong>25</strong></td></tr>
-        <tr><td>270mm</td><td>25</td><td>5</td><td><strong>30</strong></td></tr>
-        <tr><td>280mm</td><td>9</td><td>3</td><td><strong>12</strong></td></tr>
-        <tr style="border-top:1px solid #444">
-          <td><strong>합계</strong></td><td><strong>111</strong></td><td><strong>31</strong></td><td><strong>142</strong></td>
-        </tr>
-      </tbody>
-    </table>
+  <div class="grid-3">
+    <div class="card">
+      <div class="card-title">채널별 출고</div>
+      <div id="ch-bars"></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span style="color:var(--grey)">●</span> Grey · 사이즈 분포</div>
+      <div class="chart-wrap medium"><canvas id="greyChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span style="color:var(--beige)">●</span> Beige · 사이즈 분포</div>
+      <div class="chart-wrap medium"><canvas id="beigeChart"></canvas></div>
+    </div>
   </div>
+
+  <div class="grid-3">
+    <div class="card" style="grid-column: span 2;">
+      <div class="card-title">컬러 × 사이즈 누적 출고</div>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>사이즈</th>
+            <th>Grey 실판매</th>
+            <th>Beige 실판매</th>
+            <th>Grey 증정·B2B</th>
+            <th>Beige 증정·B2B</th>
+            <th>합계</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>240mm</td><td class="num green">20</td><td class="num green">10</td><td class="num" style="color:#555">12</td><td class="num" style="color:#555">4</td><td class="num"><strong>46</strong></td></tr>
+          <tr><td>250mm</td><td class="num green">17</td><td class="num green">4</td><td class="num" style="color:#555">6</td><td class="num" style="color:#555">2</td><td class="num"><strong>29</strong></td></tr>
+          <tr><td>260mm</td><td class="num green">18</td><td class="num green">2</td><td class="num" style="color:#555">4</td><td class="num" style="color:#555">1</td><td class="num"><strong>25</strong></td></tr>
+          <tr><td>270mm</td><td class="num green">19</td><td class="num green">3</td><td class="num" style="color:#555">6</td><td class="num" style="color:#555">2</td><td class="num"><strong>30</strong></td></tr>
+          <tr><td>280mm</td><td class="num green">6</td><td class="num green">2</td><td class="num" style="color:#555">3</td><td class="num" style="color:#555">1</td><td class="num"><strong>12</strong></td></tr>
+          <tr class="total"><td>합계</td><td class="num green">80</td><td class="num green">21</td><td class="num" style="color:#555">31</td><td class="num" style="color:#555">10</td><td class="num">142</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card">
+      <div class="card-title">구글 시트 공식</div>
+      <div style="font-size:11px; color: var(--muted); line-height: 1.8;">
+        <div style="margin-bottom:12px;">C열(판매처) 기준으로 새 열에 추가:</div>
+        <code style="display:block; background:#111; padding:12px; border-radius:4px; font-size:10px; color:#a0e0a0; line-height:1.7; white-space:pre-wrap;">=IF(C2="샘플","증정",
+IF(G2="마야크루","B2B",
+IF(H2="지인","증정",
+IF(OR(C2="킥스타터",
+      C2="카카오메이커스",
+      C2="네이버",
+      C2="카카오톡스토어"),
+   "실판매","기타"))))</code>
+        <div style="margin-top:12px; font-size:10px;">C=판매처, G=받는분, H=메모</div>
+      </div>
+    </div>
+  </div>
+
 </div>
 
-<footer>Data source: Google Sheets · BR-001 출고 관리 · 2026.04</footer>
+<!-- ===== PAGE 2: 플랫폼별 판매지수 ===== -->
+<div id="page-platform" class="page">
+
+  <div class="kpi-row" style="grid-template-columns: repeat(4,1fr);">
+    <div class="kpi">
+      <div class="kpi-label">킥스타터</div>
+      <div class="kpi-value">47</div>
+      <div class="kpi-sub">33% · 크라우드펀딩</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">카카오메이커스</div>
+      <div class="kpi-value green">48</div>
+      <div class="kpi-sub">34% · 최다 채널</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">네이버</div>
+      <div class="kpi-value yellow">6</div>
+      <div class="kpi-sub">4% · 러닝클래스 번들</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">카카오톡스토어</div>
+      <div class="kpi-value" style="color:var(--beige)">2</div>
+      <div class="kpi-sub">1% · 신규 채널</div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">채널별 일별 출고 추이</div>
+      <div class="chart-wrap tall"><canvas id="platformDailyChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">채널 점유율 (실판매 기준)</div>
+      <div class="chart-wrap tall"><canvas id="platformShareChart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="grid-3">
+    <div class="card">
+      <div class="card-title">채널별 선호 사이즈 Top 3</div>
+      <table class="data-table">
+        <thead><tr><th>채널</th><th>1위</th><th>2위</th><th>3위</th></tr></thead>
+        <tbody>
+          <tr><td><span class="badge sale">킥스타터</span></td><td>260mm</td><td>270mm</td><td>250mm</td></tr>
+          <tr><td><span class="badge sale">카카오메이커스</span></td><td>240mm</td><td>270mm</td><td>250mm</td></tr>
+          <tr><td><span class="badge sale">네이버</span></td><td>240mm</td><td>270mm</td><td>240mm</td></tr>
+          <tr><td><span class="badge b2b">마야크루</span></td><td>240mm</td><td>250mm</td><td>260mm</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card">
+      <div class="card-title">채널별 컬러 비중</div>
+      <div class="chart-wrap short"><canvas id="colorByChannelChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">채널 성장 메모</div>
+      <div style="font-size:12px; line-height:2;">
+        <div>📈 카카오메이커스: 4/20 런칭, 빠른 증가세</div>
+        <div>⚡ 킥스타터: 1차 배송 완료 단계</div>
+        <div>🆕 카카오톡스토어: 4/24 첫 출고</div>
+        <div>🎯 네이버: 러닝클래스 번들 특화</div>
+        <div style="margin-top:12px; color:var(--muted); font-size:11px;">* B2B/샘플 채널 제외 기준</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ===== PAGE 3: 재고 현황 & 재발주 ===== -->
+<div id="page-stock" class="page">
+
+  <div class="kpi-row" style="grid-template-columns: repeat(5, 1fr);">
+    <div class="kpi">
+      <div class="kpi-label">전체 잔여재고</div>
+      <div class="kpi-value" id="kpi-total-stock">529</div>
+      <div class="kpi-sub">켤레 (GREY 367 + BEIGE 162)</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">소진 예상 (실판매 기준)</div>
+      <div class="kpi-value yellow" id="kpi-days-sale">46</div>
+      <div class="kpi-sub">출고일 · 11.4켤레/일 기준</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">소진 예상 (전체 출고)</div>
+      <div class="kpi-value red" id="kpi-days-total">33</div>
+      <div class="kpi-sub">출고일 · 15.8켤레/일 기준</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">소진 예상일</div>
+      <div class="kpi-value" id="kpi-stockout-date">—</div>
+      <div class="kpi-sub">실판매 기준 (영업일 계산)</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">재발주 권장 기한</div>
+      <div class="kpi-value red" id="kpi-reorder-date">—</div>
+      <div class="kpi-sub">리드타임 60일 기준</div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">잔여재고 소진 진행률</div>
+      <div style="margin-bottom: 24px;">
+        <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--muted); margin-bottom:6px;">
+          <span>초기 재고 기준 소진률</span>
+          <span id="burn-pct-label">—</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="burn-progress" style="width:0%; background: linear-gradient(90deg, #4ade80, #facc15);"></div>
+        </div>
+      </div>
+      <div style="margin-top: 20px;">
+        <div class="card-title" style="margin-bottom:16px;"><span style="color:var(--grey)">●</span> GREY 사이즈별 잔여</div>
+        <div id="grey-inv-bars"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">소진 타임라인</div>
+      <div class="chart-wrap tall"><canvas id="burndownChart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="grid-3">
+    <div class="card">
+      <div class="card-title"><span style="color:var(--beige)">●</span> BEIGE 사이즈별 잔여</div>
+      <div id="beige-inv-bars"></div>
+    </div>
+    <div class="card" style="grid-column: span 2;">
+      <div class="card-title">재발주 체크리스트</div>
+      <div style="font-size: 12px; line-height: 2.2;">
+        <div id="reorder-check-1">📦 <strong>잔여재고 529켤레</strong> — 현재 소진 속도 유지 시 약 <strong id="reorder-weeks">7주</strong> 후 소진</div>
+        <div id="reorder-check-2">⏱️ <strong>생산 리드타임</strong> — 공장 발주 → 입고까지 약 60일 (8~9주)</div>
+        <div id="reorder-check-3" style="color: var(--red);">🚨 <strong>재발주 권장 기한 이미 지남</strong> — 즉시 발주 검토 필요</div>
+        <div style="margin-top: 12px; padding: 12px; background: #111; border-radius: 6px; border-left: 3px solid var(--yellow);">
+          <div style="font-size: 11px; color: var(--muted); margin-bottom: 6px;">재발주 물량 가이드 (3개월치 기준)</div>
+          <div>실판매 11.4켤레/일 × 66일(영업일) ≈ <strong>750~800켤레</strong> 권장</div>
+          <div style="color: var(--muted); font-size: 11px; margin-top: 4px;">사이즈 배분: 240(20%) 250(20%) 260(25%) 270(25%) 280(10%)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<footer>DARIMATI BR-001 출고 관리 · Data: Google Sheets · 2026.04 · <a href="https://docs.google.com/spreadsheets/d/1ibroQV42xuuvWg4P1kvaCw9RT_JxO9L-6lXVAgNjOhA" style="color:#555; text-decoration:none;">시트 열기 ↗</a></footer>
 
 <script>
-const C = Chart;
-const defaults = {
-  plugins: { legend: { display: false } },
-  scales: {
-    x: { grid: { color: '#2a2a2a' }, ticks: { color: '#888', font: { size: 11 } } },
-    y: { grid: { color: '#2a2a2a' }, ticks: { color: '#888', font: { size: 11 } }, beginAtZero: true }
-  }
+// ── 탭 전환 ──
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  event.target.classList.add('active');
+}
+
+const DATES = ['4/17','4/20','4/21','4/22','4/23','4/24','4/27','4/28','4/29'];
+const axisDefaults = {
+  x: { grid: { color: '#222' }, ticks: { color: '#666', font: { size: 10 } } },
+  y: { grid: { color: '#222' }, ticks: { color: '#666', font: { size: 10 } }, beginAtZero: true }
 };
 
-// 일별 출고
-new C(document.getElementById('dailyChart'), {
+// ── 일별 스택 바 (실판매/B2B/증정) ──
+new Chart(document.getElementById('dailyStackedChart'), {
   type: 'bar',
   data: {
-    labels: ['4/17','4/20','4/21','4/22','4/23','4/24','4/27','4/28','4/29'],
-    datasets: [{
-      data: [30, 20, 8, 7, 30, 5, 17, 5, 20],
-      backgroundColor: (ctx) => {
-        const v = ctx.parsed.y;
-        if (v >= 25) return '#facc15';
-        if (v >= 15) return '#b0c4d8';
-        return '#3a3a4a';
+    labels: DATES,
+    datasets: [
+      {
+        label: '실판매',
+        data: [22, 20, 6, 5, 0, 5, 17, 5, 20],
+        backgroundColor: '#4ade80',
+        borderRadius: 2,
       },
-      borderRadius: 3,
-      borderSkipped: false,
-    }]
+      {
+        label: 'B2B·행사',
+        data: [0, 0, 0, 0, 30, 0, 0, 0, 0],
+        backgroundColor: '#a78bfa',
+        borderRadius: 2,
+      },
+      {
+        label: '증정·샘플',
+        data: [8, 0, 2, 2, 0, 0, 0, 0, 0],
+        backgroundColor: '#374151',
+        borderRadius: 2,
+      }
+    ]
   },
   options: {
-    ...defaults,
+    scales: { ...axisDefaults, x: { ...axisDefaults.x, stacked: true }, y: { ...axisDefaults.y, stacked: true } },
     plugins: {
-      ...defaults.plugins,
-      tooltip: {
-        callbacks: { label: (c) => ` ${c.parsed.y}켤레` }
-      }
+      legend: { labels: { color: '#888', font: { size: 11 }, boxWidth: 10, padding: 16 } },
+      tooltip: { callbacks: { label: c => ` ${c.dataset.label}: ${c.parsed.y}켤레` } }
     }
   }
 });
 
-// 채널별 도넛
-new C(document.getElementById('channelChart'), {
+// ── 유형 도넛 ──
+new Chart(document.getElementById('typeChart'), {
   type: 'doughnut',
   data: {
-    labels: ['킥스타터','카카오메이커스','직접 주문','샘플','네이버','카카오톡스토어'],
+    labels: ['실판매 (103)', 'B2B·행사 (30)', '증정·샘플 (9)'],
     datasets: [{
-      data: [47, 48, 30, 9, 6, 2],
-      backgroundColor: ['#b0c4d8','#d4b896','#7c9bb5','#6e8f78','#a0a0a0','#666'],
-      borderWidth: 0,
-      hoverOffset: 6
+      data: [103, 30, 9],
+      backgroundColor: ['#4ade80', '#a78bfa', '#374151'],
+      borderWidth: 0, hoverOffset: 6
     }]
   },
   options: {
-    cutout: '62%',
+    cutout: '65%',
     plugins: {
-      legend: {
-        display: true,
-        position: 'bottom',
-        labels: { color: '#888', font: { size: 11 }, padding: 12, boxWidth: 10 }
-      },
-      tooltip: {
-        callbacks: { label: (c) => ` ${c.label}: ${c.parsed}켤레` }
-      }
+      legend: { display: true, position: 'bottom', labels: { color: '#888', font: { size: 11 }, padding: 12, boxWidth: 10 } },
+      tooltip: { callbacks: { label: c => ` ${c.label}켤레` } }
     }
   }
 });
 
-// Grey 사이즈
-new C(document.getElementById('greyChart'), {
-  type: 'bar',
-  data: {
-    labels: ['240','250','260','270','280'],
-    datasets: [{
-      data: [32, 23, 22, 25, 9],
-      backgroundColor: '#b0c4d8',
-      borderRadius: 3,
-      borderSkipped: false,
-    }]
-  },
-  options: { ...defaults, indexAxis: 'y' }
+// ── 채널 바 (수동) ──
+const channels = [
+  { name: '카카오메이커스', count: 48, color: '#d4b896' },
+  { name: '킥스타터', count: 47, color: '#b0c4d8' },
+  { name: '마야크루', count: 30, color: '#a78bfa' },
+  { name: '샘플', count: 9, color: '#374151' },
+  { name: '네이버', count: 6, color: '#7c9bb5' },
+  { name: '카카오톡스토어', count: 2, color: '#8b7355' },
+];
+const maxCh = 48;
+const chContainer = document.getElementById('ch-bars');
+channels.forEach(c => {
+  const pct = (c.count / maxCh * 100).toFixed(0);
+  chContainer.innerHTML += `<div class="ch-row">
+    <div class="ch-label">${c.name}</div>
+    <div class="ch-bar-track"><div class="ch-bar" style="width:${pct}%;background:${c.color}"></div></div>
+    <div class="ch-count">${c.count}</div>
+  </div>`;
 });
 
-// Beige 사이즈
-new C(document.getElementById('beigeChart'), {
+// ── Grey / Beige 사이즈 ──
+const sizeOpts = (color) => ({
+  indexAxis: 'y',
+  scales: { x: { ...axisDefaults.x, grid: { color: '#222' } }, y: { ...axisDefaults.y, grid: { display: false } } },
+  plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ` ${c.parsed.x}켤레` } } }
+});
+new Chart(document.getElementById('greyChart'), {
   type: 'bar',
-  data: {
-    labels: ['240','250','260','270','280'],
-    datasets: [{
-      data: [14, 6, 3, 5, 3],
-      backgroundColor: '#d4b896',
-      borderRadius: 3,
-      borderSkipped: false,
-    }]
-  },
-  options: { ...defaults, indexAxis: 'y' }
+  data: { labels: ['240','250','260','270','280'], datasets: [{ data: [32,23,22,25,9], backgroundColor: '#b0c4d8', borderRadius: 3 }] },
+  options: sizeOpts('#b0c4d8')
+});
+new Chart(document.getElementById('beigeChart'), {
+  type: 'bar',
+  data: { labels: ['240','250','260','270','280'], datasets: [{ data: [14,6,3,5,3], backgroundColor: '#d4b896', borderRadius: 3 }] },
+  options: sizeOpts('#d4b896')
 });
 
-// timestamp
-document.getElementById('updated-at').textContent = '업데이트: ' + new Date().toLocaleDateString('ko-KR', {month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+// ── 플랫폼 일별 추이 ──
+new Chart(document.getElementById('platformDailyChart'), {
+  type: 'line',
+  data: {
+    labels: DATES,
+    datasets: [
+      { label: '카카오메이커스', data: [0, 14, 4, 1, 0, 1, 3, 2, 20], borderColor: '#d4b896', backgroundColor: 'transparent', tension: 0.3, pointRadius: 3 },
+      { label: '킥스타터', data: [22, 1, 3, 3, 0, 2, 9, 3, 1], borderColor: '#b0c4d8', backgroundColor: 'transparent', tension: 0.3, pointRadius: 3 },
+      { label: '네이버', data: [4, 1, 0, 0, 0, 1, 0, 0, 0], borderColor: '#7c9bb5', backgroundColor: 'transparent', tension: 0.3, pointRadius: 3 },
+      { label: '카카오톡스토어', data: [0, 0, 0, 0, 0, 2, 0, 0, 0], borderColor: '#a0a0a0', backgroundColor: 'transparent', tension: 0.3, pointRadius: 3 },
+    ]
+  },
+  options: {
+    scales: axisDefaults,
+    plugins: { legend: { labels: { color: '#888', font: { size: 11 }, boxWidth: 10, padding: 12 } } }
+  }
+});
+
+// ── 플랫폼 점유율 ──
+new Chart(document.getElementById('platformShareChart'), {
+  type: 'doughnut',
+  data: {
+    labels: ['카카오메이커스', '킥스타터', '네이버', '카카오톡스토어'],
+    datasets: [{
+      data: [48, 47, 6, 2],
+      backgroundColor: ['#d4b896', '#b0c4d8', '#7c9bb5', '#a0a0a0'],
+      borderWidth: 0, hoverOffset: 6
+    }]
+  },
+  options: {
+    cutout: '65%',
+    plugins: {
+      legend: { display: true, position: 'bottom', labels: { color: '#888', font: { size: 11 }, padding: 12, boxWidth: 10 } }
+    }
+  }
+});
+
+// ── 채널별 컬러 비중 ──
+new Chart(document.getElementById('colorByChannelChart'), {
+  type: 'bar',
+  data: {
+    labels: ['킥스타터', '메이커스', '네이버'],
+    datasets: [
+      { label: 'Grey', data: [38, 40, 5], backgroundColor: '#b0c4d8', borderRadius: 2 },
+      { label: 'Beige', data: [9, 8, 1], backgroundColor: '#d4b896', borderRadius: 2 },
+    ]
+  },
+  options: {
+    scales: {
+      x: { ...axisDefaults.x, stacked: true },
+      y: { ...axisDefaults.y, stacked: true }
+    },
+    plugins: { legend: { labels: { color: '#888', font: { size: 10 }, boxWidth: 8, padding: 10 } } }
+  }
+});
+
+document.getElementById('updated-at').textContent = '업데이트: ' + new Date().toLocaleDateString('ko-KR', {month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit'});
+
+// ── 재고 현황 계산 ──
+const GREY_REM  = { 240: 22, 250: 86, 260: 133, 270: 83, 280: 43 };
+const BEIGE_REM = { 240: 10, 250: 29, 260: 45,  270: 44, 280: 34 };
+const SIZES = ['240','250','260','270','280'];
+
+const TOTAL_GREY  = Object.values(GREY_REM).reduce((a,b)=>a+b,0);   // 367
+const TOTAL_BEIGE = Object.values(BEIGE_REM).reduce((a,b)=>a+b,0);  // 162
+const TOTAL_REM   = TOTAL_GREY + TOTAL_BEIGE;                         // 529
+
+// 초기 재고 (잔여 + 출고)
+const GREY_SOLD  = [32,23,22,25,9].reduce((a,b)=>a+b,0);   // 111
+const BEIGE_SOLD = [14,6,3,5,3].reduce((a,b)=>a+b,0);       // 31
+const INITIAL = TOTAL_REM + GREY_SOLD + BEIGE_SOLD;          // 671
+
+const DAILY_SALE  = 11.4;  // 실판매 기준
+const DAILY_TOTAL = 15.8;  // 전체 출고 기준
+const LEAD_DAYS   = 60;    // 재발주 리드타임 (영업일)
+
+// 영업일 기준 날짜 계산 (토/일 제외)
+function addBizDays(date, days) {
+  let d = new Date(date);
+  let added = 0;
+  while (added < days) {
+    d.setDate(d.getDate() + 1);
+    if (d.getDay() !== 0 && d.getDay() !== 6) added++;
+  }
+  return d;
+}
+
+const today = new Date('2026-04-27');
+const stockoutDate = addBizDays(today, Math.round(TOTAL_REM / DAILY_SALE));
+const reorderDate  = addBizDays(today, Math.max(0, Math.round(TOTAL_REM / DAILY_SALE) - LEAD_DAYS));
+const daysUntilReorder = Math.round((reorderDate - today) / 86400000);
+
+// KPI 업데이트
+const fmtDate = d => d.toLocaleDateString('ko-KR', {month:'2-digit', day:'2-digit'});
+document.getElementById('kpi-stockout-date').textContent = fmtDate(stockoutDate);
+document.getElementById('kpi-reorder-date').textContent  = daysUntilReorder <= 0 ? '지금 즉시' : fmtDate(reorderDate);
+document.getElementById('kpi-reorder-date').style.color  = daysUntilReorder <= 5 ? 'var(--red)' : 'var(--yellow)';
+
+// 주차 계산
+const weeksLeft = Math.round(TOTAL_REM / DAILY_SALE / 5);
+document.getElementById('reorder-weeks').textContent = weeksLeft + '주';
+
+// 소진률 프로그레스
+const burnPct = Math.round((INITIAL - TOTAL_REM) / INITIAL * 100);
+document.getElementById('burn-progress').style.width = burnPct + '%';
+document.getElementById('burn-pct-label').textContent = `${burnPct}% 소진 (초기 ${INITIAL}켤레)`;
+
+// 알람 배너
+if (daysUntilReorder <= 0) {
+  document.getElementById('reorder-banner').style.display = 'flex';
+  document.getElementById('alert-msg').textContent =
+    `잔여 ${TOTAL_REM}켤레 · 실판매 기준 약 ${weeksLeft}주 후 소진 · 리드타임 60일 가정 시 재발주 기한 이미 경과 — 즉시 발주 검토 필요`;
+}
+
+// ── 잔여 사이즈 바 렌더 ──
+function renderInvBars(containerId, remObj, color) {
+  const maxVal = Math.max(...Object.values(remObj));
+  const el = document.getElementById(containerId);
+  SIZES.forEach(s => {
+    const v = remObj[s] || 0;
+    const pct = (v / maxVal * 100).toFixed(0);
+    el.innerHTML += `<div class="inv-size-row">
+      <div class="inv-size-label">${s}mm</div>
+      <div class="inv-bar-track"><div class="inv-bar" style="width:${pct}%;background:${color}"></div></div>
+      <div class="inv-count" style="color:${color}">${v}</div>
+    </div>`;
+  });
+}
+renderInvBars('grey-inv-bars',  GREY_REM,  '#b0c4d8');
+renderInvBars('beige-inv-bars', BEIGE_REM, '#d4b896');
+
+// ── 번다운 차트 ──
+const burnLabels = [];
+const burnSale   = [];
+const burnTotal  = [];
+for (let w = 0; w <= 10; w++) {
+  burnLabels.push('W+' + w);
+  burnSale.push(Math.max(0, TOTAL_REM - DAILY_SALE * 5 * w));
+  burnTotal.push(Math.max(0, TOTAL_REM - DAILY_TOTAL * 5 * w));
+}
+
+new Chart(document.getElementById('burndownChart'), {
+  type: 'line',
+  data: {
+    labels: burnLabels,
+    datasets: [
+      { label: '실판매 기준', data: burnSale, borderColor: '#4ade80', backgroundColor: 'rgba(74,222,128,0.07)', fill: true, tension: 0.1, pointRadius: 3 },
+      { label: '전체 출고 기준', data: burnTotal, borderColor: '#f87171', backgroundColor: 'transparent', tension: 0.1, pointRadius: 3, borderDash: [4,4] },
+    ]
+  },
+  options: {
+    scales: {
+      x: { ...axisDefaults.x },
+      y: { ...axisDefaults.y, title: { display: true, text: '잔여 (켤레)', color: '#666', font: { size: 10 } } }
+    },
+    plugins: {
+      legend: { labels: { color: '#888', font: { size: 11 }, boxWidth: 10, padding: 12 } },
+      tooltip: { callbacks: { label: c => ` ${c.dataset.label}: ${Math.round(c.parsed.y)}켤레` } },
+      annotation: {}
+    }
+  }
+});
 </script>
 </body>
 </html>
