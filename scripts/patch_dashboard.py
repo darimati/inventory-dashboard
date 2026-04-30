@@ -66,7 +66,12 @@ for r in rows:
     color = (g(8) or '')
     size_raw = (g(9) or '').strip()
     size = re.sub(r'mm$|\s+', '', size_raw)[:3] if size_raw else ''
-    qty = int(g(10) or 1)
+
+    # K열 (신발 수량) — 비어있거나 0이면 신발 미출고 (악세서리만 추가 발송 등) → SKIP
+    qty_raw = g(10)
+    if qty_raw is None or qty_raw == '' or int(qty_raw or 0) == 0:
+        continue
+    qty = int(qty_raw)
 
     if ch == '샘플' or '지인' in memo:
         kind = 'gift'
