@@ -94,6 +94,121 @@
   .progress-track { background: var(--border); border-radius: 4px; height: 8px; width: 100%; margin-top: 8px; }
   .progress-fill { height: 8px; border-radius: 4px; transition: width 0.3s; }
 
+  /* === SETTLEMENT & ROAS — Light Theme (디벨롭) === */
+  #page-settlement {
+    --bg: #f4f5f7;
+    --card: #ffffff;
+    --border: #e8eaed;
+    --border2: #e5e7eb;
+    --text: #0f172a;
+    --muted: #6b7280;
+    --grey: #94a3b8;
+    --green: #16a34a;
+    --green-bg: #dcfce7;
+    --yellow: #ca8a04;
+    --yellow-bg: #fef9c3;
+    --red: #dc2626;
+    --red-bg: #fee2e2;
+    --purple: #7c3aed;
+    background: var(--bg);
+    color: var(--text);
+    min-height: calc(100vh - 110px);
+    font-family: 'Apple SD Gothic Neo', 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+  #page-settlement .kpi-row { background: var(--border); border-bottom: 1px solid var(--border); }
+  #page-settlement .kpi { background: var(--card); padding: 28px 30px; }
+  #page-settlement .kpi-label {
+    color: var(--muted);
+    font-size: 11px; font-weight: 700;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+  #page-settlement .kpi-value {
+    color: var(--text);
+    font-size: 34px; font-weight: 800;
+    letter-spacing: -0.025em;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+  }
+  #page-settlement .kpi-value.green  { color: var(--green); }
+  #page-settlement .kpi-value.yellow { color: var(--yellow); }
+  #page-settlement .kpi-value.red    { color: var(--red); }
+  #page-settlement .kpi-value[style*="color:#aaa"] { color: var(--muted) !important; }
+  #page-settlement .kpi-sub { color: var(--muted); font-size: 12px; line-height: 1.6; margin-top: 10px; }
+  #page-settlement .grid-2,
+  #page-settlement .grid-3,
+  #page-settlement .grid-full { background: var(--border); }
+  #page-settlement .card {
+    background: var(--card);
+    padding: 32px 36px;
+    border: none;
+  }
+  #page-settlement .card-title {
+    color: var(--muted);
+    font-size: 12px; font-weight: 700;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    margin-bottom: 22px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border2);
+  }
+  #page-settlement .data-table { width: 100%; border-collapse: collapse; }
+  #page-settlement .data-table th {
+    color: var(--muted);
+    font-weight: 700; font-size: 10.5px;
+    background: #f9fafb;
+    padding: 14px 14px;
+    border-bottom: 2px solid var(--border2);
+    text-align: left;
+    letter-spacing: 0.05em; text-transform: uppercase;
+  }
+  #page-settlement .data-table td {
+    padding: 16px 14px;
+    border-bottom: 1px solid #f3f4f6;
+    color: var(--text);
+    font-size: 13px;
+    background: var(--card);
+  }
+  #page-settlement .data-table tr:hover td { background: #fbfbfd; }
+  #page-settlement .data-table .num {
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+  }
+  #page-settlement .data-table tfoot td {
+    background: #f8fafc !important;
+    border-top: 2px solid #cbd5e1 !important;
+    border-bottom: none !important;
+    font-weight: 700;
+    color: var(--text) !important;
+    font-size: 13.5px;
+    padding: 18px 14px;
+  }
+  /* 일반 dark 인라인 색상 무력화 (light theme 일관성) */
+  #page-settlement [style*="color:#aaa"]  { color: var(--muted) !important; }
+  #page-settlement [style*="color:#666"]  { color: #94a3b8 !important; }
+  #page-settlement [style*="color:#888"]  { color: var(--muted) !important; }
+  #page-settlement [style*="color:#fff"]  { color: var(--text) !important; }
+  #page-settlement [style*="color:#555"]  { color: #94a3b8 !important; }
+  #page-settlement [style*="color:#4ade80"] { color: var(--green) !important; }
+  #page-settlement [style*="color:#facc15"] { color: var(--yellow) !important; }
+  #page-settlement [style*="color:#f87171"] { color: var(--red) !important; }
+  /* 어두운 박스 배경을 라이트로 교체 */
+  #page-settlement [style*="background:#0d1620"]  { background: #f0f9ff !important; border-color: var(--green) !important; color: #075985 !important; }
+  #page-settlement [style*="background:#1a1500"]  { background: #fefce8 !important; border-color: var(--yellow) !important; }
+  #page-settlement [style*="background:#0d0d0d"]  { background: #f8fafc !important; }
+  #page-settlement [style*="background:#1a1a1a"]  { background: #f1f5f9 !important; border-color: var(--border2) !important; color: var(--muted) !important; }
+  #page-settlement [style*="background:#111"]     { background: #f8fafc !important; }
+
+  /* 컴포지션 뱃지 */
+  .badge-package, .badge-unit {
+    display: inline-block; padding: 4px 12px;
+    border-radius: 14px; font-size: 11px; font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+  .badge-package { background: #1a3a2a; color: #4ade80; }
+  .badge-unit    { background: #222;    color: #aaa; }
+  #page-settlement .badge-package { background: #dcfce7; color: #15803d; }
+  #page-settlement .badge-unit    { background: #f1f5f9; color: #475569; }
+
   /* INVENTORY SIZE TABLE */
   .inv-size-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; font-size: 12px; }
   .inv-size-label { width: 48px; color: var(--muted); }
@@ -1512,8 +1627,8 @@ Object.entries(SETTLEMENT_DEALS).forEach(([name, d]) => {
   const mPct    = margin / revenue * 100;
   sumRev+=revenue; sumFee+=fee; sumShip+=ship; sumCogs+=cogs; sumMargin+=margin; sumUnits+=d.units;
   const compBadge = d.composition === '풀세트'
-    ? '<span style="background:#1a3a2a; color:#4ade80; padding:2px 8px; border-radius:3px; font-size:11px; font-weight:600;">풀세트</span>'
-    : '<span style="background:#222; color:#aaa; padding:2px 8px; border-radius:3px; font-size:11px;">단품</span>';
+    ? '<span class="badge-package">풀세트</span>'
+    : '<span class="badge-unit">단품</span>';
   sBody.innerHTML += `<tr>
     <td><strong>${name}</strong></td>
     <td>${compBadge}</td>
