@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>DARIMATI · 출고 현황</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
 <style>
   :root {
     --bg: #0f0f0f;
@@ -93,6 +94,286 @@
   /* PROGRESS BAR */
   .progress-track { background: var(--border); border-radius: 4px; height: 8px; width: 100%; margin-top: 8px; }
   .progress-fill { height: 8px; border-radius: 4px; transition: width 0.3s; }
+
+  /* === ORDER CONSOLE (출고 실행 콘솔) — Light Theme === */
+  #page-order {
+    --oc-bg: #f4f5f7;
+    --oc-surface: #ffffff;
+    --oc-border: #e5e7eb;
+    --oc-border-strong: #d1d5db;
+    --oc-text: #0f172a;
+    --oc-muted: #6b7280;
+    --oc-dim: #94a3b8;
+    --oc-blue: #2563eb;
+    --oc-green: #16a34a;
+    --oc-yellow: #ca8a04;
+    --oc-red: #dc2626;
+    --oc-purple: #7c3aed;
+    --oc-orange: #ea580c;
+    background: var(--oc-bg);
+    color: var(--oc-text);
+    min-height: calc(100vh - 110px);
+    font-family: 'Apple SD Gothic Neo','Pretendard',-apple-system,sans-serif;
+    padding: 0;
+  }
+  #page-order * { box-sizing: border-box; }
+
+  /* 헤더 */
+  #page-order .oc-header {
+    background: var(--oc-surface);
+    padding: 28px 36px;
+    display: grid;
+    grid-template-columns: 1fr 280px 320px;
+    gap: 32px;
+    border-bottom: 1px solid var(--oc-border);
+    align-items: center;
+  }
+  #page-order .oc-eyebrow {
+    color: var(--oc-blue); font-size: 11px; font-weight: 700;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  #page-order .oc-title {
+    font-size: 28px; font-weight: 800; letter-spacing: -0.02em; color: var(--oc-text);
+    margin: 0;
+  }
+  #page-order .oc-date {
+    color: var(--oc-muted); font-size: 13px; margin-top: 4px;
+  }
+  #page-order .oc-countdown {
+    background: linear-gradient(135deg,#fef2f2,#fff);
+    border: 1px solid #fecaca;
+    border-radius: 12px;
+    padding: 18px 22px;
+    text-align: center;
+  }
+  #page-order .oc-cd-label {
+    color: var(--oc-red); font-size: 11px; font-weight: 700;
+    letter-spacing: 0.06em; text-transform: uppercase;
+  }
+  #page-order .oc-cd-value {
+    font-size: 30px; font-weight: 800; letter-spacing: -0.02em;
+    color: var(--oc-red); margin: 6px 0 4px;
+    font-variant-numeric: tabular-nums;
+  }
+  #page-order .oc-cd-sub {
+    color: var(--oc-muted); font-size: 11px;
+  }
+  #page-order .oc-kpi {
+    background: #f9fafb; border: 1px solid var(--oc-border);
+    border-radius: 12px; padding: 16px 20px;
+    font-size: 13px; line-height: 1.7;
+  }
+  #page-order .oc-kpi-row {
+    display: flex; justify-content: space-between; align-items: baseline;
+  }
+  #page-order .oc-kpi-row.sub {
+    margin-top: 8px; color: var(--oc-muted); font-size: 12px;
+    gap: 14px; justify-content: flex-start;
+  }
+  #page-order .oc-kpi-label {
+    color: var(--oc-muted); font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.06em;
+  }
+  #page-order .oc-kpi-value {
+    font-size: 24px; font-weight: 800; color: var(--oc-text);
+    font-variant-numeric: tabular-nums;
+  }
+  #page-order .oc-kpi-row.sub strong {
+    color: var(--oc-text); margin-left: 4px;
+  }
+  #page-order .dot {
+    display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+    margin-right: 6px; vertical-align: 1px;
+  }
+  #page-order .dot-sale { background: var(--oc-green); }
+  #page-order .dot-sample { background: var(--oc-orange); }
+  #page-order .dot-b2b { background: var(--oc-purple); }
+
+  /* 그리드 */
+  #page-order .oc-grid {
+    display: grid;
+    grid-template-columns: 420px 1fr;
+    gap: 24px;
+    padding: 24px 36px 32px;
+  }
+  #page-order .oc-pane {
+    background: var(--oc-surface);
+    border: 1px solid var(--oc-border);
+    border-radius: 12px;
+    padding: 20px 22px;
+  }
+  #page-order .oc-pane-title {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 13px; font-weight: 700;
+    color: var(--oc-text);
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--oc-border);
+    margin-bottom: 16px;
+  }
+  #page-order .oc-pane-sub {
+    font-size: 11px; font-weight: 500; color: var(--oc-dim);
+  }
+  #page-order .oc-pane-count {
+    background: var(--oc-text); color: var(--oc-surface);
+    padding: 2px 9px; border-radius: 11px;
+    font-size: 12px; font-weight: 700; margin-left: 6px;
+  }
+
+  /* Form */
+  #page-order .oc-field { margin-bottom: 14px; }
+  #page-order .oc-field label {
+    display: block; color: var(--oc-muted);
+    font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.04em;
+    margin-bottom: 6px;
+  }
+  #page-order .oc-field label em {
+    color: var(--oc-red); font-style: normal;
+  }
+  #page-order .oc-hint {
+    color: var(--oc-dim); font-weight: 400;
+    text-transform: none; letter-spacing: 0;
+    font-size: 11px; margin-left: 6px;
+  }
+  #page-order .oc-field input[type=text],
+  #page-order .oc-field input[type=number],
+  #page-order .oc-field select {
+    width: 100%; padding: 10px 12px;
+    background: var(--oc-surface); border: 1px solid var(--oc-border-strong);
+    border-radius: 8px; font-size: 13px; color: var(--oc-text);
+    font-family: inherit;
+    transition: border-color 0.15s;
+  }
+  #page-order .oc-field input:focus,
+  #page-order .oc-field select:focus {
+    outline: none; border-color: var(--oc-blue);
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+  }
+  #page-order .oc-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  #page-order .oc-radio-group, #page-order .oc-acc-grid {
+    display: flex; flex-wrap: wrap; gap: 8px;
+  }
+  #page-order .oc-radio, #page-order .oc-acc {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 7px 12px; background: #f8fafc;
+    border: 1px solid var(--oc-border); border-radius: 18px;
+    font-size: 12px; cursor: pointer; transition: all 0.15s;
+  }
+  #page-order .oc-radio:has(input:checked) {
+    background: var(--oc-blue); color: white; border-color: var(--oc-blue);
+    font-weight: 600;
+  }
+  #page-order .oc-acc:has(input:checked) {
+    background: #dcfce7; color: #15803d; border-color: #86efac;
+    font-weight: 600;
+  }
+  #page-order .oc-qty-control {
+    display: inline-flex; align-items: center; gap: 0;
+    border: 1px solid var(--oc-border-strong);
+    border-radius: 8px; overflow: hidden;
+  }
+  #page-order .oc-qty-btn {
+    padding: 8px 14px; background: #f8fafc;
+    border: none; cursor: pointer; font-size: 16px; font-weight: 600;
+    color: var(--oc-text);
+  }
+  #page-order .oc-qty-btn:hover { background: #f1f5f9; }
+  #page-order .oc-qty-control input {
+    width: 50px; text-align: center;
+    border: none; border-left: 1px solid var(--oc-border);
+    border-right: 1px solid var(--oc-border);
+    padding: 8px 0; font-size: 14px; font-weight: 600;
+    -moz-appearance: textfield;
+  }
+  #page-order .oc-qty-control input::-webkit-outer-spin-button,
+  #page-order .oc-qty-control input::-webkit-inner-spin-button {
+    -webkit-appearance: none; margin: 0;
+  }
+  #page-order .oc-shoe-slot {
+    display: grid; grid-template-columns: 28px 1fr 1fr;
+    gap: 8px; align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px dashed var(--oc-border);
+  }
+  #page-order .oc-shoe-slot:last-child { border-bottom: none; }
+  #page-order .oc-shoe-idx {
+    color: var(--oc-dim); font-size: 12px; font-weight: 600;
+    text-align: center;
+  }
+  #page-order .oc-shoe-slot select {
+    padding: 7px 10px; font-size: 12px;
+  }
+  #page-order .oc-form-actions {
+    display: flex; gap: 10px;
+    margin-top: 16px; padding-top: 16px;
+    border-top: 1px solid var(--oc-border);
+  }
+  #page-order .oc-btn {
+    padding: 10px 18px; font-size: 13px; font-weight: 700;
+    border-radius: 8px; cursor: pointer; border: none;
+    font-family: inherit; transition: all 0.15s;
+  }
+  #page-order .oc-btn-primary {
+    background: var(--oc-blue); color: white;
+  }
+  #page-order .oc-btn-primary:hover { background: #1d4ed8; }
+  #page-order .oc-btn-secondary {
+    background: var(--oc-text); color: white;
+  }
+  #page-order .oc-btn-secondary:hover { opacity: 0.9; }
+  #page-order .oc-btn-ghost {
+    background: var(--oc-surface); color: var(--oc-muted);
+    border: 1px solid var(--oc-border-strong);
+  }
+  #page-order .oc-btn-ghost:hover {
+    background: #f8fafc; color: var(--oc-text);
+  }
+  #page-order .oc-btn-danger {
+    background: white; color: var(--oc-red);
+    border: 1px solid #fecaca;
+  }
+  #page-order .oc-btn-danger:hover { background: #fef2f2; }
+
+  /* List */
+  #page-order .oc-list-pane { padding: 20px 22px 16px; }
+  #page-order .oc-list-actions { display: flex; gap: 10px; }
+  #page-order .oc-list-table-wrap { overflow-x: auto; }
+  #page-order .oc-list-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  #page-order .oc-list-table th {
+    background: #f9fafb; color: var(--oc-muted);
+    font-weight: 700; font-size: 10.5px;
+    padding: 10px 8px; border-bottom: 2px solid var(--oc-border);
+    text-align: left; text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  #page-order .oc-list-table td {
+    padding: 11px 8px; border-bottom: 1px solid #f3f4f6;
+    color: var(--oc-text); vertical-align: top;
+  }
+  #page-order .oc-list-table tr:hover td { background: #fbfbfd; }
+  #page-order .oc-list-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+  #page-order .oc-list-table tr.oc-empty td {
+    text-align: center; padding: 60px 0;
+    color: var(--oc-dim); font-style: italic;
+  }
+  #page-order .oc-cat-badge {
+    display: inline-block; padding: 3px 9px; border-radius: 11px;
+    font-size: 11px; font-weight: 700;
+  }
+  #page-order .oc-cat-sale { background: #dcfce7; color: #15803d; }
+  #page-order .oc-cat-sample { background: #ffedd5; color: #c2410c; }
+  #page-order .oc-cat-b2b { background: #ede9fe; color: #6b21a8; }
+  #page-order .oc-row-action {
+    background: none; border: none; cursor: pointer;
+    color: var(--oc-red); font-size: 12px; font-weight: 600;
+    padding: 4px 8px;
+  }
+  #page-order .oc-row-action:hover { background: #fef2f2; border-radius: 4px; }
+  #page-order .oc-list-footer {
+    display: flex; gap: 10px; flex-wrap: wrap;
+    padding-top: 16px; margin-top: 12px;
+    border-top: 1px solid var(--oc-border);
+  }
 
   /* === SETTLEMENT & ROAS — Light Theme (디벨롭) === */
   #page-settlement {
@@ -227,6 +508,7 @@
 
 <div class="tabs">
   <div class="tab active" onclick="showPage('overview', event)">전체 출고</div>
+  <div class="tab" onclick="showPage('order', event)">출고 콘솔 ★</div>
   <div class="tab" onclick="showPage('platform', event)">커머스 허브</div>
   <div class="tab" onclick="showPage('settlement', event)">정산 & ROAS</div>
   <div class="tab" onclick="showPage('stock', event)">KR 재고 & 재발주</div>
@@ -346,6 +628,178 @@ IF(OR(C2="킥스타터",
         <div style="margin-top:12px; font-size:10px;">C=판매처, G=받는분, H=메모</div>
       </div>
     </div>
+  </div>
+
+</div>
+
+<!-- ===== PAGE: 출고 실행 콘솔 (NEW · Phase 1 MVP) ===== -->
+<div id="page-order" class="page">
+
+  <!-- 상단 헤더 -->
+  <div class="oc-header">
+    <div class="oc-title-block">
+      <div class="oc-eyebrow">DAILY OPERATION</div>
+      <h2 class="oc-title">출고 실행 콘솔</h2>
+      <div class="oc-date" id="oc-date-label">—</div>
+    </div>
+    <div class="oc-countdown" id="oc-countdown">
+      <div class="oc-cd-label">출고 마감까지</div>
+      <div class="oc-cd-value" id="oc-cd-value">--:--:--</div>
+      <div class="oc-cd-sub">매일 15:00 KST</div>
+    </div>
+    <div class="oc-kpi" id="oc-kpi">
+      <div class="oc-kpi-row">
+        <span class="oc-kpi-label">오늘 누적</span>
+        <span class="oc-kpi-value" id="oc-kpi-total">0</span>
+      </div>
+      <div class="oc-kpi-row sub">
+        <span><span class="dot dot-sale"></span>실판매 <strong id="oc-kpi-sale">0</strong></span>
+        <span><span class="dot dot-sample"></span>샘플 <strong id="oc-kpi-sample">0</strong></span>
+        <span><span class="dot dot-b2b"></span>B2B <strong id="oc-kpi-b2b">0</strong></span>
+      </div>
+      <div class="oc-kpi-row sub" id="oc-kpi-size-color"></div>
+    </div>
+  </div>
+
+  <!-- 입력 영역 + 누적 list -->
+  <div class="oc-grid">
+
+    <!-- 좌: 입력 폼 -->
+    <div class="oc-pane oc-input-pane">
+      <div class="oc-pane-title">
+        <span>+ 주문 추가</span>
+        <span class="oc-pane-sub">분류 → 정보 → 사이즈/컬러 → 저장</span>
+      </div>
+
+      <form id="oc-form" autocomplete="off">
+        <!-- 분류 (실판매/샘플/B2B) -->
+        <div class="oc-field">
+          <label>분류</label>
+          <div class="oc-radio-group" id="oc-cat-group">
+            <label class="oc-radio"><input type="radio" name="oc-cat" value="sale" checked> 실판매</label>
+            <label class="oc-radio"><input type="radio" name="oc-cat" value="sample"> 샘플</label>
+            <label class="oc-radio"><input type="radio" name="oc-cat" value="b2b"> B2B</label>
+          </div>
+        </div>
+
+        <!-- 채널 (실판매 시만) -->
+        <div class="oc-field" id="oc-channel-field">
+          <label>채널</label>
+          <select name="oc-channel" id="oc-channel">
+            <option value="naver">네이버 스마트스토어</option>
+            <option value="makers">카카오메이커스</option>
+            <option value="talkdeal">카카오톡스토어 (톡딜)</option>
+            <option value="kickstarter">킥스타터</option>
+          </select>
+        </div>
+
+        <div class="oc-row-2">
+          <div class="oc-field">
+            <label>받으시는 분 (성명) <em>*</em></label>
+            <input type="text" name="oc-recipient" id="oc-recipient" required placeholder="홍길동">
+          </div>
+          <div class="oc-field">
+            <label>휴대폰 <em>*</em></label>
+            <input type="text" name="oc-phone" id="oc-phone" required placeholder="010-0000-0000">
+          </div>
+        </div>
+
+        <div class="oc-row-2">
+          <div class="oc-field" style="max-width:160px;">
+            <label>우편번호</label>
+            <input type="text" name="oc-zip" id="oc-zip" placeholder="00000" maxlength="5">
+          </div>
+          <div class="oc-field">
+            <label>주소 <em>*</em></label>
+            <input type="text" name="oc-address" id="oc-address" required placeholder="서울특별시 ...">
+          </div>
+        </div>
+
+        <div class="oc-field">
+          <label>상세주소</label>
+          <input type="text" name="oc-detail" id="oc-detail" placeholder="동/호수 등">
+        </div>
+
+        <!-- 수량 + 사이즈/컬러 슬롯 (수량 늘면 슬롯 동적 추가) -->
+        <div class="oc-field">
+          <label>수량 (신발) <span class="oc-hint">수량 변경 시 사이즈/컬러 슬롯 자동 확장</span></label>
+          <div class="oc-qty-control">
+            <button type="button" class="oc-qty-btn" data-action="dec">−</button>
+            <input type="number" name="oc-qty" id="oc-qty" value="1" min="1" max="20" step="1">
+            <button type="button" class="oc-qty-btn" data-action="inc">+</button>
+          </div>
+        </div>
+
+        <div class="oc-field" id="oc-shoes-slots-wrap">
+          <label>사이즈 / 컬러</label>
+          <div id="oc-shoes-slots"></div>
+        </div>
+
+        <!-- 부자재 7종 -->
+        <div class="oc-field">
+          <label>부자재 (선택)</label>
+          <div class="oc-acc-grid">
+            <label class="oc-acc"><input type="checkbox" name="acc" value="hat"> 모자</label>
+            <label class="oc-acc"><input type="checkbox" name="acc" value="shoebag"> 슈백</label>
+            <label class="oc-acc"><input type="checkbox" name="acc" value="towel"> 타올</label>
+            <label class="oc-acc"><input type="checkbox" name="acc" value="belt"> 벨트</label>
+            <label class="oc-acc"><input type="checkbox" name="acc" value="flask"> 플라스크</label>
+            <label class="oc-acc"><input type="checkbox" name="acc" value="lace"> 슈레이스</label>
+            <label class="oc-acc"><input type="checkbox" name="acc" value="sticker"> 반사스티커</label>
+          </div>
+        </div>
+
+        <div class="oc-field">
+          <label>메모</label>
+          <input type="text" name="oc-memo" id="oc-memo" placeholder="(선택) 선물 포장 / 시딩 등">
+        </div>
+
+        <div class="oc-form-actions">
+          <button type="submit" class="oc-btn oc-btn-primary">+ 추가</button>
+          <button type="button" class="oc-btn oc-btn-ghost" id="oc-form-clear">초기화</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- 우: 누적 list -->
+    <div class="oc-pane oc-list-pane">
+      <div class="oc-pane-title">
+        <span>오늘 누적 주문 <span class="oc-pane-count" id="oc-list-count">0</span></span>
+        <div class="oc-list-actions">
+          <button class="oc-btn oc-btn-secondary" id="oc-export-hanjin">📋 한진 양식 다운로드</button>
+        </div>
+      </div>
+
+      <div class="oc-list-table-wrap">
+        <table class="oc-list-table">
+          <thead>
+            <tr>
+              <th style="width:32px;"></th>
+              <th>분류</th>
+              <th>채널</th>
+              <th>수령인</th>
+              <th>휴대폰</th>
+              <th>주소</th>
+              <th class="num">수량</th>
+              <th>사이즈/컬러</th>
+              <th>부자재</th>
+              <th>메모</th>
+              <th style="width:60px;"></th>
+            </tr>
+          </thead>
+          <tbody id="oc-list-body">
+            <tr class="oc-empty"><td colspan="11">아직 추가된 주문이 없습니다. 좌측 폼에서 첫 주문을 추가하세요.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="oc-list-footer">
+        <button class="oc-btn oc-btn-ghost" id="oc-export-json">📥 JSON 백업</button>
+        <button class="oc-btn oc-btn-ghost" id="oc-import-json">📤 JSON 복원</button>
+        <button class="oc-btn oc-btn-danger" id="oc-clear-all">🗑️ 오늘 전체 삭제</button>
+      </div>
+    </div>
+
   </div>
 
 </div>
@@ -1738,5 +2192,381 @@ new Chart(document.getElementById('burndownChart'), {
   }
 });
 </script>
+
+<!-- ===== ORDER CONSOLE 모듈 (격리 IIFE) ===== -->
+<script>
+(function() {
+  'use strict';
+
+  // ── 상수 ───────────────────────────────────
+  const STORAGE_PREFIX = 'dari_console_orders_';
+  const SHIP_DEADLINE_HOUR = 15;  // 15:00 KST
+  const SIZES = ['240','250','260','270','280'];
+  const COLORS = [
+    {value:'그레이', label:'그레이'},
+    {value:'베이지', label:'베이지'},
+  ];
+  const ACC_LABELS = {
+    hat:'모자', shoebag:'슈백', towel:'타올', belt:'벨트',
+    flask:'플라스크', lace:'슈레이스', sticker:'반사스티커'
+  };
+  const CHANNEL_LABELS = {
+    naver:'네이버', makers:'메이커스', talkdeal:'톡딜', kickstarter:'킥스타터'
+  };
+  const CAT_LABELS = { sale:'실판매', sample:'샘플', b2b:'B2B' };
+
+  // 회사 정보 (한진 양식 발송인 — 비워두면 한진에서 디폴트 적용)
+  const COMPANY = {
+    name: '주식회사 다리마티',
+    address: '경기도 고양시 덕양구 향동로 218, 비915호',
+  };
+
+  // ── 상태 ───────────────────────────────────
+  const state = {
+    orders: [],   // 오늘 주문 list
+    today: '',    // YYYYMMDD
+  };
+
+  // ── 유틸 ───────────────────────────────────
+  const $ = (s) => document.querySelector(s);
+  const $$ = (s) => Array.from(document.querySelectorAll(s));
+
+  function todayKey() {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth()+1).padStart(2,'0');
+    const dd = String(d.getDate()).padStart(2,'0');
+    return `${y}${m}${dd}`;
+  }
+  function todayLabel() {
+    const d = new Date();
+    const wks = ['일','월','화','수','목','금','토'];
+    return d.toLocaleDateString('ko-KR', {year:'numeric', month:'long', day:'numeric'}) + ' (' + wks[d.getDay()] + ')';
+  }
+
+  function load() {
+    state.today = todayKey();
+    try {
+      const raw = localStorage.getItem(STORAGE_PREFIX + state.today);
+      state.orders = raw ? JSON.parse(raw) : [];
+    } catch(e) { state.orders = []; }
+  }
+  function save() {
+    try {
+      localStorage.setItem(STORAGE_PREFIX + state.today, JSON.stringify(state.orders));
+    } catch(e) { console.warn('console save fail', e); }
+  }
+
+  function uid() {
+    return 'ord-' + Date.now() + '-' + Math.random().toString(36).slice(2,7);
+  }
+
+  // ── 카운트다운 (15:00 KST) ──────────────────
+  function tickCountdown() {
+    const el = $('#oc-cd-value');
+    if (!el) return;
+    const now = new Date();
+    const deadline = new Date(now);
+    deadline.setHours(SHIP_DEADLINE_HOUR, 0, 0, 0);
+    let diff = (deadline - now) / 1000;
+    if (diff < 0) {
+      el.textContent = '마감 시각 도달';
+      el.style.fontSize = '18px';
+      el.style.color = '#dc2626';
+      return;
+    }
+    const h = Math.floor(diff/3600);
+    const m = Math.floor((diff%3600)/60);
+    const s = Math.floor(diff%60);
+    el.textContent = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  }
+
+  // ── 사이즈/컬러 슬롯 (수량에 따라 동적) ──────
+  function renderShoeSlots(qty) {
+    const wrap = $('#oc-shoes-slots');
+    const existing = $$('#oc-shoes-slots .oc-shoe-slot');
+    const prev = existing.map(slot => ({
+      size: slot.querySelector('.oc-shoe-size').value,
+      color: slot.querySelector('.oc-shoe-color').value,
+    }));
+    wrap.innerHTML = '';
+    for (let i = 0; i < qty; i++) {
+      const slot = document.createElement('div');
+      slot.className = 'oc-shoe-slot';
+      const def = prev[i] || prev[prev.length-1] || {size:'270', color:'그레이'};
+      slot.innerHTML = `
+        <span class="oc-shoe-idx">${i+1}.</span>
+        <select class="oc-shoe-size">
+          ${SIZES.map(s => `<option value="${s}" ${s===def.size?'selected':''}>${s}mm</option>`).join('')}
+        </select>
+        <select class="oc-shoe-color">
+          ${COLORS.map(c => `<option value="${c.value}" ${c.value===def.color?'selected':''}>${c.label}</option>`).join('')}
+        </select>
+      `;
+      wrap.appendChild(slot);
+    }
+  }
+
+  // ── KPI ─────────────────────────────────
+  function renderKPI() {
+    const orders = state.orders;
+    const tot = orders.length;
+    const sale = orders.filter(o => o.category === 'sale').length;
+    const sample = orders.filter(o => o.category === 'sample').length;
+    const b2b = orders.filter(o => o.category === 'b2b').length;
+    $('#oc-kpi-total').textContent = tot;
+    $('#oc-kpi-sale').textContent = sale;
+    $('#oc-kpi-sample').textContent = sample;
+    $('#oc-kpi-b2b').textContent = b2b;
+    $('#oc-list-count').textContent = tot;
+
+    // 사이즈/컬러 분포
+    const sz = {}; const cl = {GREY:0, BEIGE:0};
+    orders.forEach(o => {
+      (o.shoes || []).forEach(sh => {
+        sz[sh.size] = (sz[sh.size] || 0) + 1;
+        if (sh.color === '그레이') cl.GREY++;
+        else if (sh.color === '베이지') cl.BEIGE++;
+      });
+    });
+    const szText = SIZES.map(s => `${s}=${sz[s]||0}`).join(' · ');
+    $('#oc-kpi-size-color').innerHTML = `<span style="font-size:11px;color:#6b7280;">${szText} <span style="margin-left:10px;color:#94a3b8;">|</span> G ${cl.GREY} · B ${cl.BEIGE}</span>`;
+  }
+
+  // ── List 렌더 ─────────────────────────────
+  function renderList() {
+    const tbody = $('#oc-list-body');
+    if (!state.orders.length) {
+      tbody.innerHTML = `<tr class="oc-empty"><td colspan="11">아직 추가된 주문이 없습니다. 좌측 폼에서 첫 주문을 추가하세요.</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = state.orders.map((o, idx) => {
+      const catCls = `oc-cat-${o.category}`;
+      const catLbl = CAT_LABELS[o.category] || o.category;
+      const channelLbl = o.channel ? (CHANNEL_LABELS[o.channel] || o.channel) : '—';
+      const shoesText = (o.shoes || []).map(s => `${s.size}/${s.color[0]}`).join(', ');
+      const accText = (o.accessories || []).map(a => ACC_LABELS[a] || a).join('·') || '—';
+      const phone = (o.phone || '').replace(/(\d{3})(\d{3,4})(\d{4})/, '$1-$2-$3');
+      const addressShort = (o.address || '') + (o.detail ? ' ' + o.detail : '');
+      return `<tr>
+        <td>${idx+1}</td>
+        <td><span class="oc-cat-badge ${catCls}">${catLbl}</span></td>
+        <td>${channelLbl}</td>
+        <td><strong>${o.recipient || '—'}</strong></td>
+        <td>${phone || '—'}</td>
+        <td title="${addressShort}">${addressShort.length > 28 ? addressShort.slice(0,28)+'…' : addressShort}</td>
+        <td class="num">${(o.shoes || []).length}</td>
+        <td>${shoesText}</td>
+        <td style="color:#6b7280; font-size:11px;">${accText}</td>
+        <td style="color:#6b7280; font-size:11px;">${o.memo || ''}</td>
+        <td><button class="oc-row-action" data-id="${o.id}">삭제</button></td>
+      </tr>`;
+    }).join('');
+    // 삭제 버튼 핸들러
+    $$('#oc-list-body .oc-row-action').forEach(btn => {
+      btn.addEventListener('click', e => {
+        const id = btn.dataset.id;
+        if (!confirm('이 주문을 삭제하시겠습니까?')) return;
+        state.orders = state.orders.filter(o => o.id !== id);
+        save(); renderAll();
+      });
+    });
+  }
+
+  function renderAll() { renderList(); renderKPI(); }
+
+  // ── 분류 변경 시 채널 필드 토글 ──────────────
+  function onCategoryChange() {
+    const cat = ($('#oc-cat-group input:checked') || {}).value;
+    $('#oc-channel-field').style.display = cat === 'sale' ? 'block' : 'none';
+  }
+
+  // ── Form submit (주문 추가) ───────────────
+  function addOrder(e) {
+    e.preventDefault();
+    const cat = ($('#oc-cat-group input:checked') || {}).value;
+    const channel = cat === 'sale' ? $('#oc-channel').value : '';
+    const recipient = $('#oc-recipient').value.trim();
+    const phone = $('#oc-phone').value.trim().replace(/[^\d]/g,'');
+    const zip = $('#oc-zip').value.trim();
+    const address = $('#oc-address').value.trim();
+    const detail = $('#oc-detail').value.trim();
+    const qty = parseInt($('#oc-qty').value) || 1;
+    const shoes = $$('#oc-shoes-slots .oc-shoe-slot').map(slot => ({
+      size: slot.querySelector('.oc-shoe-size').value,
+      color: slot.querySelector('.oc-shoe-color').value,
+    }));
+    const accessories = $$('input[name=acc]:checked').map(c => c.value);
+    const memo = $('#oc-memo').value.trim();
+
+    if (!recipient || !phone || !address) {
+      alert('수령인 / 휴대폰 / 주소는 필수입니다.');
+      return;
+    }
+    if (shoes.length !== qty) {
+      alert('수량과 사이즈/컬러 슬롯 수가 일치하지 않습니다.');
+      return;
+    }
+
+    const order = {
+      id: uid(), category: cat, channel,
+      recipient, phone, zip, address, detail,
+      shoes, accessories, memo,
+      createdAt: new Date().toISOString(),
+    };
+    state.orders.push(order);
+    save();
+    renderAll();
+    $('#oc-form').reset();
+    document.querySelector('#oc-cat-group input[value=sale]').checked = true;
+    onCategoryChange();
+    $('#oc-qty').value = 1;
+    renderShoeSlots(1);
+    $('#oc-recipient').focus();
+  }
+
+  // ── 한진 양식 출력 ────────────────────────
+  function exportHanjin() {
+    if (!state.orders.length) {
+      alert('출고할 주문이 없습니다.');
+      return;
+    }
+    if (typeof XLSX === 'undefined') {
+      alert('SheetJS 로드 실패 — 인터넷 연결 확인');
+      return;
+    }
+    // 각 주문은 row 1개로 압축 (수량은 신발 수)
+    // 품목명: 사이즈/컬러 조합을 명시
+    const rows = [
+      ['받으시는 분','받으시는 분 전화','받는분담당자','받는분핸드폰','받는분우편번호','받는분총주소','수량','품목명','운임Type','지불조건','출고번호','특기사항','메모1','메모2','메모3','메모4']
+    ];
+    const dateTag = state.today;
+    state.orders.forEach((o, i) => {
+      const fullAddress = (o.address || '') + (o.detail ? ' ' + o.detail : '');
+      const phone = o.phone || '';
+      const itemSummary = (o.shoes || []).map(s => `${s.size}mm/${s.color}`).join(', ');
+      const accSummary = (o.accessories || []).length
+        ? ` + ${(o.accessories||[]).map(a=>ACC_LABELS[a]||a).join('·')}`
+        : '';
+      const cat = CAT_LABELS[o.category] || '';
+      rows.push([
+        o.recipient || '',           // 받으시는 분
+        phone,                        // 받으시는 분 전화
+        o.recipient || '',           // 받는분담당자 (=수령인)
+        phone,                        // 받는분핸드폰
+        o.zip || '',                  // 우편번호
+        fullAddress,                  // 총주소
+        (o.shoes || []).length,       // 수량
+        `BR-001 ${itemSummary}${accSummary}`,  // 품목명
+        '',                           // 운임Type (한진 디폴트)
+        '',                           // 지불조건
+        `${dateTag}-${String(i+1).padStart(3,'0')}`,  // 출고번호
+        cat + (o.memo ? ' · ' + o.memo : ''),         // 특기사항
+        '', '', '', ''                // 메모1~4
+      ]);
+    });
+
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    // 컬럼 너비
+    ws['!cols'] = [
+      {wch:12},{wch:14},{wch:12},{wch:14},{wch:8},{wch:50},{wch:6},{wch:36},
+      {wch:8},{wch:8},{wch:14},{wch:24},{wch:10},{wch:10},{wch:10},{wch:10}
+    ];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
+    const filename = `다리마티_한진_${dateTag}.xlsx`;
+    XLSX.writeFile(wb, filename);
+
+    // 출력 후 마킹 (옵션 — 향후 status 추적)
+    state.orders.forEach(o => o.status = 'exported');
+    save();
+  }
+
+  function exportJSON() {
+    const blob = new Blob([JSON.stringify({date: state.today, orders: state.orders}, null, 2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `dari-orders-${state.today}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+  function importJSON() {
+    const inp = document.createElement('input');
+    inp.type = 'file'; inp.accept = 'application/json';
+    inp.onchange = async (e) => {
+      const file = e.target.files[0]; if (!file) return;
+      try {
+        const data = JSON.parse(await file.text());
+        if (!Array.isArray(data.orders)) { alert('잘못된 백업 파일'); return; }
+        if (!confirm(`${data.orders.length}건 주문을 현재 list에 덮어씁니다. 계속?`)) return;
+        state.orders = data.orders;
+        save(); renderAll();
+      } catch(err) { alert('읽기 실패: ' + err.message); }
+    };
+    inp.click();
+  }
+  function clearAll() {
+    if (!state.orders.length) return;
+    if (!confirm(`오늘 누적 ${state.orders.length}건을 모두 삭제하시겠습니까? (취소 불가)`)) return;
+    state.orders = [];
+    save(); renderAll();
+  }
+
+  // ── 초기화 ────────────────────────────────
+  function init() {
+    load();
+    $('#oc-date-label').textContent = todayLabel();
+    renderShoeSlots(1);
+    renderAll();
+    onCategoryChange();
+    tickCountdown();
+    setInterval(tickCountdown, 1000);
+
+    // 이벤트 바인딩
+    $('#oc-cat-group').addEventListener('change', onCategoryChange);
+    $('#oc-form').addEventListener('submit', addOrder);
+    $('#oc-form-clear').addEventListener('click', () => {
+      $('#oc-form').reset();
+      document.querySelector('#oc-cat-group input[value=sale]').checked = true;
+      $('#oc-qty').value = 1;
+      renderShoeSlots(1);
+      onCategoryChange();
+    });
+
+    // 수량 +/-
+    document.querySelectorAll('.oc-qty-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const inp = $('#oc-qty');
+        let val = parseInt(inp.value) || 1;
+        if (btn.dataset.action === 'inc') val = Math.min(20, val+1);
+        else val = Math.max(1, val-1);
+        inp.value = val;
+        renderShoeSlots(val);
+      });
+    });
+    // 수량 직접 입력
+    $('#oc-qty').addEventListener('change', () => {
+      let val = parseInt($('#oc-qty').value) || 1;
+      val = Math.max(1, Math.min(20, val));
+      $('#oc-qty').value = val;
+      renderShoeSlots(val);
+    });
+
+    // 액션 버튼
+    $('#oc-export-hanjin').addEventListener('click', exportHanjin);
+    $('#oc-export-json').addEventListener('click', exportJSON);
+    $('#oc-import-json').addEventListener('click', importJSON);
+    $('#oc-clear-all').addEventListener('click', clearAll);
+  }
+
+  // DOM 준비 후 init
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
+
 </body>
 </html>
