@@ -248,12 +248,12 @@
   <div class="kpi-row">
     <div class="kpi">
       <div class="kpi-label">누적 출고</div>
-      <div class="kpi-value">142</div>
-      <div class="kpi-sub">켤레 (4/17 ~ 4/29)</div>
+      <div class="kpi-value">214</div>
+      <div class="kpi-sub">켤레 (4/17 ~ 4/30)</div>
     </div>
     <div class="kpi">
       <div class="kpi-label">실판매 <span class="badge sale">SALE</span></div>
-      <div class="kpi-value green">103</div>
+      <div class="kpi-value green">161</div>
       <div class="kpi-sub">킥스타터·메이커스·네이버·카카오</div>
     </div>
     <div class="kpi">
@@ -263,13 +263,13 @@
     </div>
     <div class="kpi">
       <div class="kpi-label">증정·샘플 <span class="badge gift">GIFT</span></div>
-      <div class="kpi-value red">9</div>
+      <div class="kpi-value red">23</div>
       <div class="kpi-sub">샘플·인플루언서·지인</div>
     </div>
     <div class="kpi">
       <div class="kpi-label">일평균 실판매</div>
-      <div class="kpi-value yellow">11.4</div>
-      <div class="kpi-sub">켤레 / 출고일 (9일)</div>
+      <div class="kpi-value yellow">16.1</div>
+      <div class="kpi-sub">켤레 / 출고일 (10일)</div>
     </div>
   </div>
 
@@ -397,37 +397,37 @@ IF(OR(C2="킥스타터",
         <div style="display:flex; justify-content:space-between; align-items:baseline; padding:10px 0; border-bottom:1px solid #222;">
           <div>
             <div style="color:#888; font-size:10px; letter-spacing:0.04em;">W1 · 4/17</div>
-            <div style="font-size:18px; font-weight:700;">22<span style="font-size:11px; color:#888; font-weight:400;"> 켤레</span></div>
+            <div style="font-size:18px; font-weight:700;">27<span style="font-size:11px; color:#888; font-weight:400;"> 켤레</span></div>
           </div>
           <div style="text-align:right;">
             <div style="color:#888; font-size:10px;">일평균</div>
-            <div style="color:#aaa;">22.0</div>
+            <div style="color:#aaa;">27.0</div>
           </div>
         </div>
         <div style="display:flex; justify-content:space-between; align-items:baseline; padding:10px 0; border-bottom:1px solid #222;">
           <div>
             <div style="color:#888; font-size:10px; letter-spacing:0.04em;">W2 · 4/20~24</div>
-            <div style="font-size:18px; font-weight:700;">36<span style="font-size:11px; color:#888; font-weight:400;"> 켤레</span></div>
+            <div style="font-size:18px; font-weight:700;">42<span style="font-size:11px; color:#888; font-weight:400;"> 켤레</span></div>
           </div>
           <div style="text-align:right;">
             <div style="color:#888; font-size:10px;">일평균</div>
-            <div style="color:#f87171;">7.2 ↓</div>
+            <div style="color:#f87171;">8.4 ↓</div>
           </div>
         </div>
         <div style="display:flex; justify-content:space-between; align-items:baseline; padding:10px 0; border-bottom:1px solid #222;">
           <div>
             <div style="color:#888; font-size:10px; letter-spacing:0.04em;">W3 · 4/27~ (진행중)</div>
-            <div style="font-size:18px; font-weight:700;">42<span style="font-size:11px; color:#888; font-weight:400;"> 켤레</span></div>
+            <div style="font-size:18px; font-weight:700;">92<span style="font-size:11px; color:#888; font-weight:400;"> 켤레</span></div>
           </div>
           <div style="text-align:right;">
             <div style="color:#888; font-size:10px;">일평균</div>
-            <div style="color:#facc15;">14.0 ↑</div>
+            <div style="color:#facc15;">23.0 ↑</div>
           </div>
         </div>
         <div style="margin-top:14px; padding:14px; background:#0d1620; border-radius:6px; border-left:3px solid #4ade80;">
           <div style="color:#aaa; font-size:10px; letter-spacing:0.04em; margin-bottom:6px;">5월 1주 예상 (W3 페이스 기준)</div>
-          <div style="font-size:22px; font-weight:700; color:#4ade80;">~70 <span style="font-size:11px; color:#888; font-weight:400;">켤레</span></div>
-          <div style="color:#555; font-size:10px; margin-top:4px;">14.0/일 × 5 영업일</div>
+          <div style="font-size:22px; font-weight:700; color:#4ade80;">~115 <span style="font-size:11px; color:#888; font-weight:400;">켤레</span></div>
+          <div style="color:#555; font-size:10px; margin-top:4px;">23.0/일 × 5 영업일</div>
         </div>
         <div style="margin-top:10px; font-size:10px; color:#555; line-height:1.7;">
           W2 일평균 하락은 B2B 30켤레 단발성으로 인한 기준 변동 영향. 실판매 모멘텀은 W3에서 회복.
@@ -964,21 +964,21 @@ function showPage(id, ev) {
   if (ev && ev.target) ev.target.classList.add('active');
 }
 
-const DATES = ['4/17','4/20','4/21','4/22','4/23','4/24','4/27','4/28','4/29'];
+const DATES = ['4/17','4/20','4/21','4/22','4/23','4/24','4/27','4/28','4/29','4/30'];
 
 // 플랫폼별 일별 실판매 (클릭 상세용)
 const PLATFORM_DAILY = {
-  '킥스타터':      [22, 1, 3, 3, 0, 2, 9, 3, 1],
-  '카카오메이커스': [0, 14, 4, 1, 0, 1, 3, 2, 20],
-  '네이버':        [4,  1, 0, 0, 0, 1, 0, 0, 0],
-  '카카오톡스토어': [0,  0, 0, 0, 0, 2, 0, 0, 0],
+  '킥스타터':[25, 1, 6, 4, 0, 2, 10, 3, 21, 1],
+  '카카오메이커스':[0, 18, 4, 1, 0, 1, 5, 2, 36, 7],
+  '네이버':  [2, 1, 1, 0, 0, 1, 0, 0, 5, 2],
+  '카카오톡스토어':[0, 0, 0, 0, 0, 2, 0, 0, 0, 0],
 };
 const PLATFORM_COLORS = {
   '킥스타터': '#b0c4d8', '카카오메이커스': '#d4b896', '네이버': '#7c9bb5', '카카오톡스토어': '#a0a0a0'
 };
-const SALE_DAILY = [22, 20, 6, 5, 0, 5, 17, 5, 20];
-const B2B_DAILY  = [0, 0, 0, 0, 30, 0, 0, 0, 0];
-const GIFT_DAILY = [6, 0, 1, 1, 0, 0, 0, 1, 0];
+const SALE_DAILY = [27, 20, 11, 5, 0, 6, 15, 5, 62, 10];
+const B2B_DAILY  = [0, 0, 0, 0, 30, 0, 0, 0, 0, 0];
+const GIFT_DAILY = [7, 0, 3, 3, 0, 1, 2, 1, 3, 3];
 const axisDefaults = {
   x: { grid: { color: '#222' }, ticks: { color: '#666', font: { size: 10 } } },
   y: { grid: { color: '#222' }, ticks: { color: '#666', font: { size: 10 } }, beginAtZero: true }
@@ -1045,9 +1045,9 @@ new Chart(document.getElementById('dailyStackedChart'), {
 new Chart(document.getElementById('typeChart'), {
   type: 'doughnut',
   data: {
-    labels: ['실판매 (103)', 'B2B·행사 (30)', '증정·샘플 (9)'],
+    labels: ['실판매 (161)', 'B2B·행사 (30)', '증정·샘플 (23)'],
     datasets: [{
-      data: [103, 30, 9],
+      data: [161, 30, 23],
       backgroundColor: ['#4ade80', '#a78bfa', '#374151'],
       borderWidth: 0, hoverOffset: 6
     }]
@@ -1156,15 +1156,15 @@ new Chart(document.getElementById('weeklyVelocityChart'), {
 });
 
 // ── 일별 출고 상세 시트 ──
-const DAILY_KCK  = [22, 1, 3, 3, 0, 2, 9, 3, 1];
-const DAILY_KKO  = [0, 14, 4, 1, 0, 1, 3, 2, 20];
-const DAILY_NAV  = [4,  1, 0, 0, 0, 1, 0, 0, 0];
-const DAILY_KTK  = [0,  0, 0, 0, 0, 2, 0, 0, 0];
-const WEEK_LABEL = ['W1','W2','W2','W2','W2','W2','W3','W3','W3'];
+const DAILY_KCK  = [25, 1, 6, 4, 0, 2, 10, 3, 21, 1];
+const DAILY_KKO  = [0, 18, 4, 1, 0, 1, 5, 2, 36, 7];
+const DAILY_NAV  = [2, 1, 1, 0, 0, 1, 0, 0, 5, 2];
+const DAILY_KTK  = [0, 0, 0, 0, 0, 2, 0, 0, 0, 0];
+const WEEK_LABEL = ['W1','W2','W2','W2','W2','W2','W3','W3','W3','W3'];
 const WEEK_TOTAL_ROWS = [
-  { after: 0, label: 'W1 소계', kck:22, kko:0,  nav:4, ktk:0, sale:26, b2b:0,  gift:6, total:32 },
-  { after: 5, label: 'W2 소계', kck:9,  kko:20, nav:2, ktk:2, sale:36, b2b:30, gift:1, total:67 },
-  { after: 8, label: 'W3 소계', kck:13, kko:24, nav:0, ktk:0, sale:42, b2b:0,  gift:1, total:43 },
+  { after: 0, label: 'W1 소계', kck:25, kko:0,  nav:2, ktk:0, sale:27, b2b:0,  gift:7, total:34 },
+  { after: 5, label: 'W2 소계', kck:13,  kko:24, nav:3, ktk:2, sale:42, b2b:30, gift:7, total:79 },
+  { after: 9, label: 'W3 소계', kck:35, kko:50, nav:7, ktk:0, sale:92, b2b:0,  gift:9, total:101 },
 ];
 
 const dsBody = document.getElementById('daily-sheet-body');
@@ -1207,14 +1207,14 @@ DATES.forEach((date, i) => {
 // 전체 합계 행
 dsBody.innerHTML += `<tr class="total">
   <td colspan="2">전체</td>
-  <td class="num" style="color:#b0c4d8;">44</td>
-  <td class="num" style="color:#d4b896;">45</td>
-  <td class="num" style="color:#7c9bb5;">6</td>
+  <td class="num" style="color:#b0c4d8;">73</td>
+  <td class="num" style="color:#d4b896;">74</td>
+  <td class="num" style="color:#7c9bb5;">12</td>
   <td class="num" style="color:#a0a0a0;">2</td>
-  <td class="num green">103</td>
+  <td class="num green">161</td>
   <td class="num" style="color:#a78bfa;">30</td>
-  <td class="num" style="color:#6b7280;">9</td>
-  <td class="num">142</td>
+  <td class="num" style="color:#6b7280;">23</td>
+  <td class="num">214</td>
 </tr>`;
 
 // ── 플랫폼 점유율 (B2B 포함 133켤레) + 옆 막대 legend ──
@@ -1332,7 +1332,7 @@ const SALE_BY_SIZE = {
   GREY:  { 240: 20, 250: 17, 260: 18, 270: 19, 280: 6 },
   BEIGE: { 240: 10, 250: 4,  260: 2,  270: 3,  280: 2 },
 };
-const BIZ_DAYS = 9;
+const BIZ_DAYS = 10;
 
 const skuList = [];  // 사이즈+컬러 단위 (SKU)
 SIZES.forEach(s => {
@@ -1559,7 +1559,7 @@ const COGS = {
 // 채널별 거래조건 (매트 입력 — 옵시디언과 동기화)
 const SETTLEMENT_DEALS = {
   '카카오메이커스': {
-    units: 48, unitPrice: 159000, feePct: 0.25,
+    units: 74, unitPrice: 159000, feePct: 0.25,
     shippingPerUnit: 2400, shippingByUs: true,
     cogsPerUnit: COGS.package,  // ★ 풀세트 — 부자재 5종 포함
     composition: '풀세트',
@@ -1575,7 +1575,7 @@ const SETTLEMENT_DEALS = {
     note: '단체 직접 인도 · 배송 미발생 · 단품 가정 (구성 매트 확인 필요)'
   },
   '네이버 스마트스토어': {
-    units: 6, unitPrice: 159000, feePct: 0.04,
+    units: 12, unitPrice: 159000, feePct: 0.04,
     shippingPerUnit: 2400, shippingByUs: true,
     cogsPerUnit: COGS.unit,
     composition: '단품',
@@ -1591,7 +1591,7 @@ const SETTLEMENT_DEALS = {
     note: '톡딜 4% · 단가/배송 메이커스와 동일 가정 (확인 필요)'
   },
   '킥스타터': {
-    units: 47, confirmed: false,
+    units: 73, confirmed: false,
     note: '단가·정산·구성(단품 vs 풀세트) 입력 대기 · ACI 운임 별도'
   },
 };
