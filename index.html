@@ -357,28 +357,28 @@ IF(OR(C2="킥스타터",
   <div class="kpi-row" style="grid-template-columns: repeat(5,1fr);">
     <div class="kpi" style="border-right: 1px solid #333;">
       <div class="kpi-label">4월 누계 판매</div>
-      <div class="kpi-value green" style="font-size:40px;">133</div>
-      <div class="kpi-sub" style="line-height:1.9;">실판매 <strong style="color:#4ade80;">103</strong> + B2B <strong style="color:#a78bfa;">30</strong> · 4/17~4/29</div>
+      <div class="kpi-value green" style="font-size:40px;">191</div>
+      <div class="kpi-sub" style="line-height:1.9;">실판매 <strong style="color:#4ade80;">161</strong> + B2B <strong style="color:#a78bfa;">30</strong> · 4/17~4/30</div>
     </div>
     <div class="kpi">
       <div class="kpi-label">킥스타터</div>
-      <div class="kpi-value">47</div>
-      <div class="kpi-sub">35% · 크라우드펀딩</div>
+      <div class="kpi-value">73</div>
+      <div class="kpi-sub">38% · 크라우드펀딩</div>
     </div>
     <div class="kpi">
       <div class="kpi-label">카카오메이커스</div>
-      <div class="kpi-value green">48</div>
-      <div class="kpi-sub">36% · 최다 채널</div>
+      <div class="kpi-value green">74</div>
+      <div class="kpi-sub">39% · 최다 채널</div>
     </div>
     <div class="kpi">
       <div class="kpi-label">네이버 + 카카오톡</div>
-      <div class="kpi-value yellow">8</div>
-      <div class="kpi-sub">6% · 소셜/검색 채널</div>
+      <div class="kpi-value yellow">14</div>
+      <div class="kpi-sub">7% · 소셜/검색 채널</div>
     </div>
     <div class="kpi">
       <div class="kpi-label">B2B · 마야크루</div>
       <div class="kpi-value purple">30</div>
-      <div class="kpi-sub">23% · 단체 직접 주문</div>
+      <div class="kpi-sub">16% · 단체 직접 주문</div>
     </div>
   </div>
 
@@ -465,7 +465,7 @@ IF(OR(C2="킥스타터",
   <!-- 채널 점유율 (full width) -->
   <div class="grid-full" style="margin-top:1px;">
     <div class="card">
-      <div class="card-title">채널 점유율 <span style="color:#555; font-size:10px; margin-left:6px;">4월 누계 · 전체 133켤레 (실판매 103 + B2B 30)</span></div>
+      <div class="card-title">채널 점유율 <span style="color:#555; font-size:10px; margin-left:6px;">4월 누계 · 전체 191켤레 (실판매 161 + B2B 30)</span></div>
       <div style="display:grid; grid-template-columns: 280px 1fr; gap:32px; align-items:center; margin-top:10px;">
         <div style="position:relative; height:240px;"><canvas id="platformShareChart"></canvas></div>
         <div id="platform-share-bars" style="font-size:12px; line-height:1.8;"></div>
@@ -1101,9 +1101,9 @@ new Chart(document.getElementById('beigeChart'), {
 // ── 주별 판매 속도 (실판매+B2B 스택 + 일평균 선) ──
 const weekLabels = ['W1  (4/17)', 'W2  (4/20~24)', 'W3  (4/27~, 진행중)'];
 // 실판매: W1=22, W2=36, W3=42 | B2B: W1=0, W2=30, W3=0
-const weekSale = [22, 36, 42];
-const weekB2B  = [0,  30,  0];
-const weekDays = [1,   5,  3];  // 출고일 수
+const weekSale = [27, 42, 92];
+const weekB2B  = [0, 30, 0];
+const weekDays = [1, 5, 4];  // 출고일 수
 const weekRate = weekSale.map((s,i) => +(s/weekDays[i]).toFixed(1));
 
 new Chart(document.getElementById('weeklyVelocityChart'), {
@@ -1219,10 +1219,10 @@ dsBody.innerHTML += `<tr class="total">
 
 // ── 플랫폼 점유율 (B2B 포함 133켤레) + 옆 막대 legend ──
 const PLATFORM_SHARE = [
-  { name: '카카오메이커스',   count: 48, color: '#d4b896' },
-  { name: '킥스타터',          count: 47, color: '#b0c4d8' },
+  { name: '카카오메이커스',   count: 74, color: '#d4b896' },
+  { name: '킥스타터',          count: 73, color: '#b0c4d8' },
   { name: 'B2B · 마야크루',    count: 30, color: '#a78bfa' },
-  { name: '네이버',            count: 6,  color: '#7c9bb5' },
+  { name: '네이버',            count: 12,  color: '#7c9bb5' },
   { name: '카카오톡스토어',    count: 2,  color: '#a0a0a0' },
 ];
 const PLATFORM_TOTAL = PLATFORM_SHARE.reduce((s, p) => s + p.count, 0);
@@ -1329,8 +1329,8 @@ const today = new Date('2026-04-29');
 
 // === 사이즈×컬러별 출고/소진 분석 (모든 알림·KPI·체크리스트의 기준) ===
 const SALE_BY_SIZE = {
-  GREY:  { 240: 20, 250: 17, 260: 18, 270: 19, 280: 6 },
-  BEIGE: { 240: 10, 250: 4,  260: 2,  270: 3,  280: 2 },
+  GREY:  { 240:25, 250:24, 260:19, 270:25, 280:9 },
+  BEIGE: { 240:6, 250:4, 260:0, 270:2, 280:3 },
 };
 const BIZ_DAYS = 10;
 

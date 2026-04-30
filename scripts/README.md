@@ -1,6 +1,6 @@
-# DARIMATI Dashboard 자동 갱신
+# DARIMATI Dashboard 자동 갱신 (Phase 2 — 자동 patch + push)
 
-매 평일 17:00 KST · 공휴일 제외 · 변동분만 감지
+매 평일 17:00 KST · 공휴일 제외 · 변동분만 감지 · **자동 commit + push**
 
 운영 지침: Obsidian Vault `04_운영/inventory/auto-update-rules.md`
 
@@ -10,7 +10,8 @@
 
 | 파일 | 역할 |
 |------|------|
-| `daily-update.sh` | 메인 스크립트 (변동 감지 + 알림) |
+| `daily-update.sh` | 메인 스크립트 (변동 감지 → patch 호출 → push) |
+| `patch_dashboard.py` | Sheets gviz JSON → index.html 자동 patch |
 | `holidays-kr-2026.txt` | 한국 공휴일 (매년 갱신) |
 | `com.darimati.dashboard-update.plist` | macOS launchd 스케줄 |
 
@@ -92,18 +93,38 @@ launchctl print gui/$(id -u)/com.darimati.dashboard-update | grep -i next
 
 ## Phase 로드맵
 
-### Phase 1 (현재) — 변동 감지 + 알림
-- Sheets + 옵시디언 hash 비교
-- 변동 시 macOS 알림 + 로그
-- 매트 수동 갱신 commit
+### Phase 1 (완료) — 변동 감지 + 알림
+- Sheets + 옵시디언 hash 비교, 알림만
 
-### Phase 2 (예정) — 자동 patch
-- `data/state.json` 외부 fetch 구조 도입 후
-- 변동 시 state.json 자동 갱신 → git push
+### Phase 2 (현재) — 자동 patch + push ✅
+- 변동 시 `patch_dashboard.py` 호출 → index.html 자동 patch
+- git commit + push 자동
+- JS 문법 검증 후 push (실패 시 롤백)
+- 매트 검토 단계 제거
+- `AUTO_PUSH=false` 환경변수로 수동 모드 가능
 
 ### Phase 3 (예정) — Slack 알림
 - `#all-darimati` Webhook 푸시
 - 주간/월간 자동 요약
+
+### 패치 적용 영역 (patch_dashboard.py)
+- DATES, SALE/B2B/GIFT_DAILY, PLATFORM_DAILY
+- DAILY_KCK/KKO/NAV/KTK
+- SALE_BY_SIZE
+- BIZ_DAYS
+- PAGE 1 KPI (누적·실판매·B2B·증정·일평균)
+- 4월 누계 KPI + 채널 KPI 4종 (퍼센트 자동 재계산)
+- PLATFORM_SHARE 도넛
+- weekSale/B2B/Days/Rate
+- 모멘텀 사이드 카드 (W1/W2/W3 · 일평균 · 5월 예상)
+- WEEK_TOTAL_ROWS · WEEK_LABEL
+- 일별 시트 전체 합계 row
+- SETTLEMENT_DEALS units (정산 & ROAS 탭)
+
+### Phase 2의 안전장치
+- patch 후 JS 문법 검증 (Node) → 실패 시 git checkout으로 롤백
+- 변동 hash가 있어도 dashboard 매핑된 영역 변경 없으면 commit 안 함
+- 옵시디언 잔여재고/HK 등은 자동 patch 안 함 (매트가 옵시디언만 갱신하면 hash 변동 → 다음 실행 시 알림으로 감지)
 
 ---
 
