@@ -189,6 +189,7 @@
   #page-order .dot-sale { background: var(--oc-green); }
   #page-order .dot-sample { background: var(--oc-orange); }
   #page-order .dot-b2b { background: var(--oc-purple); }
+  #page-order .dot-direct { background: var(--oc-blue); }
 
   /* 그리드 */
   #page-order .oc-grid {
@@ -363,6 +364,7 @@
   #page-order .oc-cat-sale { background: #dcfce7; color: #15803d; }
   #page-order .oc-cat-sample { background: #ffedd5; color: #c2410c; }
   #page-order .oc-cat-b2b { background: #ede9fe; color: #6b21a8; }
+  #page-order .oc-cat-direct { background: #e0f2fe; color: #075985; }
   #page-order .oc-row-action {
     background: none; border: none; cursor: pointer;
     color: var(--oc-red); font-size: 12px; font-weight: 600;
@@ -656,6 +658,7 @@ IF(OR(C2="킥스타터",
         <span><span class="dot dot-sale"></span>실판매 <strong id="oc-kpi-sale">0</strong></span>
         <span><span class="dot dot-sample"></span>샘플 <strong id="oc-kpi-sample">0</strong></span>
         <span><span class="dot dot-b2b"></span>B2B <strong id="oc-kpi-b2b">0</strong></span>
+        <span><span class="dot dot-direct"></span>직접 <strong id="oc-kpi-direct">0</strong></span>
       </div>
       <div class="oc-kpi-row sub" id="oc-kpi-size-color"></div>
     </div>
@@ -679,6 +682,7 @@ IF(OR(C2="킥스타터",
             <label class="oc-radio"><input type="radio" name="oc-cat" value="sale" checked> 실판매</label>
             <label class="oc-radio"><input type="radio" name="oc-cat" value="sample"> 샘플</label>
             <label class="oc-radio"><input type="radio" name="oc-cat" value="b2b"> B2B</label>
+            <label class="oc-radio"><input type="radio" name="oc-cat" value="direct"> 📍 직접 전달</label>
           </div>
         </div>
 
@@ -693,29 +697,41 @@ IF(OR(C2="킥스타터",
           </select>
         </div>
 
-        <div class="oc-row-2">
+        <!-- 사유 (직접 전달 시만) -->
+        <div class="oc-field" id="oc-reason-field" style="display:none;">
+          <label>사유 <em>*</em></label>
+          <select name="oc-reason" id="oc-reason">
+            <option value="지인">지인 (선물)</option>
+            <option value="시딩">시딩 (인플루언서·미디어)</option>
+            <option value="내부 사용">내부 사용 (직원·테스트)</option>
+            <option value="이벤트">이벤트 (현장 전달)</option>
+            <option value="기타">기타</option>
+          </select>
+        </div>
+
+        <div class="oc-row-2" id="oc-row-recipient">
           <div class="oc-field">
             <label>받으시는 분 (성명) <em>*</em></label>
             <input type="text" name="oc-recipient" id="oc-recipient" required placeholder="홍길동">
           </div>
-          <div class="oc-field">
+          <div class="oc-field" id="oc-phone-field">
             <label>휴대폰 <em>*</em></label>
-            <input type="text" name="oc-phone" id="oc-phone" required placeholder="010-0000-0000">
+            <input type="text" name="oc-phone" id="oc-phone" placeholder="010-0000-0000">
           </div>
         </div>
 
-        <div class="oc-row-2">
+        <div class="oc-row-2" id="oc-row-zip-address">
           <div class="oc-field" style="max-width:160px;">
             <label>우편번호</label>
             <input type="text" name="oc-zip" id="oc-zip" placeholder="00000" maxlength="5">
           </div>
           <div class="oc-field">
             <label>주소 <em>*</em></label>
-            <input type="text" name="oc-address" id="oc-address" required placeholder="서울특별시 ...">
+            <input type="text" name="oc-address" id="oc-address" placeholder="서울특별시 ...">
           </div>
         </div>
 
-        <div class="oc-field">
+        <div class="oc-field" id="oc-detail-field">
           <label>상세주소</label>
           <input type="text" name="oc-detail" id="oc-detail" placeholder="동/호수 등">
         </div>
@@ -2213,7 +2229,7 @@ new Chart(document.getElementById('burndownChart'), {
   const CHANNEL_LABELS = {
     naver:'네이버', makers:'메이커스', talkdeal:'톡딜', kickstarter:'킥스타터'
   };
-  const CAT_LABELS = { sale:'실판매', sample:'샘플', b2b:'B2B' };
+  const CAT_LABELS = { sale:'실판매', sample:'샘플', b2b:'B2B', direct:'📍 직접' };
 
   // 회사 정보 (한진 양식 발송인 — 비워두면 한진에서 디폴트 적용)
   const COMPANY = {
@@ -2314,10 +2330,12 @@ new Chart(document.getElementById('burndownChart'), {
     const sale = orders.filter(o => o.category === 'sale').length;
     const sample = orders.filter(o => o.category === 'sample').length;
     const b2b = orders.filter(o => o.category === 'b2b').length;
+    const direct = orders.filter(o => o.category === 'direct').length;
     $('#oc-kpi-total').textContent = tot;
     $('#oc-kpi-sale').textContent = sale;
     $('#oc-kpi-sample').textContent = sample;
     $('#oc-kpi-b2b').textContent = b2b;
+    $('#oc-kpi-direct').textContent = direct;
     $('#oc-list-count').textContent = tot;
 
     // 사이즈/컬러 분포
@@ -2341,20 +2359,23 @@ new Chart(document.getElementById('burndownChart'), {
       return;
     }
     tbody.innerHTML = state.orders.map((o, idx) => {
+      const isDirect = o.category === 'direct';
       const catCls = `oc-cat-${o.category}`;
       const catLbl = CAT_LABELS[o.category] || o.category;
-      const channelLbl = o.channel ? (CHANNEL_LABELS[o.channel] || o.channel) : '—';
+      const channelLbl = isDirect ? `사유: ${o.reason || '—'}` : (o.channel ? (CHANNEL_LABELS[o.channel] || o.channel) : '—');
       const shoesText = (o.shoes || []).map(s => `${s.size}/${s.color[0]}`).join(', ');
       const accText = (o.accessories || []).map(a => ACC_LABELS[a] || a).join('·') || '—';
-      const phone = (o.phone || '').replace(/(\d{3})(\d{3,4})(\d{4})/, '$1-$2-$3');
-      const addressShort = (o.address || '') + (o.detail ? ' ' + o.detail : '');
+      const phone = isDirect ? '—' : (o.phone || '').replace(/(\d{3})(\d{3,4})(\d{4})/, '$1-$2-$3');
+      const addressShort = isDirect
+        ? '<span style="color:#0369a1; font-style:italic;">📍 직접 전달 (배송 X)</span>'
+        : (o.address || '') + (o.detail ? ' ' + o.detail : '');
       return `<tr>
         <td>${idx+1}</td>
         <td><span class="oc-cat-badge ${catCls}">${catLbl}</span></td>
         <td>${channelLbl}</td>
         <td><strong>${o.recipient || '—'}</strong></td>
         <td>${phone || '—'}</td>
-        <td title="${addressShort}">${addressShort.length > 28 ? addressShort.slice(0,28)+'…' : addressShort}</td>
+        <td title="${isDirect?'직접 전달':addressShort}">${isDirect ? addressShort : (addressShort.length > 28 ? addressShort.slice(0,28)+'…' : addressShort)}</td>
         <td class="num">${(o.shoes || []).length}</td>
         <td>${shoesText}</td>
         <td style="color:#6b7280; font-size:11px;">${accText}</td>
@@ -2375,22 +2396,35 @@ new Chart(document.getElementById('burndownChart'), {
 
   function renderAll() { renderList(); renderKPI(); }
 
-  // ── 분류 변경 시 채널 필드 토글 ──────────────
+  // ── 분류 변경 시 필드 토글 ──────────────
   function onCategoryChange() {
     const cat = ($('#oc-cat-group input:checked') || {}).value;
+    const isDirect = cat === 'direct';
+    // 채널: sale 시만
     $('#oc-channel-field').style.display = cat === 'sale' ? 'block' : 'none';
+    // 사유: direct 시만
+    $('#oc-reason-field').style.display = isDirect ? 'block' : 'none';
+    // 배송 정보 (휴대폰/우편번호/주소/상세주소): direct 시 숨김
+    $('#oc-phone-field').style.display = isDirect ? 'none' : 'block';
+    $('#oc-row-zip-address').style.display = isDirect ? 'none' : 'flex';
+    $('#oc-row-zip-address').style.gridTemplateColumns = isDirect ? '0' : '160px 1fr';
+    $('#oc-detail-field').style.display = isDirect ? 'none' : 'block';
+    // 받는 분 row: direct 시 1열만
+    $('#oc-row-recipient').style.gridTemplateColumns = isDirect ? '1fr' : '1fr 1fr';
   }
 
   // ── Form submit (주문 추가) ───────────────
   function addOrder(e) {
     e.preventDefault();
     const cat = ($('#oc-cat-group input:checked') || {}).value;
-    const channel = cat === 'sale' ? $('#oc-channel').value : '';
+    const isDirect = cat === 'direct';
+    const channel = cat === 'sale' ? $('#oc-channel').value : (isDirect ? 'direct' : '');
+    const reason = isDirect ? $('#oc-reason').value : '';
     const recipient = $('#oc-recipient').value.trim();
-    const phone = $('#oc-phone').value.trim().replace(/[^\d]/g,'');
-    const zip = $('#oc-zip').value.trim();
-    const address = $('#oc-address').value.trim();
-    const detail = $('#oc-detail').value.trim();
+    const phone = isDirect ? '' : $('#oc-phone').value.trim().replace(/[^\d]/g,'');
+    const zip = isDirect ? '' : $('#oc-zip').value.trim();
+    const address = isDirect ? '' : $('#oc-address').value.trim();
+    const detail = isDirect ? '' : $('#oc-detail').value.trim();
     const qty = parseInt($('#oc-qty').value) || 1;
     const shoes = $$('#oc-shoes-slots .oc-shoe-slot').map(slot => ({
       size: slot.querySelector('.oc-shoe-size').value,
@@ -2399,9 +2433,15 @@ new Chart(document.getElementById('burndownChart'), {
     const accessories = $$('input[name=acc]:checked').map(c => c.value);
     const memo = $('#oc-memo').value.trim();
 
-    if (!recipient || !phone || !address) {
-      alert('수령인 / 휴대폰 / 주소는 필수입니다.');
-      return;
+    // 검증 — 직접 전달은 수령인 + 사유만 필수
+    if (isDirect) {
+      if (!recipient) { alert('받으시는 분 (성명) 필수'); return; }
+      if (!reason) { alert('사유 선택 필수'); return; }
+    } else {
+      if (!recipient || !phone || !address) {
+        alert('수령인 / 휴대폰 / 주소는 필수입니다.');
+        return;
+      }
     }
     if (shoes.length !== qty) {
       alert('수량과 사이즈/컬러 슬롯 수가 일치하지 않습니다.');
@@ -2409,7 +2449,7 @@ new Chart(document.getElementById('burndownChart'), {
     }
 
     const order = {
-      id: uid(), category: cat, channel,
+      id: uid(), category: cat, channel, reason,
       recipient, phone, zip, address, detail,
       shoes, accessories, memo,
       createdAt: new Date().toISOString(),
@@ -2431,6 +2471,13 @@ new Chart(document.getElementById('burndownChart'), {
       alert('출고할 주문이 없습니다.');
       return;
     }
+    // 직접 전달 row는 제외 (택배 안 보냄)
+    const shippable = state.orders.filter(o => o.category !== 'direct');
+    const directCount = state.orders.length - shippable.length;
+    if (!shippable.length) {
+      alert(`택배 출고 대상이 없습니다.\n(직접 전달 ${directCount}건은 한진 양식 미포함)`);
+      return;
+    }
     if (typeof XLSX === 'undefined') {
       alert('SheetJS 로드 실패 — 인터넷 연결 확인');
       return;
@@ -2441,7 +2488,7 @@ new Chart(document.getElementById('burndownChart'), {
       ['받으시는 분','받으시는 분 전화','받는분담당자','받는분핸드폰','받는분우편번호','받는분총주소','수량','품목명','운임Type','지불조건','출고번호','특기사항','메모1','메모2','메모3','메모4']
     ];
     const dateTag = state.today;
-    state.orders.forEach((o, i) => {
+    shippable.forEach((o, i) => {
       const fullAddress = (o.address || '') + (o.detail ? ' ' + o.detail : '');
       const phone = o.phone || '';
       const itemSummary = (o.shoes || []).map(s => `${s.size}mm/${s.color}`).join(', ');
@@ -2477,9 +2524,12 @@ new Chart(document.getElementById('burndownChart'), {
     const filename = `다리마티_한진_${dateTag}.xlsx`;
     XLSX.writeFile(wb, filename);
 
-    // 출력 후 마킹 (옵션 — 향후 status 추적)
-    state.orders.forEach(o => o.status = 'exported');
+    // 출력 후 마킹 — 택배 대상만 exported
+    shippable.forEach(o => o.status = 'exported');
     save();
+    if (directCount > 0) {
+      setTimeout(() => alert(`✅ 한진 양식 ${shippable.length}건 다운로드 완료\n📍 직접 전달 ${directCount}건은 양식 미포함 (재고 카운트만 반영)`), 200);
+    }
   }
 
   function exportJSON() {
