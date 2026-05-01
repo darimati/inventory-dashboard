@@ -1076,6 +1076,15 @@ IF(OR(C2="킥스타터",
         </div>
       </div>
 
+      <div id="oc-export-result" hidden style="margin: 8px 14px 14px; padding: 14px 16px; border-radius: 10px; background: linear-gradient(180deg,#ecfdf5 0%,#fff 100%); border: 1px solid #6ee7b7;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <strong id="oc-export-result-title" style="font-size: 13px; color:#065f46;">✅ 한진 양식 다운로드 완료</strong>
+          <button id="oc-export-result-close" style="background:none; border:none; font-size:14px; color:#6b7280; cursor:pointer;">✕</button>
+        </div>
+        <div id="oc-export-result-summary" style="font-size:12px; color:#1f2937; margin-bottom:8px;"></div>
+        <div id="oc-export-result-merges"></div>
+      </div>
+
       <div class="oc-list-table-wrap">
         <table class="oc-list-table">
           <thead>
@@ -3055,12 +3064,10 @@ new Chart(document.getElementById('burndownChart'), {
       const cats = Array.from(new Set(group.map(o => CAT_LABELS[o.category] || '').filter(Boolean)));
       const memos = Array.from(new Set(group.map(o => o.memo || '').filter(Boolean)));
       const isMerged = group.length >= 2;
-      const mergeTag = isMerged ? `🔗 합포 ${group.length}건 — 송장 1개로 발송 ` : '';
-      const noteParts = [
-        mergeTag,
-        cats.join('+'),
-        memos.length ? '· ' + memos.join(' · ') : ''
-      ].filter(Boolean);
+      // 단순화: 메모1 = "합포 N건" 또는 첫 메모 / 특기사항 = 분류만
+      const memoNote = isMerged
+        ? `🔗 합포 ${group.length}건`
+        : (memos[0] || '');
       rows.push([
         head.recipient || '',         // 받으시는 분
         phone,                         // 받으시는 분 전화
@@ -3073,8 +3080,8 @@ new Chart(document.getElementById('burndownChart'), {
         '',                            // 운임Type
         '',                            // 지불조건
         `${dateTag}-${String(i+1).padStart(3,'0')}`,  // 출고번호
-        noteParts.join(' ').trim(),    // 특기사항 (합포 명시 + 분류 + 메모)
-        isMerged ? `합포 ${group.length}건` : '',  // 메모1: 합포 강조
+        cats.join('+'),                // 특기사항 — 분류만
+        memoNote,                      // 메모1 — 합포 또는 단일 메모
         '', '', ''
       ]);
     });
@@ -3093,21 +3100,43 @@ new Chart(document.getElementById('burndownChart'), {
     // 출력 후 마킹 — 택배 대상만 exported
     shippable.forEach(o => o.status = 'exported');
     save();
-    setTimeout(() => {
-      const boxCount = groups.length;
-      const lines = [`✅ 한진 양식 다운로드 완료 — 주문 ${shippable.length}건 → 박스 ${boxCount}개 (송장 ${boxCount}장)`];
-      if (mergedGroups.length > 0) {
-        lines.push('');
-        lines.push(`📦 합포 ${mergedGroups.length}묶음 — 같은 박스에 합쳐서 보내고 송장 1개만 부착하세요`);
-        mergedGroups.forEach(g => {
-          const cats = Array.from(new Set(g.map(o => CAT_LABELS[o.category] || ''))).join('+');
-          lines.push(`  • ${g[0].recipient} (${cats}) — ${g.length}건 합포`);
-        });
-      }
-      if (added > 0) lines.unshift(`📥 시트 오늘 대기열 ${added}건 자동 흡수됨`);
-      if (directCount > 0) lines.push(`📍 직접 전달 ${directCount}건 양식 미포함 (재고 카운트만 반영)`);
-      alert(lines.join('\n'));
-    }, 200);
+    showExportResult({
+      shippableCount: shippable.length,
+      boxCount: groups.length,
+      mergedGroups,
+      added,
+      directCount,
+    });
+    renderList();
+  }
+
+  // 다운로드 결과 시각 banner — alert 대신 화면에 표시
+  function showExportResult({ shippableCount, boxCount, mergedGroups, added, directCount }) {
+    const banner  = $('#oc-export-result');
+    const titleEl = $('#oc-export-result-title');
+    const sumEl   = $('#oc-export-result-summary');
+    const mergeEl = $('#oc-export-result-merges');
+    if (!banner) return;
+    titleEl.textContent = `✅ 한진 양식 다운로드 완료 — 주문 ${shippableCount}건 → 박스 ${boxCount}개 (송장 ${boxCount}장)`;
+    const sumLines = [];
+    if (added > 0)        sumLines.push(`📥 시트 오늘 대기열 ${added}건 자동 흡수됨`);
+    if (directCount > 0)  sumLines.push(`📍 직접 전달 ${directCount}건 양식 미포함 (재고 카운트만 반영)`);
+    sumEl.innerHTML = sumLines.map(l => `<div>${l}</div>`).join('');
+    if (mergedGroups.length > 0) {
+      const cards = mergedGroups.map(g => {
+        const cats = Array.from(new Set(g.map(o => CAT_LABELS[o.category] || ''))).join('+');
+        const shoes = g.flatMap(o => o.shoes||[]).map(s => `${s.size}/${s.color[0]}`).join(', ');
+        return `<div style="background:#fef9c3; border:1px solid #facc15; border-radius:6px; padding:8px 10px; margin-top:6px; font-size:11.5px;">
+          <div style="font-weight:700; color:#854d0e;">🔗 ${g[0].recipient} <span style="color:#92400e; font-weight:600;">— ${g.length}건 합포 (${cats})</span></div>
+          <div style="color:#6b7280; margin-top:2px;">신발 ${g.flatMap(o=>o.shoes||[]).length}켤레: ${shoes}</div>
+        </div>`;
+      }).join('');
+      mergeEl.innerHTML = `<div style="font-size:12px; font-weight:700; color:#854d0e; margin-top:4px;">📦 합포 ${mergedGroups.length}묶음 — 같은 박스에 넣고 송장 1개만 부착!</div>${cards}`;
+    } else {
+      mergeEl.innerHTML = '';
+    }
+    banner.hidden = false;
+    banner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 
   function exportJSON() {
@@ -3672,6 +3701,7 @@ new Chart(document.getElementById('burndownChart'), {
     $('#oc-export-json').addEventListener('click', exportJSON);
     $('#oc-import-json').addEventListener('click', importJSON);
     $('#oc-clear-all').addEventListener('click', clearAll);
+    $('#oc-export-result-close').addEventListener('click', () => { $('#oc-export-result').hidden = true; });
 
     // 자연어 입력 (NEW)
     $('#oc-parse-btn')?.addEventListener('click', onParseClick);
