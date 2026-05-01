@@ -306,16 +306,89 @@
   #page-order .oc-pending-hint {
     font-size: 11px; color: var(--oc-muted); margin-top: 4px;
   }
-  #page-order .oc-pending-list { display: flex; flex-direction: column; gap: 8px; }
+  #page-order .oc-pending-tools {
+    display: flex; align-items: center; gap: 12px; flex-shrink: 0;
+  }
+  #page-order .oc-pending-toggle {
+    font-size: 11px; color: var(--oc-muted); cursor: pointer;
+    display: flex; align-items: center; gap: 4px;
+  }
+  #page-order .oc-pending-toggle input { margin: 0; }
+  #page-order .oc-pending-summary {
+    display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px;
+    font-size: 11px;
+  }
+  #page-order .oc-pending-summary span {
+    background: #f3f4f6; padding: 3px 9px; border-radius: 5px;
+    color: var(--oc-muted); font-weight: 600;
+  }
+  #page-order .oc-pending-summary span strong { color: var(--oc-text); }
+  #page-order .oc-pending-summary .today { background: #fef3c7; color: #92400e; }
+  #page-order .oc-pending-list {
+    display: flex; flex-direction: column; gap: 6px;
+    max-height: 480px; overflow-y: auto;
+    padding-right: 4px;
+  }
   #page-order .oc-pending-empty {
     text-align: center; padding: 24px;
     color: var(--oc-dim); font-style: italic; font-size: 12px;
   }
   #page-order .oc-pending-row {
-    display: flex; justify-content: space-between; align-items: center;
+    display: grid; grid-template-columns: 1fr auto;
+    gap: 12px; align-items: center;
     padding: 10px 14px; background: #fafbfc;
     border: 1px solid var(--oc-border);
     border-radius: 8px;
+  }
+  #page-order .oc-pending-row.today {
+    background: #fffbeb; border-color: #fcd34d;
+  }
+  #page-order .oc-pending-row .oc-pending-meta {
+    display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+    font-size: 10.5px; color: var(--oc-muted); margin-bottom: 4px;
+  }
+  #page-order .oc-pending-row .oc-pending-date {
+    font-weight: 700; color: var(--oc-text);
+  }
+  #page-order .oc-pending-row .oc-pending-date.today-tag {
+    color: #b45309; background: #fef3c7;
+    padding: 1px 5px; border-radius: 3px;
+  }
+  #page-order .oc-pending-row .oc-pending-channel {
+    background: #e0e7ff; color: #3730a3;
+    padding: 1px 6px; border-radius: 3px; font-weight: 600;
+  }
+  #page-order .oc-pending-row .oc-pending-status {
+    color: var(--oc-dim); font-size: 10px;
+  }
+  #page-order .oc-pending-row .badge-package,
+  #page-order .oc-pending-row .badge-unit {
+    padding: 1px 6px; border-radius: 3px; font-weight: 700; font-size: 10px;
+  }
+  #page-order .oc-pending-row .badge-package { background: #dcfce7; color: #166534; }
+  #page-order .oc-pending-row .badge-unit { background: #f3e8ff; color: #6b21a8; }
+  #page-order .oc-pending-row .badge-acc { background: #fef3c7; color: #92400e; }
+  #page-order .oc-pending-row .oc-pending-main {
+    display: flex; flex-wrap: wrap; gap: 8px; align-items: baseline;
+    font-size: 12px; color: var(--oc-text);
+  }
+  #page-order .oc-pending-row .oc-pending-main strong { font-size: 13px; }
+  #page-order .oc-pending-row .oc-pending-sc { color: #1e40af; font-weight: 600; }
+  #page-order .oc-pending-row .oc-pending-acc {
+    color: var(--oc-muted); font-size: 11px;
+  }
+  #page-order .oc-pending-row .oc-pending-addr {
+    font-size: 11px; color: var(--oc-muted); margin-top: 3px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  #page-order .oc-pending-row .oc-pending-memo {
+    font-size: 11px; color: #92400e; margin-top: 3px;
+  }
+  #page-order .oc-pending-row .oc-pending-actions {
+    display: flex; gap: 6px; flex-direction: column;
+  }
+  #page-order .oc-pending-row button {
+    font-size: 11px; padding: 6px 10px; white-space: nowrap;
   }
 
   /* 그리드 */
@@ -863,19 +936,21 @@ IF(OR(C2="킥스타터",
     <div id="oc-parse-result" style="display:none; margin-top:10px;"></div>
   </div>
 
-  <!-- 슬랙 → 시트 출고 대기 (NEW · 슬랙 봇 자연어 → 시트 자동 추가 → 콘솔 fetch) -->
+  <!-- 시트 출고 대기 (발주_취합양식 탭 · status≠출고완료 · 도래한 출고일) -->
   <div class="oc-pending">
     <div class="oc-pending-head">
       <div>
-        <div class="oc-pending-title">📥 슬랙 출고 대기 <span id="oc-pending-count" class="oc-pending-badge">0</span></div>
-        <div class="oc-pending-hint">슬랙 봇이 시트에 추가한 미출고 건 · [✓ 확인] 누르면 좌측 누적 list로 이동</div>
+        <div class="oc-pending-title">📥 출고 대기 (시트 기준) <span id="oc-pending-count" class="oc-pending-badge">…</span></div>
+        <div class="oc-pending-hint">발주_취합양식 탭 · 도래한 출고일 + 상태 ≠ <code>3) 출고 완료</code> · [→ 폼] 누르면 좌측 폼 자동 채움 → 누적</div>
       </div>
-      <div>
+      <div class="oc-pending-tools">
+        <label class="oc-pending-toggle"><input type="checkbox" id="oc-pending-future"> 미래 일정 포함</label>
         <button id="oc-pending-refresh" class="oc-btn oc-btn-ghost">🔄 새로고침</button>
       </div>
     </div>
+    <div id="oc-pending-summary" class="oc-pending-summary"></div>
     <div id="oc-pending-list" class="oc-pending-list">
-      <div class="oc-pending-empty">슬랙 시트 연동 설정 후 자동 표시됩니다 (시트 URL/gid 매트 입력 대기)</div>
+      <div class="oc-pending-empty">자동 fetch 중…</div>
     </div>
   </div>
 
@@ -3154,27 +3229,55 @@ new Chart(document.getElementById('burndownChart'), {
   }
 
   let _pendingCache = [];
+  let _pendingFutureMode = false;
+
+  // gviz Date(YYYY,M,D) → JS Date  (Note: gviz month is 0-based)
+  function parseGvizDate(v) {
+    if (!v) return null;
+    const m = String(v).match(/Date\((\d+),(\d+),(\d+)/);
+    if (!m) return null;
+    return new Date(parseInt(m[1]), parseInt(m[2]), parseInt(m[3]));
+  }
+  function startOfToday() {
+    const d = new Date(); d.setHours(0,0,0,0); return d;
+  }
+
+  // 출고 대기 = 상태 ≠ "3) 출고 완료" AND 채널 있음 AND 수령인 있음
+  // (도래 필터는 future toggle로 별도 적용)
+  function isRowPending(g) {
+    const status = String(g(COL.status) || '').trim();
+    if (status === '3) 출고 완료') return false;
+    if (!String(g(COL.channel) || '').trim()) return false;
+    const recipient = String(g(COL.rcpName) || g(COL.receiver) || '').trim();
+    if (!recipient) return false;
+    const hasDate = g(COL.pack) || g(COL.ship);
+    if (!hasDate) return false;
+    return true;
+  }
 
   async function refreshPendingFromSheet() {
     const list = $('#oc-pending-list');
+    const summary = $('#oc-pending-summary');
     if (!list) return;
-    list.innerHTML = '<div class="oc-pending-empty">시트에서 가져오는 중...</div>';
+    list.innerHTML = '<div class="oc-pending-empty">시트에서 가져오는 중…</div>';
+    if (summary) summary.innerHTML = '';
 
     try {
       const res = await fetch(PENDING_URL + '&_=' + Date.now());
       const text = await res.text();
-      const m = text.match(/setResponse\((.*)\)\s*$/s);
+      // gviz는 ");" 또는 ")" 또는 ");\n"으로 끝남 — 모두 흡수
+      const m = text.match(/setResponse\(([\s\S]*)\)\s*;?\s*$/);
       if (!m) throw new Error('gviz 응답 파싱 실패');
       const json = JSON.parse(m[1]);
       const rows = json.table.rows || [];
 
-      const pending = [];
+      const today = startOfToday();
+      const all = [];
       for (const r of rows) {
         const c = r.c;
         const g = (i) => (c[i] && c[i].v != null) ? c[i].v : '';
-        if (!isPending(g)) continue;
+        if (!isRowPending(g)) continue;
         const recipient = String(g(COL.rcpName) || g(COL.receiver) || '').trim();
-        if (!recipient) continue;
 
         const acc = {
           hat:     parseFloat(g(COL.hat)     || 0) || 0,
@@ -3186,10 +3289,19 @@ new Chart(document.getElementById('burndownChart'), {
           sticker: parseFloat(g(COL.sticker) || 0) || 0,
         };
         const accCount = Object.values(acc).filter(v => v >= 1).length;
-        pending.push({
-          packDate: g(COL.pack),
-          shipDate: g(COL.ship),
+        const shoeQty = parseInt(g(COL.shoe) || 0) || 0;
+        const insoleQty = parseInt(g(COL.insole) || 0) || 0;
+        const dPack = parseGvizDate(g(COL.pack));
+        const dShip = parseGvizDate(g(COL.ship));
+        const isToday = dPack && dPack.getTime() === today.getTime();
+        const isPast  = dPack && dPack.getTime() < today.getTime();
+        const isFuture = dPack && dPack.getTime() > today.getTime();
+
+        all.push({
+          packDate: g(COL.pack), shipDate: g(COL.ship),
+          dPack, isToday, isPast, isFuture,
           channel: String(g(COL.channel)||'').trim(),
+          deliv: String(g(COL.deliv)||'').trim(),
           status: String(g(COL.status)||'').trim(),
           recipient,
           phone: g(COL.rcpPhone) || g(COL.mgrPhone) || '',
@@ -3197,28 +3309,61 @@ new Chart(document.getElementById('burndownChart'), {
           address: String(g(COL.addr)||'').trim(),
           color: String(g(COL.color)||'').trim(),
           size: String(g(COL.size)||'').replace(/\s+/g,'').replace('mm',''),
-          qty: parseInt(g(COL.shoe) || 1),
-          accessories: acc,
-          accCount,
+          shoeQty, insoleQty,
+          qty: shoeQty || insoleQty || 1,
+          accessories: acc, accCount,
           isPkg: accCount >= 5,
           memo: String(g(COL.memo)||'').trim(),
           item: String(g(COL.item)||'').trim(),
         });
       }
-      _pendingCache = pending;
-      $('#oc-pending-count').textContent = pending.length;
 
-      if (!pending.length) {
-        list.innerHTML = '<div class="oc-pending-empty" style="color:#15803d;">✓ 출고 대기 없음 — 모든 row 처리 완료</div>';
+      // 도래(today+이전) vs 미래
+      const due = all.filter(p => p.isToday || p.isPast || !p.dPack);
+      const future = all.filter(p => p.isFuture);
+      const visible = _pendingFutureMode ? all : due;
+
+      // 정렬: today 최우선, 그 다음 날짜 desc
+      visible.sort((a,b) => {
+        if (a.isToday && !b.isToday) return -1;
+        if (b.isToday && !a.isToday) return 1;
+        const ta = a.dPack ? a.dPack.getTime() : 0;
+        const tb = b.dPack ? b.dPack.getTime() : 0;
+        return tb - ta;
+      });
+
+      _pendingCache = visible;
+      $('#oc-pending-count').textContent = visible.length;
+
+      // 요약
+      const todayCount = all.filter(p=>p.isToday).length;
+      const pastCount = all.filter(p=>p.isPast).length;
+      const futureCount = future.length;
+      const pkgCount = visible.filter(p=>p.isPkg).length;
+      const unitCount = visible.length - pkgCount;
+      if (summary) {
+        summary.innerHTML = `
+          <span class="today">오늘 <strong>${todayCount}</strong></span>
+          <span>누적 <strong>${pastCount}</strong></span>
+          <span>미래 <strong>${futureCount}</strong></span>
+          <span>풀세트 <strong>${pkgCount}</strong> · 단품 <strong>${unitCount}</strong></span>
+        `;
+      }
+
+      if (!visible.length) {
+        list.innerHTML = '<div class="oc-pending-empty" style="color:#15803d;">✓ 도래한 출고 대기 없음</div>';
         return;
       }
 
       list.innerHTML = '';
-      pending.forEach((p, idx) => {
+      visible.forEach((p, idx) => {
         const compBadge = p.isPkg
           ? '<span class="badge-package">풀세트</span>'
-          : '<span class="badge-unit">단품</span>';
+          : (p.shoeQty ? '<span class="badge-unit">단품</span>' : '<span class="badge-acc">부자재/A/S</span>');
         const sizeNum = (p.size.match(/(\d+)/) || [])[1] || '';
+        const colorStr = p.color.includes('베이지') ? '베이지'
+                       : p.color.includes('그레이') ? '그레이'
+                       : (p.color || '?');
         const accLabels = [];
         if (p.accessories.hat>=1) accLabels.push('모자');
         if (p.accessories.bag>=1) accLabels.push('슈백');
@@ -3227,29 +3372,34 @@ new Chart(document.getElementById('burndownChart'), {
         if (p.accessories.flask>=1) accLabels.push('플라스크');
         if (p.accessories.lace>=1) accLabels.push('슈레이스');
         if (p.accessories.sticker>=1) accLabels.push('스티커');
-        const accStr = p.isPkg ? '풀세트(7종)' : (accLabels.length ? accLabels.join('·') : '없음');
+        if (p.insoleQty) accLabels.push(`깔창×${p.insoleQty}`);
+        const accStr = p.isPkg ? '풀세트(7종)' : (accLabels.length ? accLabels.join('·') : '—');
+        const dateLabel = p.isToday
+          ? `<span class="oc-pending-date today-tag">${fmtDateShort(p.packDate)} 오늘</span>`
+          : `<span class="oc-pending-date">${fmtDateShort(p.packDate)}</span>`;
         const card = document.createElement('div');
-        card.className = 'oc-pending-row';
+        card.className = 'oc-pending-row' + (p.isToday ? ' today' : '');
         card.innerHTML = `
           <div class="oc-pending-info">
             <div class="oc-pending-meta">
-              <span class="oc-pending-date">${fmtDateShort(p.packDate)}</span>
-              <span class="oc-pending-channel">${p.channel || '(채널?)'}</span>
+              ${dateLabel}
+              <span class="oc-pending-channel">${p.channel}</span>
+              <span style="color:#6b7280;">${p.deliv || ''}</span>
               ${compBadge}
-              <span class="oc-pending-status">${p.status || '대기'}</span>
+              <span class="oc-pending-status">${p.status || '(빈 상태)'}</span>
             </div>
             <div class="oc-pending-main">
               <strong>${p.recipient}</strong>
               <span style="color:#6b7280;">${fmtPhone(p.phone)}</span>
-              <span class="oc-pending-sc">${sizeNum||'?'}mm · ${p.color.includes('베이지')?'베이지':(p.color.includes('그레이')?'그레이':p.color)}</span>
+              <span class="oc-pending-sc">${sizeNum?sizeNum+'mm':''} ${colorStr}</span>
               ${p.qty > 1 ? `<span style="color:#ca8a04; font-weight:700;">×${p.qty}</span>` : ''}
               <span class="oc-pending-acc">${accStr}</span>
             </div>
-            <div class="oc-pending-addr">${p.address || '(주소 없음)'}</div>
+            ${p.address ? `<div class="oc-pending-addr">${p.address}</div>` : ''}
             ${p.memo ? `<div class="oc-pending-memo">📝 ${p.memo}</div>` : ''}
           </div>
           <div class="oc-pending-actions">
-            <button class="oc-btn oc-btn-primary oc-pending-import" data-idx="${idx}">→ 폼 채우기</button>
+            <button class="oc-btn oc-btn-primary oc-pending-import" data-idx="${idx}">→ 폼</button>
           </div>
         `;
         list.appendChild(card);
@@ -3269,15 +3419,19 @@ new Chart(document.getElementById('burndownChart'), {
 
   function importPendingToForm(p) {
     if (!p) return;
-    // 분류 추론
+    // 분류 추론 (시트 채널 + 배송방법)
     let category = 'sale';
     let channel = '';
-    if (p.channel === '샘플') category = 'sample';
-    else if (p.channel === '마야크루') category = 'b2b';
-    else if (p.channel === '카카오메이커스') { category='sale'; channel='makers'; }
-    else if (p.channel === '네이버') { category='sale'; channel='naver'; }
-    else if (p.channel === '카카오톡스토어') { category='sale'; channel='talkdeal'; }
-    else if (p.channel === '킥스타터') { category='sale'; channel='kickstarter'; }
+    const ch = p.channel, dv = p.deliv;
+    if (ch === '증정' || ch === '샘플') {
+      // 증정 + 직접전달 → 직접 전달 / 그 외 → 샘플
+      category = (dv === '직접전달' || /직접/.test(dv)) ? 'direct' : 'sample';
+    } else if (ch === '비투비' || ch === 'B2B' || ch === '마야크루') {
+      category = 'b2b';
+    } else if (ch === '카카오메이커스' || ch === '메이커스') { category='sale'; channel='makers'; }
+    else if (ch === '네이버') { category='sale'; channel='naver'; }
+    else if (ch === '카카오톡스토어' || ch === '톡스토어' || ch === '톡딜') { category='sale'; channel='talkdeal'; }
+    else if (ch === '킥스타터') { category='sale'; channel='kickstarter'; }
 
     const radio = document.querySelector(`#oc-cat-group input[value="${category}"]`);
     if (radio) { radio.checked = true; onCategoryChange(); }
@@ -3380,8 +3534,14 @@ new Chart(document.getElementById('burndownChart'), {
       }
     });
 
-    // 슬랙 출고 대기 새로고침 (placeholder)
+    // 출고 대기 — 새로고침 + 미래 toggle + 자동 fetch
     $('#oc-pending-refresh')?.addEventListener('click', refreshPendingFromSheet);
+    $('#oc-pending-future')?.addEventListener('change', e => {
+      _pendingFutureMode = e.target.checked;
+      refreshPendingFromSheet();
+    });
+    // 콘솔 탭이 활성화될 때 fetch (탭 전환 hook가 없는 경우 페이지 로드 즉시도 trigger)
+    refreshPendingFromSheet();
   }
 
   // DOM 준비 후 init
