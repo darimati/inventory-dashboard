@@ -1094,7 +1094,7 @@ IF(OR(C2="킥스타터",
             </tr>
           </thead>
           <tbody id="oc-list-body">
-            <tr class="oc-empty"><td colspan="11">아직 추가된 주문이 없습니다. 좌측 폼에서 첫 주문을 추가하세요.</td></tr>
+            <tr class="oc-empty"><td colspan="11">오늘 컨펌할 출고가 없습니다. 우측 [📥 출고 대기] panel에서 [→ 폼]을 눌러 시트 row를 가져오세요.</td></tr>
           </tbody>
         </table>
       </div>
@@ -2779,7 +2779,7 @@ new Chart(document.getElementById('burndownChart'), {
   function renderList() {
     const tbody = $('#oc-list-body');
     if (!state.orders.length) {
-      tbody.innerHTML = `<tr class="oc-empty"><td colspan="11">아직 추가된 주문이 없습니다. 좌측 폼에서 첫 주문을 추가하세요.</td></tr>`;
+      tbody.innerHTML = `<tr class="oc-empty"><td colspan="11">오늘 컨펌할 출고가 없습니다. 우측 [📥 출고 대기] panel에서 [→ 폼]을 눌러 시트 row를 가져오세요.</td></tr>`;
       return;
     }
     tbody.innerHTML = state.orders.map((o, idx) => {
