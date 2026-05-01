@@ -207,13 +207,23 @@
     font-size: 13px; font-weight: 700; color: #1e40af;
   }
   #page-order .oc-natural-hint {
-    font-size: 11px; color: var(--oc-muted); margin-top: 4px;
+    font-size: 11px; color: var(--oc-muted); margin-top: 6px;
+    line-height: 1.7;
   }
   #page-order .oc-natural-hint code {
     background: rgba(255,255,255,0.7); padding: 2px 6px;
     border-radius: 4px; color: #1e40af;
     font-family: 'SF Mono', 'Menlo', monospace; font-size: 10.5px;
   }
+  #page-order .oc-natural-hint .oc-cat-tag {
+    display: inline-block; padding: 1px 6px; border-radius: 3px;
+    font-size: 10px; font-weight: 700; margin-right: 4px;
+    vertical-align: middle;
+  }
+  #page-order .oc-natural-hint .oc-cat-tag.sale { background: #dcfce7; color: #166534; }
+  #page-order .oc-natural-hint .oc-cat-tag.sample { background: #f3e8ff; color: #6b21a8; }
+  #page-order .oc-natural-hint .oc-cat-tag.b2b { background: #ede9fe; color: #5b21b6; }
+  #page-order .oc-natural-hint .oc-cat-tag.direct { background: #fef3c7; color: #92400e; }
   #page-order .oc-natural-actions {
     display: flex; gap: 8px; flex-shrink: 0;
   }
@@ -836,14 +846,20 @@ IF(OR(C2="킥스타터",
     <div class="oc-natural-head">
       <div>
         <div class="oc-natural-title">💬 자연어 입력 — 카톡·메시지 그대로 붙여넣기</div>
-        <div class="oc-natural-hint">예: <code>황현욱 010-1234-5678 서울 마포구 월드컵로 280mm 그레이 풀세트</code></div>
+        <div class="oc-natural-hint">
+          분류 키워드를 함께 적으면 자동 라우팅 (없으면 실판매로 분류 + 채널 부족 표시)<br>
+          <span class="oc-cat-tag sale">실판매</span><code>네이버 홍길동 010-1234-5678 서울 마포구 월드컵로 280 그레이 풀세트</code><br>
+          <span class="oc-cat-tag sample">샘플</span><code>샘플 시딩 @runner_kim 250 베이지 1켤레 풀세트</code><br>
+          <span class="oc-cat-tag b2b">B2B</span><code>B2B 마야크루 30켤레 220×3 / 250×10 / 270×17 단품</code><br>
+          <span class="oc-cat-tag direct">직접 전달</span><code>직접 전달 지인 형 280 그레이 1켤레 (선물)</code>
+        </div>
       </div>
       <div class="oc-natural-actions">
         <button id="oc-parse-btn" class="oc-btn oc-btn-primary">🤖 자동 분류 + 폼 채우기</button>
         <button id="oc-natural-clear" class="oc-btn oc-btn-ghost">초기화</button>
       </div>
     </div>
-    <textarea id="oc-natural-text" rows="3" placeholder="여기에 카톡 메시지나 주문 내용 그대로 던져주세요. 휴대폰·주소·사이즈·컬러·부자재·채널 등 자동 추출됩니다."></textarea>
+    <textarea id="oc-natural-text" rows="3" placeholder="카톡 메시지/주문 내용 그대로 paste — 맨 앞에 분류 키워드 (실판매·네이버/메이커스/톡딜/킥스타터 · 샘플·시딩 · B2B·마야크루 · 직접 전달·지인) 붙여 던지면 자동 라우팅."></textarea>
     <div id="oc-parse-result" style="display:none; margin-top:10px;"></div>
   </div>
 
@@ -3095,11 +3111,212 @@ new Chart(document.getElementById('burndownChart'), {
     }
   }
 
-  // ── 슬랙 출고 대기 (placeholder — 시트 정보 받으면 fetch 활성) ──
-  // const SLACK_PENDING_SHEET_URL = "https://docs.google.com/...";  // 매트 입력 후 활성
-  function refreshPendingFromSheet() {
-    // TODO: 매트가 시트 URL/gid 알려주면 gviz fetch + render
-    // 현재 placeholder — 변동 없음
+  // ── 시트 출고 대기 fetch (발주_취합양식 탭) ──
+  const PENDING_SHEET_ID = '1ibroQV42xuuvWg4P1kvaCw9RT_JxO9L-6lXVAgNjOhA';
+  const PENDING_SHEET_GID = '890805647';
+  const PENDING_URL = `https://docs.google.com/spreadsheets/d/${PENDING_SHEET_ID}/gviz/tq?tqx=out:json&gid=${PENDING_SHEET_GID}`;
+
+  // 컬럼 인덱스 (0-base) — 매트 시트 구조 기준
+  const COL = {
+    pack:0, ship:1, channel:2, deliv:3, status:4, invoice:5, receiver:6, memo:7,
+    color:8, size:9, shoe:10, insole:11, lace:12, magazine:13, sticker:14,
+    hat:15, postcard:16, letter:17, towel:18, belt:19, flask:20, bag:21,
+    rcpName:22, rcpPhone:23, mgr:24, mgrPhone:25, zip:26, addr:27,
+    qty:28, item:29, freight:30, payTerm:31, exitNo:32, special:33,
+    m1:34, m2:35, m3:36, m4:37
+  };
+  const ACC_KEYS_FROM_SHEET = {
+    hat:'hat', bag:'shoebag', towel:'towel', belt:'belt',
+    flask:'flask', lace:'lace', sticker:'sticker'
+  };
+
+  // 출고 대기 = E열(상태) ≠ "3) 출고 완료"  AND  K열(신발) ≥ 1
+  function isPending(g) {
+    const status = String(g(COL.status) || '').trim();
+    if (status === '3) 출고 완료') return false;
+    const shoeQty = parseInt(g(COL.shoe) || 0);
+    if (!shoeQty) return false;
+    return true;
+  }
+
+  function fmtDateShort(d) {
+    if (!d) return '?';
+    const m = String(d).match(/Date\((\d+),(\d+),(\d+)\)/);
+    if (m) return `${parseInt(m[2])+1}/${m[3]}`;
+    return String(d);
+  }
+  function fmtPhone(p) {
+    if (!p) return '';
+    const s = String(p).replace(/[^\d]/g, '');
+    if (s.length === 11) return s.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3');
+    if (s.length === 10) return s.replace(/(\d{3})(\d{3,4})(\d{4})/, '$1-$2-$3');
+    return p;
+  }
+
+  let _pendingCache = [];
+
+  async function refreshPendingFromSheet() {
+    const list = $('#oc-pending-list');
+    if (!list) return;
+    list.innerHTML = '<div class="oc-pending-empty">시트에서 가져오는 중...</div>';
+
+    try {
+      const res = await fetch(PENDING_URL + '&_=' + Date.now());
+      const text = await res.text();
+      const m = text.match(/setResponse\((.*)\)\s*$/s);
+      if (!m) throw new Error('gviz 응답 파싱 실패');
+      const json = JSON.parse(m[1]);
+      const rows = json.table.rows || [];
+
+      const pending = [];
+      for (const r of rows) {
+        const c = r.c;
+        const g = (i) => (c[i] && c[i].v != null) ? c[i].v : '';
+        if (!isPending(g)) continue;
+        const recipient = String(g(COL.rcpName) || g(COL.receiver) || '').trim();
+        if (!recipient) continue;
+
+        const acc = {
+          hat:     parseFloat(g(COL.hat)     || 0) || 0,
+          bag:     parseFloat(g(COL.bag)     || 0) || 0,
+          towel:   parseFloat(g(COL.towel)   || 0) || 0,
+          belt:    parseFloat(g(COL.belt)    || 0) || 0,
+          flask:   parseFloat(g(COL.flask)   || 0) || 0,
+          lace:    parseFloat(g(COL.lace)    || 0) || 0,
+          sticker: parseFloat(g(COL.sticker) || 0) || 0,
+        };
+        const accCount = Object.values(acc).filter(v => v >= 1).length;
+        pending.push({
+          packDate: g(COL.pack),
+          shipDate: g(COL.ship),
+          channel: String(g(COL.channel)||'').trim(),
+          status: String(g(COL.status)||'').trim(),
+          recipient,
+          phone: g(COL.rcpPhone) || g(COL.mgrPhone) || '',
+          zip: String(g(COL.zip)||'').padStart(5,'0').slice(-5),
+          address: String(g(COL.addr)||'').trim(),
+          color: String(g(COL.color)||'').trim(),
+          size: String(g(COL.size)||'').replace(/\s+/g,'').replace('mm',''),
+          qty: parseInt(g(COL.shoe) || 1),
+          accessories: acc,
+          accCount,
+          isPkg: accCount >= 5,
+          memo: String(g(COL.memo)||'').trim(),
+          item: String(g(COL.item)||'').trim(),
+        });
+      }
+      _pendingCache = pending;
+      $('#oc-pending-count').textContent = pending.length;
+
+      if (!pending.length) {
+        list.innerHTML = '<div class="oc-pending-empty" style="color:#15803d;">✓ 출고 대기 없음 — 모든 row 처리 완료</div>';
+        return;
+      }
+
+      list.innerHTML = '';
+      pending.forEach((p, idx) => {
+        const compBadge = p.isPkg
+          ? '<span class="badge-package">풀세트</span>'
+          : '<span class="badge-unit">단품</span>';
+        const sizeNum = (p.size.match(/(\d+)/) || [])[1] || '';
+        const accLabels = [];
+        if (p.accessories.hat>=1) accLabels.push('모자');
+        if (p.accessories.bag>=1) accLabels.push('슈백');
+        if (p.accessories.towel>=1) accLabels.push('타올');
+        if (p.accessories.belt>=1) accLabels.push('벨트');
+        if (p.accessories.flask>=1) accLabels.push('플라스크');
+        if (p.accessories.lace>=1) accLabels.push('슈레이스');
+        if (p.accessories.sticker>=1) accLabels.push('스티커');
+        const accStr = p.isPkg ? '풀세트(7종)' : (accLabels.length ? accLabels.join('·') : '없음');
+        const card = document.createElement('div');
+        card.className = 'oc-pending-row';
+        card.innerHTML = `
+          <div class="oc-pending-info">
+            <div class="oc-pending-meta">
+              <span class="oc-pending-date">${fmtDateShort(p.packDate)}</span>
+              <span class="oc-pending-channel">${p.channel || '(채널?)'}</span>
+              ${compBadge}
+              <span class="oc-pending-status">${p.status || '대기'}</span>
+            </div>
+            <div class="oc-pending-main">
+              <strong>${p.recipient}</strong>
+              <span style="color:#6b7280;">${fmtPhone(p.phone)}</span>
+              <span class="oc-pending-sc">${sizeNum||'?'}mm · ${p.color.includes('베이지')?'베이지':(p.color.includes('그레이')?'그레이':p.color)}</span>
+              ${p.qty > 1 ? `<span style="color:#ca8a04; font-weight:700;">×${p.qty}</span>` : ''}
+              <span class="oc-pending-acc">${accStr}</span>
+            </div>
+            <div class="oc-pending-addr">${p.address || '(주소 없음)'}</div>
+            ${p.memo ? `<div class="oc-pending-memo">📝 ${p.memo}</div>` : ''}
+          </div>
+          <div class="oc-pending-actions">
+            <button class="oc-btn oc-btn-primary oc-pending-import" data-idx="${idx}">→ 폼 채우기</button>
+          </div>
+        `;
+        list.appendChild(card);
+      });
+
+      list.querySelectorAll('.oc-pending-import').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const idx = parseInt(btn.dataset.idx);
+          importPendingToForm(_pendingCache[idx]);
+        });
+      });
+    } catch (e) {
+      console.warn('pending fetch fail', e);
+      list.innerHTML = `<div class="oc-pending-empty" style="color:#dc2626;">시트 fetch 실패: ${e.message}</div>`;
+    }
+  }
+
+  function importPendingToForm(p) {
+    if (!p) return;
+    // 분류 추론
+    let category = 'sale';
+    let channel = '';
+    if (p.channel === '샘플') category = 'sample';
+    else if (p.channel === '마야크루') category = 'b2b';
+    else if (p.channel === '카카오메이커스') { category='sale'; channel='makers'; }
+    else if (p.channel === '네이버') { category='sale'; channel='naver'; }
+    else if (p.channel === '카카오톡스토어') { category='sale'; channel='talkdeal'; }
+    else if (p.channel === '킥스타터') { category='sale'; channel='kickstarter'; }
+
+    const radio = document.querySelector(`#oc-cat-group input[value="${category}"]`);
+    if (radio) { radio.checked = true; onCategoryChange(); }
+    if (channel) { const ch = $('#oc-channel'); if (ch) ch.value = channel; }
+
+    if (p.recipient) $('#oc-recipient').value = p.recipient;
+    if (p.phone)     $('#oc-phone').value = fmtPhone(p.phone);
+    if (p.zip)       $('#oc-zip').value = p.zip;
+    if (p.address)   $('#oc-address').value = p.address;
+
+    $('#oc-qty').value = p.qty || 1;
+    renderShoeSlots(p.qty || 1);
+
+    const sizeNum = (p.size.match(/(\d+)/) || [])[1] || '270';
+    const colorStr = p.color.includes('베이지') ? '베이지' : '그레이';
+    requestAnimationFrame(() => {
+      $$('#oc-shoes-slots .oc-shoe-slot').forEach(slot => {
+        slot.querySelector('.oc-shoe-size').value = sizeNum;
+        slot.querySelector('.oc-shoe-color').value = colorStr;
+      });
+    });
+
+    // 부자재 매핑
+    const accMatch = {
+      hat:p.accessories.hat>=1, shoebag:p.accessories.bag>=1, towel:p.accessories.towel>=1,
+      belt:p.accessories.belt>=1, flask:p.accessories.flask>=1, lace:p.accessories.lace>=1,
+      sticker:p.accessories.sticker>=1
+    };
+    $$('input[name=acc]').forEach(c => { c.checked = !!accMatch[c.value]; });
+
+    if (p.memo) $('#oc-memo').value = p.memo;
+
+    $('#oc-recipient').scrollIntoView({behavior:'smooth', block:'center'});
+
+    const result = $('#oc-parse-result');
+    if (result) {
+      result.style.display = 'block';
+      result.innerHTML = `<div class="oc-parse-ok">📥 시트에서 [${p.recipient}] 데이터 폼에 채움 — 검토 후 [+ 추가] 클릭</div>`;
+    }
   }
 
   // ── 초기화 ────────────────────────────────
