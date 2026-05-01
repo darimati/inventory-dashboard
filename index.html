@@ -730,6 +730,46 @@
   #page-settlement .terms-grid input::placeholder {
     color: #cbd5e1; font-size: 11px;
   }
+  /* 저장 버튼 + dirty 표시 (변경 시에만 컨펌, 즉시 반영 X) */
+  #page-settlement .terms-card.dirty {
+    border-color: #f59e0b;
+    box-shadow: 0 0 0 3px rgba(245,158,11,.12);
+    background: #fffbeb;
+  }
+  #page-settlement .terms-dirty-flag {
+    display: none; margin-left: 8px;
+    background: #fef3c7; color: #92400e;
+    padding: 2px 7px; border-radius: 3px;
+    font-size: 10px; font-weight: 700; letter-spacing: 0;
+    text-transform: none;
+  }
+  #page-settlement .terms-card.dirty .terms-dirty-flag { display: inline-block; }
+  #page-settlement .terms-actions {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 8px; margin-top: 12px; padding-top: 10px;
+    border-top: 1px dashed var(--border2);
+  }
+  #page-settlement .terms-actions .terms-meta {
+    font-size: 10.5px; color: var(--muted); letter-spacing: 0;
+  }
+  #page-settlement .terms-actions .terms-btns { display: flex; gap: 6px; }
+  #page-settlement .terms-actions button {
+    padding: 6px 12px; border-radius: 6px; font-size: 11.5px;
+    font-weight: 700; cursor: pointer; border: 1px solid; font-family: inherit;
+    letter-spacing: 0;
+  }
+  #page-settlement .btn-save {
+    background: #2563eb; color: #fff; border-color: #2563eb;
+  }
+  #page-settlement .btn-save:hover:not(:disabled) { background: #1d4ed8; }
+  #page-settlement .btn-cancel {
+    background: #fff; color: #6b7280; border-color: var(--border2);
+  }
+  #page-settlement .btn-cancel:hover:not(:disabled) { background: #f3f4f6; }
+  #page-settlement .terms-actions button:disabled {
+    background: #f3f4f6; color: #cbd5e1; border-color: #e5e7eb;
+    cursor: not-allowed;
+  }
 
   /* 컴포지션 뱃지 */
   .badge-package, .badge-unit {
@@ -1386,13 +1426,9 @@ IF(OR(C2="킥스타터",
     <div class="card">
       <div class="card-title">
         거래조건 편집
-        <span style="color:#555; font-size:10px; margin-left:6px;">변경 즉시 정산표 갱신 · 매트 보정값은 localStorage 저장 · 시트 부자재 5+ 자동 풀세트 인식</span>
+        <span style="color:#555; font-size:10px; margin-left:6px;">각 판매처 카드 [💾 저장] 클릭 시에만 정산표·KPI에 반영됩니다 · 적용 시작일 기록 가능 (기간별 거래조건 변동 대응)</span>
       </div>
       <div id="terms-editor" style="margin-top:10px;"></div>
-      <div style="display:flex; gap:8px; margin-top:14px; padding-top:14px; border-top:1px solid var(--border2);">
-        <button id="terms-reset-btn" style="padding:8px 14px; background:#fff; border:1px solid #fecaca; color:#dc2626; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer;">🔄 기본값 복원 (보정값 삭제)</button>
-        <span style="color:#888; font-size:11px; align-self:center;">단가/수수료/배송 변경 시 자동 저장 · 켤레 보정란 비우면 시트 자동값 사용</span>
-      </div>
     </div>
   </div>
 
@@ -2478,20 +2514,63 @@ function renderSettlementTable() {
 }
 
 // === 거래조건 인라인 편집 카드 렌더 ===
+// 입력은 pendingTerms / pendingOverride에 임시 저장 — 카드 [💾 저장] 클릭 시에만
+// SETTLEMENT_TERMS / BREAKDOWN_OVERRIDE에 commit + 정산표/KPI 갱신.
+const pendingTerms = {};
+const pendingOverride = {};
+
+function isCardDirty(ch) {
+  return Boolean(pendingTerms[ch]) || Boolean(pendingOverride[ch]);
+}
+
+function commitTerms(ch) {
+  if (pendingTerms[ch]) {
+    Object.assign(SETTLEMENT_TERMS[ch], pendingTerms[ch]);
+    saveTerms(SETTLEMENT_TERMS);
+    delete pendingTerms[ch];
+  }
+  if (pendingOverride[ch]) {
+    if (!BREAKDOWN_OVERRIDE[ch]) BREAKDOWN_OVERRIDE[ch] = {};
+    Object.entries(pendingOverride[ch]).forEach(([k, v]) => {
+      if (v === null || v === '' || v === undefined) delete BREAKDOWN_OVERRIDE[ch][k];
+      else BREAKDOWN_OVERRIDE[ch][k] = v;
+    });
+    if (Object.keys(BREAKDOWN_OVERRIDE[ch]).length === 0) delete BREAKDOWN_OVERRIDE[ch];
+    saveBreakdownOverride(BREAKDOWN_OVERRIDE);
+    delete pendingOverride[ch];
+  }
+  renderSettlementTable();
+  renderTermsEditor();
+}
+
+function discardTerms(ch) {
+  delete pendingTerms[ch];
+  delete pendingOverride[ch];
+  renderTermsEditor();
+}
+
 function renderTermsEditor() {
   const wrap = document.getElementById('terms-editor');
   if (!wrap) return;
   wrap.innerHTML = '';
   Object.keys(SETTLEMENT_TERMS_DEFAULTS).forEach(ch => {
-    const t = SETTLEMENT_TERMS[ch];
+    // draft 값 = 저장된 값 + 임시 변경 (있으면 우선)
+    const t = Object.assign({}, SETTLEMENT_TERMS[ch], pendingTerms[ch] || {});
+    const ovrSaved = BREAKDOWN_OVERRIDE[ch] || {};
+    const ovrPending = pendingOverride[ch] || {};
+    const ovrDraft = Object.assign({}, ovrSaved, ovrPending);
     const br = effectiveBreakdown(ch);
     const auto = br.autoSource;
+    const dirty = isCardDirty(ch);
     const card = document.createElement('div');
-    card.className = 'terms-card' + (br.isOverride ? ' has-override' : '');
+    card.className = 'terms-card' + (br.isOverride ? ' has-override' : '') + (dirty ? ' dirty' : '');
+    card.dataset.ch = ch;
+    const eff = t.effectiveFrom || '';
+    const metaText = eff ? `시행: ${eff}` : '적용 시작일 미설정';
     card.innerHTML = `
       <div class="terms-card-head">
-        <div class="terms-ch">${ch}</div>
-        <div class="terms-auto">시트: 풀 ${auto.pkg} / 단 ${auto.unit}${br.isOverride ? ' <span style="color:#facc15;">→ 보정 적용 ✏️</span>' : ''}</div>
+        <div class="terms-ch">${ch}<span class="terms-dirty-flag">변경됨 (저장 필요)</span></div>
+        <div class="terms-auto">시트: 풀 ${auto.pkg} / 단 ${auto.unit}${br.isOverride ? ' <span style="color:#b45309;">→ 보정 적용 ✏️</span>' : ''}</div>
       </div>
       <div class="terms-grid">
         <label>풀세트 단가
@@ -2501,7 +2580,7 @@ function renderTermsEditor() {
           <input type="number" data-ch="${ch}" data-f="unitPrice" value="${t.unitPrice ?? ''}" placeholder="(공란=풀세트가)" step="1000">
         </label>
         <label>수수료
-          <input type="number" data-ch="${ch}" data-f="feePct" value="${(t.feePct*100).toFixed(1)}" step="0.1"> %
+          <input type="number" data-ch="${ch}" data-f="feePct" value="${((t.feePct||0)*100).toFixed(1)}" step="0.1"> %
         </label>
         <label>배송비
           <input type="number" data-ch="${ch}" data-f="shippingPerUnit" value="${t.shippingPerUnit ?? 0}" step="100"> 원/건
@@ -2513,67 +2592,75 @@ function renderTermsEditor() {
           </select>
         </label>
         <label>켤레 보정 (풀세트)
-          <input type="number" data-ch="${ch}" data-f="ovrPkg" value="${BREAKDOWN_OVERRIDE[ch]?.pkg ?? ''}" placeholder="시트=${auto.pkg}" min="0">
+          <input type="number" data-ch="${ch}" data-f="ovrPkg" value="${ovrDraft.pkg ?? ''}" placeholder="시트=${auto.pkg}" min="0">
         </label>
         <label>켤레 보정 (단품)
-          <input type="number" data-ch="${ch}" data-f="ovrUnit" value="${BREAKDOWN_OVERRIDE[ch]?.unit ?? ''}" placeholder="시트=${auto.unit}" min="0">
+          <input type="number" data-ch="${ch}" data-f="ovrUnit" value="${ovrDraft.unit ?? ''}" placeholder="시트=${auto.unit}" min="0">
         </label>
         <label class="terms-note">메모
           <input type="text" data-ch="${ch}" data-f="note" value="${t.note || ''}">
         </label>
+        <label class="terms-note">적용 시작일 (이 거래조건이 시행되는 날)
+          <input type="date" data-ch="${ch}" data-f="effectiveFrom" value="${eff}">
+        </label>
+      </div>
+      <div class="terms-actions">
+        <span class="terms-meta">${metaText}</span>
+        <span class="terms-btns">
+          <button type="button" class="btn-cancel" ${dirty ? '' : 'disabled'}>↩ 변경 취소</button>
+          <button type="button" class="btn-save" ${dirty ? '' : 'disabled'}>💾 저장</button>
+        </span>
       </div>
     `;
     wrap.appendChild(card);
   });
 
-  // input 변경 핸들러 → state 갱신 + 즉시 재계산
+  // input/select 변경 → pending에만 저장 (즉시 적용 X)
   wrap.querySelectorAll('input, select').forEach(el => {
-    el.addEventListener('change', e => {
+    el.addEventListener('change', () => {
       const ch = el.dataset.ch;
       const f = el.dataset.f;
+      if (!ch || !f) return;
       let v = el.value;
-      if (f === 'feePct') v = (parseFloat(v)||0) / 100;
-      else if (f === 'shippingByUs') v = (v === 'true');
-      else if (f === 'pkgPrice' || f === 'unitPrice' || f === 'shippingPerUnit') {
+      if (f === 'feePct') {
+        v = (parseFloat(v) || 0) / 100;
+      } else if (f === 'shippingByUs') {
+        v = (v === 'true');
+      } else if (['pkgPrice','unitPrice','shippingPerUnit'].includes(f)) {
         v = v === '' ? (f === 'unitPrice' ? null : 0) : parseFloat(v);
       } else if (f === 'ovrPkg' || f === 'ovrUnit') {
-        // breakdown override
         const key = f === 'ovrPkg' ? 'pkg' : 'unit';
-        if (v === '') {
-          if (BREAKDOWN_OVERRIDE[ch]) { delete BREAKDOWN_OVERRIDE[ch][key]; if (Object.keys(BREAKDOWN_OVERRIDE[ch]).length === 0) delete BREAKDOWN_OVERRIDE[ch]; }
-        } else {
-          if (!BREAKDOWN_OVERRIDE[ch]) BREAKDOWN_OVERRIDE[ch] = {};
-          BREAKDOWN_OVERRIDE[ch][key] = parseInt(v) || 0;
-        }
-        saveBreakdownOverride(BREAKDOWN_OVERRIDE);
-        renderSettlementTable();
-        renderTermsEditor();
+        if (!pendingOverride[ch]) pendingOverride[ch] = {};
+        pendingOverride[ch][key] = v === '' ? null : (parseInt(v) || 0);
+        markDirty(ch);
         return;
       }
-      SETTLEMENT_TERMS[ch][f] = v;
-      saveTerms(SETTLEMENT_TERMS);
-      renderSettlementTable();
-      renderTermsEditor();
+      // 일반 string/number/bool field
+      if (!pendingTerms[ch]) pendingTerms[ch] = {};
+      pendingTerms[ch][f] = v;
+      markDirty(ch);
     });
+  });
+
+  // 저장 / 취소 버튼
+  wrap.querySelectorAll('.terms-card').forEach(card => {
+    const ch = card.dataset.ch;
+    card.querySelector('.btn-save').addEventListener('click', () => commitTerms(ch));
+    card.querySelector('.btn-cancel').addEventListener('click', () => discardTerms(ch));
   });
 }
 
-function resetTermsToDefaults() {
-  if (!confirm('거래조건을 기본값으로 복원합니다 (단가·수수료·배송 등). 켤레 보정도 모두 삭제됩니다. 계속?')) return;
-  localStorage.removeItem(TERMS_STORAGE_KEY);
-  localStorage.removeItem(BREAKDOWN_OVERRIDE_KEY);
-  SETTLEMENT_TERMS = loadTerms();
-  BREAKDOWN_OVERRIDE = {};
-  renderSettlementTable();
-  renderTermsEditor();
+function markDirty(ch) {
+  const card = document.querySelector(`.terms-card[data-ch="${ch}"]`);
+  if (!card) return;
+  card.classList.add('dirty');
+  card.querySelector('.btn-save').disabled = false;
+  card.querySelector('.btn-cancel').disabled = false;
 }
 
 // 초기 렌더
 renderSettlementTable();
 renderTermsEditor();
-
-// 초기화 버튼
-document.getElementById('terms-reset-btn')?.addEventListener('click', resetTermsToDefaults);
 
 // ── 사이즈×색상별 소진 속도 테이블 (skuList 활용) ──
 function daysColor(d) {
