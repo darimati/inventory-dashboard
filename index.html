@@ -578,6 +578,52 @@
   }
 
   /* === SETTLEMENT & ROAS — Light Theme (디벨롭) === */
+  /* 월별 정산 — month-bar (B안 하이브리드: 라이브 + 마감된 snapshot) */
+  #page-settlement .month-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 20px; background: #f8fafc;
+    border-bottom: 1px solid var(--border, #e5e7eb);
+  }
+  #page-settlement .month-bar .month-left {
+    display: flex; align-items: center; gap: 8px;
+  }
+  #page-settlement .month-bar .month-title {
+    font-size: 13px; font-weight: 700; color: var(--text);
+  }
+  #page-settlement .month-bar select {
+    padding: 6px 10px; font-size: 13px; font-weight: 600;
+    border-radius: 6px; border: 1px solid #d1d5db;
+    background: #fff; color: var(--text); font-family: inherit;
+    cursor: pointer; min-width: 200px;
+  }
+  #page-settlement .month-bar select:focus {
+    outline: none; border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,.1);
+  }
+  #page-settlement .month-bar .month-status {
+    font-size: 11px; font-weight: 600;
+  }
+  #page-settlement .month-bar .month-status.live {
+    color: #16a34a;
+  }
+  #page-settlement .month-bar .month-status.locked {
+    color: #6b7280;
+  }
+  #page-settlement .month-bar .close-btn {
+    background: #16a34a; color: #fff; border: 1px solid #15803d;
+    padding: 8px 16px; border-radius: 6px; font-size: 12px; font-weight: 700;
+    cursor: pointer; font-family: inherit; letter-spacing: 0;
+  }
+  #page-settlement .month-bar .close-btn:hover { background: #15803d; }
+  #page-settlement .month-bar .close-btn:disabled {
+    background: #9ca3af; border-color: #9ca3af; cursor: not-allowed;
+  }
+  #page-settlement .snapshot-banner {
+    background: linear-gradient(180deg, #eff6ff, #fff);
+    border: 1px solid #bfdbfe; border-radius: 8px;
+    padding: 10px 14px; margin: 10px 14px 0;
+    font-size: 11.5px; color: #1e40af;
+  }
+
   #page-settlement {
     --bg: #f4f5f7;
     --card: #ffffff;
@@ -1323,10 +1369,24 @@ IF(OR(C2="킥스타터",
 <!-- ===== PAGE 3: 정산 & ROAS ===== -->
 <div id="page-settlement" class="page">
 
-  <!-- 4월 정산 KPI -->
+  <!-- 월 selector + 마감 (B안 하이브리드) -->
+  <div class="month-bar">
+    <div class="month-left">
+      <span class="month-title">정산 대시보드</span>
+      <select id="settlement-month-select"></select>
+      <span class="month-status" id="settlement-month-status"></span>
+    </div>
+    <div>
+      <button class="close-btn" id="settlement-close-month-btn" type="button">📸 전월 마감 (KPI 잠금)</button>
+    </div>
+  </div>
+
+  <div id="settlement-snapshot-banner" class="snapshot-banner" hidden></div>
+
+  <!-- 정산 KPI (월별) -->
   <div class="kpi-row" style="grid-template-columns: repeat(5, 1fr);">
     <div class="kpi">
-      <div class="kpi-label">4월 매출 (확정 채널)</div>
+      <div class="kpi-label" id="lbl-kpi-rev"><span data-month-label>4월</span> 매출 (확정 채널)</div>
       <div class="kpi-value" id="kpi-rev-total">—</div>
       <div class="kpi-sub" id="kpi-rev-sub">메이커스 + B2B 합산</div>
     </div>
@@ -1355,7 +1415,7 @@ IF(OR(C2="킥스타터",
   <!-- 채널별 정산 표 -->
   <div class="grid-full">
     <div class="card">
-      <div class="card-title">4월 채널별 정산 <span style="color:#555; font-size:10px; margin-left:6px;">실제 거래조건 기반 자동 계산 · COGS 63,000원/켤레 가정</span></div>
+      <div class="card-title"><span data-month-label>4월</span> 채널별 정산 <span style="color:#555; font-size:10px; margin-left:6px;">실제 거래조건 기반 자동 계산 · COGS 63,000원/켤레 가정</span></div>
       <div style="overflow-x:auto;">
         <table class="data-table" style="margin-top:8px; font-size:12px; min-width:880px;">
           <thead>
@@ -2399,6 +2459,140 @@ function saveBreakdownOverride(o) {
 let SETTLEMENT_TERMS = loadTerms();
 let BREAKDOWN_OVERRIDE = loadBreakdownOverride();
 
+// ── 월별 정산 (B안 하이브리드) ─────────────────────────
+// 라이브: 현재 월은 시트+거래조건 실시간. 마감된 과거 월은 localStorage snapshot.
+const SNAPSHOT_KEY_PREFIX = 'dari_settlement_snapshot_';
+function getCurrentMonth() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+}
+function getPrevMonth(ym) {
+  const [y, m] = ym.split('-').map(Number);
+  const prev = new Date(y, m-2, 1);
+  return `${prev.getFullYear()}-${String(prev.getMonth()+1).padStart(2,'0')}`;
+}
+function snapshotKey(ym) { return SNAPSHOT_KEY_PREFIX + ym; }
+function saveSnapshot(ym, data) {
+  try { localStorage.setItem(snapshotKey(ym), JSON.stringify(Object.assign({}, data, { month: ym, savedAt: new Date().toISOString() }))); } catch(e) {}
+}
+function loadSnapshot(ym) {
+  try { return JSON.parse(localStorage.getItem(snapshotKey(ym)) || 'null'); } catch(e) { return null; }
+}
+function listSnapshotMonths() {
+  const out = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (k && k.startsWith(SNAPSHOT_KEY_PREFIX)) out.push(k.slice(SNAPSHOT_KEY_PREFIX.length));
+  }
+  return out.sort();
+}
+
+let _viewingMonth = getCurrentMonth();
+
+function captureCurrentSettlement() {
+  const liveRows = calcSettlementRows();
+  let sumRev=0, sumFee=0, sumShip=0, sumCogs=0, sumMargin=0, sumUnits=0;
+  const rows = liveRows.map(r => {
+    sumRev+=r.revenue; sumFee+=r.fee; sumShip+=r.ship;
+    sumCogs+=r.cogs; sumMargin+=r.margin; sumUnits+=r.totalUnits;
+    return {
+      ch: r.ch, pkg: r.pkg, unit: r.unit, totalUnits: r.totalUnits,
+      pkgPrice: r.pkgPrice, unitPrice: r.unitPrice,
+      revenue: r.revenue, fee: r.fee, ship: r.ship, cogs: r.cogs,
+      margin: r.margin, mPct: r.mPct, isOverride: r.isOverride,
+      terms: JSON.parse(JSON.stringify(r.terms)),
+    };
+  });
+  return {
+    rows,
+    totals: { sumRev, sumFee, sumShip, sumCogs, sumMargin, sumUnits },
+    terms: JSON.parse(JSON.stringify(SETTLEMENT_TERMS)),
+    breakdownOverride: JSON.parse(JSON.stringify(BREAKDOWN_OVERRIDE)),
+  };
+}
+
+function closeMonth() {
+  const today = new Date();
+  // 7일 이내 = 전월 마감, 그 외 = 현재 월 마감
+  const target = today.getDate() <= 7 ? getPrevMonth(getCurrentMonth()) : getCurrentMonth();
+  const existing = loadSnapshot(target);
+  const ok = confirm(
+    `${target} 정산 KPI를 잠금합니다.\n\n` +
+    (existing ? `⚠️ 이미 마감된 월입니다 (${new Date(existing.savedAt).toLocaleString('ko-KR')}). 덮어씁니다.\n\n` : '') +
+    `현재 시점 KPI 계산값이 영구 저장됩니다 (이후 거래조건/시트 변경되어도 ${target} 값은 그대로).\n\n계속하시겠습니까?`
+  );
+  if (!ok) return;
+  const snap = captureCurrentSettlement();
+  saveSnapshot(target, snap);
+  const t = snap.totals;
+  alert(
+    `✅ ${target} 마감 완료\n` +
+    `\n` +
+    `매출  ₩${fmtKRW(t.sumRev)}\n` +
+    `수수료 ₩${fmtKRW(t.sumFee)}\n` +
+    `배송  ₩${fmtKRW(t.sumShip)}\n` +
+    `COGS ₩${fmtKRW(t.sumCogs)}\n` +
+    `이익  ₩${fmtKRW(t.sumMargin)} (${t.sumRev>0 ? (t.sumMargin/t.sumRev*100).toFixed(1) : '0'}%)\n` +
+    `총   ${t.sumUnits}켤레\n`
+  );
+  refreshMonthSelector();
+}
+
+function refreshMonthSelector() {
+  const sel = document.getElementById('settlement-month-select');
+  if (!sel) return;
+  const cur = getCurrentMonth();
+  const snapshots = listSnapshotMonths();
+  const months = Array.from(new Set([cur, ...snapshots])).sort().reverse();
+  sel.innerHTML = months.map(ym => {
+    const isCur = (ym === cur);
+    const isLocked = !isCur && snapshots.indexOf(ym) >= 0;
+    const label = isCur
+      ? `${ym} (현재 · 라이브)`
+      : (isLocked ? `${ym} (마감 ✓)` : ym);
+    return `<option value="${ym}">${label}</option>`;
+  }).join('');
+  if (months.indexOf(_viewingMonth) === -1) _viewingMonth = cur;
+  sel.value = _viewingMonth;
+  updateMonthChrome();
+}
+
+function updateMonthChrome() {
+  const cur = getCurrentMonth();
+  const isCur = (_viewingMonth === cur);
+  const snap = isCur ? null : loadSnapshot(_viewingMonth);
+  const status = document.getElementById('settlement-month-status');
+  if (status) {
+    if (isCur) {
+      status.textContent = '· 라이브 (시트+거래조건 실시간 반영)';
+      status.className = 'month-status live';
+    } else if (snap) {
+      const savedAt = new Date(snap.savedAt).toLocaleDateString('ko-KR');
+      status.textContent = `· 마감됨 (${savedAt})`;
+      status.className = 'month-status locked';
+    } else {
+      status.textContent = '· 마감 안 됨';
+      status.className = 'month-status';
+    }
+  }
+  // KPI/표 라벨에 월 반영 — "4월" → "5월" 등
+  const monthShort = `${parseInt(_viewingMonth.split('-')[1])}월`;
+  document.querySelectorAll('[data-month-label]').forEach(el => { el.textContent = monthShort; });
+  // 마감된 snapshot이면 banner 표시
+  const banner = document.getElementById('settlement-snapshot-banner');
+  if (banner) {
+    if (!isCur && snap) {
+      const t = snap.totals;
+      const pct = t.sumRev > 0 ? (t.sumMargin/t.sumRev*100).toFixed(1) : '—';
+      banner.hidden = false;
+      banner.innerHTML = `📸 <strong>${_viewingMonth} 마감 KPI (lock)</strong> — 매출 ₩${fmtKRW(t.sumRev)} · 이익 ₩${fmtKRW(t.sumMargin)} (${pct}%) · ${t.sumUnits}켤레 · ${new Date(snap.savedAt).toLocaleString('ko-KR')} 저장`;
+    } else {
+      banner.hidden = true;
+      banner.innerHTML = '';
+    }
+  }
+}
+
 function effectiveBreakdown(channel) {
   const auto = CHANNEL_BREAKDOWN_AUTO[channel] || { pkg: 0, unit: 0 };
   const ovr = BREAKDOWN_OVERRIDE[channel] || {};
@@ -2432,7 +2626,10 @@ function calcSettlementRows() {
 }
 
 function renderSettlementTable() {
-  const rows = calcSettlementRows();
+  // 월 모드 분기: 마감된 snapshot 모드면 snap 데이터 사용, 라이브면 calcSettlementRows()
+  const cur = getCurrentMonth();
+  const snap = (_viewingMonth && _viewingMonth !== cur) ? loadSnapshot(_viewingMonth) : null;
+  const rows = snap ? snap.rows : calcSettlementRows();
   const sBody = document.getElementById('settlement-body');
   if (!sBody) return;
   sBody.innerHTML = '';
@@ -2659,8 +2856,18 @@ function markDirty(ch) {
 }
 
 // 초기 렌더
+refreshMonthSelector();
 renderSettlementTable();
 renderTermsEditor();
+
+// 월 selector 변경
+document.getElementById('settlement-month-select')?.addEventListener('change', e => {
+  _viewingMonth = e.target.value;
+  updateMonthChrome();
+  renderSettlementTable();
+});
+// 마감 버튼
+document.getElementById('settlement-close-month-btn')?.addEventListener('click', closeMonth);
 
 // ── 사이즈×색상별 소진 속도 테이블 (skuList 활용) ──
 function daysColor(d) {
