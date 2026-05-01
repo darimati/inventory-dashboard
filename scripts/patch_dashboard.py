@@ -32,6 +32,10 @@ rows = data['table']['rows']
 
 REAL = {'킥스타터','카카오메이커스','네이버','카카오톡스토어'}
 
+# 부자재 컬럼 (시트 인덱스): M=12 슈레이스, O=14 스티커, P=15 모자, S=18 타월, T=19 벨트, U=20 플라스크, V=21 슈백
+ACC_COLS = [12, 14, 15, 18, 19, 20, 21]
+PKG_THRESHOLD = 5  # 부자재 5개 이상 → 풀세트로 자동 인식
+
 def parse_date(d):
     if not d: return None
     m = re.match(r'Date\((\d+),(\d+),(\d+)\)', d)
@@ -45,6 +49,8 @@ b2b_by_date = defaultdict(int)
 gift_by_date = defaultdict(int)
 ch_by_date = defaultdict(lambda: defaultdict(int))
 ch_total = defaultdict(int)
+ch_pkg = defaultdict(int)   # 채널별 풀세트 켤레 (시트 자동 감지)
+ch_unit = defaultdict(int)  # 채널별 단품 켤레 (시트 자동 감지)
 total_sale = total_b2b = total_gift = 0
 size_color_sale = defaultdict(lambda: defaultdict(int))
 
@@ -82,20 +88,34 @@ for r in rows:
     else:
         continue
 
+    # 풀세트/단품 자동 감지 (부자재 5개 이상이면 풀세트)
+    acc_count = 0
+    for ai in ACC_COLS:
+        v = g(ai)
+        if v is not None and v != '' and float(v or 0) >= 1:
+            acc_count += 1
+    is_pkg = acc_count >= PKG_THRESHOLD
+
     if kind == 'sale':
         sale_by_date[label] += qty
         ch_by_date[ch][label] += qty
         ch_total[ch] += qty
+        if is_pkg: ch_pkg[ch] += qty
+        else:      ch_unit[ch] += qty
         total_sale += qty
         if '그레이' in color and size: size_color_sale['G'][size] += qty
         elif '베이지' in color and size: size_color_sale['B'][size] += qty
     elif kind == 'b2b':
         b2b_by_date[label] += qty
         ch_total['마야크루'] += qty
+        if is_pkg: ch_pkg['마야크루'] += qty
+        else:      ch_unit['마야크루'] += qty
         total_b2b += qty
     elif kind == 'gift':
         gift_by_date[label] += qty
         ch_total['샘플'] += qty
+        if is_pkg: ch_pkg['샘플'] += qty
+        else:      ch_unit['샘플'] += qty
         total_gift += qty
 
 dates = sorted(set(list(sale_by_date.keys())+list(b2b_by_date.keys())+list(gift_by_date.keys())),
@@ -303,10 +323,40 @@ footer = (
 )
 patches.append((r'<tr class="total">\s*<td colspan="2">전체</td>[\s\S]*?</tr>', footer))
 
-# SETTLEMENT units
+# SETTLEMENT units (legacy SETTLEMENT_DEALS 호환 — 향후 deprecated)
 for label, val in [('카카오메이커스', km), ('네이버 스마트스토어', nv),
                    ('카카오톡스토어', kt), ('킥스타터', ks)]:
     patches.append((rf"('{label}':\s*\{{\s*units:\s*)\d+", lambda m, v=val: m.group(1) + str(v)))
+
+# CHANNEL_BREAKDOWN_AUTO (시트 자동 감지 — 풀세트/단품 분리)
+ch_keys = [
+    ('카카오메이커스', '카카오메이커스'),
+    ('네이버 스마트스토어', '네이버'),
+    ('카카오톡스토어', '카카오톡스토어'),
+    ('킥스타터', '킥스타터'),
+    ('B2B (마야크루)', '마야크루'),
+    ('샘플', '샘플'),
+]
+breakdown_block = "const CHANNEL_BREAKDOWN_AUTO = {\n"
+for js_key, sheet_key in ch_keys:
+    pkg = ch_total.get(sheet_key, 0)  # placeholder
+breakdown_lines = []
+for js_key, sheet_key in ch_keys:
+    p = 0; u = 0
+    # ch_pkg/ch_unit는 globals로 patch script 내부 변수
+    pass
+# Note: ch_pkg/ch_unit를 직접 활용
+def _pkg(k): return globals().get('ch_pkg', {}).get(k, 0) if False else 0
+# 위 hack 대신 직접 표시
+breakdown_block = "const CHANNEL_BREAKDOWN_AUTO = {\n"
+breakdown_block += f"  '카카오메이커스':       {{ pkg: {ch_pkg.get('카카오메이커스',0)}, unit: {ch_unit.get('카카오메이커스',0)} }},\n"
+breakdown_block += f"  '네이버 스마트스토어':   {{ pkg: {ch_pkg.get('네이버',0)}, unit: {ch_unit.get('네이버',0)} }},\n"
+breakdown_block += f"  '카카오톡스토어':       {{ pkg: {ch_pkg.get('카카오톡스토어',0)}, unit: {ch_unit.get('카카오톡스토어',0)} }},\n"
+breakdown_block += f"  '킥스타터':            {{ pkg: {ch_pkg.get('킥스타터',0)}, unit: {ch_unit.get('킥스타터',0)} }},\n"
+breakdown_block += f"  'B2B (마야크루)':      {{ pkg: {ch_pkg.get('마야크루',0)}, unit: {ch_unit.get('마야크루',0)} }},\n"
+breakdown_block += f"  '샘플':                {{ pkg: {ch_pkg.get('샘플',0)}, unit: {ch_unit.get('샘플',0)} }},\n"
+breakdown_block += "};"
+patches.append((r"const CHANNEL_BREAKDOWN_AUTO = \{[\s\S]*?\n\};", breakdown_block))
 
 # Apply
 applied = 0

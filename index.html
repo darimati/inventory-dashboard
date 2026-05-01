@@ -481,6 +481,56 @@
   #page-settlement [style*="background:#1a1a1a"]  { background: #f1f5f9 !important; border-color: var(--border2) !important; color: var(--muted) !important; }
   #page-settlement [style*="background:#111"]     { background: #f8fafc !important; }
 
+  /* 거래조건 편집 카드 (정산 탭 라이트 테마) */
+  #page-settlement #terms-editor {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+    gap: 12px;
+  }
+  #page-settlement .terms-card {
+    background: #f9fafb;
+    border: 1px solid var(--border2);
+    border-radius: 10px;
+    padding: 14px 16px;
+  }
+  #page-settlement .terms-card.has-override {
+    background: #fefce8;
+    border-color: #fde68a;
+  }
+  #page-settlement .terms-card-head {
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding-bottom: 10px; border-bottom: 1px solid var(--border2); margin-bottom: 12px;
+  }
+  #page-settlement .terms-ch {
+    font-size: 13px; font-weight: 700; color: var(--text);
+  }
+  #page-settlement .terms-auto {
+    font-size: 10.5px; color: var(--muted);
+  }
+  #page-settlement .terms-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px;
+  }
+  #page-settlement .terms-grid label {
+    display: flex; flex-direction: column; gap: 4px;
+    font-size: 10.5px; color: var(--muted); font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  #page-settlement .terms-grid label.terms-note { grid-column: span 2; }
+  #page-settlement .terms-grid input,
+  #page-settlement .terms-grid select {
+    padding: 7px 9px; border: 1px solid var(--border-strong, #d1d5db);
+    border-radius: 6px; font-size: 12.5px; font-family: inherit;
+    color: var(--text); background: #fff;
+    font-variant-numeric: tabular-nums;
+  }
+  #page-settlement .terms-grid input:focus,
+  #page-settlement .terms-grid select:focus {
+    outline: none; border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,.1);
+  }
+  #page-settlement .terms-grid input::placeholder {
+    color: #cbd5e1; font-size: 11px;
+  }
+
   /* 컴포지션 뱃지 */
   .badge-package, .badge-unit {
     display: inline-block; padding: 4px 12px;
@@ -1082,31 +1132,17 @@ IF(OR(C2="킥스타터",
     </div>
   </div>
 
-  <!-- 거래조건 / 데이터 입력 가이드 -->
+  <!-- 거래조건 인라인 편집 (단가/수수료/배송/켤레 보정) -->
   <div class="grid-full" style="margin-top:1px;">
     <div class="card">
-      <div class="card-title">거래조건 데이터 (Phase 2 자동 갱신 대기)</div>
-      <table class="data-table" style="font-size:12px; margin-top:6px;">
-        <thead>
-          <tr>
-            <th>채널</th>
-            <th class="num">단가</th>
-            <th class="num">수수료</th>
-            <th class="num">배송비 부담</th>
-            <th class="num">정산 주기</th>
-            <th>상태</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr><td>카카오메이커스</td><td class="num">159,000 (풀세트)</td><td class="num" style="color:var(--red);">25%</td><td class="num">회사 (2,400원)</td><td class="num">월 1회</td><td style="color:#4ade80;">✓ 입력 완료</td></tr>
-          <tr><td>B2B (마야크루)</td><td class="num">110,000 (단품)</td><td class="num">0%</td><td class="num">없음</td><td class="num">건별</td><td style="color:#4ade80;">✓ 입력 완료</td></tr>
-          <tr><td>네이버 스마트스토어</td><td class="num">169,000 (풀세트)</td><td class="num" style="color:var(--yellow);">4%</td><td class="num">회사 (2,400원)</td><td class="num">월 2회</td><td style="color:#4ade80;">✓ 입력 완료</td></tr>
-          <tr><td>카카오톡스토어 (톡딜)</td><td class="num">169,000 (단품)</td><td class="num" style="color:var(--yellow);">4%</td><td class="num">회사 (2,400원)</td><td class="num">월 1회</td><td style="color:#4ade80;">✓ 입력 완료</td></tr>
-          <tr><td>킥스타터</td><td class="num" style="color:#666;">미입력</td><td class="num" style="color:#666;">미입력</td><td class="num" style="color:#666;">미입력</td><td class="num" style="color:#666;">완료 후 일괄</td><td style="color:#888;">대기</td></tr>
-        </tbody>
-      </table>
-      <div style="margin-top:10px; font-size:11px; color:#666;">
-        Matt가 채널별 거래조건 알려주면 SETTLEMENT_DEALS 객체에 추가 → 자동으로 4월 정산 표·KPI에 반영됨.
+      <div class="card-title">
+        거래조건 편집
+        <span style="color:#555; font-size:10px; margin-left:6px;">변경 즉시 정산표 갱신 · 매트 보정값은 localStorage 저장 · 시트 부자재 5+ 자동 풀세트 인식</span>
+      </div>
+      <div id="terms-editor" style="margin-top:10px;"></div>
+      <div style="display:flex; gap:8px; margin-top:14px; padding-top:14px; border-top:1px solid var(--border2);">
+        <button id="terms-reset-btn" style="padding:8px 14px; background:#fff; border:1px solid #fecaca; color:#dc2626; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer;">🔄 기본값 복원 (보정값 삭제)</button>
+        <span style="color:#888; font-size:11px; align-self:center;">단가/수수료/배송 변경 시 자동 저장 · 켤레 보정란 비우면 시트 자동값 사용</span>
       </div>
     </div>
   </div>
@@ -2026,121 +2062,269 @@ const COGS = {
   package: 90614,  // 풀패키지 = 단품 + 모자 7,056 + 슈백 5,635 + 타올 3,949 + 벨트 5,340 + 반사스티커 179
 };
 
-// 채널별 거래조건 (매트 입력 — 옵시디언과 동기화)
-const SETTLEMENT_DEALS = {
-  '카카오메이커스': {
-    units: 57, unitPrice: 159000, feePct: 0.25,
-    shippingPerUnit: 2400, shippingByUs: true,
-    cogsPerUnit: COGS.package,  // ★ 풀세트 — 부자재 5종 포함
-    composition: '풀세트',
-    confirmed: true,
-    note: '풀세트(신발+모자+슈백+타올+벨트+스티커) · 회사 배송비 부담'
-  },
-  'B2B (마야크루)': {
-    units: 30, unitPrice: 110000, feePct: 0,
-    shippingPerUnit: 0, shippingByUs: false,
-    cogsPerUnit: COGS.unit,  // 단품 (구성 확인 필요)
-    composition: '단품',
-    confirmed: true,
-    note: '단체 직접 인도 · 배송 미발생 · 단품 가정 (구성 매트 확인 필요)'
-  },
-  '네이버 스마트스토어': {
-    units: 6, unitPrice: 169000, feePct: 0.04,
-    shippingPerUnit: 2400, shippingByUs: true,
-    cogsPerUnit: COGS.package,
-    composition: '풀세트',
-    confirmed: true,
-    note: '풀세트 단가 169,000 · 4% 수수료 · DARI CLASS 출고 합산'
-  },
-  '카카오톡스토어': {
-    units: 2, unitPrice: 169000, feePct: 0.04,
-    shippingPerUnit: 2400, shippingByUs: true,
-    cogsPerUnit: COGS.unit,
-    composition: '단품',
-    confirmed: true,
-    note: '톡딜 단가 169,000 · 4% 수수료'
-  },
-  '킥스타터': {
-    units: 52, confirmed: false,
-    note: '단가·정산·구성(단품 vs 풀세트) 입력 대기 · ACI 운임 별도'
-  },
+// === 채널별 자동 감지 (시트 부자재 컬럼으로 풀세트/단품 분류) ===
+// patch_dashboard.py가 매번 갱신 — 매트가 직접 수정하지 말 것
+const CHANNEL_BREAKDOWN_AUTO = {
+  '카카오메이커스':       { pkg: 57, unit: 0 },
+  '네이버 스마트스토어':   { pkg: 5, unit: 1 },
+  '카카오톡스토어':       { pkg: 0, unit: 2 },
+  '킥스타터':            { pkg: 19, unit: 33 },
+  'B2B (마야크루)':      { pkg: 0, unit: 30 },
+  '샘플':                { pkg: 2, unit: 17 },
 };
 
-const fmtKRW = n => n.toLocaleString('ko-KR');
-const sBody = document.getElementById('settlement-body');
-let sumRev=0, sumFee=0, sumShip=0, sumCogs=0, sumMargin=0, sumUnits=0;
+// === 거래조건 기본값 (매트 dashboard에서 인라인 편집 가능 · localStorage 저장) ===
+const SETTLEMENT_TERMS_DEFAULTS = {
+  '카카오메이커스':     { pkgPrice: 159000, unitPrice: null,   feePct: 0.25, shippingPerUnit: 2400, shippingByUs: true,  note: '풀세트 회사 배송 부담' },
+  '네이버 스마트스토어': { pkgPrice: 169000, unitPrice: 169000, feePct: 0.04, shippingPerUnit: 2400, shippingByUs: true,  note: 'DARI CLASS 합산 분류' },
+  '카카오톡스토어':     { pkgPrice: 169000, unitPrice: 169000, feePct: 0.04, shippingPerUnit: 2400, shippingByUs: true,  note: '톡딜' },
+  '킥스타터':          { pkgPrice: 159000, unitPrice: 119000, feePct: 0.05, shippingPerUnit: 0,    shippingByUs: false, note: 'ACI 운임 별도 (자부담)' },
+  'B2B (마야크루)':    { pkgPrice: 110000, unitPrice: 110000, feePct: 0,    shippingPerUnit: 0,    shippingByUs: false, note: '직접 인도 · 무수수료' },
+  '샘플':              { pkgPrice: 0,      unitPrice: 0,      feePct: 0,    shippingPerUnit: 0,    shippingByUs: false, note: '시딩 — 매출 0' },
+};
 
-Object.entries(SETTLEMENT_DEALS).forEach(([name, d]) => {
-  if (!d.confirmed) {
-    sBody.innerHTML += `<tr style="opacity:0.55;">
-      <td>${name}</td>
-      <td style="color:#555;">—</td>
-      <td class="num">${d.units}</td>
-      <td class="num" style="color:#555;">—</td>
-      <td class="num" style="color:#555;">—</td>
-      <td class="num" style="color:#555;">—</td>
-      <td class="num" style="color:#555;">—</td>
-      <td class="num" style="color:#555;">—</td>
-      <td class="num" style="color:#555;">—</td>
-      <td class="num" style="color:#555;">—</td>
-      <td class="num" style="color:#555;">—</td>
-      <td class="num" style="color:#555;">—</td>
-      <td style="color:#666; font-size:11px; font-style:italic;">${d.note}</td>
+const TERMS_STORAGE_KEY = 'dari_settlement_terms_v1';
+const BREAKDOWN_OVERRIDE_KEY = 'dari_channel_breakdown_override_v1';
+
+function loadTerms() {
+  try {
+    const raw = localStorage.getItem(TERMS_STORAGE_KEY);
+    if (!raw) return JSON.parse(JSON.stringify(SETTLEMENT_TERMS_DEFAULTS));
+    const saved = JSON.parse(raw);
+    // merge with defaults (새 채널 추가 호환)
+    const merged = JSON.parse(JSON.stringify(SETTLEMENT_TERMS_DEFAULTS));
+    for (const [k,v] of Object.entries(saved)) {
+      if (merged[k]) Object.assign(merged[k], v);
+      else merged[k] = v;
+    }
+    return merged;
+  } catch(e) { return JSON.parse(JSON.stringify(SETTLEMENT_TERMS_DEFAULTS)); }
+}
+function saveTerms(t) {
+  try { localStorage.setItem(TERMS_STORAGE_KEY, JSON.stringify(t)); } catch(e) {}
+}
+function loadBreakdownOverride() {
+  try { return JSON.parse(localStorage.getItem(BREAKDOWN_OVERRIDE_KEY) || '{}'); }
+  catch(e) { return {}; }
+}
+function saveBreakdownOverride(o) {
+  try { localStorage.setItem(BREAKDOWN_OVERRIDE_KEY, JSON.stringify(o)); } catch(e) {}
+}
+
+let SETTLEMENT_TERMS = loadTerms();
+let BREAKDOWN_OVERRIDE = loadBreakdownOverride();
+
+function effectiveBreakdown(channel) {
+  const auto = CHANNEL_BREAKDOWN_AUTO[channel] || { pkg: 0, unit: 0 };
+  const ovr = BREAKDOWN_OVERRIDE[channel] || {};
+  return {
+    pkg: ovr.pkg !== undefined ? +ovr.pkg : auto.pkg,
+    unit: ovr.unit !== undefined ? +ovr.unit : auto.unit,
+    autoSource: { pkg: auto.pkg, unit: auto.unit },
+    isOverride: ovr.pkg !== undefined || ovr.unit !== undefined,
+  };
+}
+
+const fmtKRW = n => Number(n||0).toLocaleString('ko-KR');
+
+function calcSettlementRows() {
+  return Object.keys(SETTLEMENT_TERMS).map(ch => {
+    const br = effectiveBreakdown(ch);
+    const t = SETTLEMENT_TERMS[ch];
+    const pkgPrice = +t.pkgPrice || 0;
+    const unitPrice = (t.unitPrice == null || t.unitPrice === '') ? pkgPrice : +t.unitPrice;
+    const revPkg = br.pkg * pkgPrice;
+    const revUnit = br.unit * unitPrice;
+    const revenue = revPkg + revUnit;
+    const totalUnits = br.pkg + br.unit;
+    const fee = Math.round(revenue * (+t.feePct || 0));
+    const ship = t.shippingByUs ? totalUnits * (+t.shippingPerUnit || 0) : 0;
+    const cogs = br.pkg * COGS.package + br.unit * COGS.unit;
+    const margin = revenue - fee - ship - cogs;
+    const mPct = revenue > 0 ? margin / revenue * 100 : 0;
+    return { ch, ...br, pkgPrice, unitPrice, totalUnits, revenue, fee, ship, cogs, margin, mPct, terms: t };
+  });
+}
+
+function renderSettlementTable() {
+  const rows = calcSettlementRows();
+  const sBody = document.getElementById('settlement-body');
+  if (!sBody) return;
+  sBody.innerHTML = '';
+  let sumRev=0, sumFee=0, sumShip=0, sumCogs=0, sumMargin=0, sumUnits=0;
+
+  rows.forEach(r => {
+    if (r.totalUnits === 0) {
+      sBody.innerHTML += `<tr style="opacity:0.5;">
+        <td>${r.ch}</td>
+        <td style="color:#555;">—</td>
+        <td class="num">0</td>
+        <td class="num" colspan="9" style="color:#555; font-style:italic; text-align:left; font-size:11px;">출고 0건 · ${r.terms.note || ''}</td>
+        <td style="color:#666; font-size:11px;">—</td>
+      </tr>`;
+      return;
+    }
+    sumRev+=r.revenue; sumFee+=r.fee; sumShip+=r.ship; sumCogs+=r.cogs; sumMargin+=r.margin; sumUnits+=r.totalUnits;
+
+    // 한 채널이 단품+풀세트 모두면 한 row에 묶어서 표시 (구성 컬럼은 mix 표기)
+    const compBadges = [
+      r.pkg > 0 ? `<span class="badge-package">풀세트 ${r.pkg}</span>` : '',
+      r.unit > 0 ? `<span class="badge-unit">단품 ${r.unit}</span>` : ''
+    ].filter(Boolean).join(' ');
+
+    const priceText = (r.pkg > 0 && r.unit > 0)
+      ? `풀 ${fmtKRW(r.pkgPrice)} / 단 ${fmtKRW(r.unitPrice)}`
+      : (r.pkg > 0 ? fmtKRW(r.pkgPrice) : fmtKRW(r.unitPrice));
+
+    const overrideTag = r.isOverride
+      ? '<span style="color:var(--yellow); font-size:10px; margin-left:4px;" title="시트 자동값과 다름">✏️</span>'
+      : '';
+
+    sBody.innerHTML += `<tr>
+      <td><strong>${r.ch}</strong>${overrideTag}</td>
+      <td>${compBadges}</td>
+      <td class="num">${r.totalUnits}</td>
+      <td class="num" style="font-size:11px;">${priceText}</td>
+      <td class="num"><strong>${fmtKRW(r.revenue)}</strong></td>
+      <td class="num" style="color:${r.terms.feePct>0?'var(--red)':'#666'};">${((r.terms.feePct||0)*100).toFixed(1)}%</td>
+      <td class="num" style="color:var(--red);">${fmtKRW(r.fee)}</td>
+      <td class="num" style="color:var(--red);">${fmtKRW(r.ship)}</td>
+      <td class="num" style="color:#aaa; font-size:11px;">${r.pkg>0?'풀 90,614 ':''}${r.unit>0?'단 68,455':''}</td>
+      <td class="num" style="color:#aaa;">${fmtKRW(r.cogs)}</td>
+      <td class="num" style="color:#4ade80; font-weight:700;">${fmtKRW(r.margin)}</td>
+      <td class="num" style="color:#4ade80; font-weight:700;">${r.mPct.toFixed(1)}%</td>
+      <td style="color:#888; font-size:11px;">${r.terms.note || ''}</td>
     </tr>`;
-    return;
-  }
-  const revenue = d.units * d.unitPrice;
-  const fee     = Math.round(revenue * d.feePct);
-  const ship    = d.shippingByUs ? d.units * d.shippingPerUnit : 0;
-  const cogs    = d.units * d.cogsPerUnit;
-  const margin  = revenue - fee - ship - cogs;
-  const mPct    = margin / revenue * 100;
-  sumRev+=revenue; sumFee+=fee; sumShip+=ship; sumCogs+=cogs; sumMargin+=margin; sumUnits+=d.units;
-  const compBadge = d.composition === '풀세트'
-    ? '<span class="badge-package">풀세트</span>'
-    : '<span class="badge-unit">단품</span>';
-  sBody.innerHTML += `<tr>
-    <td><strong>${name}</strong></td>
-    <td>${compBadge}</td>
-    <td class="num">${d.units}</td>
-    <td class="num">${fmtKRW(d.unitPrice)}</td>
-    <td class="num"><strong>${fmtKRW(revenue)}</strong></td>
-    <td class="num" style="color:${d.feePct>0?'var(--red)':'#666'};">${(d.feePct*100).toFixed(0)}%</td>
-    <td class="num" style="color:var(--red);">${fmtKRW(fee)}</td>
-    <td class="num" style="color:var(--red);">${fmtKRW(ship)}</td>
-    <td class="num" style="color:#aaa;">${fmtKRW(d.cogsPerUnit)}</td>
-    <td class="num" style="color:#aaa;">${fmtKRW(cogs)}</td>
-    <td class="num" style="color:#4ade80; font-weight:700;">${fmtKRW(margin)}</td>
-    <td class="num" style="color:#4ade80; font-weight:700;">${mPct.toFixed(1)}%</td>
-    <td style="color:#888; font-size:11px;">${d.note}</td>
-  </tr>`;
-});
-const totPct = sumRev>0 ? sumMargin/sumRev*100 : 0;
-document.getElementById('settlement-foot').innerHTML = `<tr style="border-top:2px solid #333; font-weight:700; background:#0d0d0d;">
-  <td>합계 (확정 채널)</td>
-  <td>—</td>
-  <td class="num">${sumUnits}</td>
-  <td class="num">—</td>
-  <td class="num"><strong style="color:#fff;">${fmtKRW(sumRev)}</strong></td>
-  <td class="num">—</td>
-  <td class="num" style="color:var(--red);">${fmtKRW(sumFee)}</td>
-  <td class="num" style="color:var(--red);">${fmtKRW(sumShip)}</td>
-  <td class="num">—</td>
-  <td class="num" style="color:#aaa;">${fmtKRW(sumCogs)}</td>
-  <td class="num" style="color:#4ade80;"><strong>${fmtKRW(sumMargin)}</strong></td>
-  <td class="num" style="color:#4ade80;"><strong>${totPct.toFixed(1)}%</strong></td>
-  <td style="color:#888; font-size:11px;">메이커스(풀세트) + B2B(단품)</td>
-</tr>`;
+  });
 
-// 정산 KPI
-document.getElementById('kpi-rev-total').textContent     = fmtKRW(sumRev);
-document.getElementById('kpi-rev-sub').textContent       = `${sumUnits}켤레 · 메이커스 ${SETTLEMENT_DEALS['카카오메이커스'].units} + B2B ${SETTLEMENT_DEALS['B2B (마야크루)'].units}`;
-document.getElementById('kpi-cogs-total').textContent    = fmtKRW(sumCogs);
-document.getElementById('kpi-fee-total').textContent     = fmtKRW(sumFee + sumShip);
-document.getElementById('kpi-fee-sub').textContent       = `수수료 ${fmtKRW(sumFee)} + 배송 ${fmtKRW(sumShip)}`;
-document.getElementById('kpi-margin-total').textContent  = fmtKRW(sumMargin);
-document.getElementById('kpi-margin-sub').textContent    = `매출 대비 ${totPct.toFixed(1)}% · 손익분기 ROAS ${(100/totPct).toFixed(2)}배`;
-document.getElementById('kpi-margin-pct').textContent    = totPct.toFixed(1) + '%';
+  const totPct = sumRev>0 ? sumMargin/sumRev*100 : 0;
+  document.getElementById('settlement-foot').innerHTML = `<tr style="border-top:2px solid #333; font-weight:700; background:#0d0d0d;">
+    <td>합계</td>
+    <td>—</td>
+    <td class="num">${sumUnits}</td>
+    <td class="num">—</td>
+    <td class="num"><strong style="color:#fff;">${fmtKRW(sumRev)}</strong></td>
+    <td class="num">—</td>
+    <td class="num" style="color:var(--red);">${fmtKRW(sumFee)}</td>
+    <td class="num" style="color:var(--red);">${fmtKRW(sumShip)}</td>
+    <td class="num">—</td>
+    <td class="num" style="color:#aaa;">${fmtKRW(sumCogs)}</td>
+    <td class="num" style="color:#4ade80;"><strong>${fmtKRW(sumMargin)}</strong></td>
+    <td class="num" style="color:#4ade80;"><strong>${totPct.toFixed(1)}%</strong></td>
+    <td style="color:#888; font-size:11px;">자동 계산</td>
+  </tr>`;
+
+  // KPI
+  const kSet = id => document.getElementById(id);
+  if (kSet('kpi-rev-total')) {
+    kSet('kpi-rev-total').textContent     = fmtKRW(sumRev);
+    kSet('kpi-rev-sub').textContent       = `${sumUnits}켤레 · 자동 계산 (시트 + 매트 보정)`;
+    kSet('kpi-cogs-total').textContent    = fmtKRW(sumCogs);
+    kSet('kpi-fee-total').textContent     = fmtKRW(sumFee + sumShip);
+    kSet('kpi-fee-sub').textContent       = `수수료 ${fmtKRW(sumFee)} + 배송 ${fmtKRW(sumShip)}`;
+    kSet('kpi-margin-total').textContent  = fmtKRW(sumMargin);
+    kSet('kpi-margin-sub').textContent    = `매출 대비 ${totPct.toFixed(1)}% · 손익분기 ROAS ${totPct>0?(100/totPct).toFixed(2):'—'}배`;
+    kSet('kpi-margin-pct').textContent    = totPct.toFixed(1) + '%';
+  }
+}
+
+// === 거래조건 인라인 편집 카드 렌더 ===
+function renderTermsEditor() {
+  const wrap = document.getElementById('terms-editor');
+  if (!wrap) return;
+  wrap.innerHTML = '';
+  Object.keys(SETTLEMENT_TERMS_DEFAULTS).forEach(ch => {
+    const t = SETTLEMENT_TERMS[ch];
+    const br = effectiveBreakdown(ch);
+    const auto = br.autoSource;
+    const card = document.createElement('div');
+    card.className = 'terms-card' + (br.isOverride ? ' has-override' : '');
+    card.innerHTML = `
+      <div class="terms-card-head">
+        <div class="terms-ch">${ch}</div>
+        <div class="terms-auto">시트: 풀 ${auto.pkg} / 단 ${auto.unit}${br.isOverride ? ' <span style="color:#facc15;">→ 보정 적용 ✏️</span>' : ''}</div>
+      </div>
+      <div class="terms-grid">
+        <label>풀세트 단가
+          <input type="number" data-ch="${ch}" data-f="pkgPrice" value="${t.pkgPrice ?? ''}" placeholder="원" step="1000">
+        </label>
+        <label>단품 단가
+          <input type="number" data-ch="${ch}" data-f="unitPrice" value="${t.unitPrice ?? ''}" placeholder="(공란=풀세트가)" step="1000">
+        </label>
+        <label>수수료
+          <input type="number" data-ch="${ch}" data-f="feePct" value="${(t.feePct*100).toFixed(1)}" step="0.1"> %
+        </label>
+        <label>배송비
+          <input type="number" data-ch="${ch}" data-f="shippingPerUnit" value="${t.shippingPerUnit ?? 0}" step="100"> 원/건
+        </label>
+        <label>배송 부담
+          <select data-ch="${ch}" data-f="shippingByUs">
+            <option value="true" ${t.shippingByUs ? 'selected':''}>회사</option>
+            <option value="false" ${!t.shippingByUs ? 'selected':''}>고객/면제</option>
+          </select>
+        </label>
+        <label>켤레 보정 (풀세트)
+          <input type="number" data-ch="${ch}" data-f="ovrPkg" value="${BREAKDOWN_OVERRIDE[ch]?.pkg ?? ''}" placeholder="시트=${auto.pkg}" min="0">
+        </label>
+        <label>켤레 보정 (단품)
+          <input type="number" data-ch="${ch}" data-f="ovrUnit" value="${BREAKDOWN_OVERRIDE[ch]?.unit ?? ''}" placeholder="시트=${auto.unit}" min="0">
+        </label>
+        <label class="terms-note">메모
+          <input type="text" data-ch="${ch}" data-f="note" value="${t.note || ''}">
+        </label>
+      </div>
+    `;
+    wrap.appendChild(card);
+  });
+
+  // input 변경 핸들러 → state 갱신 + 즉시 재계산
+  wrap.querySelectorAll('input, select').forEach(el => {
+    el.addEventListener('change', e => {
+      const ch = el.dataset.ch;
+      const f = el.dataset.f;
+      let v = el.value;
+      if (f === 'feePct') v = (parseFloat(v)||0) / 100;
+      else if (f === 'shippingByUs') v = (v === 'true');
+      else if (f === 'pkgPrice' || f === 'unitPrice' || f === 'shippingPerUnit') {
+        v = v === '' ? (f === 'unitPrice' ? null : 0) : parseFloat(v);
+      } else if (f === 'ovrPkg' || f === 'ovrUnit') {
+        // breakdown override
+        const key = f === 'ovrPkg' ? 'pkg' : 'unit';
+        if (v === '') {
+          if (BREAKDOWN_OVERRIDE[ch]) { delete BREAKDOWN_OVERRIDE[ch][key]; if (Object.keys(BREAKDOWN_OVERRIDE[ch]).length === 0) delete BREAKDOWN_OVERRIDE[ch]; }
+        } else {
+          if (!BREAKDOWN_OVERRIDE[ch]) BREAKDOWN_OVERRIDE[ch] = {};
+          BREAKDOWN_OVERRIDE[ch][key] = parseInt(v) || 0;
+        }
+        saveBreakdownOverride(BREAKDOWN_OVERRIDE);
+        renderSettlementTable();
+        renderTermsEditor();
+        return;
+      }
+      SETTLEMENT_TERMS[ch][f] = v;
+      saveTerms(SETTLEMENT_TERMS);
+      renderSettlementTable();
+      renderTermsEditor();
+    });
+  });
+}
+
+function resetTermsToDefaults() {
+  if (!confirm('거래조건을 기본값으로 복원합니다 (단가·수수료·배송 등). 켤레 보정도 모두 삭제됩니다. 계속?')) return;
+  localStorage.removeItem(TERMS_STORAGE_KEY);
+  localStorage.removeItem(BREAKDOWN_OVERRIDE_KEY);
+  SETTLEMENT_TERMS = loadTerms();
+  BREAKDOWN_OVERRIDE = {};
+  renderSettlementTable();
+  renderTermsEditor();
+}
+
+// 초기 렌더
+renderSettlementTable();
+renderTermsEditor();
+
+// 초기화 버튼
+document.getElementById('terms-reset-btn')?.addEventListener('click', resetTermsToDefaults);
 
 // ── 사이즈×색상별 소진 속도 테이블 (skuList 활용) ──
 function daysColor(d) {
