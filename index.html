@@ -191,6 +191,123 @@
   #page-order .dot-b2b { background: var(--oc-purple); }
   #page-order .dot-direct { background: var(--oc-blue); }
 
+  /* 자연어 입력 박스 */
+  #page-order .oc-natural {
+    background: linear-gradient(135deg, #eff6ff, #f0f9ff);
+    border: 1px solid #93c5fd;
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin: 0 36px 16px;
+  }
+  #page-order .oc-natural-head {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    gap: 16px; margin-bottom: 10px;
+  }
+  #page-order .oc-natural-title {
+    font-size: 13px; font-weight: 700; color: #1e40af;
+  }
+  #page-order .oc-natural-hint {
+    font-size: 11px; color: var(--oc-muted); margin-top: 4px;
+  }
+  #page-order .oc-natural-hint code {
+    background: rgba(255,255,255,0.7); padding: 2px 6px;
+    border-radius: 4px; color: #1e40af;
+    font-family: 'SF Mono', 'Menlo', monospace; font-size: 10.5px;
+  }
+  #page-order .oc-natural-actions {
+    display: flex; gap: 8px; flex-shrink: 0;
+  }
+  #page-order .oc-natural textarea {
+    width: 100%; padding: 10px 12px; border: 1px solid #93c5fd;
+    border-radius: 8px; font-size: 13px; font-family: inherit;
+    resize: vertical; line-height: 1.6; background: white;
+    color: var(--oc-text); min-height: 60px;
+  }
+  #page-order .oc-natural textarea:focus {
+    outline: none; border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+  }
+  /* 파싱 결과 */
+  #page-order .oc-parse-warn {
+    background: #fef3c7; border: 1px solid #fcd34d;
+    padding: 12px 14px; border-radius: 8px; color: #92400e;
+    font-size: 12px;
+  }
+  #page-order .oc-parse-warn strong {
+    display: block; margin-bottom: 6px; color: #78350f;
+  }
+  #page-order .oc-parse-ok {
+    background: #dcfce7; border: 1px solid #86efac;
+    padding: 12px 14px; border-radius: 8px; color: #15803d;
+    font-weight: 600; font-size: 12px;
+  }
+  #page-order .oc-detected-tag {
+    display: inline-block; background: rgba(255,255,255,0.6); color: #1e40af;
+    padding: 2px 8px; border-radius: 11px; font-size: 11px;
+    margin-right: 4px; margin-top: 4px;
+  }
+  #page-order .oc-missing-tag {
+    display: inline-block; background: #fef2f2; color: #dc2626;
+    padding: 2px 8px; border-radius: 11px; font-weight: 600; font-size: 11px;
+    margin-right: 4px; margin-top: 4px;
+  }
+  #page-order .oc-parse-hint {
+    font-size: 11px; color: var(--oc-muted); margin-top: 8px;
+  }
+  /* 부족 필드 highlight */
+  #page-order .oc-field.missing input,
+  #page-order .oc-field.missing select,
+  #page-order .oc-field.missing > label {
+    border-color: #fca5a5 !important;
+  }
+  #page-order .oc-field.missing input,
+  #page-order .oc-field.missing select {
+    background: #fef2f2 !important;
+    animation: missingPulse 1.6s ease-out;
+  }
+  #page-order .oc-field.missing > label {
+    color: #dc2626 !important;
+  }
+  @keyframes missingPulse {
+    0% { box-shadow: 0 0 0 4px rgba(252, 165, 165, 0.4); }
+    100% { box-shadow: 0 0 0 0 rgba(252, 165, 165, 0); }
+  }
+
+  /* 슬랙 출고 대기 패널 */
+  #page-order .oc-pending {
+    background: var(--oc-surface);
+    border: 1px solid var(--oc-border);
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin: 0 36px 16px;
+  }
+  #page-order .oc-pending-head {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    margin-bottom: 12px;
+  }
+  #page-order .oc-pending-title {
+    font-size: 13px; font-weight: 700; color: var(--oc-text);
+  }
+  #page-order .oc-pending-badge {
+    display: inline-block; background: #fef3c7; color: #92400e;
+    padding: 2px 9px; border-radius: 11px;
+    font-size: 11px; font-weight: 700; margin-left: 6px;
+  }
+  #page-order .oc-pending-hint {
+    font-size: 11px; color: var(--oc-muted); margin-top: 4px;
+  }
+  #page-order .oc-pending-list { display: flex; flex-direction: column; gap: 8px; }
+  #page-order .oc-pending-empty {
+    text-align: center; padding: 24px;
+    color: var(--oc-dim); font-style: italic; font-size: 12px;
+  }
+  #page-order .oc-pending-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 14px; background: #fafbfc;
+    border: 1px solid var(--oc-border);
+    border-radius: 8px;
+  }
+
   /* 그리드 */
   #page-order .oc-grid {
     display: grid;
@@ -711,6 +828,38 @@ IF(OR(C2="킥스타터",
         <span><span class="dot dot-direct"></span>직접 <strong id="oc-kpi-direct">0</strong></span>
       </div>
       <div class="oc-kpi-row sub" id="oc-kpi-size-color"></div>
+    </div>
+  </div>
+
+  <!-- 자연어 입력 (NEW · 카톡 메시지 그대로 던지기) -->
+  <div class="oc-natural">
+    <div class="oc-natural-head">
+      <div>
+        <div class="oc-natural-title">💬 자연어 입력 — 카톡·메시지 그대로 붙여넣기</div>
+        <div class="oc-natural-hint">예: <code>황현욱 010-1234-5678 서울 마포구 월드컵로 280mm 그레이 풀세트</code></div>
+      </div>
+      <div class="oc-natural-actions">
+        <button id="oc-parse-btn" class="oc-btn oc-btn-primary">🤖 자동 분류 + 폼 채우기</button>
+        <button id="oc-natural-clear" class="oc-btn oc-btn-ghost">초기화</button>
+      </div>
+    </div>
+    <textarea id="oc-natural-text" rows="3" placeholder="여기에 카톡 메시지나 주문 내용 그대로 던져주세요. 휴대폰·주소·사이즈·컬러·부자재·채널 등 자동 추출됩니다."></textarea>
+    <div id="oc-parse-result" style="display:none; margin-top:10px;"></div>
+  </div>
+
+  <!-- 슬랙 → 시트 출고 대기 (NEW · 슬랙 봇 자연어 → 시트 자동 추가 → 콘솔 fetch) -->
+  <div class="oc-pending">
+    <div class="oc-pending-head">
+      <div>
+        <div class="oc-pending-title">📥 슬랙 출고 대기 <span id="oc-pending-count" class="oc-pending-badge">0</span></div>
+        <div class="oc-pending-hint">슬랙 봇이 시트에 추가한 미출고 건 · [✓ 확인] 누르면 좌측 누적 list로 이동</div>
+      </div>
+      <div>
+        <button id="oc-pending-refresh" class="oc-btn oc-btn-ghost">🔄 새로고침</button>
+      </div>
+    </div>
+    <div id="oc-pending-list" class="oc-pending-list">
+      <div class="oc-pending-empty">슬랙 시트 연동 설정 후 자동 표시됩니다 (시트 URL/gid 매트 입력 대기)</div>
     </div>
   </div>
 
@@ -2746,6 +2895,213 @@ new Chart(document.getElementById('burndownChart'), {
     save(); renderAll();
   }
 
+  // ── 자연어 파싱 ─────────────────────────
+  // 클라이언트 사이드 (정규식 + 휴리스틱) — LLM 호출 0
+  function parseNatural(text) {
+    const r = {
+      phone: '', zip: '', size: '', color: '',
+      address: '', detail: '', recipient: '', accessories: [],
+      category: '', channel: '', memo: '', qty: 1,
+      reason: '',
+      detected: [], missing: []
+    };
+    if (!text || !text.trim()) return r;
+
+    // 휴대폰 (01x-xxxx-xxxx 또는 01xxxxxxxxxx)
+    const phoneM = text.match(/01[0-9][\s.-]?\d{3,4}[\s.-]?\d{4}/);
+    if (phoneM) {
+      const p = phoneM[0].replace(/[\s.-]/g, '');
+      r.phone = p.replace(/(\d{3})(\d{3,4})(\d{4})/, '$1-$2-$3');
+      r.detected.push(`휴대폰 ${r.phone}`);
+    }
+    // 우편번호 (5자리, 휴대폰 제외)
+    const remaining = phoneM ? text.replace(phoneM[0], ' ') : text;
+    const zipM = remaining.match(/(?:^|[\s,(])(\d{5})(?:[\s,)]|$)/);
+    if (zipM) { r.zip = zipM[1]; r.detected.push(`우편 ${r.zip}`); }
+
+    // 사이즈 240/250/260/270/280
+    const sizeM = text.match(/\b(2[4-8]0)\s*mm?\b/i);
+    if (sizeM) { r.size = sizeM[1]; r.detected.push(`사이즈 ${r.size}mm`); }
+
+    // 컬러
+    if (/그레이|회색|gray|grey/i.test(text)) { r.color = '그레이'; r.detected.push('컬러 그레이'); }
+    else if (/베이지|beige/i.test(text)) { r.color = '베이지'; r.detected.push('컬러 베이지'); }
+
+    // 수량 (예: 2족, 3켤레, x2)
+    const qtyM = text.match(/(\d+)\s*(?:족|켤레|개)/) || text.match(/[xX×]\s*(\d+)/);
+    if (qtyM) { r.qty = Math.min(20, Math.max(1, parseInt(qtyM[1])||1)); r.detected.push(`수량 ${r.qty}`); }
+
+    // 주소 (광역시도 키워드)
+    const addrRe = /(?:서울특별시|부산광역시|대구광역시|인천광역시|광주광역시|대전광역시|울산광역시|세종특별자치시|경기도|강원도|강원특별자치도|충청남도|충청북도|전라남도|전라북도|전북특별자치도|경상남도|경상북도|제주특별자치도|서울|부산|대구|인천|광주|대전|울산|세종|경기|강원|충남|충북|전남|전북|경남|경북|제주)[^\n,]{2,80}/;
+    const addrM = text.match(addrRe);
+    if (addrM) { r.address = addrM[0].trim(); r.detected.push(`주소`); }
+
+    // 이름 (한글 2-4자) — 지역명 제외
+    const exclude = new Set(['서울','부산','대구','인천','광주','대전','울산','경기','강원','충남','충북','전남','전북','경남','경북','제주','세종','마포','강남','강북','종로','중구','용산','성동','광진','동대문','중랑','성북','강서','양천','구로','금천','영등포','동작','관악','서초','송파','강동','노원','도봉','은평','서대문']);
+    const nameMatches = text.matchAll(/(?:^|[\s,(\n])([가-힣]{2,4})(?=[\s,)\n]|$)/g);
+    for (const m of nameMatches) {
+      if (!exclude.has(m[1]) && m[1] !== r.color && m[1].length <= 4) {
+        r.recipient = m[1]; r.detected.push(`성명 ${r.recipient}`); break;
+      }
+    }
+
+    // 부자재 (풀세트 키워드 우선)
+    if (/풀세트|풀패키지|fullset|full\s*set|풀\s*키트/i.test(text)) {
+      r.accessories = ['hat','shoebag','towel','belt','flask','lace','sticker'];
+      r.detected.push('부자재 풀세트(7종)');
+    } else {
+      const accMap = [
+        ['hat',     /모자|cap|hat/i, '모자'],
+        ['shoebag', /슈백|슈백|shoe\s*bag/i, '슈백'],
+        ['towel',   /타올|타월|수건|towel/i, '타올'],
+        ['belt',    /벨트|belt/i, '벨트'],
+        ['flask',   /플라스크|보틀|flask|bottle/i, '플라스크'],
+        ['lace',    /슈레이스|레이스|끈|lace/i, '슈레이스'],
+        ['sticker', /스티커|반사스티커|sticker/i, '반사스티커'],
+      ];
+      accMap.forEach(([k, re, label]) => {
+        if (re.test(text)) { r.accessories.push(k); r.detected.push(`부자재 ${label}`); }
+      });
+    }
+
+    // 분류 추론
+    if (/샘플|시딩|인플루언서|seeding|sample/i.test(text)) {
+      r.category = 'sample'; r.detected.push('분류 샘플');
+    } else if (/마야크루|b2b|단체|기업|회사/i.test(text)) {
+      r.category = 'b2b'; r.detected.push('분류 B2B');
+    } else if (/직접\s*전달|직접전달|지인|선물|손에|픽업|매장/i.test(text)) {
+      r.category = 'direct';
+      r.detected.push('분류 📍 직접 전달');
+      // 사유 추론
+      if (/지인|선물|친구|가족|형|동생|누나|언니/.test(text)) r.reason = '지인';
+      else if (/시딩|인플루언서/.test(text)) r.reason = '시딩';
+      else if (/내부|직원|테스트/.test(text)) r.reason = '내부 사용';
+      else if (/이벤트|현장/.test(text)) r.reason = '이벤트';
+      else r.reason = '기타';
+    } else if (/네이버|스마트스토어/i.test(text)) {
+      r.category = 'sale'; r.channel = 'naver'; r.detected.push('분류 실판매·네이버');
+    } else if (/메이커스|kakao\s*makers/i.test(text)) {
+      r.category = 'sale'; r.channel = 'makers'; r.detected.push('분류 실판매·메이커스');
+    } else if (/톡딜|카카오톡스토어|카카오\s*톡/i.test(text)) {
+      r.category = 'sale'; r.channel = 'talkdeal'; r.detected.push('분류 실판매·톡딜');
+    } else if (/킥스타터|kickstarter/i.test(text)) {
+      r.category = 'sale'; r.channel = 'kickstarter'; r.detected.push('분류 실판매·킥스타터');
+    } else {
+      r.category = 'sale';
+      r.missing.push('채널 (네이버/메이커스/톡딜/킥스타터)');
+    }
+
+    // 부족 정보 체크
+    if (!r.recipient) r.missing.push('성명');
+    if (r.category !== 'direct') {
+      if (!r.phone) r.missing.push('휴대폰');
+      if (!r.address) r.missing.push('주소');
+    }
+    if (!r.size) r.missing.push('사이즈');
+    if (!r.color) r.missing.push('컬러');
+
+    return r;
+  }
+
+  function applyParseToForm(p) {
+    // 분류
+    if (p.category) {
+      const radio = document.querySelector(`#oc-cat-group input[value="${p.category}"]`);
+      if (radio) { radio.checked = true; onCategoryChange(); }
+    }
+    // 채널 (sale)
+    if (p.channel) {
+      const ch = $('#oc-channel');
+      if (ch) ch.value = p.channel;
+    }
+    // 사유 (direct)
+    if (p.category === 'direct' && p.reason) {
+      const reason = $('#oc-reason');
+      if (reason) reason.value = p.reason;
+    }
+    // 기본 정보
+    if (p.recipient) $('#oc-recipient').value = p.recipient;
+    if (p.phone) $('#oc-phone').value = p.phone;
+    if (p.zip) $('#oc-zip').value = p.zip;
+    if (p.address) $('#oc-address').value = p.address;
+    // 수량
+    $('#oc-qty').value = p.qty;
+    renderShoeSlots(p.qty);
+    // 사이즈/컬러
+    if (p.size || p.color) {
+      requestAnimationFrame(() => {
+        $$('#oc-shoes-slots .oc-shoe-slot').forEach(slot => {
+          if (p.size) slot.querySelector('.oc-shoe-size').value = p.size;
+          if (p.color) slot.querySelector('.oc-shoe-color').value = p.color;
+        });
+      });
+    }
+    // 부자재
+    $$('input[name=acc]').forEach(c => { c.checked = p.accessories.includes(c.value); });
+  }
+
+  function highlightMissing(missing, detected) {
+    // 모든 .oc-field에서 missing 클래스 제거
+    $$('.oc-field.missing').forEach(e => e.classList.remove('missing'));
+
+    const fieldByLabel = {
+      '성명': '#oc-recipient', '휴대폰': '#oc-phone',
+      '주소': '#oc-address', '사이즈': '#oc-shoes-slots-wrap',
+      '컬러': '#oc-shoes-slots-wrap',
+    };
+    missing.forEach(m => {
+      const key = m.split(' ')[0]; // "채널 (..." → "채널"
+      const sel = fieldByLabel[key];
+      if (sel) {
+        const el = document.querySelector(sel);
+        const field = el ? (el.closest('.oc-field') || el.parentElement) : null;
+        if (field) field.classList.add('missing');
+      }
+      if (key === '채널') {
+        const f = document.getElementById('oc-channel-field');
+        if (f) f.classList.add('missing');
+      }
+    });
+
+    const result = $('#oc-parse-result');
+    if (!result) return;
+    result.style.display = 'block';
+    const detectedHtml = detected.length
+      ? `<div style="margin-bottom:10px;"><strong style="color:#1e40af;">✓ 인식 완료:</strong> ${detected.map(d => `<span class="oc-detected-tag">${d}</span>`).join(' ')}</div>`
+      : '';
+    if (missing.length > 0) {
+      result.innerHTML = detectedHtml + `<div class="oc-parse-warn">
+        <strong>⚠️ 추가 정보 필요 (${missing.length}건)</strong>
+        <div>${missing.map(m => `<span class="oc-missing-tag">${m}</span>`).join(' ')}</div>
+        <div class="oc-parse-hint">아래 폼에서 직접 입력하거나, 자연어 입력란에 추가 정보 던지고 [🤖 자동 분류] 다시 클릭</div>
+      </div>`;
+    } else {
+      result.innerHTML = detectedHtml + `<div class="oc-parse-ok">✅ 모든 필수 정보 인식 완료 — 좌측 폼 확인 후 [+ 추가] 클릭하세요</div>`;
+    }
+  }
+
+  function onParseClick() {
+    const text = $('#oc-natural-text').value;
+    if (!text.trim()) { alert('자연어 입력란이 비어있습니다.'); return; }
+    const p = parseNatural(text);
+    applyParseToForm(p);
+    highlightMissing(p.missing, p.detected);
+    // 첫 부족 필드로 스크롤
+    if (p.missing.length > 0) {
+      const firstMissing = $$('.oc-field.missing input, .oc-field.missing select')[0];
+      if (firstMissing) {
+        setTimeout(() => firstMissing.focus({preventScroll:false}), 100);
+      }
+    }
+  }
+
+  // ── 슬랙 출고 대기 (placeholder — 시트 정보 받으면 fetch 활성) ──
+  // const SLACK_PENDING_SHEET_URL = "https://docs.google.com/...";  // 매트 입력 후 활성
+  function refreshPendingFromSheet() {
+    // TODO: 매트가 시트 URL/gid 알려주면 gviz fetch + render
+    // 현재 placeholder — 변동 없음
+  }
+
   // ── 초기화 ────────────────────────────────
   function init() {
     load();
@@ -2791,6 +3147,24 @@ new Chart(document.getElementById('burndownChart'), {
     $('#oc-export-json').addEventListener('click', exportJSON);
     $('#oc-import-json').addEventListener('click', importJSON);
     $('#oc-clear-all').addEventListener('click', clearAll);
+
+    // 자연어 입력 (NEW)
+    $('#oc-parse-btn')?.addEventListener('click', onParseClick);
+    $('#oc-natural-clear')?.addEventListener('click', () => {
+      $('#oc-natural-text').value = '';
+      $('#oc-parse-result').style.display = 'none';
+      $$('.oc-field.missing').forEach(e => e.classList.remove('missing'));
+    });
+    // Cmd/Ctrl + Enter로 빠른 파싱
+    $('#oc-natural-text')?.addEventListener('keydown', e => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+        e.preventDefault();
+        onParseClick();
+      }
+    });
+
+    // 슬랙 출고 대기 새로고침 (placeholder)
+    $('#oc-pending-refresh')?.addEventListener('click', refreshPendingFromSheet);
   }
 
   // DOM 준비 후 init
