@@ -2661,6 +2661,34 @@ new Chart(document.getElementById('burndownChart'), {
     address: '경기도 고양시 덕양구 향동로 218, 비915호',
   };
 
+  // ── 합포 그룹화 ─────────────────────────────
+  // 같은 수령인 + 휴대폰 + 우편번호 + 주소 → 같은 박스에 합포
+  // 직접 전달(category='direct')은 택배 X → 합포 대상에서 제외
+  function shipKey(o) {
+    const phoneClean = String(o.phone || '').replace(/[^\d]/g,'');
+    const addrClean  = ((o.address || '') + ' ' + (o.detail || '')).replace(/\s+/g,' ').trim();
+    return `${(o.recipient||'').trim()}|${phoneClean}|${o.zip||''}|${addrClean}`;
+  }
+  function groupOrdersForShipping(orders) {
+    const groups = new Map();
+    orders.forEach(o => {
+      if (o.category === 'direct') return;
+      const k = shipKey(o);
+      if (!groups.has(k)) groups.set(k, []);
+      groups.get(k).push(o);
+    });
+    return Array.from(groups.values());
+  }
+  // order.id → { position, total } (합포된 경우만)
+  function buildMergeMap(orders) {
+    const m = new Map();
+    groupOrdersForShipping(orders).forEach(g => {
+      if (g.length < 2) return;
+      g.forEach((o, i) => m.set(o.id, { position: i+1, total: g.length }));
+    });
+    return m;
+  }
+
   // ── 상태 ───────────────────────────────────
   const state = {
     orders: [],   // 오늘 주문 list
@@ -2782,6 +2810,7 @@ new Chart(document.getElementById('burndownChart'), {
       tbody.innerHTML = `<tr class="oc-empty"><td colspan="11">오늘 컨펌할 출고가 없습니다. 우측 [📥 출고 대기] panel에서 [→ 폼]을 눌러 시트 row를 가져오세요.</td></tr>`;
       return;
     }
+    const mergeMap = buildMergeMap(state.orders);
     tbody.innerHTML = state.orders.map((o, idx) => {
       const isDirect = o.category === 'direct';
       const catCls = `oc-cat-${o.category}`;
@@ -2796,9 +2825,16 @@ new Chart(document.getElementById('burndownChart'), {
       const sourceTag = o.source === 'sheet'
         ? '<span title="시트 자동 흡수" style="display:inline-block;background:#fef3c7;color:#92400e;padding:1px 4px;border-radius:3px;font-size:9px;font-weight:700;margin-right:4px;">시트</span>'
         : '';
-      return `<tr>
+      const mg = mergeMap.get(o.id);
+      const mergeBadge = mg
+        ? `<span title="합포 — 같은 박스에 함께 발송. 송장 1개만 부착!" style="display:inline-block;background:#fef9c3;color:#854d0e;border:1px solid #facc15;padding:1px 5px;border-radius:3px;font-size:10px;font-weight:700;margin-right:4px;">🔗 합포 ${mg.position}/${mg.total}</span>`
+        : '';
+      const rowStyle = mg
+        ? ' style="background:linear-gradient(90deg, #fffbeb 0%, #fff 30%); border-left:3px solid #f59e0b;"'
+        : '';
+      return `<tr${rowStyle}>
         <td>${idx+1}</td>
-        <td>${sourceTag}<span class="oc-cat-badge ${catCls}">${catLbl}</span></td>
+        <td>${sourceTag}${mergeBadge}<span class="oc-cat-badge ${catCls}">${catLbl}</span></td>
         <td>${channelLbl}</td>
         <td><strong>${o.recipient || '—'}</strong></td>
         <td>${phone || '—'}</td>
@@ -2922,8 +2958,21 @@ new Chart(document.getElementById('burndownChart'), {
     if (p.accessories.lace>=1)    accessories.push('lace');
     if (p.accessories.sticker>=1) accessories.push('sticker');
 
+    // 시트 row 식별자 (dedup 용) — 같은 시트 row 재import 방지.
+    // 같은 수령인이라도 다른 시트 row(다른 사이즈/컬러/메모/날짜)면 별개 주문.
+    const sheetSig = [
+      p.packDate || '',
+      (p.recipient||'').trim(),
+      String(p.phone||'').replace(/[^\d]/g,''),
+      String(p.size||'').replace(/\s+/g,''),
+      String(p.color||'').trim(),
+      String(p.memo||'').trim(),
+      JSON.stringify(p.accessories||{})
+    ].join('|');
+
     return {
       id: 'sheet-' + Date.now() + '-' + Math.random().toString(36).slice(2,8),
+      sheetSig,
       category, channel,
       recipient: p.recipient || '',
       phone: fmtPhone(p.phone) || '',
@@ -2944,14 +2993,17 @@ new Chart(document.getElementById('burndownChart'), {
     const todayPending = _pendingCache.filter(p => p.isToday);
     let added = 0;
     todayPending.forEach(p => {
-      const phoneClean = String(p.phone || '').replace(/[^\d]/g,'');
-      const exists = state.orders.some(o => {
-        if (o.recipient !== p.recipient) return false;
-        const oPhone = String(o.phone || '').replace(/[^\d]/g,'');
-        // 같은 수령인 + (같은 휴대폰 OR 휴대폰 한쪽 비어있음 → 같은 사람으로 간주)
-        return !phoneClean || !oPhone || oPhone === phoneClean;
-      });
-      if (exists) return;
+      const sig = [
+        p.packDate || '',
+        (p.recipient||'').trim(),
+        String(p.phone||'').replace(/[^\d]/g,''),
+        String(p.size||'').replace(/\s+/g,''),
+        String(p.color||'').trim(),
+        String(p.memo||'').trim(),
+        JSON.stringify(p.accessories||{})
+      ].join('|');
+      // 같은 시트 row 재import만 차단. 같은 수령인의 다른 row는 별개 주문 → 합포로 처리.
+      if (state.orders.some(o => o.sheetSig === sig)) return;
       state.orders.push(pendingRowToOrder(p));
       added++;
     });
@@ -2983,34 +3035,47 @@ new Chart(document.getElementById('burndownChart'), {
       alert('SheetJS 로드 실패 — 인터넷 연결 확인');
       return;
     }
-    // 각 주문은 row 1개로 압축 (수량은 신발 수)
-    // 품목명: 사이즈/컬러 조합을 명시
+    // 합포: 같은 수령인+휴대폰+우편번호+주소 → 1 row (1 박스 = 송장 1개)
+    // 신발/부자재 합산, 분류·메모 통합, 특기사항에 합포 명시
+    const groups = groupOrdersForShipping(shippable);
+    const mergedGroups = groups.filter(g => g.length >= 2);
     const rows = [
       ['받으시는 분','받으시는 분 전화','받는분담당자','받는분핸드폰','받는분우편번호','받는분총주소','수량','품목명','운임Type','지불조건','출고번호','특기사항','메모1','메모2','메모3','메모4']
     ];
     const dateTag = state.today;
-    shippable.forEach((o, i) => {
-      const fullAddress = (o.address || '') + (o.detail ? ' ' + o.detail : '');
-      const phone = o.phone || '';
-      const itemSummary = (o.shoes || []).map(s => `${s.size}mm/${s.color}`).join(', ');
-      const accSummary = (o.accessories || []).length
-        ? ` + ${(o.accessories||[]).map(a=>ACC_LABELS[a]||a).join('·')}`
-        : '';
-      const cat = CAT_LABELS[o.category] || '';
+    groups.forEach((group, i) => {
+      const head = group[0];
+      const fullAddress = (head.address || '') + (head.detail ? ' ' + head.detail : '');
+      const phone = head.phone || '';
+      const allShoes = group.flatMap(o => o.shoes || []);
+      const allAcc   = group.flatMap(o => o.accessories || []);
+      const accUniq  = Array.from(new Set(allAcc));
+      const itemSummary = allShoes.map(s => `${s.size}mm/${s.color}`).join(', ');
+      const accSummary  = accUniq.length ? ` + ${accUniq.map(a=>ACC_LABELS[a]||a).join('·')}` : '';
+      const cats = Array.from(new Set(group.map(o => CAT_LABELS[o.category] || '').filter(Boolean)));
+      const memos = Array.from(new Set(group.map(o => o.memo || '').filter(Boolean)));
+      const isMerged = group.length >= 2;
+      const mergeTag = isMerged ? `🔗 합포 ${group.length}건 — 송장 1개로 발송 ` : '';
+      const noteParts = [
+        mergeTag,
+        cats.join('+'),
+        memos.length ? '· ' + memos.join(' · ') : ''
+      ].filter(Boolean);
       rows.push([
-        o.recipient || '',           // 받으시는 분
-        phone,                        // 받으시는 분 전화
-        o.recipient || '',           // 받는분담당자 (=수령인)
-        phone,                        // 받는분핸드폰
-        o.zip || '',                  // 우편번호
-        fullAddress,                  // 총주소
-        (o.shoes || []).length,       // 수량
-        `BR-001 ${itemSummary}${accSummary}`,  // 품목명
-        '',                           // 운임Type (한진 디폴트)
-        '',                           // 지불조건
+        head.recipient || '',         // 받으시는 분
+        phone,                         // 받으시는 분 전화
+        head.recipient || '',         // 받는분담당자
+        phone,                         // 받는분핸드폰
+        head.zip || '',                // 우편번호
+        fullAddress,                   // 총주소
+        allShoes.length,               // 수량 (합산)
+        `BR-001 ${itemSummary}${accSummary}`,  // 품목명 (합산)
+        '',                            // 운임Type
+        '',                            // 지불조건
         `${dateTag}-${String(i+1).padStart(3,'0')}`,  // 출고번호
-        cat + (o.memo ? ' · ' + o.memo : ''),         // 특기사항
-        '', '', '', ''                // 메모1~4
+        noteParts.join(' ').trim(),    // 특기사항 (합포 명시 + 분류 + 메모)
+        isMerged ? `합포 ${group.length}건` : '',  // 메모1: 합포 강조
+        '', '', ''
       ]);
     });
 
@@ -3029,7 +3094,16 @@ new Chart(document.getElementById('burndownChart'), {
     shippable.forEach(o => o.status = 'exported');
     save();
     setTimeout(() => {
-      const lines = [`✅ 한진 양식 ${shippable.length}건 다운로드 완료`];
+      const boxCount = groups.length;
+      const lines = [`✅ 한진 양식 다운로드 완료 — 주문 ${shippable.length}건 → 박스 ${boxCount}개 (송장 ${boxCount}장)`];
+      if (mergedGroups.length > 0) {
+        lines.push('');
+        lines.push(`📦 합포 ${mergedGroups.length}묶음 — 같은 박스에 합쳐서 보내고 송장 1개만 부착하세요`);
+        mergedGroups.forEach(g => {
+          const cats = Array.from(new Set(g.map(o => CAT_LABELS[o.category] || ''))).join('+');
+          lines.push(`  • ${g[0].recipient} (${cats}) — ${g.length}건 합포`);
+        });
+      }
       if (added > 0) lines.unshift(`📥 시트 오늘 대기열 ${added}건 자동 흡수됨`);
       if (directCount > 0) lines.push(`📍 직접 전달 ${directCount}건 양식 미포함 (재고 카운트만 반영)`);
       alert(lines.join('\n'));
