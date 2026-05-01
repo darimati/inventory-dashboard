@@ -1100,7 +1100,7 @@ IF(OR(C2="킥스타터",
         <tbody>
           <tr><td>카카오메이커스</td><td class="num">159,000 (풀세트)</td><td class="num" style="color:var(--red);">25%</td><td class="num">회사 (2,400원)</td><td class="num">월 1회</td><td style="color:#4ade80;">✓ 입력 완료</td></tr>
           <tr><td>B2B (마야크루)</td><td class="num">110,000 (단품)</td><td class="num">0%</td><td class="num">없음</td><td class="num">건별</td><td style="color:#4ade80;">✓ 입력 완료</td></tr>
-          <tr><td>네이버 스마트스토어</td><td class="num">169,000 (단품)</td><td class="num" style="color:var(--yellow);">4%</td><td class="num">회사 (2,400원)</td><td class="num">월 2회</td><td style="color:#4ade80;">✓ 입력 완료</td></tr>
+          <tr><td>네이버 스마트스토어</td><td class="num">169,000 (풀세트)</td><td class="num" style="color:var(--yellow);">4%</td><td class="num">회사 (2,400원)</td><td class="num">월 2회</td><td style="color:#4ade80;">✓ 입력 완료</td></tr>
           <tr><td>카카오톡스토어 (톡딜)</td><td class="num">169,000 (단품)</td><td class="num" style="color:var(--yellow);">4%</td><td class="num">회사 (2,400원)</td><td class="num">월 1회</td><td style="color:#4ade80;">✓ 입력 완료</td></tr>
           <tr><td>킥스타터</td><td class="num" style="color:#666;">미입력</td><td class="num" style="color:#666;">미입력</td><td class="num" style="color:#666;">미입력</td><td class="num" style="color:#666;">완료 후 일괄</td><td style="color:#888;">대기</td></tr>
         </tbody>
@@ -2047,10 +2047,10 @@ const SETTLEMENT_DEALS = {
   '네이버 스마트스토어': {
     units: 6, unitPrice: 169000, feePct: 0.04,
     shippingPerUnit: 2400, shippingByUs: true,
-    cogsPerUnit: COGS.unit,
-    composition: '단품',
+    cogsPerUnit: COGS.package,
+    composition: '풀세트',
     confirmed: true,
-    note: '단가 169,000 · 4% 수수료 · DARI CLASS 출고 합산'
+    note: '풀세트 단가 169,000 · 4% 수수료 · DARI CLASS 출고 합산'
   },
   '카카오톡스토어': {
     units: 2, unitPrice: 169000, feePct: 0.04,
