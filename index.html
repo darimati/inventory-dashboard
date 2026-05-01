@@ -2793,9 +2793,12 @@ new Chart(document.getElementById('burndownChart'), {
       const addressShort = isDirect
         ? '<span style="color:#0369a1; font-style:italic;">📍 직접 전달 (배송 X)</span>'
         : (o.address || '') + (o.detail ? ' ' + o.detail : '');
+      const sourceTag = o.source === 'sheet'
+        ? '<span title="시트 자동 흡수" style="display:inline-block;background:#fef3c7;color:#92400e;padding:1px 4px;border-radius:3px;font-size:9px;font-weight:700;margin-right:4px;">시트</span>'
+        : '';
       return `<tr>
         <td>${idx+1}</td>
-        <td><span class="oc-cat-badge ${catCls}">${catLbl}</span></td>
+        <td>${sourceTag}<span class="oc-cat-badge ${catCls}">${catLbl}</span></td>
         <td>${channelLbl}</td>
         <td><strong>${o.recipient || '—'}</strong></td>
         <td>${phone || '—'}</td>
@@ -2889,10 +2892,84 @@ new Chart(document.getElementById('burndownChart'), {
     $('#oc-recipient').focus();
   }
 
+  // ── 시트 오늘 대기열 → 누적 list 흡수 ─────────
+  // 한진 양식 다운로드 = 발주 확정. 그 시점에 시트의 오늘 도래분을
+  // 누적 list로 자동 import (중복 제외). 매트가 [+ 추가]로 일일이
+  // 옮기지 않아도 한 번에 처리.
+  function pendingRowToOrder(p) {
+    let category = 'sale', channel = '';
+    const ch = p.channel, dv = p.deliv;
+    if (ch === '증정' || ch === '샘플') {
+      category = (dv === '직접전달' || /직접/.test(dv)) ? 'direct' : 'sample';
+    } else if (ch === '비투비' || ch === 'B2B' || ch === '마야크루') {
+      category = 'b2b';
+    } else if (ch === '카카오메이커스' || ch === '메이커스') { category='sale'; channel='makers'; }
+    else if (ch === '네이버') { category='sale'; channel='naver'; }
+    else if (ch === '카카오톡스토어' || ch === '톡스토어' || ch === '톡딜') { category='sale'; channel='talkdeal'; }
+    else if (ch === '킥스타터') { category='sale'; channel='kickstarter'; }
+
+    const sizeNum = (p.size.match(/(\d+)/) || [])[1] || '270';
+    const colorStr = p.color.includes('베이지') ? '베이지' : (p.color.includes('그레이') ? '그레이' : '그레이');
+    const qty = Math.max(1, p.shoeQty || 0);
+    const shoes = [];
+    for (let i = 0; i < qty; i++) shoes.push({ size: sizeNum, color: colorStr });
+    const accessories = [];
+    if (p.accessories.hat>=1)     accessories.push('hat');
+    if (p.accessories.bag>=1)     accessories.push('shoebag');
+    if (p.accessories.towel>=1)   accessories.push('towel');
+    if (p.accessories.belt>=1)    accessories.push('belt');
+    if (p.accessories.flask>=1)   accessories.push('flask');
+    if (p.accessories.lace>=1)    accessories.push('lace');
+    if (p.accessories.sticker>=1) accessories.push('sticker');
+
+    return {
+      id: 'sheet-' + Date.now() + '-' + Math.random().toString(36).slice(2,8),
+      category, channel,
+      recipient: p.recipient || '',
+      phone: fmtPhone(p.phone) || '',
+      zip: p.zip || '',
+      address: p.address || '',
+      detail: '',
+      shoes, accessories,
+      memo: p.memo || (p.shoeQty ? '' : '부자재/A/S'),
+      source: 'sheet',
+      sheetChannel: ch,
+      status: 'pending',
+      createdAt: new Date().toISOString(),
+    };
+  }
+
+  function importTodayPendingToOrders() {
+    if (!_pendingCache || _pendingCache.length === 0) return 0;
+    const todayPending = _pendingCache.filter(p => p.isToday);
+    let added = 0;
+    todayPending.forEach(p => {
+      const phoneClean = String(p.phone || '').replace(/[^\d]/g,'');
+      const exists = state.orders.some(o => {
+        if (o.recipient !== p.recipient) return false;
+        const oPhone = String(o.phone || '').replace(/[^\d]/g,'');
+        // 같은 수령인 + (같은 휴대폰 OR 휴대폰 한쪽 비어있음 → 같은 사람으로 간주)
+        return !phoneClean || !oPhone || oPhone === phoneClean;
+      });
+      if (exists) return;
+      state.orders.push(pendingRowToOrder(p));
+      added++;
+    });
+    if (added > 0) { save(); renderAll(); }
+    return added;
+  }
+
   // ── 한진 양식 출력 ────────────────────────
-  function exportHanjin() {
+  async function exportHanjin() {
+    // 시트 fetch가 아직 비어있으면 먼저 fetch
+    if (!_pendingCache || _pendingCache.length === 0) {
+      await refreshPendingFromSheet();
+    }
+    // 시트 오늘 대기열 자동 흡수 (이미 누적된 row는 dedup)
+    const added = importTodayPendingToOrders();
+
     if (!state.orders.length) {
-      alert('출고할 주문이 없습니다.');
+      alert('출고할 주문이 없습니다.\n(시트에 오늘 대기열도 없음)');
       return;
     }
     // 직접 전달 row는 제외 (택배 안 보냄)
@@ -2951,9 +3028,12 @@ new Chart(document.getElementById('burndownChart'), {
     // 출력 후 마킹 — 택배 대상만 exported
     shippable.forEach(o => o.status = 'exported');
     save();
-    if (directCount > 0) {
-      setTimeout(() => alert(`✅ 한진 양식 ${shippable.length}건 다운로드 완료\n📍 직접 전달 ${directCount}건은 양식 미포함 (재고 카운트만 반영)`), 200);
-    }
+    setTimeout(() => {
+      const lines = [`✅ 한진 양식 ${shippable.length}건 다운로드 완료`];
+      if (added > 0) lines.unshift(`📥 시트 오늘 대기열 ${added}건 자동 흡수됨`);
+      if (directCount > 0) lines.push(`📍 직접 전달 ${directCount}건 양식 미포함 (재고 카운트만 반영)`);
+      alert(lines.join('\n'));
+    }, 200);
   }
 
   function exportJSON() {
