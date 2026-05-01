@@ -3270,40 +3270,86 @@ new Chart(document.getElementById('burndownChart'), {
 
     // 휴대폰 (01x-xxxx-xxxx 또는 01xxxxxxxxxx)
     const phoneM = text.match(/01[0-9][\s.-]?\d{3,4}[\s.-]?\d{4}/);
+    let phoneIdx = -1;
     if (phoneM) {
+      phoneIdx = phoneM.index;
       const p = phoneM[0].replace(/[\s.-]/g, '');
       r.phone = p.replace(/(\d{3})(\d{3,4})(\d{4})/, '$1-$2-$3');
       r.detected.push(`휴대폰 ${r.phone}`);
     }
     // 우편번호 (5자리, 휴대폰 제외)
-    const remaining = phoneM ? text.replace(phoneM[0], ' ') : text;
-    const zipM = remaining.match(/(?:^|[\s,(])(\d{5})(?:[\s,)]|$)/);
-    if (zipM) { r.zip = zipM[1]; r.detected.push(`우편 ${r.zip}`); }
+    const phoneStripped = phoneM ? text.replace(phoneM[0], ' ') : text;
+    const zipM = phoneStripped.match(/(?:^|[\s,(])(\d{5})(?:[\s,)]|$)/);
+    let zipIdx = -1;
+    if (zipM) {
+      r.zip = zipM[1];
+      r.detected.push(`우편 ${r.zip}`);
+      // 원문에서 우편번호 위치 (휴대폰 5자리와 충돌 가능성 차단)
+      zipIdx = text.indexOf('(' + r.zip + ')');
+      if (zipIdx === -1) {
+        // "(...)" 형태 아닐 때 fallback — 원문에서 5자리 직접 검색 (단 휴대폰 영역 제외)
+        const reZip = new RegExp(`(?:^|[\\s,(])(${r.zip})(?:[\\s,)]|$)`);
+        const m2 = text.match(reZip);
+        if (m2) zipIdx = (m2.index || 0) + (m2[0].length - r.zip.length - 1);
+      }
+    }
 
-    // 사이즈 240/250/260/270/280
-    const sizeM = text.match(/\b(2[4-8]0)\s*mm?\b/i);
+    // 주소 종료점 = 휴대폰/우편번호/괄호/줄바꿈 중 가장 빠른 위치 (greedy 방지)
+    const addrStartRe = /(?:서울특별시|부산광역시|대구광역시|인천광역시|광주광역시|대전광역시|울산광역시|세종특별자치시|경기도|강원도|강원특별자치도|충청남도|충청북도|전라남도|전라북도|전북특별자치도|경상남도|경상북도|제주특별자치도|서울|부산|대구|인천|광주|대전|울산|세종|경기|강원|충남|충북|전남|전북|경남|경북|제주)/;
+    const addrStartM = text.match(addrStartRe);
+    let addrSeg = ''; let addrStart = -1; let addrEnd = -1;
+    if (addrStartM) {
+      addrStart = addrStartM.index || 0;
+      // 가능한 종료점들 — 시작점 이후만 고려
+      const candidates = [text.length];
+      if (phoneIdx > addrStart) candidates.push(phoneIdx);
+      if (zipIdx > addrStart) candidates.push(zipIdx);
+      const parenIdx = text.indexOf('(', addrStart);
+      if (parenIdx > addrStart) candidates.push(parenIdx);
+      const nlIdx = text.indexOf('\n', addrStart);
+      if (nlIdx > addrStart) candidates.push(nlIdx);
+      const commaIdx = text.indexOf(',', addrStart);
+      if (commaIdx > addrStart) candidates.push(commaIdx);
+      addrEnd = Math.min.apply(null, candidates);
+      addrSeg = text.slice(addrStart, addrEnd).trim();
+      if (addrSeg.length >= 5) {
+        r.address = addrSeg;
+        r.detected.push(`주소`);
+      }
+    }
+
+    // 이름·사이즈·컬러 등은 "주소+휴대폰+우편번호" 제거된 working 텍스트에서 추출
+    let working = text;
+    if (phoneM) working = working.replace(phoneM[0], ' ');
+    if (zipM)   working = working.replace(zipM[0], ' ');
+    if (addrSeg) working = working.replace(addrSeg, ' ');
+
+    // 사이즈 — 'mm' 옵션 (없어도 OK), 단 휴대폰·우편번호 영역 안 숫자는 제외 (working 사용)
+    const sizeM = working.match(/(?<![\d.])(2[4-8]0)(?:\s*mm)?(?![\d.])/i);
     if (sizeM) { r.size = sizeM[1]; r.detected.push(`사이즈 ${r.size}mm`); }
 
     // 컬러
-    if (/그레이|회색|gray|grey/i.test(text)) { r.color = '그레이'; r.detected.push('컬러 그레이'); }
-    else if (/베이지|beige/i.test(text)) { r.color = '베이지'; r.detected.push('컬러 베이지'); }
+    if (/그레이|회색|gray|grey/i.test(working)) { r.color = '그레이'; r.detected.push('컬러 그레이'); }
+    else if (/베이지|beige/i.test(working)) { r.color = '베이지'; r.detected.push('컬러 베이지'); }
 
     // 수량 (예: 2족, 3켤레, x2)
-    const qtyM = text.match(/(\d+)\s*(?:족|켤레|개)/) || text.match(/[xX×]\s*(\d+)/);
+    const qtyM = working.match(/(\d+)\s*(?:족|켤레|개)/) || working.match(/[xX×]\s*(\d+)/);
     if (qtyM) { r.qty = Math.min(20, Math.max(1, parseInt(qtyM[1])||1)); r.detected.push(`수량 ${r.qty}`); }
 
-    // 주소 (광역시도 키워드)
-    const addrRe = /(?:서울특별시|부산광역시|대구광역시|인천광역시|광주광역시|대전광역시|울산광역시|세종특별자치시|경기도|강원도|강원특별자치도|충청남도|충청북도|전라남도|전라북도|전북특별자치도|경상남도|경상북도|제주특별자치도|서울|부산|대구|인천|광주|대전|울산|세종|경기|강원|충남|충북|전남|전북|경남|경북|제주)[^\n,]{2,80}/;
-    const addrM = text.match(addrRe);
-    if (addrM) { r.address = addrM[0].trim(); r.detected.push(`주소`); }
-
-    // 이름 (한글 2-4자) — 지역명 제외
-    const exclude = new Set(['서울','부산','대구','인천','광주','대전','울산','경기','강원','충남','충북','전남','전북','경남','경북','제주','세종','마포','강남','강북','종로','중구','용산','성동','광진','동대문','중랑','성북','강서','양천','구로','금천','영등포','동작','관악','서초','송파','강동','노원','도봉','은평','서대문']);
-    const nameMatches = text.matchAll(/(?:^|[\s,(\n])([가-힣]{2,4})(?=[\s,)\n]|$)/g);
+    // 이름 (한글 2-4자) — working에서 추출. 행정구역 suffix 자동 배제.
+    const exclude = new Set(['서울','부산','대구','인천','광주','대전','울산','경기','강원','충남','충북','전남','전북','경남','경북','제주','세종','마포','강남','강북','종로','중구','용산','성동','광진','동대문','중랑','성북','강서','양천','구로','금천','영등포','동작','관악','서초','송파','강동','노원','도봉','은평','서대문','마포구','강남구','용산구','종로구']);
+    const nameMatches = working.matchAll(/(?:^|[\s,(\n])([가-힣]{2,4})(?=[\s,)\n]|$)/g);
     for (const m of nameMatches) {
-      if (!exclude.has(m[1]) && m[1] !== r.color && m[1].length <= 4) {
-        r.recipient = m[1]; r.detected.push(`성명 ${r.recipient}`); break;
-      }
+      const w = m[1];
+      if (exclude.has(w)) continue;
+      if (w === r.color) continue;
+      // 도로명/길/대로/번길 → 주소 잔여물
+      if (/(?:대로|번길|로|길)$/.test(w)) continue;
+      // ~구/~시/~동 (행정구역 잔여물) — 사람 이름 오인 방지 위해 길이 3 이상만 배제
+      if (w.length >= 3 && /[구시동읍면]$/.test(w)) continue;
+      r.recipient = w;
+      r.detected.push(`성명 ${r.recipient}`);
+      break;
     }
 
     // 부자재 (풀세트 키워드 우선)
