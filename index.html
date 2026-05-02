@@ -1348,7 +1348,7 @@ IF(OR(C2="킥스타터",
         </thead>
         <tbody>
           <tr><td><strong>킥스타터</strong></td><td style="color:#888;">KR/HK</td><td class="num">~$119</td><td class="num" style="color:#f87171;">5% + PG</td><td class="num">ACI</td><td class="num" style="color:#888;">완료 후</td><td class="num green">~65%</td><td style="color:#888; font-size:11px;">1차 배송 완료 · 해외 백커는 HK 거점</td></tr>
-          <tr><td><strong>카카오메이커스</strong></td><td style="color:#888;">KR</td><td class="num">159,000</td><td class="num" style="color:#f87171;">15%</td><td class="num">4,000</td><td class="num" style="color:#888;">월 1회</td><td class="num green">~42%</td><td style="color:#888; font-size:11px;">최다 채널 · 4월 48켤레</td></tr>
+          <tr><td><strong>카카오메이커스</strong></td><td style="color:#888;">KR</td><td class="num">159,000</td><td class="num" style="color:#f87171;">15%</td><td class="num">4,000</td><td class="num" style="color:#888;">월 1회</td><td class="num green">~42%</td><td style="color:#888; font-size:11px;">최다 채널 · 4월 57켤레</td></tr>
           <tr><td><strong>네이버 스마트스토어</strong></td><td style="color:#888;">KR</td><td class="num">179,000</td><td class="num" style="color:#facc15;">3%</td><td class="num">4,000</td><td class="num" style="color:#888;">월 2회</td><td class="num green">~54%</td><td style="color:#888; font-size:11px;">고마진 채널 · 검색/오픈마켓</td></tr>
           <tr><td><strong>카카오톡스토어</strong></td><td style="color:#888;">KR</td><td class="num">159,000</td><td class="num" style="color:#facc15;">10%</td><td class="num">4,000</td><td class="num" style="color:#888;">월 1회</td><td class="num green">~48%</td><td style="color:#888; font-size:11px;">런칭 초기 · 소셜 채널</td></tr>
           <tr><td><strong>B2B (마야크루)</strong></td><td style="color:#888;">KR</td><td class="num" style="color:#888;">협의</td><td class="num" style="color:#888;">0%</td><td class="num">협의</td><td class="num" style="color:#888;">건별</td><td class="num" style="color:#a78bfa;">직협</td><td style="color:#888; font-size:11px;">단체 직접 주문 · 4월 30켤레</td></tr>
@@ -1727,7 +1727,7 @@ IF(OR(C2="킥스타터",
     <div class="kpi">
       <div class="kpi-label">실판매 대비</div>
       <div class="kpi-value" style="color:#9ca3af; font-size:24px;">0.9일</div>
-      <div class="kpi-sub">증정 9켤레 = 실판매 약 0.9일치</div>
+      <div class="kpi-sub">증정 10켤레 = 실판매 약 0.9일치</div>
     </div>
     <div class="kpi">
       <div class="kpi-label">상태</div>
@@ -1913,16 +1913,17 @@ new Chart(document.getElementById('typeChart'), {
   }
 });
 
-// ── 채널 바 (수동) ──
+// ── 채널 바 (옵시디언 channel-economics.md 4/30 기준 · truth) ──
+// 합 = 57+52+30+19+6+2 = 166 (누적 출고와 일치)
 const channels = [
-  { name: '카카오메이커스', count: 48, color: '#d4b896' },
-  { name: '킥스타터', count: 47, color: '#b0c4d8' },
-  { name: '마야크루', count: 30, color: '#a78bfa' },
-  { name: '샘플', count: 9, color: '#374151' },
+  { name: '카카오메이커스', count: 57, color: '#d4b896' },
+  { name: '킥스타터', count: 52, color: '#b0c4d8' },
+  { name: 'B2B · 마야크루', count: 30, color: '#a78bfa' },
+  { name: '증정·샘플', count: 19, color: '#374151' },
   { name: '네이버', count: 6, color: '#7c9bb5' },
   { name: '카카오톡스토어', count: 2, color: '#8b7355' },
 ];
-const maxCh = 48;
+const maxCh = 57;
 const chContainer = document.getElementById('ch-bars');
 channels.forEach(c => {
   const pct = (c.count / maxCh * 100).toFixed(0);
