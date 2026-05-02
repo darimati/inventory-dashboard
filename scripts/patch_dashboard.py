@@ -79,7 +79,7 @@ for r in rows:
         continue
     qty = int(qty_raw)
 
-    if ch == '샘플' or '지인' in memo:
+    if ch == '샘플' or ch == '증정' or '지인' in memo:
         kind = 'gift'
     elif ch == '마야크루' or recipient == '마야크루':
         kind = 'b2b'
@@ -357,6 +357,30 @@ breakdown_block += f"  'B2B (마야크루)':      {{ pkg: {ch_pkg.get('마야크
 breakdown_block += f"  '샘플':                {{ pkg: {ch_pkg.get('샘플',0)}, unit: {ch_unit.get('샘플',0)} }},\n"
 breakdown_block += "};"
 patches.append((r"const CHANNEL_BREAKDOWN_AUTO = \{[\s\S]*?\n\};", breakdown_block))
+
+# ── 전체 출고 탭 — 채널 바 array (이전엔 누락되어 stale drift 발생) ──
+channels_arr = (
+    "const channels = [\n"
+    f"  {{ name: '카카오메이커스', count: {km}, color: '#d4b896' }},\n"
+    f"  {{ name: '킥스타터', count: {ks}, color: '#b0c4d8' }},\n"
+    f"  {{ name: 'B2B · 마야크루', count: {mc}, color: '#a78bfa' }},\n"
+    f"  {{ name: '증정·샘플', count: {total_gift}, color: '#374151' }},\n"
+    f"  {{ name: '네이버', count: {nv}, color: '#7c9bb5' }},\n"
+    f"  {{ name: '카카오톡스토어', count: {kt}, color: '#8b7355' }},\n"
+    "];"
+)
+patches.append((r"const channels = \[[\s\S]*?\n\];", channels_arr))
+patches.append((r"const maxCh = \d+;", f"const maxCh = {km};"))
+
+# ── 정산 & ROAS 탭 — 채널 매트릭스 비고 텍스트 ──
+patches.append((
+    r'(<strong>카카오메이커스</strong>[\s\S]*?)4월 \d+켤레',
+    lambda m: m.group(1) + f'4월 {km}켤레'
+))
+patches.append((
+    r'(<strong>B2B \(마야크루\)</strong>[\s\S]*?)4월 \d+켤레',
+    lambda m: m.group(1) + f'4월 {mc}켤레'
+))
 
 # Apply
 applied = 0
