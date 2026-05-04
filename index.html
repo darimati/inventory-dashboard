@@ -1488,6 +1488,7 @@ IF(OR(C2="킥스타터",
       <span class="month-title">정산 대시보드</span>
       <select id="settlement-month-select"></select>
       <span class="month-status" id="settlement-month-status"></span>
+      <span class="month-period" id="settlement-period" style="margin-left:10px; color:#888; font-size:11px; font-variant-numeric:tabular-nums;">—</span>
     </div>
     <div>
       <button class="close-btn" id="settlement-close-month-btn" type="button">📸 전월 마감 (KPI 잠금)</button>
@@ -2991,6 +2992,20 @@ function updateMonthChrome() {
     } else {
       status.textContent = '· 마감 안 됨';
       status.className = 'month-status';
+    }
+  }
+  // 집계 기간 표시 — 현재 KPI는 런칭(4/17) 누적 기준 (CHANNEL_BREAKDOWN_AUTO 누적 데이터 사용)
+  const periodEl = document.getElementById('settlement-period');
+  if (periodEl) {
+    const fmtMD = d => `${d.getMonth()+1}/${d.getDate()}`;
+    if (isCur) {
+      const today = new Date();
+      periodEl.textContent = `📅 집계 기간: 2026-04-17 (런칭) ~ ${today.toISOString().slice(0,10)} · 누적`;
+    } else if (snap) {
+      const savedAt = new Date(snap.savedAt);
+      periodEl.textContent = `📅 집계 기간: 2026-04-17 (런칭) ~ ${savedAt.toISOString().slice(0,10)} · ${_viewingMonth} 마감 시점 누적`;
+    } else {
+      periodEl.textContent = `📅 ${_viewingMonth} · 마감 snapshot 없음`;
     }
   }
   // KPI/표 라벨에 월 반영 — "4월" → "5월" 등
