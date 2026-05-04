@@ -3517,8 +3517,8 @@ new Chart(document.getElementById('burndownChart'), {
       const allShoes = group.flatMap(o => o.shoes || []);
       const allAcc   = group.flatMap(o => o.accessories || []);
       const accUniq  = Array.from(new Set(allAcc));
-      const itemSummary = allShoes.map(s => `${s.size}mm/${s.color}`).join(', ');
-      const accSummary  = accUniq.length ? ` + ${accUniq.map(a=>ACC_LABELS[a]||a).join('·')}` : '';
+      const optionSummary = allShoes.map(s => `${s.size}mm/${s.color}`).join(', ');
+      const accSummary    = accUniq.length ? accUniq.map(a=>ACC_LABELS[a]||a).join('·') : '';
       const cats = Array.from(new Set(group.map(o => CAT_LABELS[o.category] || '').filter(Boolean)));
       const memos = Array.from(new Set(group.map(o => o.memo || '').filter(Boolean)));
       const isMerged = group.length >= 2;
@@ -3534,21 +3534,23 @@ new Chart(document.getElementById('burndownChart'), {
         head.zip || '',                // 우편번호
         fullAddress,                   // 총주소
         allShoes.length,               // 수량 (합산)
-        `BR-001 ${itemSummary}${accSummary}`,  // 품목명 (합산)
+        'BR-001',                      // 품목명 — 제품명만
         '',                            // 운임Type
         '',                            // 지불조건
         `${dateTag}-${String(i+1).padStart(3,'0')}`,  // 출고번호
         cats.join('+'),                // 특기사항 — 분류만
         memoNote,                      // 메모1 — 합포 또는 단일 메모
-        '', '', ''
+        optionSummary,                 // 메모2 — 사이즈/컬러 옵션
+        accSummary,                    // 메모3 — 부자재
+        ''                             // 메모4
       ]);
     });
 
     const ws = XLSX.utils.aoa_to_sheet(rows);
     // 컬럼 너비
     ws['!cols'] = [
-      {wch:12},{wch:14},{wch:12},{wch:14},{wch:8},{wch:50},{wch:6},{wch:36},
-      {wch:8},{wch:8},{wch:14},{wch:24},{wch:10},{wch:10},{wch:10},{wch:10}
+      {wch:12},{wch:14},{wch:12},{wch:14},{wch:8},{wch:50},{wch:6},{wch:10},
+      {wch:8},{wch:8},{wch:14},{wch:14},{wch:14},{wch:28},{wch:18},{wch:10}
     ];
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
