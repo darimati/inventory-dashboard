@@ -91,6 +91,13 @@
   @keyframes pulse { 0%,100%{ opacity:1; } 50%{ opacity:0.4; } }
   .alert-title { font-weight: 700; margin-right: 10px; }
 
+  /* 시점 토글 (전체 출고 탭) */
+  .ovw-view-toggle { display: flex; justify-content: flex-end; align-items: center; gap: 6px; margin: 8px 40px 0; font-size: 11px; }
+  .ovw-view-label { color: #777; margin-right: 4px; }
+  .ovw-vbtn { background: transparent; color: #888; border: 1px solid #333; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; font-family: inherit; transition: all 0.15s; }
+  .ovw-vbtn:hover:not(.active) { background: #1a1a1a; color: #ccc; border-color: #555; }
+  .ovw-vbtn.active { background: #4ade80; color: #0a0a0a; border-color: #4ade80; font-weight: 700; }
+
   /* PROGRESS BAR */
   .progress-track { background: var(--border); border-radius: 4px; height: 8px; width: 100%; margin-top: 8px; }
   .progress-fill { height: 8px; border-radius: 4px; transition: width 0.3s; }
@@ -886,6 +893,50 @@
   .cs-prev-dot.high { background: var(--red); } .cs-prev-dot.mid { background: var(--yellow); }
   .cs-prev-type-t { font-size: 11px; font-weight: 700; margin-bottom: 2px; }
   .cs-prev-action-t { font-size: 10px; color: var(--muted); line-height: 1.5; }
+
+  /* ── CS 인사이트 (트렌드 · 신호 · 액션) ── */
+  .cs-insights { background: var(--bg); border-bottom: 1px solid var(--border); }
+  .cs-ins-kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border); }
+  .cs-ins-kpi { background: var(--card); padding: 18px 22px; }
+  .cs-ins-kpi .l { display: block; font-size: 10px; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 8px; }
+  .cs-ins-kpi .v { display: block; font-size: 26px; font-weight: 700; color: var(--text); letter-spacing: -0.02em; }
+  .cs-ins-kpi .v.green { color: var(--green); }
+  .cs-ins-kpi .v.yellow { color: var(--yellow); }
+  .cs-ins-kpi .v.red { color: var(--red); }
+  .cs-ins-kpi .s { display: block; font-size: 10px; color: var(--muted); margin-top: 4px; }
+
+  .cs-ins-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); margin-top: 1px; }
+  .cs-ins-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1px; background: var(--border); margin-top: 1px; }
+  .cs-ins-card { background: var(--card); padding: 18px 22px; }
+  .cs-ins-title { font-size: 11px; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+
+  .cs-ins-actions { background: var(--card); padding: 20px 28px; border-top: 1px solid var(--border); }
+  .cs-action-card { background: #0f0f0f; border-left: 3px solid var(--yellow); padding: 14px 16px; margin-bottom: 10px; border-radius: 4px; }
+  .cs-action-card.high { border-left-color: var(--red); }
+  .cs-action-card.low { border-left-color: var(--muted); }
+  .cs-action-card-head { display: flex; justify-content: space-between; align-items: baseline; gap: 14px; margin-bottom: 10px; }
+  .cs-action-card-title { font-size: 13px; font-weight: 700; color: var(--text); flex: 1; line-height: 1.4; }
+  .cs-action-card-priority { font-size: 9px; padding: 3px 9px; border-radius: 10px; font-weight: 700; letter-spacing: 0.05em; flex-shrink: 0; }
+  .cs-action-card-evidence { font-size: 11px; color: #aaa; margin-bottom: 8px; line-height: 1.7; }
+  .cs-action-card-evidence b { color: #ddd; }
+  .cs-action-card-action { font-size: 11.5px; color: var(--text); margin-bottom: 10px; line-height: 1.7; padding: 10px 12px; background: #1a1a1a; border-radius: 4px; border: 1px solid #2a2a2a; }
+  .cs-action-card-action b { color: var(--yellow); font-weight: 700; margin-right: 4px; }
+  .cs-action-card-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 10.5px; color: var(--muted); line-height: 1.7; }
+  .cs-action-card-meta > div { padding: 8px 10px; background: #141414; border-radius: 3px; }
+  .cs-action-card-meta b { color: #aaa; font-weight: 700; display: block; margin-bottom: 3px; font-size: 10px; letter-spacing: 0.04em; text-transform: uppercase; }
+
+  .cs-heatmap-table { width: 100%; border-collapse: separate; border-spacing: 2px; font-size: 10px; }
+  .cs-heatmap-table th { padding: 4px 6px; color: var(--muted); font-weight: 400; font-size: 10px; text-align: center; }
+  .cs-heatmap-table th.row-h { text-align: left; padding-left: 8px; }
+  .cs-heatmap-table td { padding: 0; text-align: center; font-variant-numeric: tabular-nums; }
+  .cs-heatmap-cell { display: block; padding: 6px 4px; border-radius: 3px; font-weight: 700; min-height: 20px; }
+
+  .cs-pattern-item { padding: 10px 12px; background: #0f0f0f; border-radius: 4px; margin-bottom: 8px; border-left: 2px solid #2a2a2a; }
+  .cs-pattern-item.high { border-left-color: var(--red); }
+  .cs-pattern-item.mid { border-left-color: var(--yellow); }
+  .cs-pattern-item.new { border-left-color: #7c9bb5; }
+  .cs-pattern-name { font-size: 11.5px; font-weight: 700; color: var(--text); margin-bottom: 4px; display: flex; justify-content: space-between; gap: 8px; }
+  .cs-pattern-meta { font-size: 10px; color: var(--muted); line-height: 1.5; }
 </style>
 </head>
 <body>
@@ -902,6 +953,7 @@
   <div class="tab" onclick="showPage('platform', event)">커머스 허브</div>
   <div class="tab" onclick="showPage('settlement', event)">정산 & ROAS</div>
   <div class="tab" onclick="showPage('stock', event)">KR 재고 & 재발주</div>
+  <div class="tab" onclick="showPage('accessory', event)">부자재 재고</div>
   <div class="tab" onclick="showPage('hk', event)">HK 재고</div>
   <div class="tab" onclick="showPage('gift', event)">증정 현황</div>
   <div class="tab" onclick="showPage('todo', event)">투두</div>
@@ -910,6 +962,13 @@
 
 <!-- ===== PAGE 1: 전체 출고 ===== -->
 <div id="page-overview" class="page active">
+
+  <!-- 시점 토글 (당월 vs 런칭 누적) -->
+  <div class="ovw-view-toggle">
+    <span class="ovw-view-label">시점:</span>
+    <button class="ovw-vbtn active" data-view="month">당월 <span class="dyn-month">5</span>월</button>
+    <button class="ovw-vbtn" data-view="all">런칭 누적 (4/17~)</button>
+  </div>
 
   <!-- 재발주 긴급 알림 (전체 출고 탭 전용) -->
   <div id="reorder-banner" class="alert-banner red" style="display:none;">
@@ -920,29 +979,29 @@
 
   <div class="kpi-row">
     <div class="kpi">
-      <div class="kpi-label">누적 출고</div>
-      <div class="kpi-value">166</div>
-      <div class="kpi-sub">켤레 (4/17 ~ 4/30)</div>
+      <div class="kpi-label"><span class="dyn-month">5</span>월 누계 출고</div>
+      <div class="kpi-value" id="ovw-kpi-total">0</div>
+      <div class="kpi-sub">켤레 · <span class="dyn-month-range">—</span></div>
     </div>
     <div class="kpi">
       <div class="kpi-label">실판매 <span class="badge sale">SALE</span></div>
-      <div class="kpi-value green">117</div>
+      <div class="kpi-value green" id="ovw-kpi-sale">0</div>
       <div class="kpi-sub">킥스타터·메이커스·네이버·카카오</div>
     </div>
     <div class="kpi">
       <div class="kpi-label">B2B·행사 <span class="badge b2b">B2B</span></div>
-      <div class="kpi-value purple">30</div>
+      <div class="kpi-value purple" id="ovw-kpi-b2b">0</div>
       <div class="kpi-sub">마야크루 직접 주문</div>
     </div>
     <div class="kpi">
       <div class="kpi-label">증정·샘플 <span class="badge gift">GIFT</span></div>
-      <div class="kpi-value red">19</div>
+      <div class="kpi-value red" id="ovw-kpi-gift">0</div>
       <div class="kpi-sub">샘플·인플루언서·지인</div>
     </div>
     <div class="kpi">
       <div class="kpi-label">일평균 실판매</div>
-      <div class="kpi-value yellow">11.7</div>
-      <div class="kpi-sub">켤레 / 출고일 (10일)</div>
+      <div class="kpi-value yellow" id="ovw-kpi-avg">0</div>
+      <div class="kpi-sub">켤레 / 출고일 (<span id="ovw-kpi-days">0</span>일)</div>
     </div>
   </div>
 
@@ -1265,9 +1324,9 @@ IF(OR(C2="킥스타터",
   <!-- 월간 누계 + 채널별 KPI -->
   <div class="kpi-row" style="grid-template-columns: repeat(5,1fr);">
     <div class="kpi" style="border-right: 1px solid #333;">
-      <div class="kpi-label">4월 누계 판매</div>
-      <div class="kpi-value green" style="font-size:40px;">147</div>
-      <div class="kpi-sub" style="line-height:1.9;">실판매 <strong style="color:#4ade80;">117</strong> + B2B <strong style="color:#a78bfa;">30</strong> · 4/17~4/30</div>
+      <div class="kpi-label"><span class="dyn-month">5</span>월 누계 판매</div>
+      <div class="kpi-value green" style="font-size:40px;" id="month-kpi-total">0</div>
+      <div class="kpi-sub" style="line-height:1.9;">실판매 <strong style="color:#4ade80;" id="month-kpi-sale">0</strong> + B2B <strong style="color:#a78bfa;" id="month-kpi-b2b">0</strong> · <span class="dyn-month-range">—</span></div>
     </div>
     <div class="kpi">
       <div class="kpi-label">킥스타터</div>
@@ -1334,7 +1393,7 @@ IF(OR(C2="킥스타터",
           </div>
         </div>
         <div style="margin-top:14px; padding:14px; background:#0d1620; border-radius:6px; border-left:3px solid #4ade80;">
-          <div style="color:#aaa; font-size:10px; letter-spacing:0.04em; margin-bottom:6px;">5월 1주 예상 (W3 페이스 기준)</div>
+          <div style="color:#aaa; font-size:10px; letter-spacing:0.04em; margin-bottom:6px;">다음 주 예상 (W3 페이스 기준)</div>
           <div style="font-size:22px; font-weight:700; color:#4ade80;">~61 <span style="font-size:11px; color:#888; font-weight:400;">켤레</span></div>
           <div style="color:#555; font-size:10px; margin-top:4px;">12.2/일 × 5 영업일</div>
         </div>
@@ -1374,7 +1433,7 @@ IF(OR(C2="킥스타터",
   <!-- 채널 점유율 (full width) -->
   <div class="grid-full" style="margin-top:1px;">
     <div class="card">
-      <div class="card-title">채널 점유율 <span style="color:#555; font-size:10px; margin-left:6px;">4월 누계 · 전체 147켤레 (실판매 117 + B2B 30)</span></div>
+      <div class="card-title">채널 점유율 <span style="color:#555; font-size:10px; margin-left:6px;"><span class="dyn-month">5</span>월 누계 · 전체 <span id="month-share-total">0</span>켤레 (실판매 <span id="month-share-sale">0</span> + B2B <span id="month-share-b2b">0</span>)</span></div>
       <div style="display:grid; grid-template-columns: 280px 1fr; gap:32px; align-items:center; margin-top:10px;">
         <div style="position:relative; height:240px;"><canvas id="platformShareChart"></canvas></div>
         <div id="platform-share-bars" style="font-size:12px; line-height:1.8;"></div>
@@ -1401,10 +1460,10 @@ IF(OR(C2="킥스타터",
         </thead>
         <tbody>
           <tr><td><strong>킥스타터</strong></td><td style="color:#888;">KR/HK</td><td class="num">~$119</td><td class="num" style="color:#f87171;">5% + PG</td><td class="num">ACI</td><td class="num" style="color:#888;">완료 후</td><td class="num green">~65%</td><td style="color:#888; font-size:11px;">1차 배송 완료 · 해외 백커는 HK 거점</td></tr>
-          <tr><td><strong>카카오메이커스</strong></td><td style="color:#888;">KR</td><td class="num">159,000</td><td class="num" style="color:#f87171;">15%</td><td class="num">4,000</td><td class="num" style="color:#888;">월 1회</td><td class="num green">~42%</td><td style="color:#888; font-size:11px;">최다 채널 · 4월 57켤레</td></tr>
+          <tr><td><strong>카카오메이커스</strong></td><td style="color:#888;">KR</td><td class="num">159,000</td><td class="num" style="color:#f87171;">15%</td><td class="num">4,000</td><td class="num" style="color:#888;">월 1회</td><td class="num green">~42%</td><td style="color:#888; font-size:11px;">최다 채널 · <span class="dyn-month">5</span>월 <span id="ch-makers-mo">0</span>켤레</td></tr>
           <tr><td><strong>네이버 스마트스토어</strong></td><td style="color:#888;">KR</td><td class="num">179,000</td><td class="num" style="color:#facc15;">3%</td><td class="num">4,000</td><td class="num" style="color:#888;">월 2회</td><td class="num green">~54%</td><td style="color:#888; font-size:11px;">고마진 채널 · 검색/오픈마켓</td></tr>
           <tr><td><strong>카카오톡스토어</strong></td><td style="color:#888;">KR</td><td class="num">159,000</td><td class="num" style="color:#facc15;">10%</td><td class="num">4,000</td><td class="num" style="color:#888;">월 1회</td><td class="num green">~48%</td><td style="color:#888; font-size:11px;">런칭 초기 · 소셜 채널</td></tr>
-          <tr><td><strong>B2B (마야크루)</strong></td><td style="color:#888;">KR</td><td class="num" style="color:#888;">협의</td><td class="num" style="color:#888;">0%</td><td class="num">협의</td><td class="num" style="color:#888;">건별</td><td class="num" style="color:#a78bfa;">직협</td><td style="color:#888; font-size:11px;">단체 직접 주문 · 4월 30켤레</td></tr>
+          <tr><td><strong>B2B (마야크루)</strong></td><td style="color:#888;">KR</td><td class="num" style="color:#888;">협의</td><td class="num" style="color:#888;">0%</td><td class="num">협의</td><td class="num" style="color:#888;">건별</td><td class="num" style="color:#a78bfa;">직협</td><td style="color:#888; font-size:11px;">단체 직접 주문 · <span class="dyn-month">5</span>월 <span id="ch-b2b-mo">0</span>켤레</td></tr>
           <tr style="border-top:1px solid #333;"><td><strong style="color:#7c9bb5;">HK D2C (Shopify)</strong></td><td style="color:#7c9bb5;">HK</td><td class="num" style="color:#7c9bb5;">~$139</td><td class="num" style="color:#7c9bb5;">2.9% + ACI</td><td class="num" style="color:#7c9bb5;">$5~10</td><td class="num" style="color:#888;">즉시</td><td class="num" style="color:#7c9bb5;">~55%</td><td style="color:#888; font-size:11px;">글로벌 D2C 전용 · 런칭 준비</td></tr>
           <tr style="border-top:1px dashed #333;"><td colspan="8" style="text-align:center; padding:14px; color:#555; font-size:11px; font-style:italic;">신규 채널은 원가·수수료 데이터 입력 후 추가 (수기 또는 시트 연동)</td></tr>
         </tbody>
@@ -1673,8 +1732,87 @@ IF(OR(C2="킥스타터",
         </div>
         <div id="reorder-quantity-grid" style="display:grid; grid-template-columns: repeat(5, 1fr); gap:8px; margin-top:10px; font-size:11px;"></div>
         <div style="margin-top:12px; color:#888; font-size:10px; line-height:1.7;">
-          ※ 위 수치는 4월 출고 패턴 기반 추정. 실제 발주 시 시즌성·캠페인 등 추가 변수 반영 필요.
+          ※ 위 수치는 런칭 이후 출고 패턴 기반 추정. 실제 발주 시 시즌성·캠페인 등 추가 변수 반영 필요.
         </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ===== PAGE: 부자재 재고 ===== -->
+<div id="page-accessory" class="page">
+
+  <div class="kpi-row" style="grid-template-columns: repeat(4, 1fr);">
+    <div class="kpi">
+      <div class="kpi-label">부자재 누적 출고</div>
+      <div class="kpi-value" id="acc-kpi-total">—</div>
+      <div class="kpi-sub" id="acc-kpi-total-sub">집계 중…</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">최단 소진 부자재</div>
+      <div class="kpi-value red" id="acc-kpi-shortest">—</div>
+      <div class="kpi-sub" id="acc-kpi-shortest-sub">초기재고 입력 필요</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">전체 일평균 출고</div>
+      <div class="kpi-value yellow" id="acc-kpi-avg">—</div>
+      <div class="kpi-sub" id="acc-kpi-avg-sub">7종 합산 / 출고일 평균</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">초기재고 미설정</div>
+      <div class="kpi-value" id="acc-kpi-unset">—</div>
+      <div class="kpi-sub">우측 카드에서 입력</div>
+    </div>
+  </div>
+
+  <div class="grid-full" style="margin-top:1px;">
+    <div class="card">
+      <div class="card-title">부자재별 잔여 & 소진 예상 <span style="color:#555; font-size:10px; margin-left:6px;">출고 시트 · 상태 = "3) 출고 완료" 기준 집계</span></div>
+      <div style="overflow-x:auto;">
+        <table class="data-table" id="acc-burndown-table">
+          <thead>
+            <tr>
+              <th>부자재</th>
+              <th class="num">초기재고</th>
+              <th class="num">누적출고</th>
+              <th class="num">잔여</th>
+              <th class="num">일평균</th>
+              <th class="num">잔여일수</th>
+              <th class="num">소진예상</th>
+              <th>상태</th>
+            </tr>
+          </thead>
+          <tbody id="acc-burndown-body">
+            <tr><td colspan="8" style="color:#666; padding:18px; text-align:center;">시트에서 가져오는 중…</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="display:flex; gap:20px; margin-top:12px; font-size:10px; color:#555;">
+        <span><span style="background:#4a0a0a; color:#f87171; padding:2px 8px; border-radius:3px;">15일 이내</span> 즉시 발주 필요</span>
+        <span><span style="background:#3a3000; color:#facc15; padding:2px 8px; border-radius:3px;">30일 이내</span> 발주 준비</span>
+        <span><span style="background:#1a1a1a; color:#888; padding:2px 8px; border-radius:3px;">30일 초과</span> 모니터링</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-2" style="grid-template-columns: 1.6fr 1fr; margin-top:1px;">
+    <div class="card">
+      <div class="card-title">일별 부자재 출고 <span style="color:#555; font-size:10px; margin-left:6px;">스택 · 출고 완료 일자 기준</span></div>
+      <div class="chart-wrap tall"><canvas id="accDailyChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">초기재고 입력 <span style="color:#555; font-size:10px; margin-left:6px;">로컬 저장 · 매트 직접 입력</span></div>
+      <div id="acc-stock-editor" style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:4px;"></div>
+      <div style="display:flex; gap:10px; margin-top:14px; align-items:center;">
+        <button id="acc-stock-save" style="background:#1f3b2a; color:#4ade80; border:1px solid #2d5840; padding:8px 16px; border-radius:4px; font-size:11px; cursor:pointer; letter-spacing:0.05em;">저장 & 재계산</button>
+        <button id="acc-stock-refresh" style="background:#1a1a1a; color:#888; border:1px solid #2a2a2a; padding:8px 14px; border-radius:4px; font-size:11px; cursor:pointer;">시트 재집계</button>
+        <span id="acc-stock-saved" style="color:#666; font-size:10px;"></span>
+      </div>
+      <div style="margin-top:14px; padding:12px; background:#0f0f0f; border-radius:4px; border-left:3px solid #2a2a2a; font-size:10.5px; color:#666; line-height:1.7;">
+        · 출고 시트의 부자재 컬럼(모자/슈백/타올/벨트/플라스크/슈레이스/스티커) 합산<br>
+        · 잔여 = 초기재고 − 누적출고 (상태 = "3) 출고 완료" 행만 카운트)<br>
+        · 일평균 = 누적출고 ÷ 부자재가 1개 이상 출고된 일수
       </div>
     </div>
   </div>
@@ -1770,7 +1908,7 @@ IF(OR(C2="킥스타터",
     <div class="kpi">
       <div class="kpi-label">누적 증정</div>
       <div class="kpi-value" style="color:#9ca3af;">9</div>
-      <div class="kpi-sub">켤레 · 4/17 ~ 4/29</div>
+      <div class="kpi-sub">켤레 · 4/17 이후 누적</div>
     </div>
     <div class="kpi">
       <div class="kpi-label">재고 영향</div>
@@ -1855,16 +1993,120 @@ IF(OR(C2="킥스타터",
     <span>↑ DARI BOARD · matibot_todo 풀 페이지 임베드 (스타일·기능 전체 유지)</span>
     <a href="https://matteeee-code.github.io/matibot_todo/" target="_blank" style="color:#888; text-decoration:none;">새 탭으로 열기 ↗</a>
   </div>
+</div>
 
-<!-- ===== CS 대시보드 ===== -->
+<!-- ===== CS 대시보드 (page-todo 밖으로 분리) ===== -->
 <div id="page-cs" class="page">
+
+  <!-- 📊 CS 인사이트 — 트렌드 · 신호 · 액션 권고 -->
+  <div class="cs-insights">
+
+    <!-- KPI -->
+    <div class="cs-ins-kpi-row">
+      <div class="cs-ins-kpi">
+        <span class="l">총 케이스</span>
+        <span class="v" id="cins-total">—</span>
+        <span class="s" id="cins-total-sub">—</span>
+      </div>
+      <div class="cs-ins-kpi">
+        <span class="l">유지율 (회복 성공)</span>
+        <span class="v green" id="cins-retain">—</span>
+        <span class="s" id="cins-retain-sub">유지+교환 ÷ 종결 케이스</span>
+      </div>
+      <div class="cs-ins-kpi">
+        <span class="l">이번 달 신규</span>
+        <span class="v yellow" id="cins-month">—</span>
+        <span class="s" id="cins-month-sub">—</span>
+      </div>
+      <div class="cs-ins-kpi">
+        <span class="l">운영 신호</span>
+        <span class="v red" id="cins-signals">—</span>
+        <span class="s" id="cins-signals-sub">반복 패턴 + 신규 등장</span>
+      </div>
+    </div>
+
+    <!-- 트렌드 + 히트맵 -->
+    <div class="cs-ins-grid-2">
+      <div class="cs-ins-card">
+        <div class="cs-ins-title">월별 케이스 추이 <span style="color:#555; font-size:10px; margin-left:6px; letter-spacing:0;">유지·교환·환불 스택</span></div>
+        <div style="position:relative; height:200px;"><canvas id="csTrendChart"></canvas></div>
+      </div>
+      <div class="cs-ins-card">
+        <div class="cs-ins-title">유형 × 사이즈 히트맵 <span style="color:#555; font-size:10px; margin-left:6px; letter-spacing:0;">사이즈별 어떤 문의가 많은지</span></div>
+        <div id="cs-heatmap" style="overflow-x:auto;"></div>
+      </div>
+    </div>
+
+    <!-- 신호: 반복 / 신규 / 회복효과 -->
+    <div class="cs-ins-grid-3">
+      <div class="cs-ins-card">
+        <div class="cs-ins-title">🔁 반복 패턴 <span style="color:var(--yellow); font-size:10px; margin-left:6px; letter-spacing:0;">개선 필요 영역</span></div>
+        <div id="cs-repeat-patterns"></div>
+      </div>
+      <div class="cs-ins-card">
+        <div class="cs-ins-title">✨ 신규 등장 <span style="color:#7c9bb5; font-size:10px; margin-left:6px; letter-spacing:0;">특이건 — 14일 이내</span></div>
+        <div id="cs-new-patterns"></div>
+      </div>
+      <div class="cs-ins-card">
+        <div class="cs-ins-title">🛡️ 회복 무기 효과 <span style="color:#555; font-size:10px; margin-left:6px; letter-spacing:0;">유지율 기준</span></div>
+        <div id="cs-recovery-effect"></div>
+      </div>
+    </div>
+
+    <!-- 액션 권고 -->
+    <div class="cs-ins-actions">
+      <div class="cs-ins-title" style="font-size:13px; margin-bottom:14px; color:var(--text);">💡 액션 인사이트 <span style="color:var(--muted); font-size:10px; margin-left:6px; letter-spacing:0;">데이터 결합 → 운영 룰 권고 (자동 갱신)</span></div>
+      <div id="cs-action-list"></div>
+    </div>
+
+  </div>
+
+  <!-- 새 CS 인테이크 패널 (인사이트 바로 아래로 승격) -->
+  <div id="cs-intake-panel" style="padding:18px 28px; background:#0a0a0a; border-bottom:1px solid var(--border);">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+      <div style="font-size:13px; font-weight:700; color:var(--text);">📥 새 CS 인테이크</div>
+    </div>
+    <div style="font-size:10px; color:var(--muted); margin-bottom:10px; line-height:1.6;">
+      고객 메시지/이미지 캡처 텍스트를 그대로 붙여넣으세요. 옵시디언 <code>CS/DARIMATI_CS_지침서.md</code> §0·§2 회복 무기 룰로 자동 분류·판단해서 답변 초안을 생성합니다.
+    </div>
+    <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; margin-bottom:8px;">
+      <select id="cs-intake-platform" class="cs-input">
+        <option value="">플랫폼 (선택)</option>
+        <option>스마트스토어</option><option>카카오메이커스</option><option>킥스타터</option>
+        <option>자사몰</option><option>인스타DM</option><option>카톡</option><option>이메일</option><option>톡스토어</option>
+      </select>
+      <input id="cs-intake-orderno" class="cs-input" placeholder="주문번호 (선택)" />
+      <input id="cs-intake-size" class="cs-input" placeholder="사이즈 (예: 235, 240)" />
+    </div>
+    <textarea id="cs-intake-text" class="cs-input" rows="5" placeholder="고객 메시지 그대로 붙여넣기 (예: '235 신는데 240 받았더니 좀 큰 거 같아요. 환불 가능?')" style="width:100%; resize:vertical;"></textarea>
+    <div style="margin-top:10px; display:flex; gap:8px;">
+      <button onclick="csJudgeAndDraft()" style="padding:8px 16px; background:var(--text); color:#000; border:0; border-radius:4px; cursor:pointer; font-size:12px; font-weight:700;">옵시디언 룰로 판단 → 답변 초안</button>
+      <button onclick="document.getElementById('cs-intake-text').value='';document.getElementById('cs-intake-result').style.display='none';" style="padding:8px 14px; background:transparent; color:var(--muted); border:1px solid var(--border); border-radius:4px; cursor:pointer; font-size:12px;">지우기</button>
+    </div>
+    <div id="cs-intake-result" style="display:none; margin-top:14px; padding:14px; background:#111; border:1px solid #2a2a2a; border-radius:8px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <div style="font-size:11px; font-weight:700; color:var(--text);">📋 자동 판단 결과</div>
+        <div id="cs-intake-confidence" style="font-size:9px; color:var(--muted);"></div>
+      </div>
+      <div style="font-size:10px; color:var(--muted); margin-bottom:4px;">분류 (옵시디언 §2 매칭):</div>
+      <div id="cs-intake-classification" style="font-size:11px; color:#7c9bb5; margin-bottom:10px; line-height:1.5;"></div>
+      <div style="font-size:10px; color:var(--muted); margin-bottom:4px;">답변 초안 (지침서 §5 톤 + 회복 무기 적용):</div>
+      <textarea id="cs-intake-draft" rows="8" class="cs-input" style="width:100%; resize:vertical; background:#0f0f0f; line-height:1.7;"></textarea>
+      <div style="display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;">
+        <button onclick="csCopyIntakeDraft()" style="padding:6px 14px; background:#2a2a2a; color:var(--text); border:0; border-radius:4px; cursor:pointer; font-size:11px;">📋 답변 복사</button>
+        <button onclick="csSaveIntakeAsCase()" style="padding:6px 14px; background:#1a3a1a; color:#7eb87e; border:1px solid #2a5a2a; border-radius:4px; cursor:pointer; font-size:11px;">💾 옵시디언에 케이스로 저장 (frontmatter 복사)</button>
+      </div>
+    </div>
+  </div>
+
   <div class="cs-toolbar">
     <button class="cs-filter-btn active" onclick="filterCS('all',this)">전체</button>
     <button class="cs-filter-btn" onclick="filterCS('resolved',this)">✅ 처리완료</button>
     <button class="cs-filter-btn" onclick="filterCS('pending',this)">⏳ 대기중</button>
     <button class="cs-filter-btn" onclick="filterCS('open',this)">🔴 미처리</button>
-    <button class="cs-add-btn" onclick="openAddCS()">+ CS 등록</button>
+    <button class="cs-add-btn" onclick="document.getElementById('cs-intake-text').focus()">📥 인테이크로 이동</button>
   </div>
+
   <div class="cs-layout">
     <div><div class="cs-list" id="cs-list"></div></div>
     <div class="cs-side">
@@ -1879,11 +2121,14 @@ IF(OR(C2="킥스타터",
       <div id="cs-prev-list"></div>
     </div>
   </div>
+
+  <style>
+    #page-cs .cs-input { background:#1a1a1a; border:1px solid #2a2a2a; color:var(--text); padding:7px 10px; border-radius:4px; font-size:12px; font-family:inherit; }
+    #page-cs .cs-input:focus { outline:none; border-color:var(--text); }
+  </style>
 </div>
 
-</div>
-
-<footer>DARIMATI BR-001 출고 관리 · Data: Google Sheets · 2026.04 · <a href="https://docs.google.com/spreadsheets/d/1ibroQV42xuuvWg4P1kvaCw9RT_JxO9L-6lXVAgNjOhA" style="color:#555; text-decoration:none;">시트 열기 ↗</a></footer>
+<footer>DARIMATI BR-001 출고 관리 · Data: Google Sheets · <span id="footer-date">—</span> · <a href="https://docs.google.com/spreadsheets/d/1ibroQV42xuuvWg4P1kvaCw9RT_JxO9L-6lXVAgNjOhA" style="color:#555; text-decoration:none;">시트 열기 ↗</a></footer>
 
 <script>
 // ── 탭 전환 ──
@@ -1893,6 +2138,9 @@ function showPage(id, ev) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.getElementById('page-' + id).classList.add('active');
   if (ev && ev.target) ev.target.classList.add('active');
+  if (id === 'accessory' && typeof window.__loadAccessoryTab === 'function') {
+    window.__loadAccessoryTab();
+  }
 }
 
 const DATES = ['4/17','4/20','4/21','4/22','4/23','4/24','4/27','4/28','4/29','4/30'];
@@ -1910,13 +2158,21 @@ const PLATFORM_COLORS = {
 const SALE_DAILY = [27, 20, 10, 5, 0, 6, 15, 5, 20, 9];
 const B2B_DAILY  = [0, 0, 0, 0, 30, 0, 0, 0, 0, 0];
 const GIFT_DAILY = [7, 0, 3, 3, 0, 1, 2, 0, 0, 3];
+
+// 월별 (시스템 today의 월 — patch_dashboard.py가 채움)
+const MO_DATES = [];
+const MO_SALE_DAILY = [];
+const MO_B2B_DAILY  = [];
+const MO_GIFT_DAILY = [];
+const MO_RANGE = '—';
 const axisDefaults = {
   x: { grid: { color: '#222' }, ticks: { color: '#666', font: { size: 10 } } },
   y: { grid: { color: '#222' }, ticks: { color: '#666', font: { size: 10 } }, beginAtZero: true }
 };
 
-// ── 일별 스택 바 (실판매/B2B/증정) ──
-new Chart(document.getElementById('dailyStackedChart'), {
+// ── 일별 스택 바 (실판매/B2B/증정) — 토글로 월별/누적 전환 ──
+let _dailyChart, _typeChart;
+_dailyChart = new Chart(document.getElementById('dailyStackedChart'), {
   type: 'bar',
   data: {
     labels: DATES,
@@ -1930,37 +2186,41 @@ new Chart(document.getElementById('dailyStackedChart'), {
     onClick(evt, elements) {
       if (!elements.length) return;
       const idx = elements[0].index;
-      const date = DATES[idx];
+      const date = evt.chart.data.labels[idx];
+      // PLATFORM_DAILY는 누적 인덱스라 view-aware lookup
+      const allIdx = DATES.indexOf(date);
       const detail = document.getElementById('day-detail');
       const title  = document.getElementById('day-detail-title');
       const body   = document.getElementById('day-detail-body');
       title.textContent = date + ' 출고 상세';
 
       let rows = '';
-      // 실판매 플랫폼 breakdown
-      Object.entries(PLATFORM_DAILY).forEach(([ch, data]) => {
-        const v = data[idx];
-        if (v > 0) rows += `
+      if (allIdx >= 0) {
+        // 실판매 플랫폼 breakdown
+        Object.entries(PLATFORM_DAILY).forEach(([ch, data]) => {
+          const v = data[allIdx];
+          if (v > 0) rows += `
+            <div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:#1a1a1a;border-radius:4px;">
+              <span style="width:8px;height:8px;background:${PLATFORM_COLORS[ch]};border-radius:50%;flex-shrink:0;"></span>
+              <span style="flex:1;color:#ccc;">${ch}</span>
+              <span style="font-weight:700;color:#4ade80;">${v}켤레</span>
+            </div>`;
+        });
+        // B2B
+        if (B2B_DAILY[allIdx] > 0) rows += `
           <div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:#1a1a1a;border-radius:4px;">
-            <span style="width:8px;height:8px;background:${PLATFORM_COLORS[ch]};border-radius:50%;flex-shrink:0;"></span>
-            <span style="flex:1;color:#ccc;">${ch}</span>
-            <span style="font-weight:700;color:#4ade80;">${v}켤레</span>
+            <span style="width:8px;height:8px;background:#a78bfa;border-radius:50%;flex-shrink:0;"></span>
+            <span style="flex:1;color:#ccc;">B2B·행사</span>
+            <span style="font-weight:700;color:#a78bfa;">${B2B_DAILY[allIdx]}켤레</span>
           </div>`;
-      });
-      // B2B
-      if (B2B_DAILY[idx] > 0) rows += `
-        <div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:#1a1a1a;border-radius:4px;">
-          <span style="width:8px;height:8px;background:#a78bfa;border-radius:50%;flex-shrink:0;"></span>
-          <span style="flex:1;color:#ccc;">B2B·행사</span>
-          <span style="font-weight:700;color:#a78bfa;">${B2B_DAILY[idx]}켤레</span>
-        </div>`;
-      // 증정
-      if (GIFT_DAILY[idx] > 0) rows += `
-        <div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:#1a1a1a;border-radius:4px;">
-          <span style="width:8px;height:8px;background:#374151;border-radius:50%;flex-shrink:0;"></span>
-          <span style="flex:1;color:#ccc;">증정·샘플</span>
-          <span style="font-weight:700;color:#9ca3af;">${GIFT_DAILY[idx]}켤레</span>
-        </div>`;
+        // 증정
+        if (GIFT_DAILY[allIdx] > 0) rows += `
+          <div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:#1a1a1a;border-radius:4px;">
+            <span style="width:8px;height:8px;background:#374151;border-radius:50%;flex-shrink:0;"></span>
+            <span style="flex:1;color:#ccc;">증정·샘플</span>
+            <span style="font-weight:700;color:#9ca3af;">${GIFT_DAILY[allIdx]}켤레</span>
+          </div>`;
+      }
       body.innerHTML = rows || '<div style="color:#555;font-size:11px;">출고 없음</div>';
       detail.style.display = 'block';
     },
@@ -1973,7 +2233,7 @@ new Chart(document.getElementById('dailyStackedChart'), {
 });
 
 // ── 유형 도넛 ──
-new Chart(document.getElementById('typeChart'), {
+_typeChart = new Chart(document.getElementById('typeChart'), {
   type: 'doughnut',
   data: {
     labels: ['실판매 (117)', 'B2B·행사 (30)', '증정·샘플 (19)'],
@@ -1991,6 +2251,69 @@ new Chart(document.getElementById('typeChart'), {
     }
   }
 });
+
+// ── 시점 토글 (전체 출고 탭) — 당월 ↔ 런칭 누적 ──
+{
+  const sum = a => a.reduce((x,y) => x+y, 0);
+  const VIEW_DATA = {
+    month: {
+      dates: MO_DATES, sale: MO_SALE_DAILY, b2b: MO_B2B_DAILY, gift: MO_GIFT_DAILY,
+      get saleSum() { return sum(MO_SALE_DAILY); },
+      get b2bSum()  { return sum(MO_B2B_DAILY);  },
+      get giftSum() { return sum(MO_GIFT_DAILY); },
+      get total()   { return this.saleSum + this.b2bSum + this.giftSum; },
+      get n()       { return MO_DATES.length; },
+      get avg()     { return this.n ? +(this.saleSum/this.n).toFixed(1) : 0; },
+      range: MO_RANGE
+    },
+    all: {
+      dates: DATES, sale: SALE_DAILY, b2b: B2B_DAILY, gift: GIFT_DAILY,
+      get saleSum() { return sum(SALE_DAILY); },
+      get b2bSum()  { return sum(B2B_DAILY);  },
+      get giftSum() { return sum(GIFT_DAILY); },
+      get total()   { return this.saleSum + this.b2bSum + this.giftSum; },
+      get n()       { return DATES.length; },
+      get avg()     { return this.n ? +(this.saleSum/this.n).toFixed(1) : 0; },
+      get range()   { return DATES.length ? `4/17~${DATES[DATES.length-1]}` : '4/17~'; }
+    }
+  };
+
+  function applyOvwView(v) {
+    const d = VIEW_DATA[v];
+    // KPI 5종
+    const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+    set('ovw-kpi-total', d.total);
+    set('ovw-kpi-sale',  d.saleSum);
+    set('ovw-kpi-b2b',   d.b2bSum);
+    set('ovw-kpi-gift',  d.giftSum);
+    set('ovw-kpi-avg',   d.avg);
+    set('ovw-kpi-days',  d.n);
+    document.querySelectorAll('.dyn-month-range').forEach(el => { el.textContent = d.range; });
+    // 일별 스택 바
+    if (_dailyChart) {
+      _dailyChart.data.labels = d.dates;
+      _dailyChart.data.datasets[0].data = d.sale;
+      _dailyChart.data.datasets[1].data = d.b2b;
+      _dailyChart.data.datasets[2].data = d.gift;
+      _dailyChart.update();
+    }
+    // 도넛 (출고 유형 비중)
+    if (_typeChart) {
+      _typeChart.data.labels = [`실판매 (${d.saleSum})`, `B2B·행사 (${d.b2bSum})`, `증정·샘플 (${d.giftSum})`];
+      _typeChart.data.datasets[0].data = [d.saleSum, d.b2bSum, d.giftSum];
+      _typeChart.update();
+    }
+    // 토글 active 표시
+    document.querySelectorAll('.ovw-vbtn').forEach(b => b.classList.toggle('active', b.dataset.view === v));
+  }
+
+  document.querySelectorAll('.ovw-vbtn').forEach(btn => {
+    btn.addEventListener('click', () => applyOvwView(btn.dataset.view));
+  });
+
+  // 기본: 당월 (시점 일치 원칙)
+  applyOvwView('month');
+}
 
 // ── 채널 바 (옵시디언 channel-economics.md 4/30 기준 · truth) ──
 // 합 = 57+52+30+19+6+2 = 166 (누적 출고와 일치)
@@ -2228,6 +2551,15 @@ new Chart(document.getElementById('giftDailyChart'), {
 });
 
 document.getElementById('updated-at').textContent = '업데이트: ' + new Date().toLocaleDateString('ko-KR', {month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit'});
+{
+  const d = new Date();
+  const fd = document.getElementById('footer-date');
+  if (fd) fd.textContent = `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}`;
+  // 시차 일치: .dyn-month → 시스템 today의 월 (월별 KPI 라벨이 자동으로 따라감)
+  // 데이터 값은 patch_dashboard.py가 cron 시 채움 (월별 집계).
+  const curM = d.getMonth() + 1;
+  document.querySelectorAll('.dyn-month').forEach(el => { el.textContent = String(curM); });
+}
 
 // ── 재고 현황 계산 ──
 const GREY_REM  = { 240: 22, 250: 86, 260: 133, 270: 83, 280: 43 };
@@ -2257,7 +2589,12 @@ function addBizDays(date, days) {
   return d;
 }
 
-const today = new Date('2026-04-29');
+// 시차 기준: today는 시스템 시각 사용 (지침: scripts/README.md "시차 맞추기 기준")
+// 테스트/스냅샷 재현은 URL ?date=YYYY-MM-DD 로만 오버라이드.
+const today = (() => {
+  const u = new URLSearchParams(location.search).get('date');
+  return u && /^\d{4}-\d{2}-\d{2}$/.test(u) ? new Date(u) : new Date();
+})();
 
 // === 사이즈×컬러별 출고/소진 분석 (모든 알림·KPI·체크리스트의 기준) ===
 const SALE_BY_SIZE = {
@@ -4243,60 +4580,29 @@ new Chart(document.getElementById('burndownChart'), {
 })();
 
 // ━━ CS 대시보드 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-const CS_CASES = [
-  { id:"cs13", date:"2026-05-04", platform:"킥스타터", orderNo:"고강훈", size:"-", type:"사이즈교환", status:"pending",
-    summary:"킥스타터 백커 사이즈 교환 요청 — 4/17 출고 송장 확인됨",
-    response:"안녕하세요, DARIMATI입니다.\n\n사이즈 교환 요청 확인하였습니다. 저희 측 비용으로 교환 진행해 드리겠습니다.\n\n반송 주소 및 교환 절차를 안내드리겠습니다. 원하시는 사이즈를 알려주시면 바로 확인 후 재발송해 드리겠습니다.\n\n감사합니다.",
-    note:"킥스타터 백커 교환 — 자사 부담 교환 정책 적용 여부 Matt 확인 필요" },
-  { id:"cs12", date:"2026-05-04", platform:"카카오메이커스", orderNo:"134698951", size:"240", type:"단순변심", status:"resolved",
-    summary:"모자 구성 불만족 — '러닝화 제외 구성품 불필요'",
-    response:"안녕하세요, DARIMATI입니다.\n\n반품 요청 확인하였습니다. 단순변심 반품 기한 내 접수 확인되어 반품을 승인해 드립니다.\n\n상품 수령 후 미사용·미개봉 상태로 회수가 진행될 예정이며, 수거 완료 및 검수 후 환불 처리해 드리겠습니다.\n\n이용해 주셔서 감사합니다.",
-    note:"모자·악세서리 구성품 관련 불만. 선제 안내 개선 필요." },
-  { id:"cs11", date:"2026-04-30", platform:"카카오메이커스", orderNo:"-", size:"-", type:"구성품문의", status:"pending",
-    summary:"모자 사이즈 문의 — 깊이 측정 후 안내 예정",
-    response:"안녕하세요, DARIMATI입니다.\n\nUrban Focus Shield(모자) 사이즈 문의 주셔서 감사합니다.\n모자는 프리사이즈로 제작되었으며, 내부 둘레 약 58cm 기준입니다. 깊이(크라운 높이)는 약 10cm이며 스트레치 소재로 착용감을 조정하게 됩니다.\n\n감사합니다.",
-    note:"모자 깊이 실측 후 정확한 수치 업데이트 필요" },
-  { id:"cs10", date:"2026-04-30", platform:"카카오메이커스", orderNo:"-", size:"240", type:"사이즈문의", status:"resolved",
-    summary:"235mm 고객 → 240 추천 + 깔창 동봉 안내",
-    response:"안녕하세요, 다리마티입니다 :)\n\n평소 235mm 신발을 신으신다면 BR-001의 240mm를 편하게 신으실 수 있습니다.\n혹시 240mm를 신어보시고 약간의 여유가 느껴지신다면 저희가 보내드리는 깔창을 활용해 핏 조정이 가능하세요. 240mm 주문 시 메모 남겨주시면 함께 챙겨드리겠습니다.\n\n감사합니다 :)",
-    note:"깔창 동봉 요청 시 메모 필수 안내" },
-  { id:"cs9", date:"2026-04-30", platform:"이메일", orderNo:"-", size:"-", type:"배송문의", status:"resolved",
-    summary:"[해외] Texas 배송 가능 여부 문의",
-    response:"Hi,\n\nThank you for reaching out to DARIMATI!\nYes, we do ship to Texas, USA. Once your order is placed on our website (darimati.us), we'll arrange international shipping to your address.\n\nBest,\nDARIMATI Team",
-    note:"미국 배송 가능 — 자사몰(darimati.us) 통해 주문 안내" },
-  { id:"cs8", date:"2026-04-29", platform:"조선몰(디즈먼트)", orderNo:"-", size:"270", type:"사이즈문의", status:"resolved",
-    summary:"발볼 넓은 남성 사이즈 문의 — 발길이 160mm, 발폭 110mm",
-    response:"담당자님 안녕하세요, 다리마티입니다.\n\n발볼이 넓으신 분의 경우 BR-001은 동사이즈 대비 5mm 더 여유 있게 설계되어 있습니다.\n발길이 기준으로 맞는 사이즈를 선택하시되, 발폭이 넓으신 점 고려해 핏 확인 후 문의 주시면 조치드리겠습니다.\n\n감사합니다.",
-    note:"발폭 11cm는 매우 넓은 편 — 최소사이즈(240) 안내 + 추가 확인 요청" },
-  { id:"cs7", date:"2026-04-29", platform:"톡스토어", orderNo:"-", size:"-", type:"리뷰코멘트", status:"resolved",
-    summary:"톡스토어 상품 리뷰 코멘트 작성",
-    response:"안녕하세요, 다리마티입니다 :)\n\n소중한 리뷰 남겨주셔서 진심으로 감사드립니다.\n앞으로도 더 좋은 제품으로 보답하는 DARIMATI가 되겠습니다. 감사합니다 🙏",
-    note:"긍정/부정 리뷰 톤 다르게 적용 필요" },
-  { id:"cs6", date:"2026-04-28", platform:"카카오메이커스", orderNo:"-", size:"260", type:"사이즈문의", status:"resolved",
-    summary:"발볼 넓은 고객 — 호카 클리프톤 260 신던 분",
-    response:"안녕하세요 다리마티입니다.\n\n해당 제품은 발볼이 넉넉히 나온 편이고, 동사이즈 대비 타 러닝화에 비해 5mm 더 여유 있게 나와있습니다.\n260을 추천드리며, 불편하시면 카카오톡 상담센터로 문의주시면 조치드리겠습니다.\n\n감사합니다!",
-    note:"발볼 넓은 고객 → 동사이즈 추천 패턴 확립" },
-  { id:"cs5", date:"2026-04-28", platform:"카카오메이커스", orderNo:"-", size:"240", type:"사이즈문의", status:"resolved",
-    summary:"230mm 사이즈 없냐는 문의 — 최소 240mm 안내",
-    response:"안녕하세요, 다리마티입니다 :)\n\nBR-001은 현재 240mm부터 생산되고 있어, 230mm 사이즈는 없는 점 양해 부탁드립니다 ㅠㅠ\n240mm 주문 시 깔창을 활용해 핏 조정이 가능하니 함께 챙겨드릴 수 있도록 메모 남겨주세요.\n\n감사합니다 :)",
-    note:"최소 사이즈 240mm — 상세페이지에 명시 필요 (반복 문의)" },
-  { id:"cs4", date:"2026-04-28", platform:"카카오메이커스", orderNo:"-", size:"-", type:"사이즈문의", status:"resolved",
-    summary:"남성도 신을 수 있나요? 유니섹스 여부 문의",
-    response:"안녕하세요, 다리마티입니다 :)\n\nBR-001은 남녀공용(유니섹스) 러닝화입니다. 본인 발 사이즈에 맞게 선택해 주시면 됩니다.\n하이록스 남성 선수 분들께도 인기가 높은 신발입니다^^\n\n감사합니다 :)",
-    note:"유니섹스 여부 → 상세페이지 상단 명시 필요" },
-  { id:"cs3", date:"2026-04-28", platform:"카카오메이커스", orderNo:"-", size:"260", type:"사이즈문의", status:"resolved",
-    summary:"평소 265mm 신던 고객 — 5mm 단위 사이즈 선택 문의",
-    response:"안녕하세요, 다리마티입니다 :)\n\nBR-001은 10mm 단위로 제작되어 사이즈 선택에 고민이 많으셨을 것 같아요.\n발볼이 여유있게 설계되어 있어, 평소 265mm를 신으신다면 260mm를 권장드립니다.\n발볼이 넓거나 두꺼운 양말 예정이시라면 270mm도 고려해 보실 수 있어요.\n\n감사합니다 :)",
-    note:"5mm 단위 → 다운사이즈 추천 (발볼 넓으면 업 고려) — 스탠다드 답변" },
-  { id:"cs2", date:"2026-04-27", platform:"카카오메이커스", orderNo:"-", size:"-", type:"반품", status:"resolved",
-    summary:"소비자보호법 기준 반품 안내 케이스",
-    response:"안녕하세요, DARIMATI입니다.\n\n소비자보호법에 따른 반품 요청 확인하였습니다. 미사용·미개봉 상태로 반송해 주시면 수령 후 환불 처리해 드리겠습니다.\n\n불편을 드려 죄송합니다. 감사합니다.",
-    note:"소비자보호법 기준 반품 — 정책 명문화 필요" },
-  { id:"cs1", date:"2026-03-21", platform:"킥스타터", orderNo:"jherie@ymail.com", size:"W7", type:"사이즈교환", status:"resolved",
-    summary:"[해외] 킥스타터 백커 — W7.5 → W7 사이즈 정정 요청",
-    response:"Hi,\n\nThank you for reaching out! We'll update your order from W7.5 to W7 before shipment.\nSince your order hasn't shipped yet, we can make this change without any issue.\n\nBest,\nDARIMATI Team",
-    note:"배송 전 변경은 즉시 처리. 배송 후라면 교환 프로세스." },
-];
+// 데이터 소스 = 옵시디언 CS/cases/*.md (build 시 cs-aggregate.py + inject_cs_data.py 주입)
+// 마티봇이 모은 13건은 CASE-003~015로 옵시디언 마이그레이션됨 (단일 진실원 유지)
+window.CS_DATA = /* CS_DATA_START */{"generated_at":"2026-05-04 20:33:40","total":15,"by_channel":{"스마트스토어":1,"카카오메이커스":9,"킥스타터":2,"톡스토어":1,"조선몰(디즈먼트)":1,"이메일":1},"by_type":{"반품":3,"사이즈교환":2,"사이즈문의":6,"리뷰코멘트":1,"배송문의":1,"구성품문의":1,"단순변심":1},"by_size":{"W7":1,"260":2,"240":3,"270":1},"by_sku":{"BR-001":15},"by_tag":{"detail-page-candidate":3,"over-7d":2,"law-17-3":2,"overseas":2,"insole-recommended":2,"defect-claim":1,"manufacturing-defect":1,"lace-stitching":1,"size-correction":1,"pre-shipment":1,"consumer-protection-law":1,"refund-policy":1,"size-inquiry":1,"5mm-step":1,"size-down":1,"unisex-inquiry":1,"below-min-size":1,"230mm-request":1,"wide-foot":1,"same-size":1,"hoka-comparison":1,"review":1,"engagement":1,"wide-foot-extreme":1,"size-guide":1,"B2B-channel":1,"shipping-inquiry":1,"us-shipping":1,"too-big":1,"size-235":1,"core-pattern":1,"accessory-inquiry":1,"hat-size":1,"needs-measurement":1,"change-of-mind":1,"bundle-complaint":1,"accessory-overload":1,"size-exchange":1,"ks-backer":1,"post-shipment":1,"needs-matt-confirmation":1},"by_recovery":{"size-exchange":3,"size-guide":3,"info":4,"insole":2},"by_outcome":{"pending":4,"exchanged":1,"refunded":2,"retained":8},"by_status":{"진행중":4,"완료":11},"by_month":{"2026-03":1,"2026-04":12,"2026-05":2},"matrix_type_size":{"반품":{"?":3},"사이즈교환":{"W7":1,"?":1},"사이즈문의":{"260":2,"?":1,"240":2,"270":1},"리뷰코멘트":{"?":1},"배송문의":{"?":1},"구성품문의":{"?":1},"단순변심":{"240":1}},"retention_rate":0.818,"manual_candidates":[{"tag":"detail-page-candidate","count":3}],"min_freq_threshold":3,"cases":[{"case_id":"CASE-001","date":"2026-04-27","channel":"스마트스토어","order_no":null,"type":"반품","sku":"BR-001","size":null,"tags":["over-7d","defect-claim","law-17-3"],"recovery_used":[],"status":"진행중","outcome":"pending","summary":"수령 후 7일 초과 반품 요구 (불량 주장). 전자상거래법 제17조③ 근거로 환불 요구.","response":"1. 제품 수거 → 검수 (불량 여부 확인)\n2. 불량 확인 시 → 환불 수용\n3. 불량 미확인 시 → 반품 거절 + 이유 안내\n4. 분쟁 지속 시 → 소비자원(1372) 안내","note":"","file":"CASE-001.md"},{"case_id":"CASE-002","date":"2026-04-27","channel":"카카오메이커스","order_no":null,"type":"반품","sku":"BR-001","size":null,"tags":["over-7d","manufacturing-defect","lace-stitching","law-17-3"],"recovery_used":["size-exchange"],"status":"진행중","outcome":"pending","summary":"제조 불량 (신발끈 박음질 불량). 7일 초과 후 반품 요청.\n\n- 1654460: 2026-04-24 박음질 불량 사진 업로드 + 교환 요청\n- 1655456: 2026-04-27 반품 요청 + 전자상거래법 17조③ 근거 제시\n- 기존 답변(rexyrexy@naver.com)에서 7일 초과 이유로 반품 거절 후 교환으로만 안내한 상태","response":"- 1차: 교환 안내 (이미 시도, 거절됨)\n- 2차: 반품 수용으로 전환 답변 제공\n- 수거 후 환불 처리 예정","note":"","file":"CASE-002.md"},{"case_id":"CASE-003","date":"2026-03-21","channel":"킥스타터","order_no":"jherie@ymail.com","type":"사이즈교환","sku":"BR-001","size":"W7","tags":["size-correction","pre-shipment","overseas"],"recovery_used":["size-exchange"],"status":"완료","outcome":"exchanged","summary":"[해외] 킥스타터 백커 — W7.5 → W7 사이즈 정정 요청","response":"Hi,\n\nThank you for reaching out! We'll update your order from W7.5 to W7 before shipment.\nSince your order hasn't shipped yet, we can make this change without any issue.\n\nBest,\nDARIMATI Team","note":"배송 전 변경은 즉시 처리. 배송 후라면 교환 프로세스.","file":"CASE-003.md"},{"case_id":"CASE-004","date":"2026-04-27","channel":"카카오메이커스","order_no":null,"type":"반품","sku":"BR-001","size":null,"tags":["consumer-protection-law","refund-policy"],"recovery_used":[],"status":"완료","outcome":"refunded","summary":"소비자보호법 기준 반품 안내 케이스","response":"안녕하세요, DARIMATI입니다.\n\n소비자보호법에 따른 반품 요청 확인하였습니다. 미사용·미개봉 상태로 반송해 주시면 수령 후 환불 처리해 드리겠습니다.\n\n불편을 드려 죄송합니다. 감사합니다.","note":"소비자보호법 기준 반품 — 정책 명문화 필요","file":"CASE-004.md"},{"case_id":"CASE-005","date":"2026-04-28","channel":"카카오메이커스","order_no":null,"type":"사이즈문의","sku":"BR-001","size":"260","tags":["size-inquiry","5mm-step","size-down"],"recovery_used":["size-guide"],"status":"완료","outcome":"retained","summary":"평소 265mm 신던 고객 — 5mm 단위 사이즈 선택 문의","response":"안녕하세요, 다리마티입니다 :)\n\nBR-001은 10mm 단위로 제작되어 사이즈 선택에 고민이 많으셨을 것 같아요.\n발볼이 여유있게 설계되어 있어, 평소 265mm를 신으신다면 260mm를 권장드립니다.\n발볼이 넓거나 두꺼운 양말 예정이시라면 270mm도 고려해 보실 수 있어요.\n\n감사합니다 :)","note":"5mm 단위 → 다운사이즈 추천 (발볼 넓으면 업 고려) — 스탠다드 답변","file":"CASE-005.md"},{"case_id":"CASE-006","date":"2026-04-28","channel":"카카오메이커스","order_no":null,"type":"사이즈문의","sku":"BR-001","size":null,"tags":["unisex-inquiry","detail-page-candidate"],"recovery_used":["info"],"status":"완료","outcome":"retained","summary":"남성도 신을 수 있나요? 유니섹스 여부 문의","response":"안녕하세요, 다리마티입니다 :)\n\nBR-001은 남녀공용(유니섹스) 러닝화입니다. 본인 발 사이즈에 맞게 선택해 주시면 됩니다.\n하이록스 남성 선수 분들께도 인기가 높은 신발입니다^^\n\n감사합니다 :)","note":"유니섹스 여부 → 상세페이지 상단 명시 필요","file":"CASE-006.md"},{"case_id":"CASE-007","date":"2026-04-28","channel":"카카오메이커스","order_no":null,"type":"사이즈문의","sku":"BR-001","size":"240","tags":["below-min-size","230mm-request","insole-recommended","detail-page-candidate"],"recovery_used":["insole","info"],"status":"완료","outcome":"retained","summary":"230mm 사이즈 없냐는 문의 — 최소 240mm 안내","response":"안녕하세요, 다리마티입니다 :)\n\nBR-001은 현재 240mm부터 생산되고 있어, 230mm 사이즈는 없는 점 양해 부탁드립니다 ㅠㅠ\n240mm 주문 시 깔창을 활용해 핏 조정이 가능하니 함께 챙겨드릴 수 있도록 메모 남겨주세요.\n\n감사합니다 :)","note":"최소 사이즈 240mm — 상세페이지에 명시 필요 (반복 문의)","file":"CASE-007.md"},{"case_id":"CASE-008","date":"2026-04-28","channel":"카카오메이커스","order_no":null,"type":"사이즈문의","sku":"BR-001","size":"260","tags":["wide-foot","same-size","hoka-comparison"],"recovery_used":["size-guide"],"status":"완료","outcome":"retained","summary":"발볼 넓은 고객 — 호카 클리프톤 260 신던 분","response":"안녕하세요 다리마티입니다.\n\n해당 제품은 발볼이 넉넉히 나온 편이고, 동사이즈 대비 타 러닝화에 비해 5mm 더 여유 있게 나와있습니다.\n260을 추천드리며, 불편하시면 카카오톡 상담센터로 문의주시면 조치드리겠습니다.\n\n감사합니다!","note":"발볼 넓은 고객 → 동사이즈 추천 패턴 확립","file":"CASE-008.md"},{"case_id":"CASE-009","date":"2026-04-29","channel":"톡스토어","order_no":null,"type":"리뷰코멘트","sku":"BR-001","size":null,"tags":["review","engagement"],"recovery_used":[],"status":"완료","outcome":"retained","summary":"톡스토어 상품 리뷰 코멘트 작성","response":"안녕하세요, 다리마티입니다 :)\n\n소중한 리뷰 남겨주셔서 진심으로 감사드립니다.\n앞으로도 더 좋은 제품으로 보답하는 DARIMATI가 되겠습니다. 감사합니다 🙏","note":"긍정/부정 리뷰 톤 다르게 적용 필요","file":"CASE-009.md"},{"case_id":"CASE-010","date":"2026-04-29","channel":"조선몰(디즈먼트)","order_no":null,"type":"사이즈문의","sku":"BR-001","size":"270","tags":["wide-foot-extreme","size-guide","B2B-channel"],"recovery_used":["size-guide"],"status":"완료","outcome":"retained","summary":"발볼 넓은 남성 사이즈 문의 — 발길이 160mm, 발폭 110mm","response":"담당자님 안녕하세요, 다리마티입니다.\n\n발볼이 넓으신 분의 경우 BR-001은 동사이즈 대비 5mm 더 여유 있게 설계되어 있습니다.\n발길이 기준으로 맞는 사이즈를 선택하시되, 발폭이 넓으신 점 고려해 핏 확인 후 문의 주시면 조치드리겠습니다.\n\n감사합니다.","note":"발폭 11cm는 매우 넓은 편 — 최소사이즈(240) 안내 + 추가 확인 요청","file":"CASE-010.md"},{"case_id":"CASE-011","date":"2026-04-30","channel":"이메일","order_no":null,"type":"배송문의","sku":"BR-001","size":null,"tags":["overseas","shipping-inquiry","us-shipping"],"recovery_used":["info"],"status":"완료","outcome":"retained","summary":"[해외] Texas 배송 가능 여부 문의","response":"Hi,\n\nThank you for reaching out to DARIMATI!\nYes, we do ship to Texas, USA. Once your order is placed on our website (darimati.us), we'll arrange international shipping to your address.\n\nBest,\nDARIMATI Team","note":"미국 배송 가능 — 자사몰(darimati.us) 통해 주문 안내","file":"CASE-011.md"},{"case_id":"CASE-012","date":"2026-04-30","channel":"카카오메이커스","order_no":null,"type":"사이즈문의","sku":"BR-001","size":"240","tags":["too-big","size-235","insole-recommended","core-pattern"],"recovery_used":["insole"],"status":"완료","outcome":"retained","summary":"235mm 고객 → 240 추천 + 깔창 동봉 안내","response":"안녕하세요, 다리마티입니다 :)\n\n평소 235mm 신발을 신으신다면 BR-001의 240mm를 편하게 신으실 수 있습니다.\n혹시 240mm를 신어보시고 약간의 여유가 느껴지신다면 저희가 보내드리는 깔창을 활용해 핏 조정이 가능하세요. 240mm 주문 시 메모 남겨주시면 함께 챙겨드리겠습니다.\n\n감사합니다 :)","note":"깔창 동봉 요청 시 메모 필수 안내","file":"CASE-012.md"},{"case_id":"CASE-013","date":"2026-04-30","channel":"카카오메이커스","order_no":null,"type":"구성품문의","sku":"BR-001","size":null,"tags":["accessory-inquiry","hat-size","needs-measurement"],"recovery_used":["info"],"status":"진행중","outcome":"pending","summary":"모자 사이즈 문의 — 깊이 측정 후 안내 예정","response":"안녕하세요, DARIMATI입니다.\n\nUrban Focus Shield(모자) 사이즈 문의 주셔서 감사합니다.\n모자는 프리사이즈로 제작되었으며, 내부 둘레 약 58cm 기준입니다. 깊이(크라운 높이)는 약 10cm이며 스트레치 소재로 착용감을 조정하게 됩니다.\n\n감사합니다.","note":"모자 깊이 실측 후 정확한 수치 업데이트 필요","file":"CASE-013.md"},{"case_id":"CASE-014","date":"2026-05-04","channel":"카카오메이커스","order_no":"134698951","type":"단순변심","sku":"BR-001","size":"240","tags":["change-of-mind","bundle-complaint","accessory-overload","detail-page-candidate"],"recovery_used":[],"status":"완료","outcome":"refunded","summary":"모자 구성 불만족 — '러닝화 제외 구성품 불필요'","response":"안녕하세요, DARIMATI입니다.\n\n반품 요청 확인하였습니다. 단순변심 반품 기한 내 접수 확인되어 반품을 승인해 드립니다.\n\n상품 수령 후 미사용·미개봉 상태로 회수가 진행될 예정이며, 수거 완료 및 검수 후 환불 처리해 드리겠습니다.\n\n이용해 주셔서 감사합니다.","note":"모자·악세서리 구성품 관련 불만. 선제 안내 개선 필요.","file":"CASE-014.md"},{"case_id":"CASE-015","date":"2026-05-04","channel":"킥스타터","order_no":"고강훈","type":"사이즈교환","sku":"BR-001","size":null,"tags":["size-exchange","ks-backer","post-shipment","needs-matt-confirmation"],"recovery_used":["size-exchange"],"status":"진행중","outcome":"pending","summary":"킥스타터 백커 사이즈 교환 요청 — 4/17 출고 송장 확인됨","response":"안녕하세요, DARIMATI입니다.\n\n사이즈 교환 요청 확인하였습니다. 저희 측 비용으로 교환 진행해 드리겠습니다.\n\n반송 주소 및 교환 절차를 안내드리겠습니다. 원하시는 사이즈를 알려주시면 바로 확인 후 재발송해 드리겠습니다.\n\n감사합니다.","note":"킥스타터 백커 교환 — 자사 부담 교환 정책 적용 여부 Matt 확인 필요","file":"CASE-015.md"}]}/* CS_DATA_END */;
+
+// 옵시디언 → 마티봇 UI 매핑 (outcome 'pending' → status 'pending', 그 외 → 'resolved')
+const CS_CASES = ((window.CS_DATA && window.CS_DATA.cases) || [])
+  .slice()
+  .sort((a, b) => (b.date || '').localeCompare(a.date || ''))
+  .map(c => ({
+    id: c.case_id,
+    date: c.date,
+    platform: c.channel,
+    orderNo: c.order_no || "-",
+    size: c.size || "-",
+    type: c.type,
+    status: c.outcome === 'pending' ? 'pending' : 'resolved',
+    summary: c.summary,
+    response: c.response,
+    note: c.note,
+    _tags: c.tags || [],
+    _outcome: c.outcome,
+    _recovery: c.recovery_used || [],
+  }));
 
 const CS_TEMPLATES = [
   { type:"단순변심 반품", title:"단순변심 반품 승인",
@@ -4338,9 +4644,11 @@ function renderCSList() {
       <div class="cs-badges"><span class="cs-badge platform">${c.platform}</span><span class="cs-badge type">${c.type}</span><span class="cs-badge status-${c.status}">${sLabel}</span></div>
       <div class="cs-meta-text">주문 ${c.orderNo||"-"} · 사이즈 ${c.size||"-"} · ${c.date}</div>
       <div class="cs-detail">
-        <div style="font-size:10px;color:var(--muted);margin-bottom:6px;letter-spacing:.06em;text-transform:uppercase;">발송 응답 템플릿</div>
-        <div class="cs-resp-box">${c.response}</div>
-        <button class="cs-copy-btn" onclick="event.stopPropagation();copyCS('${c.id}')">📋 복사</button>
+        <div style="font-size:10px;color:var(--muted);margin-bottom:6px;letter-spacing:.06em;text-transform:uppercase;">📨 원본 고객 호소</div>
+        <div style="background:#0a0a0a; border:1px solid #2a2a2a; border-left:2px solid #7c9bb5; border-radius:4px; padding:10px 14px; font-size:11px; color:#aaa; line-height:1.7; white-space:pre-wrap; margin-bottom:12px;">${c.summary || '(원본 호소 없음)'}</div>
+        <div style="font-size:10px;color:var(--muted);margin-bottom:6px;letter-spacing:.06em;text-transform:uppercase;">📤 발송 응답 템플릿</div>
+        <div class="cs-resp-box">${c.response || '(답변 없음)'}</div>
+        <button class="cs-copy-btn" onclick="event.stopPropagation();copyCS('${c.id}')">📋 답변 복사</button>
         ${c.note ? '<div class="cs-note-text">💡 ' + c.note + '</div>' : ""}
       </div>`;
     card.addEventListener("click", () => card.classList.toggle("open"));
@@ -4398,11 +4706,759 @@ function renderCSTemplates() {
 function renderCSPrevention() {
   const el = document.getElementById("cs-prev-list"); if (!el) return;
   const counts = {}; CS_CASES.forEach(c=>{ counts[c.type]=(counts[c.type]||0)+1; });
-  el.innerHTML = CS_PREVENTION.map(p => {
+
+  // 옵시디언 cs-aggregate.py가 자동 탐지한 매뉴얼 갱신 후보 (빈도 ≥ 3 인데 지침서에 미등록)
+  const auto = ((window.CS_DATA && window.CS_DATA.manual_candidates) || []);
+  const minFreq = (window.CS_DATA && window.CS_DATA.min_freq_threshold) || 3;
+  const autoBlock = auto.length === 0 ? '' : `
+    <div style="margin-bottom:14px; padding:10px 12px; background:#2a1f0a; border:1px solid #5a4a1a; border-radius:8px;">
+      <div style="font-size:9px; color:#f0c36d; font-weight:700; letter-spacing:0.05em; text-transform:uppercase; margin-bottom:6px;">⚠️ 매뉴얼 갱신 후보 (옵시디언 빈도 ${minFreq}+)</div>
+      ${auto.map(c => `<div style="font-size:10px; color:#fcd34d; line-height:1.5;"><b>${c.tag}</b> · ${c.count}건 · <span style="color:#a08a4a;">→ CS 지침서 §2 추가 검토</span></div>`).join("")}
+    </div>`;
+
+  const fixedBlock = CS_PREVENTION.map(p => {
     const cnt = counts[p.type.split(" ")[0]] || 0;
     const urgMark = cnt >= 3 ? ' <span style="color:var(--red);font-weight:800">' + cnt + '건↑ 즉시조치</span>' : cnt > 0 ? ' <span style="color:var(--yellow)">' + cnt + '건</span>' : "";
     return `<div class="cs-prev-item"><div class="cs-prev-dot ${p.level}"></div><div><div class="cs-prev-type-t">${p.type}${urgMark}</div><div class="cs-prev-action-t">${p.action.replace(/\n/g,"<br>")}</div></div></div>`;
   }).join("");
+
+  el.innerHTML = autoBlock + fixedBlock;
+}
+
+// ━━ CS 인사이트 — 트렌드 · 신호 · 액션 권고 ━━━━━━━━━━━━━━━━━━━━━
+// 데이터 누적될 때마다 자동 갱신. CS_DATA의 cases 배열을 fully 활용.
+const CS_TAG_LABELS = {
+  'detail-page-candidate': '상세페이지 갱신 후보',
+  'over-7d': '7일 초과 반품',
+  'law-17-3': '전자상거래법 17조③',
+  'overseas': '해외 케이스',
+  'insole-recommended': '깔창 권유',
+  'defect-claim': '불량 주장',
+  'manufacturing-defect': '제조 불량',
+  'lace-stitching': '신발끈 박음질 불량',
+  'size-correction': '사이즈 정정',
+  'pre-shipment': '배송 전',
+  'consumer-protection-law': '소비자보호법',
+  'refund-policy': '환불 정책',
+  'size-inquiry': '사이즈 문의',
+  '5mm-step': '5mm 단위 문의',
+  'size-down': '다운사이즈',
+  'unisex-inquiry': '유니섹스 여부',
+  'below-min-size': '최소사이즈 미만',
+  '230mm-request': '230mm 요청',
+  'wide-foot': '발볼 넓음',
+  'wide-foot-extreme': '발볼 매우 넓음',
+  'same-size': '동사이즈 추천',
+  'hoka-comparison': 'HOKA 비교',
+  'review': '리뷰',
+  'engagement': '응대',
+  'size-guide': '사이즈 가이드',
+  'B2B-channel': 'B2B 채널',
+  'shipping-inquiry': '배송 문의',
+  'us-shipping': '미국 배송',
+  'too-big': '사이즈 큼',
+  'size-235': '235mm 케이스',
+  'core-pattern': '핵심 패턴',
+  'accessory-inquiry': '구성품 문의',
+  'hat-size': '모자 사이즈',
+  'needs-measurement': '실측 필요',
+  'change-of-mind': '단순변심',
+  'bundle-complaint': '구성 불만',
+  'accessory-overload': '구성품 과다 불만',
+  'size-exchange': '사이즈 교환',
+  'ks-backer': '킥스타터 백커',
+  'post-shipment': '배송 후',
+  'needs-matt-confirmation': '매트 확인 필요',
+};
+const CS_RECOVERY_LABELS = {
+  'insole': '깔창 동봉',
+  'size-exchange': '사이즈 교환',
+  'size-guide': '사이즈 가이드 안내',
+  'info': '정보 제공',
+};
+
+function csFmtMD(d) { return d ? `${d.getMonth()+1}/${d.getDate()}` : '—'; }
+function csDaysAgo(d) { return d ? Math.floor((Date.now() - d.getTime()) / 86400000) : 0; }
+function csTagLabel(t) { return CS_TAG_LABELS[t] || t; }
+
+function csComputeTagInfo(cases) {
+  const info = {};
+  cases.forEach(c => {
+    (c.tags || []).forEach(tag => {
+      if (!info[tag]) info[tag] = { count:0, first:null, last:null, sizes:new Set(), types:new Set(), channels:new Set(), cases:[] };
+      const t = info[tag];
+      t.count++;
+      const d = c.date ? new Date(c.date) : null;
+      if (d && (!t.first || d < t.first)) t.first = d;
+      if (d && (!t.last || d > t.last)) t.last = d;
+      if (c.size && c.size !== '?') t.sizes.add(c.size);
+      if (c.type) t.types.add(c.type);
+      if (c.channel) t.channels.add(c.channel);
+      t.cases.push(c.case_id);
+    });
+  });
+  return info;
+}
+
+function csComputeRecoveryEffect(cases) {
+  const stats = {};
+  cases.forEach(c => {
+    (c.recovery_used || []).forEach(w => {
+      if (!stats[w]) stats[w] = { used:0, retained:0, refunded:0, exchanged:0, pending:0 };
+      stats[w].used++;
+      const oc = c.outcome || 'pending';
+      if (stats[w][oc] !== undefined) stats[w][oc]++;
+    });
+  });
+  return Object.entries(stats).map(([w,s]) => ({
+    weapon: w, ...s,
+    retainRate: s.used > 0 ? (s.retained + s.exchanged) / s.used : 0
+  })).sort((a,b) => b.used - a.used);
+}
+
+function renderCSTrendChart(cases) {
+  const ctx = document.getElementById('csTrendChart');
+  if (!ctx) return;
+  const byMonth = {};
+  cases.forEach(c => {
+    if (!c.date) return;
+    const m = c.date.slice(0,7);
+    if (!byMonth[m]) byMonth[m] = { total:0, retained:0, refunded:0, exchanged:0, pending:0 };
+    byMonth[m].total++;
+    const oc = c.outcome || 'pending';
+    if (byMonth[m][oc] !== undefined) byMonth[m][oc]++;
+  });
+  const months = Object.keys(byMonth).sort();
+  const labels = months.map(m => {
+    const [y, mm] = m.split('-');
+    return `${y.slice(2)}.${mm}`;
+  });
+  if (window._csTrendChart) window._csTrendChart.destroy();
+  window._csTrendChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label:'유지', data: months.map(m => byMonth[m].retained), backgroundColor:'#4ade80', borderRadius:2 },
+        { label:'교환', data: months.map(m => byMonth[m].exchanged), backgroundColor:'#facc15', borderRadius:2 },
+        { label:'환불', data: months.map(m => byMonth[m].refunded), backgroundColor:'#f87171', borderRadius:2 },
+        { label:'진행중', data: months.map(m => byMonth[m].pending), backgroundColor:'#555', borderRadius:2 },
+      ]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      scales: {
+        x: { stacked:true, grid:{color:'#222'}, ticks:{color:'#888', font:{size:10}} },
+        y: { stacked:true, grid:{color:'#222'}, ticks:{color:'#888', font:{size:10}}, beginAtZero:true }
+      },
+      plugins: {
+        legend: { labels:{color:'#888', font:{size:10}, boxWidth:10, padding:10} },
+        tooltip: { callbacks: { label: c => ` ${c.dataset.label}: ${c.parsed.y}건` } }
+      }
+    }
+  });
+}
+
+function renderCSHeatmap(cases) {
+  const el = document.getElementById('cs-heatmap');
+  if (!el) return;
+  const matrix = {};
+  const sizesSet = new Set(), typesSet = new Set();
+  cases.forEach(c => {
+    const t = c.type || '기타';
+    const s = (c.size && c.size !== '?') ? c.size : 'N/A';
+    typesSet.add(t); sizesSet.add(s);
+    if (!matrix[t]) matrix[t] = {};
+    matrix[t][s] = (matrix[t][s] || 0) + 1;
+  });
+  const sizes = Array.from(sizesSet).sort((a,b) => {
+    if (a === 'N/A') return 1;
+    if (b === 'N/A') return -1;
+    return a.localeCompare(b, undefined, {numeric:true});
+  });
+  const types = Array.from(typesSet).sort((a,b) => {
+    const ta = (matrix[a] && Object.values(matrix[a]).reduce((x,y)=>x+y,0)) || 0;
+    const tb = (matrix[b] && Object.values(matrix[b]).reduce((x,y)=>x+y,0)) || 0;
+    return tb - ta;
+  });
+  let max = 1;
+  Object.values(matrix).forEach(row => Object.values(row).forEach(v => { if (v > max) max = v; }));
+
+  el.innerHTML = `
+    <table class="cs-heatmap-table">
+      <thead><tr><th class="row-h">유형 \\ 사이즈</th>${sizes.map(s => `<th>${s}</th>`).join('')}<th>합</th></tr></thead>
+      <tbody>
+        ${types.map(t => {
+          const row = matrix[t] || {};
+          const total = Object.values(row).reduce((a,b)=>a+b,0);
+          return `<tr>
+            <td style="text-align:left; color:#aaa; font-size:10.5px; padding-left:8px; padding-right:6px;">${t}</td>
+            ${sizes.map(s => {
+              const v = row[s] || 0;
+              if (!v) return '<td><span class="cs-heatmap-cell" style="background:#141414; color:#333;">·</span></td>';
+              const intensity = v / max;
+              const bg = `rgba(124,155,181,${0.18 + intensity * 0.62})`;
+              const color = intensity >= 0.55 ? '#fff' : '#dde6ef';
+              return `<td><span class="cs-heatmap-cell" style="background:${bg}; color:${color};">${v}</span></td>`;
+            }).join('')}
+            <td><span class="cs-heatmap-cell" style="background:#1a1a1a; color:#aaa;">${total}</span></td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>`;
+}
+
+function renderCSPatternsAndRecovery(cases, tagInfo) {
+  const FOURTEEN = 14 * 86400000;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const tagsArr = Object.entries(tagInfo).map(([t,i]) => ({tag:t, ...i}));
+
+  const SKIP_TAGS = new Set(['core-pattern','engagement']);
+  const repeats = tagsArr
+    .filter(t => t.count >= 2 && !SKIP_TAGS.has(t.tag))
+    .sort((a,b) => b.count - a.count);
+
+  const newOnes = tagsArr
+    .filter(t => t.first && (today - t.first) <= FOURTEEN && t.count <= 2 && !SKIP_TAGS.has(t.tag))
+    .sort((a,b) => b.first - a.first);
+
+  const signalsEl = document.getElementById('cins-signals');
+  if (signalsEl) signalsEl.textContent = repeats.length + newOnes.length;
+  const signalsSubEl = document.getElementById('cins-signals-sub');
+  if (signalsSubEl) signalsSubEl.textContent = `반복 ${repeats.length} + 신규 ${newOnes.length}`;
+
+  const repEl = document.getElementById('cs-repeat-patterns');
+  if (repEl) {
+    if (!repeats.length) {
+      repEl.innerHTML = '<div style="font-size:10px; color:#555; padding:14px 0; text-align:center;">반복 패턴 없음 — 모든 태그 단발성</div>';
+    } else {
+      repEl.innerHTML = repeats.slice(0, 7).map(t => {
+        const cls = t.count >= 3 ? 'high' : 'mid';
+        const sizes = Array.from(t.sizes).join(', ') || '—';
+        return `<div class="cs-pattern-item ${cls}">
+          <div class="cs-pattern-name"><span>${csTagLabel(t.tag)}</span><span style="color:${t.count>=3?'var(--red)':'var(--yellow)'}">${t.count}건</span></div>
+          <div class="cs-pattern-meta">유형 ${Array.from(t.types).join('·')} · 사이즈 ${sizes} · 첫 등장 ${csFmtMD(t.first)}</div>
+        </div>`;
+      }).join('');
+    }
+  }
+
+  const newEl = document.getElementById('cs-new-patterns');
+  if (newEl) {
+    if (!newOnes.length) {
+      newEl.innerHTML = '<div style="font-size:10px; color:#555; padding:14px 0; text-align:center;">최근 14일 신규 단발성 태그 없음</div>';
+    } else {
+      newEl.innerHTML = newOnes.slice(0, 7).map(t => `
+        <div class="cs-pattern-item new">
+          <div class="cs-pattern-name"><span>${csTagLabel(t.tag)}</span><span style="color:#7c9bb5">${t.count}건</span></div>
+          <div class="cs-pattern-meta">유형 ${Array.from(t.types).join('·')} · ${csFmtMD(t.first)} (${csDaysAgo(t.first)}일 전) · 패턴화 모니터링</div>
+        </div>`).join('');
+    }
+  }
+
+  const recovery = csComputeRecoveryEffect(cases);
+  const recEl = document.getElementById('cs-recovery-effect');
+  if (recEl) {
+    if (!recovery.length) {
+      recEl.innerHTML = '<div style="font-size:10px; color:#555; padding:14px 0; text-align:center;">회복 무기 사용 데이터 없음</div>';
+    } else {
+      recEl.innerHTML = recovery.map(r => {
+        const pct = Math.round(r.retainRate * 100);
+        const color = pct >= 70 ? 'var(--green)' : pct >= 40 ? 'var(--yellow)' : 'var(--red)';
+        return `<div class="cs-pattern-item">
+          <div class="cs-pattern-name"><span>${CS_RECOVERY_LABELS[r.weapon] || r.weapon}</span><span style="color:${color}">${pct}%</span></div>
+          <div class="cs-pattern-meta">${r.used}건 사용 · 유지 ${r.retained} · 교환 ${r.exchanged} · 환불 ${r.refunded}</div>
+        </div>`;
+      }).join('');
+    }
+  }
+}
+
+// ━━ 액션 룰 엔진 (사이즈×태그×채널 결합) ━━━━━━━━━━━━━━━━━━━━━━
+const CS_ACTION_RULES = [
+  { id:'insole-by-size',
+    run: (cases) => {
+      const bySize = {};
+      cases.forEach(c => {
+        if (!c.size || c.size === '?') return;
+        const tags = c.tags || [];
+        const recovery = c.recovery_used || [];
+        const insoleSignal = tags.includes('insole-recommended') || tags.includes('too-big')
+                          || recovery.includes('insole') || tags.includes('size-235');
+        if (insoleSignal) {
+          if (!bySize[c.size]) bySize[c.size] = { count:0, ids:[], channels:new Set() };
+          bySize[c.size].count++;
+          bySize[c.size].ids.push(c.case_id);
+          bySize[c.size].channels.add(c.channel);
+        }
+      });
+      const out = [];
+      Object.entries(bySize).forEach(([size, info]) => {
+        if (info.count < 2) return;
+        const channels = Array.from(info.channels).join(', ');
+        out.push({
+          priority: info.count >= 3 ? 'high' : 'mid',
+          title: `${size}mm 출고분에 깔창 1장 기본 동봉 — 운영 룰화`,
+          evidence: `<b>${size}mm + 깔창 권유/사이즈 큼/235mm 케이스 ${info.count}건</b> (${info.ids.join(', ')}) · 채널: ${channels}. CS에서 매번 "메모에 깔창 동봉 요청 적어주세요"로 재안내 중 — 메모 누락시 단순변심 반품 위험.`,
+          action: `<b>운영 변경 ▸</b> 한진 출고 양식 자동화에서 ${size}mm 출고시 품목명 끝에 "+ 깔창 1장" 자동 표기. 출고 콘솔 페이지의 ${size}mm 슬롯에 "깔창 자동동봉" 토글 디폴트 ON. 상세페이지 사이즈 표 ${size}mm 줄에 "기본 깔창 동봉" 뱃지 노출.`,
+          metric: `<b>30일 후 측정 ▸</b> ${size}mm 관련 단순변심·핏 불만 케이스 ${Math.max(1, Math.floor(info.count*0.5))}건 이하로 감소. 깔창 일평균 사용량 (부자재 재고 탭) +${(info.count/30).toFixed(2)}장/일 증가 확인.`,
+          next: `① 출고 콘솔(★)의 ${size}mm 슬롯 정의에 {shoe + insole 1ea} 디폴트 추가<br>② 부자재 재고 탭에서 깔창 burn-rate 관찰 → 재발주 임계 갱신<br>③ 30일 후 ${size} 단순변심 케이스 빈도 재측정 (베이스라인 ${info.count}건)`
+        });
+      });
+      return out;
+    }
+  },
+  { id:'detail-page-update',
+    run: (cases, tagInfo) => {
+      const t = tagInfo['detail-page-candidate'];
+      if (!t || t.count < 2) return [];
+      const subTagCount = {};
+      cases.forEach(c => {
+        if (!(c.tags||[]).includes('detail-page-candidate')) return;
+        (c.tags||[]).filter(x => x !== 'detail-page-candidate').forEach(o => {
+          subTagCount[o] = (subTagCount[o]||0) + 1;
+        });
+      });
+      const topSubs = Object.entries(subTagCount).sort((a,b)=>b[1]-a[1]).slice(0,5);
+      return [{
+        priority:'high',
+        title:'상세페이지 즉시 보강 — 반복 노출 항목',
+        evidence:`<b>detail-page-candidate ${t.count}건</b> (${t.cases.join(', ')}). 동시 태그 빈도 TOP: ${topSubs.map(([k,v]) => `${csTagLabel(k)}(${v})`).join(' · ')}. 채널 ${Array.from(t.channels).join('·')} 모두에서 동일 문의 반복.`,
+        action:`<b>상세페이지 보강 ▸</b><br>· "남녀공용(유니섹스)" 상품명/상단 명시<br>· "최소 사이즈 240mm — 235 이하는 240+깔창 권장" 사이즈 섹션 상단<br>· 구성품 용도(모자=자외선차단·시야확보 / 깔창=핏 조정용)<br>· 발볼 가이드: "동사이즈 대비 5mm 여유 → 발볼 넓으면 동사이즈"`,
+        metric:`<b>30일 후 측정 ▸</b> 사이즈문의·구성품문의 신규 케이스 30% 감소. detail-page-candidate 신규 태그 발생 0건 목표.`,
+        next:`① 카카오메이커스 + 자사몰(darimati.us) + 네이버 동시 업데이트 (3채널)<br>② 변경 직전 30일 vs 직후 30일 케이스 비교 리포트<br>③ 옵시디언 CS_케이스북.md에 "상세페이지 §보강 완료" 마킹`
+      }];
+    }
+  },
+  { id:'overseas-template',
+    run: (cases) => {
+      const overseas = cases.filter(c => (c.tags||[]).some(t => ['overseas','us-shipping','ks-backer'].includes(t)));
+      if (overseas.length < 2) return [];
+      const platforms = Array.from(new Set(overseas.map(c => c.channel)));
+      const types = Array.from(new Set(overseas.map(c => c.type)));
+      return [{
+        priority:'mid',
+        title:'해외 응답 영문 매크로 — 인테이크 자동분기',
+        evidence:`<b>해외 케이스 ${overseas.length}건</b> (${overseas.map(c=>c.case_id).join(', ')}) — 채널 ${platforms.join('+')}, 유형 ${types.join('·')}. 매번 영문 응답 수동 작성 중 (응답 지연 위험).`,
+        action:`<b>자동화 ▸</b> CS 인테이크 패널 룰에 overseas 분기 추가. 영문 키워드(ship/USA/Texas/W7 등) 감지시 영문 템플릿 3종(사이즈정정·배송가능여부·KS백커 사이즈교환) 자동 노출. darimati.us 안내 자동 삽입.`,
+        metric:`<b>30일 후 측정 ▸</b> 해외 케이스 평균 응답시간 24h → 4h. Matt 부재시도 영문 응답 가능. 영문 직접 작성 0건.`,
+        next:`① CS 인테이크 룰에 us-shipping/ks-backer 패턴 추가 (현재는 overseas 키워드만)<br>② 자사몰 darimati.us 안내 매크로 등록<br>③ KS 백커 자사 부담 교환 정책 명문화 (needs-matt-confirmation 잔존)`
+      }];
+    }
+  },
+  { id:'over-7d-policy',
+    run: (cases, tagInfo) => {
+      const t = tagInfo['over-7d'];
+      if (!t || t.count < 2) return [];
+      const law = tagInfo['law-17-3'] || {count:0};
+      const def = tagInfo['defect-claim'] || {count:0};
+      return [{
+        priority:'high',
+        title:'7일 초과 반품 정책 명문화 + 자동응답 트리거',
+        evidence:`<b>over-7d ${t.count}건</b> (${t.cases.join(', ')}) · law-17-3 ${law.count}건 · defect-claim ${def.count}건. 모두 전자상거래법 17조③ 인용 + 환불 분쟁. 정책 명문화 안 되어 케바케 응대 → 응답 일관성 결여.`,
+        action:`<b>정책 페이지 명문화 ▸</b><br>· 단순변심: 7일 이내(법 17조①) — 미사용·미개봉시 반품<br>· 하자: 3개월 이내(법 17조③) — 사진/제품 수거 → 검수 결과 따라 처리<br>· 분쟁 지속시 소비자원(1372) 안내<br><b>자동응답 ▸</b> 카톡 키워드 매크로("환불"·"불량"·"7일"·"하자") 등록.`,
+        metric:`<b>30일 후 측정 ▸</b> over-7d 케이스 평균 응대시간 < 1시간. 분쟁 에스컬레이션(1372 회부) 0건. 정책 페이지 클릭→이탈률 추적.`,
+        next:`① 정책 텍스트 작성 (옵시디언 CS_지침서 §2 베이스)<br>② 자사몰·카카오메이커스·네이버 정책 동시 업데이트<br>③ 카톡 자동응답 키워드 등록 → 운영 외 시간 1차 안내`
+      }];
+    }
+  },
+  { id:'accessory-bundle-complaint',
+    run: (cases) => {
+      const tags = ['accessory-overload','bundle-complaint','accessory-inquiry'];
+      const matched = cases.filter(c => (c.tags||[]).some(t => tags.includes(t)));
+      if (matched.length < 1) return [];
+      const refunds = matched.filter(c => c.outcome === 'refunded').length;
+      return [{
+        priority: matched.length >= 2 ? 'high' : 'mid',
+        title:'풀세트 구성품 불만 — 선제 안내 + 단품 옵션 검토',
+        evidence:`<b>${tags.map(csTagLabel).join('·')} 관련 ${matched.length}건</b> (${matched.map(c=>c.case_id).join(', ')}) · 환불 종결 ${refunds}건. 모자/구성품에 대한 "필요 없다" 단순변심 — 풀세트 159k 가격 부담 가능성.`,
+        action:`<b>선제 안내 ▸</b> 상세페이지 상단에 구성품 사진 + 각 항목 용도/가치 1줄 명시 (모자=자외선차단·시야확보 / 슈백=공간절약·습기차단 / 깔창=핏 조정 등). <b>옵션 검토 ▸</b> '러닝화 단품' 옵션 추가 가능성 회의 안건화 — 다만 풀세트 ARPU 영향 사전 분석 필요.`,
+        metric:`<b>30일 후 측정 ▸</b> bundle-complaint·accessory-overload 신규 케이스 0건. 단품 옵션 출시시 풀세트 vs 단품 매출 비율 모니터링.`,
+        next:`① 카카오메이커스 상세페이지 구성품 섹션 보강<br>② 단품 출시 ROI 분석 (풀세트 ARPU 159k vs 단품 추정가)<br>③ 모자 사이즈 실측(needs-measurement) 후 정확 spec 명시 (CASE-013 follow-up)`
+      }];
+    }
+  },
+  { id:'new-pattern-monitor',
+    run: (cases) => {
+      const today = new Date(); today.setHours(0,0,0,0);
+      const FOURTEEN = 14 * 86400000;
+      const recent = {};
+      cases.forEach(c => {
+        if (!c.date) return;
+        const d = new Date(c.date);
+        if ((today - d) > FOURTEEN) return;
+        (c.tags||[]).forEach(t => {
+          if (!recent[t]) recent[t] = { count:0, cases:[] };
+          recent[t].count++;
+          recent[t].cases.push(c.case_id);
+        });
+      });
+      const newOnes = [];
+      Object.entries(recent).forEach(([tag, info]) => {
+        const totalCount = cases.filter(c => (c.tags||[]).includes(tag)).length;
+        if (totalCount === info.count && totalCount <= 2) newOnes.push({tag, ...info});
+      });
+      if (newOnes.length === 0) return [];
+      return [{
+        priority:'low',
+        title:`신규 단발성 신호 ${newOnes.length}종 — 패턴 형성 모니터링`,
+        evidence:`최근 14일 처음 등장 + 전체 ≤ 2건: ${newOnes.slice(0,8).map(n => `${csTagLabel(n.tag)}(${n.count})`).join(', ')}${newOnes.length>8?' …':''}`,
+        action:`<b>액션 보류 ▸</b> 즉시 조치 불필요. 다음 30일 동일 태그 재발생시 자동으로 "반복 패턴"으로 승격 → 별도 액션 룰 트리거. 단발성으로 끝나면 노이즈로 분류해 자동 제거.`,
+        metric:`<b>30일 후 측정 ▸</b> ${newOnes.length}종 중 50% 이상이 1건으로 그치면 우리 응대가 좋다는 신호. 추가 발생률(=재발률) 추적.`,
+        next:`① 옵시디언 CS_케이스북.md에 신규 태그 의미 1줄 메모<br>② 매주 월요일 신규 패턴 리뷰 (이번 주: ${newOnes.slice(0,3).map(n => csTagLabel(n.tag)).join(', ')})`
+      }];
+    }
+  }
+];
+
+function renderCSActions(cases, tagInfo) {
+  const el = document.getElementById('cs-action-list');
+  if (!el) return;
+  const out = [];
+  CS_ACTION_RULES.forEach(rule => {
+    try {
+      const r = rule.run(cases, tagInfo) || [];
+      r.forEach(a => out.push({...a, ruleId: rule.id}));
+    } catch (e) { console.warn('[cs-action]', rule.id, e); }
+  });
+  const order = {high:0, mid:1, low:2};
+  out.sort((a,b) => (order[a.priority] ?? 9) - (order[b.priority] ?? 9));
+
+  if (!out.length) {
+    el.innerHTML = '<div style="font-size:11px; color:#555; padding:18px; text-align:center;">현재 데이터 기준 권고 액션 없음. 케이스 누적시 자동 갱신.</div>';
+    return;
+  }
+
+  el.innerHTML = out.map((a,i) => {
+    const pCls = a.priority;
+    const pColor = pCls === 'high' ? 'var(--red)' : pCls === 'mid' ? 'var(--yellow)' : '#888';
+    const pBg   = pCls === 'high' ? '#2a0a0a' : pCls === 'mid' ? '#2a2200' : '#1a1a1a';
+    const pLabel = pCls === 'high' ? 'P0 즉시 조치' : pCls === 'mid' ? 'P1 이번 주' : 'P2 모니터링';
+    return `<div class="cs-action-card ${pCls}">
+      <div class="cs-action-card-head">
+        <div class="cs-action-card-title">${i+1}. ${a.title}</div>
+        <div class="cs-action-card-priority" style="background:${pBg}; color:${pColor};">${pLabel}</div>
+      </div>
+      <div class="cs-action-card-evidence"><b>근거 ▸</b> ${a.evidence}</div>
+      <div class="cs-action-card-action">${a.action}</div>
+      <div class="cs-action-card-meta">
+        <div>${a.metric}</div>
+        <div>${a.next}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderCSInsights() {
+  const data = window.CS_DATA || {};
+  const cases = (data.cases || []).slice();
+  if (!cases.length) return;
+
+  const today = new Date(); today.setHours(0,0,0,0);
+  const thisYM = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}`;
+  const thisMonth = cases.filter(c => c.date && c.date.startsWith(thisYM));
+
+  // KPI
+  const totalEl = document.getElementById('cins-total');
+  if (totalEl) totalEl.textContent = cases.length;
+  const months = data.by_month || {};
+  const mKeys = Object.keys(months).sort();
+  const totalSubEl = document.getElementById('cins-total-sub');
+  if (totalSubEl && mKeys.length) totalSubEl.textContent = `${mKeys[0]} ~ ${mKeys[mKeys.length-1]}`;
+
+  // 유지율 = (retained + exchanged) ÷ 종결 케이스
+  const closed = cases.filter(c => c.outcome && c.outcome !== 'pending');
+  const retainedClosed = closed.filter(c => c.outcome === 'retained' || c.outcome === 'exchanged').length;
+  const retainPct = closed.length ? (retainedClosed / closed.length * 100) : 0;
+  const retainEl = document.getElementById('cins-retain');
+  if (retainEl) retainEl.textContent = retainPct.toFixed(1) + '%';
+  const retainSubEl = document.getElementById('cins-retain-sub');
+  if (retainSubEl) retainSubEl.textContent = `유지+교환 ${retainedClosed} ÷ 종결 ${closed.length}`;
+
+  const monthEl = document.getElementById('cins-month');
+  if (monthEl) monthEl.textContent = thisMonth.length;
+  const monthSubEl = document.getElementById('cins-month-sub');
+  if (monthSubEl) {
+    const prevKey = mKeys[mKeys.length - 2];
+    const prev = (prevKey && months[prevKey]) || 0;
+    let diffStr = '—';
+    if (prev > 0) {
+      const pct = ((thisMonth.length / prev) - 1) * 100;
+      diffStr = (pct >= 0 ? '+' : '') + pct.toFixed(0) + '%';
+    }
+    monthSubEl.textContent = `${thisYM} 기준 · 전월 대비 ${diffStr}`;
+  }
+
+  const tagInfo = csComputeTagInfo(cases);
+  renderCSPatternsAndRecovery(cases, tagInfo);
+  renderCSTrendChart(cases);
+  renderCSHeatmap(cases);
+  renderCSActions(cases, tagInfo);
+}
+
+// ━━ 새 CS 인테이크 (옵시디언 §2 룰 기반 자동 판단 + 답변 초안) ━━
+// 옵시디언 출처: CS/DARIMATI_CS_지침서.md §0·§2 + 03_프로젝트/kakao-makers/_지침.md + 01_브랜드/product-br001.md
+// 풀세트 구성:
+//   카카오메이커스 풀세트 (159,000원): BR-001 + 모자(Urban Focus Shield) + 슈백 + 타올 + 벨트 + 플라스크 + 반사스티커
+//   킥스타터 Full Ritual: BR-001 + Urban Focus Shield + Flow-Line Carrier(슈백) + Rapid Reset Cloth(타월) + Soft Flask
+const CS_FULL_PACKAGES = {
+  '카카오메이커스': ['BR-001', '모자(Urban Focus Shield)', '슈백', '타올', '벨트', '플라스크', '반사스티커'],
+  '킥스타터':       ['BR-001', 'Urban Focus Shield(모자)', 'Flow-Line Carrier(슈백)', 'Rapid Reset Cloth(타월)', 'Soft Flask(플라스크)'],
+};
+
+// 한국어 조사 자동 (받침 유무 판정)
+function csParticle(word, p) {
+  if (!word) return p === '이/가' ? '가' : (p === '을/를' ? '를' : (p === '은/는' ? '는' : p));
+  const last = word.charCodeAt(word.length - 1);
+  if (last < 0xAC00 || last > 0xD7A3) return p === '이/가' ? '가' : (p === '을/를' ? '를' : (p === '은/는' ? '는' : p));
+  const hasJongseong = (last - 0xAC00) % 28 !== 0;
+  if (p === '이/가') return hasJongseong ? '이' : '가';
+  if (p === '을/를') return hasJongseong ? '을' : '를';
+  if (p === '은/는') return hasJongseong ? '은' : '는';
+  return p;
+}
+
+// 누락 구성품 추정 (텍스트에 언급된 구성품 키워드)
+function csDetectMissingItem(text) {
+  const items = [
+    {label: '모자', kw: ['모자', '캡', 'cap', 'urban focus', '햇']},
+    {label: '슈백', kw: ['슈백', '신발 가방', '슈가방', 'flow-line', 'carrier']},
+    {label: '타올', kw: ['타올', '타월', 'cloth', 'rapid reset']},
+    {label: '벨트', kw: ['벨트', 'belt']},
+    {label: '플라스크', kw: ['플라스크', 'flask', '물병']},
+    {label: '반사스티커', kw: ['반사', '스티커', 'reflect']},
+    {label: '깔창', kw: ['깔창', 'insole']},
+    {label: '신발끈', kw: ['신발끈', 'lace']},
+  ];
+  const t = (text || '').toLowerCase();
+  const found = [];
+  for (const it of items) {
+    if (it.kw.some(k => t.includes(k.toLowerCase()))) found.push(it.label);
+  }
+  return found;
+}
+
+const CS_INTAKE_RULES = [
+  // ⭐ 최우선 — 풀세트 구성품 누락 (매트 명문화 2026-05-04: 묻지 말고 감정터치 + 즉시 재발송)
+  { type: "missing-item", patterns: ["누락", "안 왔", "안왔", "덜 왔", "덜왔", "안 보여", "안보여", "안 보이", "안보이", "빠진", "빠졌", "빼먹", "못 받", "못받", "구성이 덜", "구성품이 안", "missing"],
+    priority: 100,
+    label: "🚨 풀세트 구성품 누락 (회복 무기: 즉시 재발송)",
+    rule: "지침서 §2 → 묻지 말고 감정 터치 + 즉시 재발송. 사진 요청·되묻기 금지.",
+    draft: ({size, platform, text, order}) => {
+      const channel = platform || '';
+      const fullSet = CS_FULL_PACKAGES[channel];
+      const missing = csDetectMissingItem(text);
+      const missingStr = missing.length > 0 ? missing.join('·') : '말씀하신 구성품';
+      const setLine = fullSet
+        ? `\n\n${channel} 풀세트는 [${fullSet.join(' / ')}] 구성으로 발송되어야 했는데, ${missingStr}${csParticle(missingStr, '이/가')} 누락된 점 즉시 확인했습니다.`
+        : `\n\n말씀하신 ${missingStr}${csParticle(missingStr, '이/가')} 누락된 점 즉시 확인했습니다.`;
+      const orderRef = order ? `[주문번호 ${order}] ` : '';
+      return `안녕하세요, 다리마티입니다.\n\n원래 보내드렸어야 할 ${missingStr}${csParticle(missingStr, '이/가')} 누락된 점 정말 죄송합니다.\n\n${orderRef}발송 기록 즉시 확인 후, 누락이 맞으면 오늘(또는 내일 영업일) 바로 ${missingStr} 단독 발송해드리겠습니다. 송장번호는 출고 즉시 안내드릴게요.\n\n다리마티 드림`;
+    } },
+  // 사이즈 큼 → 깔창
+  { type: "too-big", patterns: ["크다", "큼", "커요", "커서", "헐렁", "헐겁", "여유 있", "여유있", "남는다", "남아"],
+    priority: 50,
+    label: "사이즈 큼 (회복 무기: 깔창)",
+    rule: "지침서 §2 → 1차: 깔창 1장 추가 (2장 겹치면 더 타이트) / 2차: 한 사이즈 다운 교환",
+    draft: ({size, platform}) => `안녕하세요, 다리마티입니다.\n\n신어보시고 발에 비해 약간 여유가 느껴지시는 점, 불편을 드려 정말 죄송합니다.\n\nBR-001은 장시간 보행과 러닝 모두를 고려해 발볼을 약간 넉넉하게 설계했습니다. 동봉해드린 추가 깔창 1장을 끼우시면 핏이 한층 안정적으로 잡히고, 더 타이트한 핏을 원하시면 깔창 2장을 겹쳐 사용하시면 됩니다 — 실제 후기에서도 깔창 한 장만으로 핏이 정확히 잡혔다는 분들이 많습니다.\n\n그래도 사이즈가 맞지 않으시면${size ? ` ${size}에서 한 사이즈 다운으로` : ' 한 사이즈 다운으로'} 교환 도와드리겠습니다. 편하게 말씀 주세요.\n\n감사합니다.\n다리마티 드림` },
+  // 사이즈 작음 → 사이즈업
+  { type: "too-small", patterns: ["작다", "작아", "꽉", "조여", "답답", "빡빡", "안 맞", "안맞", "타이트"],
+    priority: 50,
+    label: "사이즈 작음 (회복 무기: 사이즈업 교환)",
+    rule: "지침서 §2 → 1차: 한 사이즈 업 교환 (새 사이즈는 깔창 빼고) / 2차: 환불",
+    draft: ({size, platform}) => `안녕하세요, 다리마티입니다.\n\n착용해 보시고 발에 비해 사이즈가 작게 느껴지시는 점, 불편 끼쳐드려 죄송합니다.\n\n${size ? `${size}에서 한 사이즈 업으로` : '한 사이즈 업으로'} 바로 교환 도와드리겠습니다. 새로 받으시는 제품은 동봉된 깔창을 빼고 신어보시면 핏을 가장 정확히 확인하실 수 있습니다 — 깔창은 여유가 느껴질 때만 추가하시면 돼요.\n\n반송 절차와 새 사이즈 발송 일정 바로 안내드릴 수 있도록 주문번호 알려주시면 빠르게 진행하겠습니다.\n\n감사합니다.\n다리마티 드림` },
+  // 사이즈 모름
+  { type: "size-unsure", patterns: ["사이즈 모르", "사이즈 추천", "어떤 사이즈", "몇 mm", "몇mm", "어느 사이즈", "사이즈 고민", "사이즈 어떻"],
+    priority: 30,
+    label: "사이즈 모름 (회복 무기: 핏 가이드)",
+    rule: "지침서 §2 → BR-001 핏 특성 + 평소 신는 브랜드 비교표",
+    draft: ({size, platform}) => `안녕하세요, 다리마티입니다.\n\n사이즈 선택 도와드리겠습니다.\n\nBR-001은 발볼이 약간 넉넉하게 설계되어 있어, 사이즈가 애매하시면 반 사이즈 다운이 기본 추천입니다.\n\n• Nike 9.5 (좁은 발 핏 선호) → BR-001 9\n• Adidas 9.5 (편하게 신으시는 편) → BR-001 10\n• 평소 235mm 신으시는 분 → 240mm + 동봉 깔창으로 핏 조정\n• 발볼 넓으신 분 → 동사이즈\n\n평소 신으시는 브랜드와 사이즈, 발 너비 어떠신지 알려주시면 더 정확히 추천드리겠습니다.\n\n감사합니다.\n다리마티 드림` },
+  // 최소 사이즈 미만
+  { type: "below-min", patterns: ["230", "225", "최소 사이즈", "더 작은 사이즈", "작은 사이즈는 없"],
+    priority: 70,
+    label: "최소 사이즈 미만 (회복 무기: 240 + 깔창 권유)",
+    rule: "지침서 §2 → 235 미만은 직접 컨택 / 240 + 깔창으로 핏 조정 권유",
+    draft: ({size, platform}) => `안녕하세요, 다리마티입니다.\n\n작은 사이즈로 고민 주신 점 감사드리며, BR-001은 현재 240mm부터 생산되고 있어 230mm는 없다는 점 먼저 양해 부탁드립니다.\n\n다만 평소 235mm를 신으시는 분들도 240mm + 동봉 깔창 1장으로 편하게 신으신다는 후기가 다수입니다. BR-001은 발볼이 넉넉한 만큼 깔창으로 핏을 미세 조정하실 수 있어요.\n\n240mm로 주문하실 때 메모란에 "깔창 동봉 요청"이라고 남겨주시면 핏 조정용 깔창 함께 챙겨드리겠습니다. 받으시고 핏이 안 맞으시면 즉시 안내드리니 부담 없이 시도해 보세요.\n\n감사합니다.\n다리마티 드림` },
+  // 발볼 넓음
+  { type: "wide-foot", patterns: ["발볼", "발 볼", "넓다", "넓어", "wide", "발폭", "발 폭", "발이 넓"],
+    priority: 40,
+    label: "발볼 넓음 (회복 무기: 동사이즈 추천)",
+    rule: "지침서 §2 → BR-001은 동사이즈 대비 5mm 여유 / 동사이즈 추천",
+    draft: ({size, platform}) => `안녕하세요, 다리마티입니다.\n\n발볼 관련 문의 주셔서 감사합니다.\n\nBR-001은 동사이즈 대비 타 러닝화에 비해 약 5mm 더 여유 있게 설계되어 있어서, 발볼이 넓으신 분들도 보통 동사이즈를 그대로 추천드립니다. 호카 클리프톤·나이키 페가수스보다 발볼 부분이 넉넉하다는 후기가 많습니다.\n\n${size ? `평소 신으시는 ${size}` : '평소 사이즈'} 그대로 선택하시되, 받으시고 핏 확인 후 조금이라도 불편하시면 카카오톡 채널로 바로 말씀 주세요. 추가 안내드리거나 교환 도와드리겠습니다.\n\n감사합니다.\n다리마티 드림` },
+  // 하자
+  { type: "defect", patterns: ["불량", "박음질", "하자", "결함", "터졌", "찢어", "문제 있", "이상해", "실밥"],
+    priority: 80,
+    label: "하자 주장 (절차: 수거 → 검수 → 처리)",
+    rule: "지침서 §2 → 전자상거래법 17조③ 3개월 이내. 수거 → 검수 → 결과 따라 처리",
+    draft: ({size, platform}) => `안녕하세요, 다리마티입니다.\n\n제품에 문제가 있으셨다니 정말 죄송합니다. 기대하고 받으셨을 텐데 이런 일이 생겨 마음이 편치 않으실 것 같습니다.\n\n정확하고 빠른 처리를 위해 제품 전체와 문제 부위가 잘 보이는 사진 2~3장을 보내주시면, 즉시 검수 진행해드리겠습니다.\n\n제조 불량으로 확인되면 고객님이 원하시는 방향(교환·환불·수리) 중 우선 진행해드립니다. 검수 결과는 영업일 1일 이내 안내드리며, 회수 비용은 저희가 부담합니다.\n\n다시 한 번 죄송드리며, 끝까지 책임지고 도와드리겠습니다.\n\n감사합니다.\n다리마티 드림` },
+  // 배송
+  { type: "delivery", patterns: ["배송", "도착", "송장", "택배", "분실", "늦", "안 와", "지연", "배송 안"],
+    priority: 30,
+    label: "배송 문제",
+    rule: "지침서 §2 → 택배사 귀책 vs 당사 귀책 구분",
+    draft: ({size, platform}) => `안녕하세요, 다리마티입니다.\n\n배송이 늦어지거나 도착이 안 된 점 죄송합니다.\n\n주문번호와 송장번호 알려주시면 택배사와 즉시 확인 후 빠르게 안내드리겠습니다. 택배사 귀책이면 클레임 진행 + 경과 알려드리고, 당사 귀책이면 즉시 재발송으로 처리해드리겠습니다.\n\n다리마티 드림` },
+  // 단순 변심
+  { type: "change-of-mind", patterns: ["변심", "단순", "마음 바뀌", "필요 없", "사용 안", "맘에 안", "그냥 안 쓸"],
+    priority: 30,
+    label: "단순 변심",
+    rule: "지침서 §2 → 7일 이내: 반품 / 7일 초과: 케이스 보고",
+    draft: ({size, platform}) => `안녕하세요, 다리마티입니다.\n\n문의 주셔서 감사합니다.\n\n수령일로부터 7일 이내이시면 반품·환불 도와드릴 수 있습니다. 미사용·미개봉 상태로 회수 후 환불 처리해드리고, 회수 비용은 단순 변심 기준으로 안내드리겠습니다.\n\n혹시 사이즈·핏 관련 부분이 있으시다면 동봉 깔창으로 핏 조정이나 교환으로도 해결 가능하니, 불편하셨던 부분을 알려주시면 가장 도움 되는 방향으로 먼저 안내드릴 수도 있습니다.\n\n감사합니다.\n다리마티 드림` },
+  // 환불·반품
+  { type: "refund-request", patterns: ["환불", "취소", "반품"],
+    priority: 20,
+    label: "환불·반품 요청 (회복 무기 우선 시도)",
+    rule: "지침서 §0 → 환불은 최악. 회복 무기 1개 이상 먼저 제시. 강성·법적·범위밖이면 직접 환불.",
+    draft: ({size, platform}) => `안녕하세요, 다리마티입니다.\n\n먼저 불편 끼쳐드린 점 죄송하다는 말씀 드립니다. 처리 전에 한 가지만 안내드리고 싶은 부분이 있어요.\n\nBR-001은 발볼이 약간 넉넉하게 설계되어 있어서, 사이즈 관련 불편이라면 동봉해드린 추가 깔창 1장 또는 2장 겹치기로 핏이 한층 안정될 수 있습니다. 사이즈 자체가 맞지 않으시면 교환도 도와드릴 수 있어요.\n\n그래도 환불을 원하시면 어떤 부분이 불편하셨는지 한 줄만 알려주세요. 저희 기준에 맞게 빠르게 처리해드리겠습니다.\n\n감사합니다.\n다리마티 드림` },
+  // 리뷰
+  { type: "review", patterns: ["리뷰", "후기", "별점", "review"],
+    priority: 10,
+    label: "리뷰 코멘트",
+    rule: "지침서 §2 → 긍정/부정 톤 다르게 적용",
+    draft: ({size, platform}) => `안녕하세요, 다리마티입니다.\n\n소중한 리뷰 남겨주셔서 진심으로 감사드립니다. 한 분 한 분 리뷰가 저희에게 큰 동력이 됩니다.\n\n앞으로도 더 좋은 제품과 경험으로 보답하는 DARIMATI가 되겠습니다.\n\n감사합니다.\n다리마티 드림` },
+  // 구성품 일반
+  { type: "accessory", patterns: ["모자", "깔창 단독", "슈레이스", "신발끈", "악세서리", "구성품 spec", "스펙"],
+    priority: 5,
+    label: "구성품 문의 (단순 spec)",
+    rule: "구성품별 spec 안내",
+    draft: ({size, platform}) => {
+      const fullSet = CS_FULL_PACKAGES[platform];
+      const setLine = fullSet ? `\n\n${platform} 풀세트 구성: ${fullSet.join(' · ')}` : '';
+      return `안녕하세요, 다리마티입니다.\n\n구성품 관련 문의 주셔서 감사합니다.${setLine}\n\n어느 구성품의 어떤 정보(사이즈·소재·사용법)가 궁금하신지 알려주시면 자세히 안내드리겠습니다.\n\n감사합니다.\n다리마티 드림`;
+    } },
+];
+
+function csClassify(text) {
+  const t = (text || '').toLowerCase();
+  const hits = CS_INTAKE_RULES.map(r => {
+    let score = 0;
+    let matched = [];
+    for (const p of r.patterns) {
+      if (t.includes(p.toLowerCase())) { score += 1; matched.push(p); }
+    }
+    // 가중치 = priority(룰의 중요도) × score(매칭 키워드 수). priority 명시 안 하면 50.
+    const weight = score * (r.priority || 50);
+    return { rule: r, score, matched, weight };
+  }).filter(x => x.score > 0).sort((a, b) => b.weight - a.weight);
+  return hits;
+}
+
+function openCSIntake() {
+  document.getElementById('cs-intake-panel').style.display = '';
+  document.getElementById('cs-intake-text').focus();
+}
+
+function closeCSIntake() {
+  document.getElementById('cs-intake-panel').style.display = 'none';
+  document.getElementById('cs-intake-result').style.display = 'none';
+}
+
+function csJudgeAndDraft() {
+  const text = document.getElementById('cs-intake-text').value.trim();
+  if (!text) { alert('고객 메시지를 붙여넣어 주세요'); return; }
+  const platform = document.getElementById('cs-intake-platform').value;
+  const orderno = document.getElementById('cs-intake-orderno').value;
+  const size = document.getElementById('cs-intake-size').value;
+
+  const hits = csClassify(text);
+  if (hits.length === 0) {
+    document.getElementById('cs-intake-classification').textContent = '⚠️ 자동 분류 실패 — 키워드 매칭 안됨. 지침서 §2 참고해서 수동 작성 필요.';
+    document.getElementById('cs-intake-confidence').textContent = '신뢰도: 0%';
+    document.getElementById('cs-intake-draft').value = `안녕하세요, 다리마티입니다.\n\n문의 주셔서 감사합니다. 정확한 처리를 위해 상황을 좀 더 자세히 알려주시면 가장 도움 되는 방향으로 안내드리겠습니다.\n\n감사합니다.`;
+  } else {
+    const top = hits[0];
+    const totalWeight = hits.reduce((a, b) => a + b.weight, 0);
+    const confidence = Math.round((top.weight / totalWeight) * 100);
+    const classifyHtml = hits.slice(0, 3).map(h =>
+      `<div>${h === top ? '🎯' : '·'} <b>${h.rule.label}</b> <span style="color:var(--muted); font-size:10px;">(매칭 ${h.score}건: ${h.matched.join(', ')} · 가중치 ${h.weight})</span></div>` +
+      `<div style="color:var(--muted); font-size:10px; margin-left:18px;">${h.rule.rule}</div>`
+    ).join('');
+    document.getElementById('cs-intake-classification').innerHTML = classifyHtml;
+    document.getElementById('cs-intake-confidence').textContent = `신뢰도 ${confidence}% (${hits.length}개 후보)`;
+    document.getElementById('cs-intake-draft').value = top.rule.draft({size, platform, text, order: orderno});
+  }
+  document.getElementById('cs-intake-result').style.display = '';
+}
+
+function csCopyIntakeDraft() {
+  const t = document.getElementById('cs-intake-draft');
+  t.select(); t.setSelectionRange(0, 99999);
+  navigator.clipboard.writeText(t.value).then(() => alert('답변 복사됨 ✅')).catch(() => {
+    document.execCommand('copy');
+    alert('답변 복사됨 ✅');
+  });
+  t.blur();
+}
+
+function csSaveIntakeAsCase() {
+  const text = document.getElementById('cs-intake-text').value.trim();
+  const platform = document.getElementById('cs-intake-platform').value || '미분류';
+  const orderno = document.getElementById('cs-intake-orderno').value || '';
+  const size = document.getElementById('cs-intake-size').value || '';
+  const draft = document.getElementById('cs-intake-draft').value;
+  const hits = csClassify(text);
+  const topRule = hits[0] && hits[0].rule;
+  const ruleType = topRule ? topRule.type : 'other';
+  const tagMap = {
+    'too-big': ['too-big', 'insole-recommended'],
+    'too-small': ['too-small', 'size-up'],
+    'size-unsure': ['size-inquiry', 'size-guide'],
+    'below-min': ['below-min-size', 'insole-recommended'],
+    'wide-foot': ['wide-foot', 'same-size'],
+    'defect': ['defect-claim'],
+    'delivery': ['shipping-inquiry'],
+    'change-of-mind': ['change-of-mind'],
+    'refund-request': ['refund-request'],
+    'review': ['review'],
+    'accessory': ['accessory-inquiry'],
+  };
+  const recoveryMap = {
+    'too-big': ['insole'], 'too-small': ['size-exchange'], 'size-unsure': ['size-guide'],
+    'below-min': ['insole', 'info'], 'wide-foot': ['size-guide'],
+    'defect': [], 'delivery': [], 'change-of-mind': [], 'refund-request': [],
+    'review': [], 'accessory': ['info']
+  };
+  const typeKoMap = {
+    'too-big': '사이즈문의', 'too-small': '사이즈교환', 'size-unsure': '사이즈문의',
+    'below-min': '사이즈문의', 'wide-foot': '사이즈문의',
+    'defect': '하자', 'delivery': '배송문의', 'change-of-mind': '단순변심',
+    'refund-request': '반품', 'review': '리뷰코멘트', 'accessory': '구성품문의'
+  };
+  const today = new Date().toISOString().slice(0, 10);
+  const total = (window.CS_DATA && window.CS_DATA.cases) ? window.CS_DATA.cases.length : 15;
+  const caseId = `CASE-${String(total + 1).padStart(3, '0')}`;
+  const tags = (tagMap[ruleType] || []).join(', ');
+  const recovery = (recoveryMap[ruleType] || []).join(', ');
+  const fmText =
+`---
+case_id: ${caseId}
+date: ${today}
+channel: ${platform}
+${orderno ? `order_no: "${orderno}"` : '# order_no: '}
+type: ${typeKoMap[ruleType] || '기타'}
+sku: BR-001
+${size ? `size: "${size}"` : 'size: null'}
+tags: [${tags}]
+status: 완료
+recovery_used: [${recovery}]
+outcome: retained
+source: 대시보드 인테이크 (자동분류: ${ruleType})
+---
+
+## 고객 호소
+
+${text}
+
+## 대응
+
+${draft}
+
+## 메모
+
+대시보드에서 자동 분류·생성. 후속 follow-up 있으면 추가.
+`;
+  navigator.clipboard.writeText(fmText).then(() =>
+    alert(`frontmatter 복사됨 ✅\n→ 옵시디언 CS/cases/${caseId}.md 로 저장하면 다음 daily-update.sh 실행 시 자동 반영됩니다.`)
+  );
 }
 
 function openAddCS() {
@@ -4418,15 +5474,289 @@ function openAddCS() {
   const response = prompt("발송 응답 내용:") || "";
   const note = prompt("내부 메모 (없으면 빈칸):") || "";
   const now = new Date();
-  CS_CASES.unshift({ id:"cs"+Date.now(), date:now.toISOString().slice(0,10),
+  const newId = "CASE-NEW-" + Date.now();
+  CS_CASES.unshift({ id:newId, date:now.toISOString().slice(0,10),
     platform:platforms[pi], orderNo, size, type:types[ti], status:"resolved", summary, response, note });
   renderCSList(); renderCSStats();
+
+  // 영구화 안내 — frontmatter 형식 텍스트 생성해서 매트가 옵시디언 CS/cases/에 저장하도록
+  const nextNum = (window.CS_DATA && window.CS_DATA.cases) ? (window.CS_DATA.cases.length + 1) : '?';
+  const fmText = `---\ncase_id: CASE-${String(nextNum).padStart(3,'0')}\ndate: ${now.toISOString().slice(0,10)}\nchannel: ${platforms[pi]}\norder_no: "${orderNo}"\ntype: ${types[ti]}\nsku: BR-001\nsize: ${size && size !== '-' ? '"' + size + '"' : 'null'}\ntags: []\nstatus: 완료\nrecovery_used: []\noutcome: retained\n---\n\n## 고객 호소\n\n${summary}\n\n## 대응\n\n${response}\n\n## 메모\n\n${note}\n`;
+  const proceed = confirm(`임시 추가됨 (페이지 새로고침 시 사라짐).\n\n영구 보관하려면 OK 클릭 → frontmatter 텍스트 클립보드 복사.\n옵시디언 CS/cases/CASE-${String(nextNum).padStart(3,'0')}.md 로 저장하세요.`);
+  if (proceed) {
+    navigator.clipboard.writeText(fmText).then(() => alert("frontmatter 복사됨 → 옵시디언 CS/cases/ 에 저장 후 daily-update.sh 다음 실행에 자동 반영"));
+  }
 }
 
 // CS 탭 초기 렌더
 document.addEventListener("DOMContentLoaded", function() {
   renderCSList(); renderCSStats(); renderCSTemplates(); renderCSPrevention();
+  renderCSInsights();
 });
+
+// ── 부자재 재고 탭 (격리 IIFE) ──────────────────
+(function() {
+  'use strict';
+  const ACC_KEYS = ['hat','shoebag','towel','belt','flask','lace','sticker'];
+  const ACC_LABELS = {
+    hat:'모자', shoebag:'슈백', towel:'타올', belt:'벨트',
+    flask:'플라스크', lace:'슈레이스', sticker:'반사스티커'
+  };
+  // 출고 시트 컬럼 인덱스 (0-base)
+  const COL_PACK = 0, COL_SHIP = 1, COL_STATUS = 4;
+  const ACC_COL = { hat:15, shoebag:21, towel:18, belt:19, flask:20, lace:12, sticker:14 };
+  const STORAGE_KEY = 'dari_acc_initial_stock_v1';
+  const SHEET_ID = '1ibroQV42xuuvWg4P1kvaCw9RT_JxO9L-6lXVAgNjOhA';
+  const SHEET_GID = '890805647';
+  const URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&gid=${SHEET_GID}`;
+  const PALETTE = ['#b0c4d8','#d4b896','#7c9bb5','#a78bfa','#facc15','#4ade80','#f87171'];
+
+  let _data = null;       // { byDate, totals, dates, shipmentDays }
+  let _loaded = false;
+  let _loading = false;
+  let _accChart = null;
+
+  function loadStock() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const obj = JSON.parse(raw);
+        return ACC_KEYS.reduce((o,k) => (o[k] = parseInt(obj[k]) || 0, o), {});
+      }
+    } catch(e) {}
+    return ACC_KEYS.reduce((o,k) => (o[k]=0,o), {});
+  }
+  function saveStock(stock) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(stock));
+  }
+
+  function parseGvizDate(v) {
+    if (!v) return null;
+    const m = String(v).match(/Date\((\d+),(\d+),(\d+)/);
+    if (!m) return null;
+    return new Date(+m[1], +m[2], +m[3]);
+  }
+  function dKey(d) {
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }
+
+  async function fetchConsumption() {
+    const res = await fetch(URL + '&_=' + Date.now());
+    const text = await res.text();
+    const m = text.match(/setResponse\(([\s\S]*)\)\s*;?\s*$/);
+    if (!m) throw new Error('gviz 응답 파싱 실패');
+    const json = JSON.parse(m[1]);
+    const rows = json.table.rows || [];
+
+    const byDate = {};
+    const totals = ACC_KEYS.reduce((o,k)=>(o[k]=0,o), {});
+    const datesSet = new Set();
+
+    for (const r of rows) {
+      const c = r.c;
+      const g = (i) => (c[i] && c[i].v != null) ? c[i].v : '';
+      const status = String(g(COL_STATUS) || '').trim();
+      if (status !== '3) 출고 완료') continue;
+      const d = parseGvizDate(g(COL_SHIP)) || parseGvizDate(g(COL_PACK));
+      if (!d) continue;
+      const dk = dKey(d);
+      let any = 0;
+      const day = byDate[dk] || ACC_KEYS.reduce((o,k)=>(o[k]=0,o), {});
+      for (const k of ACC_KEYS) {
+        const qty = parseFloat(g(ACC_COL[k]) || 0) || 0;
+        if (qty > 0) {
+          day[k] += qty;
+          totals[k] += qty;
+          any += qty;
+        }
+      }
+      if (any > 0) {
+        byDate[dk] = day;
+        datesSet.add(dk);
+      }
+    }
+    const dates = Array.from(datesSet).sort();
+    return { byDate, totals, dates, shipmentDays: dates.length };
+  }
+
+  function renderEditor(stock) {
+    const ed = document.getElementById('acc-stock-editor');
+    if (!ed) return;
+    ed.innerHTML = ACC_KEYS.map(k => `
+      <label style="display:flex; align-items:center; gap:8px; font-size:11px; color:#aaa; padding:6px 0;">
+        <span style="flex:1;">${ACC_LABELS[k]}</span>
+        <input type="number" min="0" step="1" data-acc="${k}" value="${stock[k]||0}"
+          style="width:90px; background:#0f0f0f; color:#f0f0f0; border:1px solid #2a2a2a; padding:6px 8px; font-size:11px; text-align:right; font-variant-numeric:tabular-nums; border-radius:3px;">
+      </label>
+    `).join('');
+  }
+
+  function statusBadge(daysLeft, init, remain) {
+    if (init <= 0) return '<span style="background:#1a1a1a; color:#666; padding:2px 8px; border-radius:3px; font-size:10px;">미설정</span>';
+    if (remain <= 0) return '<span style="background:#4a0a0a; color:#f87171; padding:2px 8px; border-radius:3px; font-size:10px;">소진됨</span>';
+    if (daysLeft === Infinity) return '<span style="background:#1a2a1a; color:#4ade80; padding:2px 8px; border-radius:3px; font-size:10px;">출고無</span>';
+    if (daysLeft <= 15) return '<span style="background:#4a0a0a; color:#f87171; padding:2px 8px; border-radius:3px; font-size:10px;">즉시 발주</span>';
+    if (daysLeft <= 30) return '<span style="background:#3a3000; color:#facc15; padding:2px 8px; border-radius:3px; font-size:10px;">발주 준비</span>';
+    return '<span style="background:#1a1a1a; color:#888; padding:2px 8px; border-radius:3px; font-size:10px;">정상</span>';
+  }
+
+  function renderTable() {
+    if (!_data) return;
+    const stock = loadStock();
+    const tbody = document.getElementById('acc-burndown-body');
+    if (!tbody) return;
+    const days = Math.max(_data.shipmentDays, 1);
+
+    let totalSent = 0, totalAvg = 0;
+    let shortest = null;
+    const today = new Date(); today.setHours(0,0,0,0);
+
+    const html = ACC_KEYS.map(k => {
+      const init = stock[k] || 0;
+      const sent = _data.totals[k] || 0;
+      totalSent += sent;
+      const avg = sent / days;
+      totalAvg += avg;
+      const remain = init - sent;
+      const daysLeft = (init > 0 && avg > 0) ? (remain / avg) : (avg > 0 ? -Infinity : Infinity);
+      if (init > 0 && avg > 0 && remain > 0) {
+        if (!shortest || daysLeft < shortest.daysLeft) shortest = { key: k, daysLeft };
+      }
+
+      let exhLabel = '—';
+      if (init > 0) {
+        if (remain <= 0) exhLabel = '소진';
+        else if (avg > 0) {
+          const exh = new Date(today.getTime() + Math.floor(daysLeft) * 86400000);
+          exhLabel = `${exh.getMonth()+1}/${exh.getDate()}`;
+        } else exhLabel = '∞';
+      }
+
+      let remainStyle = 'color:#888;';
+      if (init > 0) {
+        if (remain <= 0 || daysLeft <= 15) remainStyle = 'color:var(--red);';
+        else if (daysLeft <= 30) remainStyle = 'color:var(--yellow);';
+        else remainStyle = 'color:var(--green);';
+      }
+
+      const daysLeftLabel = init <= 0 ? '—'
+        : (avg <= 0 ? '∞'
+        : (remain <= 0 ? '0일' : Math.floor(daysLeft) + '일'));
+
+      return `<tr>
+        <td>${ACC_LABELS[k]}</td>
+        <td class="num">${init > 0 ? init : '—'}</td>
+        <td class="num">${sent}</td>
+        <td class="num" style="${remainStyle} font-weight:700;">${init > 0 ? remain : '—'}</td>
+        <td class="num">${avg.toFixed(1)}</td>
+        <td class="num" style="${remainStyle}">${daysLeftLabel}</td>
+        <td class="num">${exhLabel}</td>
+        <td>${statusBadge(daysLeft, init, remain)}</td>
+      </tr>`;
+    }).join('');
+
+    tbody.innerHTML = html + `
+      <tr class="total">
+        <td>합계</td>
+        <td class="num">${ACC_KEYS.reduce((s,k) => s + (stock[k]||0), 0) || '—'}</td>
+        <td class="num">${totalSent}</td>
+        <td class="num">—</td>
+        <td class="num">${totalAvg.toFixed(1)}</td>
+        <td class="num">—</td>
+        <td class="num">—</td>
+        <td>—</td>
+      </tr>`;
+
+    document.getElementById('acc-kpi-total').textContent = totalSent;
+    document.getElementById('acc-kpi-total-sub').textContent = `7종 합산 · 출고일 ${days}일`;
+    document.getElementById('acc-kpi-avg').textContent = totalAvg.toFixed(1);
+    if (shortest) {
+      document.getElementById('acc-kpi-shortest').textContent = ACC_LABELS[shortest.key];
+      document.getElementById('acc-kpi-shortest-sub').textContent = `${Math.floor(shortest.daysLeft)}일 후 소진 예상`;
+    } else {
+      const anyInit = ACC_KEYS.some(k => (stock[k]||0) > 0);
+      document.getElementById('acc-kpi-shortest').textContent = anyInit ? '여유' : '—';
+      document.getElementById('acc-kpi-shortest-sub').textContent = anyInit ? '소진 위험 없음' : '초기재고 입력 필요';
+    }
+    const unsetCount = ACC_KEYS.filter(k => !stock[k] || stock[k] === 0).length;
+    document.getElementById('acc-kpi-unset').textContent = unsetCount + ' / 7';
+  }
+
+  function renderChart() {
+    if (!_data) return;
+    const ctx = document.getElementById('accDailyChart');
+    if (!ctx) return;
+    const labels = _data.dates.map(d => {
+      const [, m, dd] = d.split('-');
+      return `${+m}/${+dd}`;
+    });
+    const datasets = ACC_KEYS.map((k, i) => ({
+      label: ACC_LABELS[k],
+      data: _data.dates.map(dk => (_data.byDate[dk] && _data.byDate[dk][k]) || 0),
+      backgroundColor: PALETTE[i],
+      borderRadius: 2,
+    })).filter(ds => ds.data.some(v => v > 0));
+    if (_accChart) _accChart.destroy();
+    _accChart = new Chart(ctx, {
+      type: 'bar',
+      data: { labels, datasets },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        scales: {
+          x: { stacked: true, grid: { color: '#222' }, ticks: { color: '#666', font: { size: 10 } } },
+          y: { stacked: true, grid: { color: '#222' }, ticks: { color: '#666', font: { size: 10 } }, beginAtZero: true }
+        },
+        plugins: {
+          legend: { labels: { color: '#888', font: { size: 10 }, boxWidth: 10, padding: 12 } },
+          tooltip: { callbacks: { label: c => ` ${c.dataset.label}: ${c.parsed.y}` } }
+        }
+      }
+    });
+  }
+
+  async function load(force) {
+    if (_loading) return;
+    if (_loaded && !force) return;
+    _loading = true;
+    const tbody = document.getElementById('acc-burndown-body');
+    if (tbody && !_loaded) {
+      tbody.innerHTML = '<tr><td colspan="8" style="color:#666; padding:18px; text-align:center;">시트에서 가져오는 중…</td></tr>';
+    }
+    try {
+      _data = await fetchConsumption();
+      _loaded = true;
+      renderTable();
+      renderChart();
+    } catch (e) {
+      console.warn('[acc] fetch fail', e);
+      if (tbody) tbody.innerHTML = `<tr><td colspan="8" style="color:#dc2626; padding:18px; text-align:center;">시트 fetch 실패: ${e.message}</td></tr>`;
+    } finally {
+      _loading = false;
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    renderEditor(loadStock());
+    const saveBtn = document.getElementById('acc-stock-save');
+    if (saveBtn) saveBtn.addEventListener('click', () => {
+      const next = ACC_KEYS.reduce((o,k) => (o[k]=0,o), {});
+      document.querySelectorAll('#acc-stock-editor input[data-acc]').forEach(i => {
+        next[i.dataset.acc] = Math.max(0, parseInt(i.value) || 0);
+      });
+      saveStock(next);
+      renderTable();
+      const saved = document.getElementById('acc-stock-saved');
+      if (saved) {
+        saved.textContent = '✓ 저장됨';
+        setTimeout(() => { saved.textContent = ''; }, 2500);
+      }
+    });
+    const refreshBtn = document.getElementById('acc-stock-refresh');
+    if (refreshBtn) refreshBtn.addEventListener('click', () => load(true));
+  });
+
+  window.__loadAccessoryTab = () => load(false);
+})();
 
 </script>
 

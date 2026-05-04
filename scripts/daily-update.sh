@@ -13,8 +13,14 @@ CACHE_DIR="${CACHE_DIR:-$HOME/.cache/darimati-dashboard}"
 LOG_FILE="$CACHE_DIR/daily-update.log"
 HASH_FILE="$CACHE_DIR/last-hash.txt"
 SHEET_CACHE="$CACHE_DIR/sheet-out.json"
+CS_CACHE="$CACHE_DIR/cs-out.json"
 HOLIDAYS_FILE="$REPO_DIR/scripts/holidays-kr-$(date +%Y).txt"
 PATCHER="$REPO_DIR/scripts/patch_dashboard.py"
+CS_AGGREGATOR="$REPO_DIR/scripts/cs-aggregate.py"
+CS_INJECTOR="$REPO_DIR/scripts/inject_cs_data.py"
+
+# CS vault — 인벤토리 vault와 별개 (~/Desktop/09_클로드_개발/obsidian/vault)
+CS_VAULT_DIR="${CS_VAULT_DIR:-$HOME/Desktop/09_클로드_개발/obsidian/vault/CS}"
 
 SHEET_ID="${SHEET_ID:-1ibroQV42xuuvWg4P1kvaCw9RT_JxO9L-6lXVAgNjOhA}"
 SHEET_GID_OUT="${SHEET_GID_OUT:-890805647}"
@@ -58,6 +64,16 @@ if ! curl -sf --max-time 30 -o "$SHEET_CACHE" "$SHEET_URL"; then
   exit 1
 fi
 
+# ── 3.5 CS 케이스 집계 (옵시디언 CS/cases/ → cs-out.json) ──
+if [[ -f "$CS_AGGREGATOR" ]]; then
+  if python3 "$CS_AGGREGATOR" --out "$CS_CACHE" 2>>"$LOG_FILE"; then
+    cs_total=$(python3 -c "import json; print(json.load(open('$CS_CACHE'))['total'])" 2>/dev/null || echo "?")
+    log "CS aggregate: $cs_total cases → $CS_CACHE"
+  else
+    log "WARN · cs-aggregate 실패 (계속 진행)"
+  fi
+fi
+
 # ── 4. 옵시디언 핵심 파일 hash 비교 ───────────
 OBSIDIAN_FILES=(
   "$VAULT_DIR/04_운영/inventory/inventory-prd.md"
@@ -70,6 +86,9 @@ cat "$SHEET_CACHE" > "$hash_in"
 for f in "${OBSIDIAN_FILES[@]}"; do
   [[ -f "$f" ]] && cat "$f" >> "$hash_in"
 done
+# CS 변동도 hash에 포함 — 케이스 추가/지침서 갱신 시 변동 감지
+[[ -f "$CS_CACHE" ]] && cat "$CS_CACHE" >> "$hash_in"
+[[ -d "$CS_VAULT_DIR" ]] && find "$CS_VAULT_DIR" -name "*.md" -exec cat {} \; >> "$hash_in" 2>/dev/null
 NEW_HASH=$(shasum -a 256 "$hash_in" | cut -d' ' -f1)
 OLD_HASH=$(cat "$HASH_FILE" 2>/dev/null || echo "")
 
@@ -97,6 +116,15 @@ PATCH_SUMMARY=$(python3 "$PATCHER" "$SHEET_CACHE" "$REPO_DIR/index.html" 2>&1) |
   exit 1
 }
 log "Patch summary: $PATCH_SUMMARY"
+
+# ── 6.5 CS_DATA 인젝트 (cs-out.json → index.html) ──
+if [[ -f "$CS_INJECTOR" && -f "$CS_CACHE" ]]; then
+  if cs_summary=$(python3 "$CS_INJECTOR" "$CS_CACHE" "$REPO_DIR/index.html" 2>&1); then
+    log "CS inject: $cs_summary"
+  else
+    log "WARN · CS inject 실패: $cs_summary (계속 진행)"
+  fi
+fi
 
 # ── 7. 변경 사항 있는지 확인 ───────────────
 if git diff --quiet index.html; then

@@ -63,8 +63,10 @@ for r in rows:
     pd = parse_date(od)
     if not pd: continue
     label, y, mo, dy = pd
-    if mo != 4 or dy < 17: continue  # 4월 17일 이후만 (배송 시작일)
-    if dy > 30: continue              # 4월만
+    # 시작 고정점: 2026-04-17 (BR-001 런칭일). 이후 모든 월 포함.
+    if y < 2026: continue
+    if y == 2026 and mo < 4: continue
+    if y == 2026 and mo == 4 and dy < 17: continue
 
     ch = (g(2) or '').strip()
     recipient = (g(6) or '')
@@ -133,6 +135,27 @@ nv_kt = nv + kt
 avg_sale = round(total_sale/n, 1) if n else 0
 def pct(x): return round(x/total_kr*100) if total_kr else 0
 
+# ── 1.5 월별 집계 (시점 일치 — 월별 탭은 모두 시스템 today의 월 기준) ──
+# 누적 vs 월별 분리: 부자재/KR재고/HK재고는 누적, 매출/출고량/ROAS는 월별.
+from datetime import date as _Date
+cur_m = _Date.today().month
+mo_idx = [i for i, d in enumerate(dates) if int(d.split('/')[0]) == cur_m]
+mo_dates_list = [dates[i] for i in mo_idx]
+mo_n = len(mo_idx)
+mo_sale = sum(sale[i] for i in mo_idx)
+mo_b2b  = sum(b2b[i]  for i in mo_idx)
+mo_gift = sum(gift[i] for i in mo_idx)
+mo_total = mo_sale + mo_b2b + mo_gift
+mo_total_kr = mo_sale + mo_b2b
+mo_ks = sum(plat['킥스타터'][i]       for i in mo_idx)
+mo_km = sum(plat['카카오메이커스'][i] for i in mo_idx)
+mo_nv = sum(plat['네이버'][i]         for i in mo_idx)
+mo_kt = sum(plat['카카오톡스토어'][i] for i in mo_idx)
+mo_mc = sum(b2b[i] for i in mo_idx)  # B2B = 마야크루만
+mo_avg_sale = round(mo_sale/mo_n, 1) if mo_n else 0
+mo_range = f"{mo_dates_list[0]}~{mo_dates_list[-1]}" if mo_dates_list else f"{cur_m}/1~"
+def mo_pct(x): return round(x/mo_total_kr*100) if mo_total_kr else 0
+
 # ── 2. HTML 패치 ──────────────────────────
 html = open(html_path).read()
 
@@ -152,6 +175,16 @@ patches.append((r"const PLATFORM_DAILY = \{[^}]+\};", plat_block))
 patches.append((r"const SALE_DAILY = \[[^\]]+\];", f"const SALE_DAILY = {js(sale)};"))
 patches.append((r"const B2B_DAILY  = \[[^\]]+\];", f"const B2B_DAILY  = {js(b2b)};"))
 patches.append((r"const GIFT_DAILY = \[[^\]]+\];", f"const GIFT_DAILY = {js(gift)};"))
+
+# 월별 (시점 일치 — 토글로 차트/KPI 전환)
+mo_sale_arr = [sale[i] for i in mo_idx]
+mo_b2b_arr  = [b2b[i]  for i in mo_idx]
+mo_gift_arr = [gift[i] for i in mo_idx]
+patches.append((r"const MO_DATES = \[[^\]]*\];", f"const MO_DATES = [{','.join(repr(d) for d in mo_dates_list)}];"))
+patches.append((r"const MO_SALE_DAILY = \[[^\]]*\];", f"const MO_SALE_DAILY = {js(mo_sale_arr)};"))
+patches.append((r"const MO_B2B_DAILY  = \[[^\]]*\];", f"const MO_B2B_DAILY  = {js(mo_b2b_arr)};"))
+patches.append((r"const MO_GIFT_DAILY = \[[^\]]*\];", f"const MO_GIFT_DAILY = {js(mo_gift_arr)};"))
+patches.append((r"const MO_RANGE = '[^']*';", f"const MO_RANGE = '{mo_range}';"))
 patches.append((r"const DAILY_KCK  = \[[^\]]+\];", f"const DAILY_KCK  = {js(plat['킥스타터'])};"))
 patches.append((r"const DAILY_KKO  = \[[^\]]+\];", f"const DAILY_KKO  = {js(plat['카카오메이커스'])};"))
 patches.append((r"const DAILY_NAV  = \[[^\]]+\];", f"const DAILY_NAV  = {js(plat['네이버'])};"))
@@ -166,69 +199,59 @@ sbs = ("const SALE_BY_SIZE = {\n"
     "};")
 patches.append((r"const SALE_BY_SIZE = \{[\s\S]*?\n\};", sbs))
 
-# typeChart
+# typeChart (전체 출고 탭 = 월별)
 patches.append((
     r"labels: \['실판매 \(\d+\)', 'B2B·행사 \(\d+\)', '증정·샘플 \(\d+\)'\],",
-    f"labels: ['실판매 ({total_sale})', 'B2B·행사 ({total_b2b})', '증정·샘플 ({total_gift})'],"
+    f"labels: ['실판매 ({mo_sale})', 'B2B·행사 ({mo_b2b})', '증정·샘플 ({mo_gift})'],"
 ))
 patches.append((
     r"data: \[\d+, \d+, \d+\],\n      backgroundColor: \['#4ade80', '#a78bfa', '#374151'\]",
-    f"data: [{total_sale}, {total_b2b}, {total_gift}],\n      backgroundColor: ['#4ade80', '#a78bfa', '#374151']"
+    f"data: [{mo_sale}, {mo_b2b}, {mo_gift}],\n      backgroundColor: ['#4ade80', '#a78bfa', '#374151']"
 ))
 
-# PAGE 1 KPI
-patches.append((
-    r'<div class="kpi-label">누적 출고</div>\s*<div class="kpi-value">\d+</div>\s*<div class="kpi-sub">켤레 \(4/17 ~ 4/\d+\)</div>',
-    f'<div class="kpi-label">누적 출고</div>\n      <div class="kpi-value">{total_all}</div>\n      <div class="kpi-sub">켤레 (4/17 ~ {dates[-1] if dates else "—"})</div>'
-))
-patches.append((
-    r'<div class="kpi-label">실판매 <span class="badge sale">SALE</span></div>\s*<div class="kpi-value green">\d+</div>',
-    f'<div class="kpi-label">실판매 <span class="badge sale">SALE</span></div>\n      <div class="kpi-value green">{total_sale}</div>'
-))
-patches.append((
-    r'<div class="kpi-label">B2B·행사 <span class="badge b2b">B2B</span></div>\s*<div class="kpi-value purple">\d+</div>',
-    f'<div class="kpi-label">B2B·행사 <span class="badge b2b">B2B</span></div>\n      <div class="kpi-value purple">{total_b2b}</div>'
-))
-patches.append((
-    r'<div class="kpi-label">증정·샘플 <span class="badge gift">GIFT</span></div>\s*<div class="kpi-value red">\d+</div>',
-    f'<div class="kpi-label">증정·샘플 <span class="badge gift">GIFT</span></div>\n      <div class="kpi-value red">{total_gift}</div>'
-))
-patches.append((
-    r'<div class="kpi-label">일평균 실판매</div>\s*<div class="kpi-value yellow">[\d.]+</div>\s*<div class="kpi-sub">켤레 / 출고일 \(\d+일\)</div>',
-    f'<div class="kpi-label">일평균 실판매</div>\n      <div class="kpi-value yellow">{avg_sale}</div>\n      <div class="kpi-sub">켤레 / 출고일 ({n}일)</div>'
-))
+# 전체 출고 탭 KPI (월별 — 시점 일치)
+patches.append((r'(id="ovw-kpi-total">)\d+',  lambda m, v=mo_total:    m.group(1) + str(v)))
+patches.append((r'(id="ovw-kpi-sale">)\d+',   lambda m, v=mo_sale:     m.group(1) + str(v)))
+patches.append((r'(id="ovw-kpi-b2b">)\d+',    lambda m, v=mo_b2b:      m.group(1) + str(v)))
+patches.append((r'(id="ovw-kpi-gift">)\d+',   lambda m, v=mo_gift:     m.group(1) + str(v)))
+patches.append((r'(id="ovw-kpi-avg">)[\d.]+', lambda m, v=mo_avg_sale: m.group(1) + str(v)))
+patches.append((r'(id="ovw-kpi-days">)\d+',   lambda m, v=mo_n:        m.group(1) + str(v)))
 
-# 4월 누계 큰 KPI
-patches.append((
-    r'<div class="kpi-value green" style="font-size:40px;">\d+</div>\s*<div class="kpi-sub" style="line-height:1\.9;">실판매 <strong style="color:#4ade80;">\d+</strong> \+ B2B <strong style="color:#a78bfa;">\d+</strong> · 4/17~4/\d+</div>',
-    f'<div class="kpi-value green" style="font-size:40px;">{total_kr}</div>\n      <div class="kpi-sub" style="line-height:1.9;">실판매 <strong style="color:#4ade80;">{total_sale}</strong> + B2B <strong style="color:#a78bfa;">{total_b2b}</strong> · 4/17~{dates[-1] if dates else "—"}</div>'
-))
+# 커머스 허브 큰 KPI (월별)
+patches.append((r'(id="month-kpi-total">)\d+', lambda m, v=mo_total_kr: m.group(1) + str(v)))
+patches.append((r'(id="month-kpi-sale">)\d+',  lambda m, v=mo_sale:     m.group(1) + str(v)))
+patches.append((r'(id="month-kpi-b2b">)\d+',   lambda m, v=mo_b2b:      m.group(1) + str(v)))
 
-# 채널 KPI
-for label, val, cls in [('킥스타터', ks, ''), ('카카오메이커스', km, ' green'),
-                        (r'네이버 \+ 카카오톡', nv_kt, ' yellow'), (r'B2B · 마야크루', mc, ' purple')]:
+# 채널 KPI 4종 (커머스 허브 = 월별)
+for label, val, cls in [('킥스타터', mo_ks, ''), ('카카오메이커스', mo_km, ' green'),
+                        (r'네이버 \+ 카카오톡', mo_nv+mo_kt, ' yellow'), (r'B2B · 마야크루', mo_mc, ' purple')]:
     pat = rf'<div class="kpi-label">{label}</div>\s*<div class="kpi-value{cls}">\d+</div>\s*<div class="kpi-sub">\d+% · ([^<]+)</div>'
     plain_label = label.replace(r'\+', '+').replace(r'\.', '.')
     repl = lambda m, v=val, cls=cls, lbl=plain_label: \
-        f'<div class="kpi-label">{lbl}</div>\n      <div class="kpi-value{cls}">{v}</div>\n      <div class="kpi-sub">{pct(v)}% · {m.group(1)}</div>'
+        f'<div class="kpi-label">{lbl}</div>\n      <div class="kpi-value{cls}">{v}</div>\n      <div class="kpi-sub">{mo_pct(v)}% · {m.group(1)}</div>'
     patches.append((pat, repl))
 
-# PLATFORM_SHARE
+# PLATFORM_SHARE (커머스 허브 도넛 = 월별)
 ps = ("const PLATFORM_SHARE = [\n"
-    f"  {{ name: '카카오메이커스',   count: {km}, color: '#d4b896' }},\n"
-    f"  {{ name: '킥스타터',          count: {ks}, color: '#b0c4d8' }},\n"
-    f"  {{ name: 'B2B · 마야크루',    count: {mc}, color: '#a78bfa' }},\n"
-    f"  {{ name: '네이버',            count: {nv},  color: '#7c9bb5' }},\n"
-    f"  {{ name: '카카오톡스토어',    count: {kt},  color: '#a0a0a0' }},\n"
+    f"  {{ name: '카카오메이커스',   count: {mo_km}, color: '#d4b896' }},\n"
+    f"  {{ name: '킥스타터',          count: {mo_ks}, color: '#b0c4d8' }},\n"
+    f"  {{ name: 'B2B · 마야크루',    count: {mo_mc}, color: '#a78bfa' }},\n"
+    f"  {{ name: '네이버',            count: {mo_nv},  color: '#7c9bb5' }},\n"
+    f"  {{ name: '카카오톡스토어',    count: {mo_kt},  color: '#a0a0a0' }},\n"
     "];")
 patches.append((r"const PLATFORM_SHARE = \[[\s\S]*?\n\];", ps))
 
-# 점유율 타이틀 (실판매 103 + B2B 30 같은 sub-text 포함 변형)
+# 채널 점유율 sub (월별)
+patches.append((r'(id="month-share-total">)\d+', lambda m, v=mo_total_kr: m.group(1) + str(v)))
+patches.append((r'(id="month-share-sale">)\d+',  lambda m, v=mo_sale:     m.group(1) + str(v)))
+patches.append((r'(id="month-share-b2b">)\d+',   lambda m, v=mo_b2b:      m.group(1) + str(v)))
+
+# dyn-month-range (월별 탭 KPI sub의 날짜 범위 — 여러 곳에 있어 count=0)
 patches.append((
-    r"4월 누계 · 전체 \d+켤레 \(실판매 \d+ \+ B2B \d+\)",
-    f"4월 누계 · 전체 {total_kr}켤레 (실판매 {total_sale} + B2B {total_b2b})"
+    r'<span class="dyn-month-range">[^<]*</span>',
+    f'<span class="dyn-month-range">{mo_range}</span>',
+    0
 ))
-patches.append((r"4월 누계 · 전체 \d+켤레(?! \()", f"4월 누계 · 전체 {total_kr}켤레"))
 
 # 주별
 def wk(label):
@@ -260,11 +283,16 @@ patches.append((r'(W2 · 4/20~24[\s\S]*?<div style="color:#f87171;">)[\d.]+( ↓
 patches.append((r'(W3 · 4/27~ \(진행중\)[\s\S]*?<div style="color:#facc15;">)[\d.]+( ↑</div>)',
                 lambda m: m.group(1) + str(wr[2]) + m.group(2)))
 
-# 5월 1주 예상
+# 다음 주 예상 (현재 진행중 W3 페이스 × 5 영업일)
 forecast = round(wr[2] * 5)
 patches.append((
-    r'(5월 1주 예상 \(W3 페이스 기준\)</div>\s*<div style="font-size:22px; font-weight:700; color:#4ade80;">)~\d+',
+    r'((?:5월 1주 예상|다음 주 예상) \(W3 페이스 기준\)</div>\s*<div style="font-size:22px; font-weight:700; color:#4ade80;">)~\d+',
     lambda m: m.group(1) + f'~{forecast}'
+))
+# 라벨 마이그레이션: "5월 1주 예상" → "다음 주 예상"
+patches.append((
+    r'5월 1주 예상 \(W3 페이스 기준\)',
+    '다음 주 예상 (W3 페이스 기준)'
 ))
 patches.append((
     r'<div style="color:#555; font-size:10px; margin-top:4px;">[\d.]+/일 × \d+ 영업일</div>',
@@ -372,26 +400,27 @@ channels_arr = (
 patches.append((r"const channels = \[[\s\S]*?\n\];", channels_arr))
 patches.append((r"const maxCh = \d+;", f"const maxCh = {km};"))
 
-# ── 정산 & ROAS 탭 — 채널 매트릭스 비고 텍스트 ──
-patches.append((
-    r'(<strong>카카오메이커스</strong>[\s\S]*?)4월 \d+켤레',
-    lambda m: m.group(1) + f'4월 {km}켤레'
-))
-patches.append((
-    r'(<strong>B2B \(마야크루\)</strong>[\s\S]*?)4월 \d+켤레',
-    lambda m: m.group(1) + f'4월 {mc}켤레'
-))
+# ── 채널 매트릭스 비고 (커머스 허브 = 월별) ──
+patches.append((r'(id="ch-makers-mo">)\d+', lambda m, v=mo_km: m.group(1) + str(v)))
+patches.append((r'(id="ch-b2b-mo">)\d+',    lambda m, v=mo_mc: m.group(1) + str(v)))
 
-# Apply
+# Apply (3-tuple = (pattern, repl, count); 2-tuple defaults count=1)
 applied = 0
-for pattern, repl in patches:
-    new_html, c = re.subn(pattern, repl, html, count=1)
+for tup in patches:
+    if len(tup) == 3:
+        pattern, repl, count = tup
+    else:
+        pattern, repl = tup
+        count = 1
+    new_html, c = re.subn(pattern, repl, html, count=count)
     if c: applied += 1; html = new_html
 
 open(html_path, 'w').write(html)
 
 # Output summary (commit message용)
-print(f"4월 누계: {total_sale}/{total_b2b}/{total_gift} = {total_all} ({n}일)")
-print(f"메이커스 {km} · 킥 {ks} · B2B {mc} · 네 {nv} · 톡 {kt} · 증정 {total_gift}")
+print(f"런칭 누적 (4/17~{dates[-1] if dates else '—'}): 실판매 {total_sale} / B2B {total_b2b} / 증정 {total_gift} = {total_all} ({n}일)")
+print(f"{cur_m}월 누계 ({mo_range}): 실판매 {mo_sale} / B2B {mo_b2b} / 증정 {mo_gift} = {mo_total} ({mo_n}일)")
+print(f"누적 채널: 메이커스 {km} · 킥 {ks} · B2B {mc} · 네 {nv} · 톡 {kt} · 증정 {total_gift}")
+print(f"{cur_m}월 채널: 메이커스 {mo_km} · 킥 {mo_ks} · B2B {mo_mc} · 네 {mo_nv} · 톡 {mo_kt} · 증정 {mo_gift}")
 print(f"W1={ws[0]}/{wr[0]} W2={ws[1]}/{wr[1]} W3={ws[2]}/{wr[2]}")
 print(f"패치 적용: {applied}/{len(patches)}")
