@@ -100,7 +100,7 @@ launchctl print gui/$(id -u)/com.darimati.dashboard-update | grep -i next
 
 | 분류 | 어떤 데이터? | 어떤 탭? | 시점 기준 |
 |---|---|---|---|
-| **누적 (Cumulative)** | 잔여 재고, burn rate, 시작 고정점 (4/17) 이후 전체 | KR 재고 & 재발주, 부자재 재고, HK 재고 | 시작 고정점부터 현재까지 |
+| **누적 (Cumulative)** | 잔여 재고, burn rate, 시작 고정점 (4/17) 이후 전체 | KR 재고 & 재발주, 악세서리 재고, HK 재고 | 시작 고정점부터 현재까지 |
 | **월별 (Monthly)** | 매출, 출고량, ROAS, 정산, 채널 점유율 | 전체 출고, 커머스 허브, 정산 & ROAS | 시스템 today의 월 |
 
 **시점 일치 (Time-Point Sync):** 월별 탭은 모두 **시스템 today의 월** 기준으로 표시. 5월에는 모두 5월 누계, 6월에는 모두 6월 누계. ROAS 비교/정산 비교가 같은 시점에서 가능하도록.

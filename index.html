@@ -953,7 +953,7 @@
   <div class="tab" onclick="showPage('platform', event)">커머스 허브</div>
   <div class="tab" onclick="showPage('settlement', event)">정산 & ROAS</div>
   <div class="tab" onclick="showPage('stock', event)">KR 재고 & 재발주</div>
-  <div class="tab" onclick="showPage('accessory', event)">부자재 재고</div>
+  <div class="tab" onclick="showPage('accessory', event)">악세서리 재고</div>
   <div class="tab" onclick="showPage('hk', event)">HK 재고</div>
   <div class="tab" onclick="showPage('gift', event)">증정 현황</div>
   <div class="tab" onclick="showPage('todo', event)">투두</div>
@@ -1240,9 +1240,9 @@ IF(OR(C2="킥스타터",
           <div id="oc-shoes-slots"></div>
         </div>
 
-        <!-- 부자재 7종 -->
+        <!-- 악세서리 7종 -->
         <div class="oc-field">
-          <label>부자재 (선택)</label>
+          <label>악세서리 (선택)</label>
           <div class="oc-acc-grid">
             <label class="oc-acc"><input type="checkbox" name="acc" value="hat"> 모자</label>
             <label class="oc-acc"><input type="checkbox" name="acc" value="shoebag"> 슈백</label>
@@ -1296,7 +1296,7 @@ IF(OR(C2="킥스타터",
               <th>주소</th>
               <th class="num">수량</th>
               <th>사이즈/컬러</th>
-              <th>부자재</th>
+              <th>악세서리</th>
               <th>메모</th>
               <th style="width:60px;"></th>
             </tr>
@@ -1741,17 +1741,17 @@ IF(OR(C2="킥스타터",
 
 </div>
 
-<!-- ===== PAGE: 부자재 재고 ===== -->
+<!-- ===== PAGE: 악세서리 재고 ===== -->
 <div id="page-accessory" class="page">
 
   <div class="kpi-row" style="grid-template-columns: repeat(4, 1fr);">
     <div class="kpi">
-      <div class="kpi-label">부자재 누적 출고</div>
+      <div class="kpi-label">악세서리 누적 출고</div>
       <div class="kpi-value" id="acc-kpi-total">—</div>
       <div class="kpi-sub" id="acc-kpi-total-sub">집계 중…</div>
     </div>
     <div class="kpi">
-      <div class="kpi-label">최단 소진 부자재</div>
+      <div class="kpi-label">최단 소진 악세서리</div>
       <div class="kpi-value red" id="acc-kpi-shortest">—</div>
       <div class="kpi-sub" id="acc-kpi-shortest-sub">초기재고 입력 필요</div>
     </div>
@@ -1769,12 +1769,12 @@ IF(OR(C2="킥스타터",
 
   <div class="grid-full" style="margin-top:1px;">
     <div class="card">
-      <div class="card-title">부자재별 잔여 & 소진 예상 <span style="color:#555; font-size:10px; margin-left:6px;">출고 시트 · 상태 = "3) 출고 완료" 기준 집계</span></div>
+      <div class="card-title">악세서리별 잔여 & 소진 예상 <span style="color:#555; font-size:10px; margin-left:6px;">출고 시트 · 상태 = "3) 출고 완료" 기준 집계</span></div>
       <div style="overflow-x:auto;">
         <table class="data-table" id="acc-burndown-table">
           <thead>
             <tr>
-              <th>부자재</th>
+              <th>악세서리</th>
               <th class="num">초기재고</th>
               <th class="num">누적출고</th>
               <th class="num">잔여</th>
@@ -1799,7 +1799,7 @@ IF(OR(C2="킥스타터",
 
   <div class="grid-2" style="grid-template-columns: 1.6fr 1fr; margin-top:1px;">
     <div class="card">
-      <div class="card-title">일별 부자재 출고 <span style="color:#555; font-size:10px; margin-left:6px;">스택 · 출고 완료 일자 기준</span></div>
+      <div class="card-title">일별 악세서리 출고 <span style="color:#555; font-size:10px; margin-left:6px;">스택 · 출고 완료 일자 기준</span></div>
       <div class="chart-wrap tall"><canvas id="accDailyChart"></canvas></div>
     </div>
     <div class="card">
@@ -1811,9 +1811,9 @@ IF(OR(C2="킥스타터",
         <span id="acc-stock-saved" style="color:#666; font-size:10px;"></span>
       </div>
       <div style="margin-top:14px; padding:12px; background:#0f0f0f; border-radius:4px; border-left:3px solid #2a2a2a; font-size:10.5px; color:#666; line-height:1.7;">
-        · 출고 시트의 부자재 컬럼(모자/슈백/타올/벨트/플라스크/슈레이스/스티커) 합산<br>
+        · 출고 시트의 악세서리 컬럼(모자/슈백/타올/벨트/플라스크/슈레이스/스티커) 합산<br>
         · 잔여 = 초기재고 − 누적출고 (상태 = "3) 출고 완료" 행만 카운트)<br>
-        · 일평균 = 누적출고 ÷ 부자재가 1개 이상 출고된 일수
+        · 일평균 = 누적출고 ÷ 악세서리가 1개 이상 출고된 일수
       </div>
     </div>
   </div>
@@ -2839,7 +2839,7 @@ const COGS = {
   package: 90614,  // 풀패키지 = 단품 + 모자 7,056 + 슈백 5,635 + 타올 3,949 + 벨트 5,340 + 반사스티커 179
 };
 
-// === 채널별 자동 감지 (시트 부자재 컬럼으로 풀세트/단품 분류) ===
+// === 채널별 자동 감지 (시트 악세서리 컬럼으로 풀세트/단품 분류) ===
 // patch_dashboard.py가 매번 갱신 — 매트가 직접 수정하지 말 것
 const CHANNEL_BREAKDOWN_AUTO = {
   '카카오메이커스':       { pkg: 57, unit: 0 },
@@ -3812,7 +3812,7 @@ new Chart(document.getElementById('burndownChart'), {
       address: p.address || '',
       detail: '',
       shoes, accessories,
-      memo: p.memo || (p.shoeQty ? '' : '부자재/A/S'),
+      memo: p.memo || (p.shoeQty ? '' : '악세서리/A/S'),
       source: 'sheet',
       sheetChannel: ch,
       status: 'pending',
@@ -3868,7 +3868,7 @@ new Chart(document.getElementById('burndownChart'), {
       return;
     }
     // 합포: 같은 수령인+휴대폰+우편번호+주소 → 1 row (1 박스 = 송장 1개)
-    // 신발/부자재 합산, 분류·메모 통합, 특기사항에 합포 명시
+    // 신발/악세서리 합산, 분류·메모 통합, 특기사항에 합포 명시
     const groups = groupOrdersForShipping(shippable);
     const mergedGroups = groups.filter(g => g.length >= 2);
     const rows = [
@@ -3906,7 +3906,7 @@ new Chart(document.getElementById('burndownChart'), {
         cats.join('+'),                // 특기사항 — 분류만
         memoNote,                      // 메모1 — 합포 또는 단일 메모
         optionSummary,                 // 메모2 — 사이즈/컬러 옵션
-        accSummary,                    // 메모3 — 부자재
+        accSummary,                    // 메모3 — 악세서리
         ''                             // 메모4
       ]);
     });
@@ -4090,10 +4090,10 @@ new Chart(document.getElementById('burndownChart'), {
       break;
     }
 
-    // 부자재 (풀세트 키워드 우선)
+    // 악세서리 (풀세트 키워드 우선)
     if (/풀세트|풀패키지|fullset|full\s*set|풀\s*키트/i.test(text)) {
       r.accessories = ['hat','shoebag','towel','belt','flask','lace','sticker'];
-      r.detected.push('부자재 풀세트(7종)');
+      r.detected.push('악세서리 풀세트(7종)');
     } else {
       const accMap = [
         ['hat',     /모자|cap|hat/i, '모자'],
@@ -4105,7 +4105,7 @@ new Chart(document.getElementById('burndownChart'), {
         ['sticker', /스티커|반사스티커|sticker/i, '반사스티커'],
       ];
       accMap.forEach(([k, re, label]) => {
-        if (re.test(text)) { r.accessories.push(k); r.detected.push(`부자재 ${label}`); }
+        if (re.test(text)) { r.accessories.push(k); r.detected.push(`악세서리 ${label}`); }
       });
     }
 
@@ -4181,7 +4181,7 @@ new Chart(document.getElementById('burndownChart'), {
         });
       });
     }
-    // 부자재
+    // 악세서리
     $$('input[name=acc]').forEach(c => { c.checked = p.accessories.includes(c.value); });
   }
 
@@ -4413,7 +4413,7 @@ new Chart(document.getElementById('burndownChart'), {
       visible.forEach((p, idx) => {
         const compBadge = p.isPkg
           ? '<span class="badge-package">풀세트</span>'
-          : (p.shoeQty ? '<span class="badge-unit">단품</span>' : '<span class="badge-acc">부자재/A/S</span>');
+          : (p.shoeQty ? '<span class="badge-unit">단품</span>' : '<span class="badge-acc">악세서리/A/S</span>');
         const sizeNum = (p.size.match(/(\d+)/) || [])[1] || '';
         const colorStr = p.color.includes('베이지') ? '베이지'
                        : p.color.includes('그레이') ? '그레이'
@@ -4508,7 +4508,7 @@ new Chart(document.getElementById('burndownChart'), {
       });
     });
 
-    // 부자재 매핑
+    // 악세서리 매핑
     const accMatch = {
       hat:p.accessories.hat>=1, shoebag:p.accessories.bag>=1, towel:p.accessories.towel>=1,
       belt:p.accessories.belt>=1, flask:p.accessories.flask>=1, lace:p.accessories.lace>=1,
@@ -5029,8 +5029,8 @@ const CS_ACTION_RULES = [
           title: `${size}mm 출고분에 깔창 1장 기본 동봉 — 운영 룰화`,
           evidence: `<b>${size}mm + 깔창 권유/사이즈 큼/235mm 케이스 ${info.count}건</b> (${info.ids.join(', ')}) · 채널: ${channels}. CS에서 매번 "메모에 깔창 동봉 요청 적어주세요"로 재안내 중 — 메모 누락시 단순변심 반품 위험.`,
           action: `<b>운영 변경 ▸</b> 한진 출고 양식 자동화에서 ${size}mm 출고시 품목명 끝에 "+ 깔창 1장" 자동 표기. 출고 콘솔 페이지의 ${size}mm 슬롯에 "깔창 자동동봉" 토글 디폴트 ON. 상세페이지 사이즈 표 ${size}mm 줄에 "기본 깔창 동봉" 뱃지 노출.`,
-          metric: `<b>30일 후 측정 ▸</b> ${size}mm 관련 단순변심·핏 불만 케이스 ${Math.max(1, Math.floor(info.count*0.5))}건 이하로 감소. 깔창 일평균 사용량 (부자재 재고 탭) +${(info.count/30).toFixed(2)}장/일 증가 확인.`,
-          next: `① 출고 콘솔(★)의 ${size}mm 슬롯 정의에 {shoe + insole 1ea} 디폴트 추가<br>② 부자재 재고 탭에서 깔창 burn-rate 관찰 → 재발주 임계 갱신<br>③ 30일 후 ${size} 단순변심 케이스 빈도 재측정 (베이스라인 ${info.count}건)`
+          metric: `<b>30일 후 측정 ▸</b> ${size}mm 관련 단순변심·핏 불만 케이스 ${Math.max(1, Math.floor(info.count*0.5))}건 이하로 감소. 깔창 일평균 사용량 (악세서리 재고 탭) +${(info.count/30).toFixed(2)}장/일 증가 확인.`,
+          next: `① 출고 콘솔(★)의 ${size}mm 슬롯 정의에 {shoe + insole 1ea} 디폴트 추가<br>② 악세서리 재고 탭에서 깔창 burn-rate 관찰 → 재발주 임계 갱신<br>③ 30일 후 ${size} 단순변심 케이스 빈도 재측정 (베이스라인 ${info.count}건)`
         });
       });
       return out;
@@ -5522,7 +5522,7 @@ document.addEventListener("DOMContentLoaded", function() {
   renderCSInsights();
 });
 
-// ── 부자재 재고 탭 (격리 IIFE) ──────────────────
+// ── 악세서리 재고 탭 (격리 IIFE) ──────────────────
 (function() {
   'use strict';
   const ACC_KEYS = ['hat','shoebag','towel','belt','flask','lace','sticker'];
