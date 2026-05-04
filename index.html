@@ -834,6 +834,58 @@
   .inv-bar-track { flex: 1; background: var(--border); border-radius: 3px; height: 10px; }
   .inv-bar { height: 10px; border-radius: 3px; transition: width 0.3s; }
   .inv-count { width: 50px; text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
+
+  /* ── CS 대시보드 ── */
+  .cs-layout { display: grid; grid-template-columns: 1fr 260px; gap: 1px; background: var(--border); padding-top: 1px; }
+  .cs-toolbar { display: flex; gap: 8px; padding: 16px 28px 0; flex-wrap: wrap; align-items: center; }
+  .cs-filter-btn { font-size: 11px; font-weight: 600; padding: 5px 14px; border-radius: 20px; border: 1px solid #3a3a3a; background: transparent; color: var(--muted); cursor: pointer; transition: all .15s; letter-spacing: .04em; }
+  .cs-filter-btn.active, .cs-filter-btn:hover { background: var(--text); color: #000; border-color: var(--text); }
+  .cs-add-btn { margin-left: auto; font-size: 11px; font-weight: 700; padding: 5px 14px; border-radius: 20px; background: var(--purple); color: #fff; border: none; cursor: pointer; letter-spacing: .04em; }
+  .cs-list { display: flex; flex-direction: column; gap: 1px; background: var(--border); margin-top: 8px; }
+  .cs-card { background: var(--card); padding: 16px 28px; cursor: pointer; transition: background .1s; }
+  .cs-card:hover { background: #1f1f1f; }
+  .cs-card.open .cs-detail { display: block; }
+  .cs-top { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+  .cs-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .cs-dot.resolved { background: var(--green); }
+  .cs-dot.open { background: var(--red); }
+  .cs-dot.pending { background: var(--yellow); }
+  .cs-title-text { font-size: 13px; font-weight: 600; flex: 1; }
+  .cs-badges { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 4px; }
+  .cs-badge { font-size: 9px; font-weight: 700; padding: 2px 7px; border-radius: 10px; letter-spacing: .04em; }
+  .cs-badge.platform { background: #1a2a3a; color: #60a5fa; }
+  .cs-badge.type { background: #1a1a2a; color: var(--purple); }
+  .cs-badge.status-resolved { background: #0a2a1a; color: var(--green); }
+  .cs-badge.status-open { background: #2a0a0a; color: var(--red); }
+  .cs-badge.status-pending { background: #2a1a0a; color: var(--yellow); }
+  .cs-meta-text { font-size: 10px; color: var(--muted); }
+  .cs-detail { display: none; margin-top: 10px; padding-top: 12px; border-top: 1px solid var(--border); }
+  .cs-resp-box { background: #111; border: 1px solid #2a2a2a; border-radius: 8px; padding: 12px 14px; font-size: 11px; color: #ccc; line-height: 1.8; white-space: pre-wrap; margin-bottom: 8px; }
+  .cs-copy-btn { font-size: 10px; font-weight: 700; padding: 4px 12px; border-radius: 20px; background: #2a2a2a; color: var(--text); border: 1px solid #3a3a3a; cursor: pointer; }
+  .cs-copy-btn:hover { background: #3a3a3a; }
+  .cs-note-text { font-size: 10px; color: var(--muted); margin-top: 6px; line-height: 1.6; }
+  .cs-side { background: var(--card); padding: 24px; display: flex; flex-direction: column; }
+  .cs-side-title { font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); font-weight: 700; margin-bottom: 12px; }
+  .cs-stat-row { display: flex; align-items: center; gap: 8px; margin-bottom: 9px; }
+  .cs-stat-label { font-size: 11px; flex: 1; color: var(--text); }
+  .cs-bar-wrap { width: 60px; height: 4px; background: #2a2a2a; border-radius: 2px; overflow: hidden; }
+  .cs-bar-fill { height: 100%; border-radius: 2px; transition: width .3s; }
+  .cs-stat-n { font-size: 11px; font-weight: 700; min-width: 16px; text-align: right; }
+  .cs-kpi-row { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
+  .cs-kpi-item { flex: 1; padding: 12px 8px; text-align: center; border-right: 1px solid var(--border); }
+  .cs-kpi-item:last-child { border-right: none; }
+  .cs-kpi-n { font-size: 22px; font-weight: 700; }
+  .cs-kpi-l { font-size: 9px; color: var(--muted); margin-top: 2px; }
+  .cs-tpl-item { background: #111; border: 1px solid #2a2a2a; border-radius: 8px; padding: 10px 12px; margin-bottom: 6px; cursor: pointer; transition: border-color .15s; }
+  .cs-tpl-item:hover { border-color: var(--purple); }
+  .cs-tpl-title-t { font-size: 11px; font-weight: 700; margin-bottom: 3px; }
+  .cs-tpl-prev { font-size: 10px; color: var(--muted); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.5; }
+  .cs-prev-item { padding: 8px 0; border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; gap: 8px; }
+  .cs-prev-item:last-child { border-bottom: none; }
+  .cs-prev-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
+  .cs-prev-dot.high { background: var(--red); } .cs-prev-dot.mid { background: var(--yellow); }
+  .cs-prev-type-t { font-size: 11px; font-weight: 700; margin-bottom: 2px; }
+  .cs-prev-action-t { font-size: 10px; color: var(--muted); line-height: 1.5; }
 </style>
 </head>
 <body>
@@ -853,6 +905,7 @@
   <div class="tab" onclick="showPage('hk', event)">HK 재고</div>
   <div class="tab" onclick="showPage('gift', event)">증정 현황</div>
   <div class="tab" onclick="showPage('todo', event)">투두</div>
+  <div class="tab" onclick="showPage('cs', event)">🎧 CS</div>
 </div>
 
 <!-- ===== PAGE 1: 전체 출고 ===== -->
@@ -1802,6 +1855,32 @@ IF(OR(C2="킥스타터",
     <span>↑ DARI BOARD · matibot_todo 풀 페이지 임베드 (스타일·기능 전체 유지)</span>
     <a href="https://matteeee-code.github.io/matibot_todo/" target="_blank" style="color:#888; text-decoration:none;">새 탭으로 열기 ↗</a>
   </div>
+
+<!-- ===== CS 대시보드 ===== -->
+<div id="page-cs" class="page">
+  <div class="cs-toolbar">
+    <button class="cs-filter-btn active" onclick="filterCS('all',this)">전체</button>
+    <button class="cs-filter-btn" onclick="filterCS('resolved',this)">✅ 처리완료</button>
+    <button class="cs-filter-btn" onclick="filterCS('pending',this)">⏳ 대기중</button>
+    <button class="cs-filter-btn" onclick="filterCS('open',this)">🔴 미처리</button>
+    <button class="cs-add-btn" onclick="openAddCS()">+ CS 등록</button>
+  </div>
+  <div class="cs-layout">
+    <div><div class="cs-list" id="cs-list"></div></div>
+    <div class="cs-side">
+      <div class="cs-kpi-row" id="cs-kpi-row"></div>
+      <div class="cs-side-title">유형별 통계</div>
+      <div id="cs-type-stats"></div>
+      <div class="cs-side-title" style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);">플랫폼별</div>
+      <div id="cs-plat-stats"></div>
+      <div class="cs-side-title" style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);">자동응답 템플릿</div>
+      <div id="cs-tpl-list"></div>
+      <div class="cs-side-title" style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);">🛡️ 선제 대응 필요</div>
+      <div id="cs-prev-list"></div>
+    </div>
+  </div>
+</div>
+
 </div>
 
 <footer>DARIMATI BR-001 출고 관리 · Data: Google Sheets · 2026.04 · <a href="https://docs.google.com/spreadsheets/d/1ibroQV42xuuvWg4P1kvaCw9RT_JxO9L-6lXVAgNjOhA" style="color:#555; text-decoration:none;">시트 열기 ↗</a></footer>
@@ -4160,6 +4239,193 @@ new Chart(document.getElementById('burndownChart'), {
     init();
   }
 })();
+
+// ━━ CS 대시보드 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+const CS_CASES = [
+  { id:"cs13", date:"2026-05-04", platform:"킥스타터", orderNo:"고강훈", size:"-", type:"사이즈교환", status:"pending",
+    summary:"킥스타터 백커 사이즈 교환 요청 — 4/17 출고 송장 확인됨",
+    response:"안녕하세요, DARIMATI입니다.\n\n사이즈 교환 요청 확인하였습니다. 저희 측 비용으로 교환 진행해 드리겠습니다.\n\n반송 주소 및 교환 절차를 안내드리겠습니다. 원하시는 사이즈를 알려주시면 바로 확인 후 재발송해 드리겠습니다.\n\n감사합니다.",
+    note:"킥스타터 백커 교환 — 자사 부담 교환 정책 적용 여부 Matt 확인 필요" },
+  { id:"cs12", date:"2026-05-04", platform:"카카오메이커스", orderNo:"134698951", size:"240", type:"단순변심", status:"resolved",
+    summary:"모자 구성 불만족 — '러닝화 제외 구성품 불필요'",
+    response:"안녕하세요, DARIMATI입니다.\n\n반품 요청 확인하였습니다. 단순변심 반품 기한 내 접수 확인되어 반품을 승인해 드립니다.\n\n상품 수령 후 미사용·미개봉 상태로 회수가 진행될 예정이며, 수거 완료 및 검수 후 환불 처리해 드리겠습니다.\n\n이용해 주셔서 감사합니다.",
+    note:"모자·악세서리 구성품 관련 불만. 선제 안내 개선 필요." },
+  { id:"cs11", date:"2026-04-30", platform:"카카오메이커스", orderNo:"-", size:"-", type:"구성품문의", status:"pending",
+    summary:"모자 사이즈 문의 — 깊이 측정 후 안내 예정",
+    response:"안녕하세요, DARIMATI입니다.\n\nUrban Focus Shield(모자) 사이즈 문의 주셔서 감사합니다.\n모자는 프리사이즈로 제작되었으며, 내부 둘레 약 58cm 기준입니다. 깊이(크라운 높이)는 약 10cm이며 스트레치 소재로 착용감을 조정하게 됩니다.\n\n감사합니다.",
+    note:"모자 깊이 실측 후 정확한 수치 업데이트 필요" },
+  { id:"cs10", date:"2026-04-30", platform:"카카오메이커스", orderNo:"-", size:"240", type:"사이즈문의", status:"resolved",
+    summary:"235mm 고객 → 240 추천 + 깔창 동봉 안내",
+    response:"안녕하세요, 다리마티입니다 :)\n\n평소 235mm 신발을 신으신다면 BR-001의 240mm를 편하게 신으실 수 있습니다.\n혹시 240mm를 신어보시고 약간의 여유가 느껴지신다면 저희가 보내드리는 깔창을 활용해 핏 조정이 가능하세요. 240mm 주문 시 메모 남겨주시면 함께 챙겨드리겠습니다.\n\n감사합니다 :)",
+    note:"깔창 동봉 요청 시 메모 필수 안내" },
+  { id:"cs9", date:"2026-04-30", platform:"이메일", orderNo:"-", size:"-", type:"배송문의", status:"resolved",
+    summary:"[해외] Texas 배송 가능 여부 문의",
+    response:"Hi,\n\nThank you for reaching out to DARIMATI!\nYes, we do ship to Texas, USA. Once your order is placed on our website (darimati.us), we'll arrange international shipping to your address.\n\nBest,\nDARIMATI Team",
+    note:"미국 배송 가능 — 자사몰(darimati.us) 통해 주문 안내" },
+  { id:"cs8", date:"2026-04-29", platform:"조선몰(디즈먼트)", orderNo:"-", size:"270", type:"사이즈문의", status:"resolved",
+    summary:"발볼 넓은 남성 사이즈 문의 — 발길이 160mm, 발폭 110mm",
+    response:"담당자님 안녕하세요, 다리마티입니다.\n\n발볼이 넓으신 분의 경우 BR-001은 동사이즈 대비 5mm 더 여유 있게 설계되어 있습니다.\n발길이 기준으로 맞는 사이즈를 선택하시되, 발폭이 넓으신 점 고려해 핏 확인 후 문의 주시면 조치드리겠습니다.\n\n감사합니다.",
+    note:"발폭 11cm는 매우 넓은 편 — 최소사이즈(240) 안내 + 추가 확인 요청" },
+  { id:"cs7", date:"2026-04-29", platform:"톡스토어", orderNo:"-", size:"-", type:"리뷰코멘트", status:"resolved",
+    summary:"톡스토어 상품 리뷰 코멘트 작성",
+    response:"안녕하세요, 다리마티입니다 :)\n\n소중한 리뷰 남겨주셔서 진심으로 감사드립니다.\n앞으로도 더 좋은 제품으로 보답하는 DARIMATI가 되겠습니다. 감사합니다 🙏",
+    note:"긍정/부정 리뷰 톤 다르게 적용 필요" },
+  { id:"cs6", date:"2026-04-28", platform:"카카오메이커스", orderNo:"-", size:"260", type:"사이즈문의", status:"resolved",
+    summary:"발볼 넓은 고객 — 호카 클리프톤 260 신던 분",
+    response:"안녕하세요 다리마티입니다.\n\n해당 제품은 발볼이 넉넉히 나온 편이고, 동사이즈 대비 타 러닝화에 비해 5mm 더 여유 있게 나와있습니다.\n260을 추천드리며, 불편하시면 카카오톡 상담센터로 문의주시면 조치드리겠습니다.\n\n감사합니다!",
+    note:"발볼 넓은 고객 → 동사이즈 추천 패턴 확립" },
+  { id:"cs5", date:"2026-04-28", platform:"카카오메이커스", orderNo:"-", size:"240", type:"사이즈문의", status:"resolved",
+    summary:"230mm 사이즈 없냐는 문의 — 최소 240mm 안내",
+    response:"안녕하세요, 다리마티입니다 :)\n\nBR-001은 현재 240mm부터 생산되고 있어, 230mm 사이즈는 없는 점 양해 부탁드립니다 ㅠㅠ\n240mm 주문 시 깔창을 활용해 핏 조정이 가능하니 함께 챙겨드릴 수 있도록 메모 남겨주세요.\n\n감사합니다 :)",
+    note:"최소 사이즈 240mm — 상세페이지에 명시 필요 (반복 문의)" },
+  { id:"cs4", date:"2026-04-28", platform:"카카오메이커스", orderNo:"-", size:"-", type:"사이즈문의", status:"resolved",
+    summary:"남성도 신을 수 있나요? 유니섹스 여부 문의",
+    response:"안녕하세요, 다리마티입니다 :)\n\nBR-001은 남녀공용(유니섹스) 러닝화입니다. 본인 발 사이즈에 맞게 선택해 주시면 됩니다.\n하이록스 남성 선수 분들께도 인기가 높은 신발입니다^^\n\n감사합니다 :)",
+    note:"유니섹스 여부 → 상세페이지 상단 명시 필요" },
+  { id:"cs3", date:"2026-04-28", platform:"카카오메이커스", orderNo:"-", size:"260", type:"사이즈문의", status:"resolved",
+    summary:"평소 265mm 신던 고객 — 5mm 단위 사이즈 선택 문의",
+    response:"안녕하세요, 다리마티입니다 :)\n\nBR-001은 10mm 단위로 제작되어 사이즈 선택에 고민이 많으셨을 것 같아요.\n발볼이 여유있게 설계되어 있어, 평소 265mm를 신으신다면 260mm를 권장드립니다.\n발볼이 넓거나 두꺼운 양말 예정이시라면 270mm도 고려해 보실 수 있어요.\n\n감사합니다 :)",
+    note:"5mm 단위 → 다운사이즈 추천 (발볼 넓으면 업 고려) — 스탠다드 답변" },
+  { id:"cs2", date:"2026-04-27", platform:"카카오메이커스", orderNo:"-", size:"-", type:"반품", status:"resolved",
+    summary:"소비자보호법 기준 반품 안내 케이스",
+    response:"안녕하세요, DARIMATI입니다.\n\n소비자보호법에 따른 반품 요청 확인하였습니다. 미사용·미개봉 상태로 반송해 주시면 수령 후 환불 처리해 드리겠습니다.\n\n불편을 드려 죄송합니다. 감사합니다.",
+    note:"소비자보호법 기준 반품 — 정책 명문화 필요" },
+  { id:"cs1", date:"2026-03-21", platform:"킥스타터", orderNo:"jherie@ymail.com", size:"W7", type:"사이즈교환", status:"resolved",
+    summary:"[해외] 킥스타터 백커 — W7.5 → W7 사이즈 정정 요청",
+    response:"Hi,\n\nThank you for reaching out! We'll update your order from W7.5 to W7 before shipment.\nSince your order hasn't shipped yet, we can make this change without any issue.\n\nBest,\nDARIMATI Team",
+    note:"배송 전 변경은 즉시 처리. 배송 후라면 교환 프로세스." },
+];
+
+const CS_TEMPLATES = [
+  { type:"단순변심 반품", title:"단순변심 반품 승인",
+    content:"안녕하세요, DARIMATI입니다.\n\n반품 요청 확인하였습니다. 단순변심 반품 기한 내 접수 확인되어 반품을 승인해 드립니다.\n상품 수령 후 미사용·미개봉 상태로 회수 예정이며, 수거 완료 및 검수 후 환불 처리해 드리겠습니다.\n\n이용해 주셔서 감사합니다." },
+  { type:"사이즈 문의", title:"사이즈 안내 (기본)",
+    content:"안녕하세요, DARIMATI입니다.\n\nBR-001은 발볼이 넉넉하게 설계되어 있어 동사이즈 기준 타 러닝화 대비 5mm 정도 여유 있게 나와 있습니다.\n반 사이즈 경계이신 분은 아래 사이즈를, 발볼이 넓으신 분은 동사이즈를 추천드립니다.\n발 길이(mm)를 알려주시면 맞춤 안내드리겠습니다.\n\n감사합니다." },
+  { type:"배송 문의", title:"배송 현황 안내",
+    content:"안녕하세요, DARIMATI입니다.\n\n현재 배송은 한진택배로 진행되며, 평균 2~3 영업일 내 도착 예정입니다.\n송장번호는 발송 완료 시 문자 또는 플랫폼 알림으로 안내드리겠습니다.\n\n감사합니다." },
+  { type:"깔창 동봉 요청", title:"깔창 동봉 안내",
+    content:"안녕하세요, DARIMATI입니다.\n\n주문 시 메모란에 '깔창 동봉 요청'이라고 남겨주시면 함께 챙겨드리겠습니다.\n이미 주문 완료 하셨다면 주문번호와 함께 카카오톡 채널로 문의 주시면 확인 후 동봉해 드리겠습니다.\n\n감사합니다." },
+];
+
+const CS_PREVENTION = [
+  { level:"high", type:"구성품 불만족 (모자)", action:"상세페이지에 각 구성품 용도 명시\n(모자=자외선차단+시야확보 기능)" },
+  { level:"high", type:"쿠션 기대 불일치", action:"'쿠션이 아닌 구조적 안정성' 제품 성격을\n상단 문구에 명시 필요" },
+  { level:"mid", type:"사이즈 선택 불확실", action:"발 길이→사이즈 대응표 + '발볼 넓으면\n동사이즈, 반사이즈 경계면 아래' 문구 추가" },
+  { level:"mid", type:"최소사이즈(240) 문의", action:"상세페이지 사이즈 섹션에 최소 사이즈\n240mm 명시 (230 없음 선제 안내)" },
+  { level:"mid", type:"유니섹스 여부 문의", action:"상품명 또는 상단에 '남녀공용' 표기 추가" },
+];
+
+let csFilterState = "all";
+
+function filterCS(f, btn) {
+  csFilterState = f;
+  document.querySelectorAll(".cs-filter-btn").forEach(b => b.classList.remove("active"));
+  if (btn) btn.classList.add("active");
+  renderCSList();
+}
+
+function renderCSList() {
+  const el = document.getElementById("cs-list"); if (!el) return;
+  const filtered = csFilterState === "all" ? CS_CASES : CS_CASES.filter(c => c.status === csFilterState);
+  if (!filtered.length) { el.innerHTML = '<div style="padding:40px;text-align:center;color:var(--muted);font-size:12px">해당 케이스 없음</div>'; return; }
+  el.innerHTML = "";
+  filtered.forEach(c => {
+    const card = document.createElement("div"); card.className = "cs-card";
+    const sLabel = c.status === "resolved" ? "처리완료" : c.status === "pending" ? "대기중" : "미처리";
+    card.innerHTML = `<div class="cs-top"><div class="cs-dot ${c.status}"></div><div class="cs-title-text">${c.summary}</div></div>
+      <div class="cs-badges"><span class="cs-badge platform">${c.platform}</span><span class="cs-badge type">${c.type}</span><span class="cs-badge status-${c.status}">${sLabel}</span></div>
+      <div class="cs-meta-text">주문 ${c.orderNo||"-"} · 사이즈 ${c.size||"-"} · ${c.date}</div>
+      <div class="cs-detail">
+        <div style="font-size:10px;color:var(--muted);margin-bottom:6px;letter-spacing:.06em;text-transform:uppercase;">발송 응답 템플릿</div>
+        <div class="cs-resp-box">${c.response}</div>
+        <button class="cs-copy-btn" onclick="event.stopPropagation();copyCS('${c.id}')">📋 복사</button>
+        ${c.note ? '<div class="cs-note-text">💡 ' + c.note + '</div>' : ""}
+      </div>`;
+    card.addEventListener("click", () => card.classList.toggle("open"));
+    el.appendChild(card);
+  });
+}
+
+function copyCS(id) {
+  const c = CS_CASES.find(x => x.id === id); if (!c) return;
+  navigator.clipboard.writeText(c.response).then(() => alert("복사됐습니다 ✅"));
+}
+
+function renderCSStats() {
+  const total = CS_CASES.length;
+  const resolved = CS_CASES.filter(c => c.status === "resolved").length;
+  const pending = CS_CASES.filter(c => c.status === "pending").length;
+  const open = CS_CASES.filter(c => c.status === "open").length;
+  // KPI
+  const kpiEl = document.getElementById("cs-kpi-row");
+  if (kpiEl) kpiEl.innerHTML = `
+    <div class="cs-kpi-item"><div class="cs-kpi-n" style="color:var(--green)">${resolved}</div><div class="cs-kpi-l">처리완료</div></div>
+    <div class="cs-kpi-item"><div class="cs-kpi-n" style="color:var(--yellow)">${pending}</div><div class="cs-kpi-l">대기중</div></div>
+    <div class="cs-kpi-item"><div class="cs-kpi-n" style="color:var(--red)">${open}</div><div class="cs-kpi-l">미처리</div></div>
+    <div class="cs-kpi-item"><div class="cs-kpi-n" style="color:var(--purple)">${total}</div><div class="cs-kpi-l">총계</div></div>`;
+  // 유형 통계
+  const counts = {}; CS_CASES.forEach(c => { counts[c.type] = (counts[c.type] || 0) + 1; });
+  const sorted = Object.entries(counts).sort((a,b) => b[1]-a[1]);
+  const max = sorted[0]?.[1] || 1;
+  const barColors = ["#a78bfa","#60a5fa","#4ade80","#facc15","#f87171","#fb923c","#34d399","#e879f9"];
+  const typeEl = document.getElementById("cs-type-stats");
+  if (typeEl) typeEl.innerHTML = sorted.map(([t,n],i) => `
+    <div class="cs-stat-row"><div class="cs-stat-label">${t}</div>
+    <div class="cs-bar-wrap"><div class="cs-bar-fill" style="width:${Math.round(n/max*100)}%;background:${barColors[i%barColors.length]}"></div></div>
+    <div class="cs-stat-n" style="color:${barColors[i%barColors.length]}">${n}</div></div>`).join("");
+  // 플랫폼 통계
+  const plats = {}; CS_CASES.forEach(c => { plats[c.platform] = (plats[c.platform]||0)+1; });
+  const psorted = Object.entries(plats).sort((a,b)=>b[1]-a[1]); const pmax = psorted[0]?.[1]||1;
+  const platEl = document.getElementById("cs-plat-stats");
+  if (platEl) platEl.innerHTML = psorted.map(([p,n]) => `
+    <div class="cs-stat-row"><div class="cs-stat-label" style="font-size:10px">${p}</div>
+    <div class="cs-bar-wrap"><div class="cs-bar-fill" style="width:${Math.round(n/pmax*100)}%;background:#60a5fa"></div></div>
+    <div class="cs-stat-n" style="color:#60a5fa">${n}</div></div>`).join("");
+}
+
+function renderCSTemplates() {
+  const el = document.getElementById("cs-tpl-list"); if (!el) return;
+  el.innerHTML = ""; CS_TEMPLATES.forEach(tpl => {
+    const item = document.createElement("div"); item.className = "cs-tpl-item";
+    item.innerHTML = `<div class="cs-tpl-title-t">${tpl.title}</div><div class="cs-tpl-prev">${tpl.content.replace(/\n/g," ")}</div>`;
+    item.onclick = () => navigator.clipboard.writeText(tpl.content).then(() => alert('"' + tpl.title + '" 복사됐습니다 ✅'));
+    el.appendChild(item);
+  });
+}
+
+function renderCSPrevention() {
+  const el = document.getElementById("cs-prev-list"); if (!el) return;
+  const counts = {}; CS_CASES.forEach(c=>{ counts[c.type]=(counts[c.type]||0)+1; });
+  el.innerHTML = CS_PREVENTION.map(p => {
+    const cnt = counts[p.type.split(" ")[0]] || 0;
+    const urgMark = cnt >= 3 ? ' <span style="color:var(--red);font-weight:800">' + cnt + '건↑ 즉시조치</span>' : cnt > 0 ? ' <span style="color:var(--yellow)">' + cnt + '건</span>' : "";
+    return `<div class="cs-prev-item"><div class="cs-prev-dot ${p.level}"></div><div><div class="cs-prev-type-t">${p.type}${urgMark}</div><div class="cs-prev-action-t">${p.action.replace(/\n/g,"<br>")}</div></div></div>`;
+  }).join("");
+}
+
+function openAddCS() {
+  const platforms = ["카카오메이커스","네이버스마트스토어","킥스타터","인디고고","이메일","기타"];
+  const types = ["단순변심","구성품문의","사이즈문의","사이즈교환","배송문의","반품","리뷰코멘트","기타"];
+  const p = prompt("플랫폼 선택:\n" + platforms.map((x,i)=>(i+1)+". "+x).join("\n")+"\n번호:");
+  const pi = parseInt(p)-1; if (isNaN(pi)||pi<0||pi>=platforms.length) return;
+  const t = prompt("문의 유형:\n" + types.map((x,i)=>(i+1)+". "+x).join("\n")+"\n번호:");
+  const ti = parseInt(t)-1; if (isNaN(ti)||ti<0||ti>=types.length) return;
+  const summary = prompt("케이스 요약:"); if (!summary) return;
+  const orderNo = prompt("주문번호 (없으면 빈칸):") || "-";
+  const size = prompt("사이즈 (없으면 빈칸):") || "-";
+  const response = prompt("발송 응답 내용:") || "";
+  const note = prompt("내부 메모 (없으면 빈칸):") || "";
+  const now = new Date();
+  CS_CASES.unshift({ id:"cs"+Date.now(), date:now.toISOString().slice(0,10),
+    platform:platforms[pi], orderNo, size, type:types[ti], status:"resolved", summary, response, note });
+  renderCSList(); renderCSStats();
+}
+
+// CS 탭 초기 렌더
+document.addEventListener("DOMContentLoaded", function() {
+  renderCSList(); renderCSStats(); renderCSTemplates(); renderCSPrevention();
+});
+
 </script>
 
 </body>
