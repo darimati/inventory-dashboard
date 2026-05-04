@@ -1998,7 +1998,45 @@ IF(OR(C2="킥스타터",
 <!-- ===== CS 대시보드 (page-todo 밖으로 분리) ===== -->
 <div id="page-cs" class="page">
 
-  <!-- 📊 CS 인사이트 — 트렌드 · 신호 · 액션 권고 -->
+  <!-- 📥 새 CS 인테이크 패널 (최상단 — 새 상담 인입 즉시 처리) -->
+  <div id="cs-intake-panel" style="padding:18px 28px; background:#0a0a0a; border-bottom:1px solid var(--border);">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+      <div style="font-size:13px; font-weight:700; color:var(--text);">📥 새 CS 인테이크</div>
+    </div>
+    <div style="font-size:10px; color:var(--muted); margin-bottom:10px; line-height:1.6;">
+      고객 메시지/이미지 캡처 텍스트를 그대로 붙여넣으세요. 옵시디언 <code>CS/DARIMATI_CS_지침서.md</code> §0·§2 회복 무기 룰로 자동 분류·판단해서 답변 초안을 생성합니다.
+    </div>
+    <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; margin-bottom:8px;">
+      <select id="cs-intake-platform" class="cs-input">
+        <option value="">플랫폼 (선택)</option>
+        <option>스마트스토어</option><option>카카오메이커스</option><option>킥스타터</option>
+        <option>자사몰</option><option>인스타DM</option><option>카톡</option><option>이메일</option><option>톡스토어</option>
+      </select>
+      <input id="cs-intake-orderno" class="cs-input" placeholder="주문번호 (선택)" />
+      <input id="cs-intake-size" class="cs-input" placeholder="사이즈 (예: 235, 240)" />
+    </div>
+    <textarea id="cs-intake-text" class="cs-input" rows="5" placeholder="고객 메시지 그대로 붙여넣기 (예: '235 신는데 240 받았더니 좀 큰 거 같아요. 환불 가능?')" style="width:100%; resize:vertical;"></textarea>
+    <div style="margin-top:10px; display:flex; gap:8px;">
+      <button onclick="csJudgeAndDraft()" style="padding:8px 16px; background:var(--text); color:#000; border:0; border-radius:4px; cursor:pointer; font-size:12px; font-weight:700;">옵시디언 룰로 판단 → 답변 초안</button>
+      <button onclick="document.getElementById('cs-intake-text').value='';document.getElementById('cs-intake-result').style.display='none';" style="padding:8px 14px; background:transparent; color:var(--muted); border:1px solid var(--border); border-radius:4px; cursor:pointer; font-size:12px;">지우기</button>
+    </div>
+    <div id="cs-intake-result" style="display:none; margin-top:14px; padding:14px; background:#111; border:1px solid #2a2a2a; border-radius:8px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <div style="font-size:11px; font-weight:700; color:var(--text);">📋 자동 판단 결과</div>
+        <div id="cs-intake-confidence" style="font-size:9px; color:var(--muted);"></div>
+      </div>
+      <div style="font-size:10px; color:var(--muted); margin-bottom:4px;">분류 (옵시디언 §2 매칭):</div>
+      <div id="cs-intake-classification" style="font-size:11px; color:#7c9bb5; margin-bottom:10px; line-height:1.5;"></div>
+      <div style="font-size:10px; color:var(--muted); margin-bottom:4px;">답변 초안 (지침서 §5 톤 + 회복 무기 적용):</div>
+      <textarea id="cs-intake-draft" rows="8" class="cs-input" style="width:100%; resize:vertical; background:#0f0f0f; line-height:1.7;"></textarea>
+      <div style="display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;">
+        <button onclick="csCopyIntakeDraft()" style="padding:6px 14px; background:#2a2a2a; color:var(--text); border:0; border-radius:4px; cursor:pointer; font-size:11px;">📋 답변 복사</button>
+        <button onclick="csSaveIntakeAsCase()" style="padding:6px 14px; background:#1a3a1a; color:#7eb87e; border:1px solid #2a5a2a; border-radius:4px; cursor:pointer; font-size:11px;">💾 옵시디언에 케이스로 저장 (frontmatter 복사)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 📊 CS 인사이트 — 트렌드 · 신호 (액션 인사이트는 페이지 최하단으로 분리) -->
   <div class="cs-insights">
 
     <!-- KPI -->
@@ -2037,44 +2075,6 @@ IF(OR(C2="킥스타터",
       </div>
     </div>
 
-    <!-- 새 CS 인테이크 패널 (상단 그래프 바로 아래로 위치) -->
-    <div id="cs-intake-panel" style="padding:18px 28px; background:#0a0a0a; border-top:1px solid var(--border); border-bottom:1px solid var(--border); margin-top:1px;">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-        <div style="font-size:13px; font-weight:700; color:var(--text);">📥 새 CS 인테이크</div>
-      </div>
-      <div style="font-size:10px; color:var(--muted); margin-bottom:10px; line-height:1.6;">
-        고객 메시지/이미지 캡처 텍스트를 그대로 붙여넣으세요. 옵시디언 <code>CS/DARIMATI_CS_지침서.md</code> §0·§2 회복 무기 룰로 자동 분류·판단해서 답변 초안을 생성합니다.
-      </div>
-      <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; margin-bottom:8px;">
-        <select id="cs-intake-platform" class="cs-input">
-          <option value="">플랫폼 (선택)</option>
-          <option>스마트스토어</option><option>카카오메이커스</option><option>킥스타터</option>
-          <option>자사몰</option><option>인스타DM</option><option>카톡</option><option>이메일</option><option>톡스토어</option>
-        </select>
-        <input id="cs-intake-orderno" class="cs-input" placeholder="주문번호 (선택)" />
-        <input id="cs-intake-size" class="cs-input" placeholder="사이즈 (예: 235, 240)" />
-      </div>
-      <textarea id="cs-intake-text" class="cs-input" rows="5" placeholder="고객 메시지 그대로 붙여넣기 (예: '235 신는데 240 받았더니 좀 큰 거 같아요. 환불 가능?')" style="width:100%; resize:vertical;"></textarea>
-      <div style="margin-top:10px; display:flex; gap:8px;">
-        <button onclick="csJudgeAndDraft()" style="padding:8px 16px; background:var(--text); color:#000; border:0; border-radius:4px; cursor:pointer; font-size:12px; font-weight:700;">옵시디언 룰로 판단 → 답변 초안</button>
-        <button onclick="document.getElementById('cs-intake-text').value='';document.getElementById('cs-intake-result').style.display='none';" style="padding:8px 14px; background:transparent; color:var(--muted); border:1px solid var(--border); border-radius:4px; cursor:pointer; font-size:12px;">지우기</button>
-      </div>
-      <div id="cs-intake-result" style="display:none; margin-top:14px; padding:14px; background:#111; border:1px solid #2a2a2a; border-radius:8px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-          <div style="font-size:11px; font-weight:700; color:var(--text);">📋 자동 판단 결과</div>
-          <div id="cs-intake-confidence" style="font-size:9px; color:var(--muted);"></div>
-        </div>
-        <div style="font-size:10px; color:var(--muted); margin-bottom:4px;">분류 (옵시디언 §2 매칭):</div>
-        <div id="cs-intake-classification" style="font-size:11px; color:#7c9bb5; margin-bottom:10px; line-height:1.5;"></div>
-        <div style="font-size:10px; color:var(--muted); margin-bottom:4px;">답변 초안 (지침서 §5 톤 + 회복 무기 적용):</div>
-        <textarea id="cs-intake-draft" rows="8" class="cs-input" style="width:100%; resize:vertical; background:#0f0f0f; line-height:1.7;"></textarea>
-        <div style="display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;">
-          <button onclick="csCopyIntakeDraft()" style="padding:6px 14px; background:#2a2a2a; color:var(--text); border:0; border-radius:4px; cursor:pointer; font-size:11px;">📋 답변 복사</button>
-          <button onclick="csSaveIntakeAsCase()" style="padding:6px 14px; background:#1a3a1a; color:#7eb87e; border:1px solid #2a5a2a; border-radius:4px; cursor:pointer; font-size:11px;">💾 옵시디언에 케이스로 저장 (frontmatter 복사)</button>
-        </div>
-      </div>
-    </div>
-
     <!-- 신호: 반복 / 신규 / 회복효과 -->
     <div class="cs-ins-grid-3">
       <div class="cs-ins-card">
@@ -2089,12 +2089,6 @@ IF(OR(C2="킥스타터",
         <div class="cs-ins-title">🛡️ 회복 무기 효과 <span style="color:#555; font-size:10px; margin-left:6px; letter-spacing:0;">유지율 기준</span></div>
         <div id="cs-recovery-effect"></div>
       </div>
-    </div>
-
-    <!-- 액션 권고 -->
-    <div class="cs-ins-actions">
-      <div class="cs-ins-title" style="font-size:13px; margin-bottom:14px; color:var(--text);">💡 액션 인사이트 <span style="color:var(--muted); font-size:10px; margin-left:6px; letter-spacing:0;">데이터 결합 → 운영 룰 권고 (자동 갱신)</span></div>
-      <div id="cs-action-list"></div>
     </div>
 
   </div>
@@ -2120,6 +2114,12 @@ IF(OR(C2="킥스타터",
       <div class="cs-side-title" style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);">🛡️ 선제 대응 필요</div>
       <div id="cs-prev-list"></div>
     </div>
+  </div>
+
+  <!-- 💡 액션 인사이트 (페이지 최하단 — 데이터 결합 → 운영 룰 권고) -->
+  <div class="cs-ins-actions" style="margin-top:1px;">
+    <div class="cs-ins-title" style="font-size:13px; margin-bottom:14px; color:var(--text);">💡 액션 인사이트 <span style="color:var(--muted); font-size:10px; margin-left:6px; letter-spacing:0;">데이터 결합 → 운영 룰 권고 (자동 갱신)</span></div>
+    <div id="cs-action-list"></div>
   </div>
 
   <style>
