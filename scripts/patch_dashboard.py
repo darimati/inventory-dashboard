@@ -185,6 +185,19 @@ patches.append((r"const MO_SALE_DAILY = \[[^\]]*\];", f"const MO_SALE_DAILY = {j
 patches.append((r"const MO_B2B_DAILY  = \[[^\]]*\];", f"const MO_B2B_DAILY  = {js(mo_b2b_arr)};"))
 patches.append((r"const MO_GIFT_DAILY = \[[^\]]*\];", f"const MO_GIFT_DAILY = {js(mo_gift_arr)};"))
 patches.append((r"const MO_RANGE = '[^']*';", f"const MO_RANGE = '{mo_range}';"))
+
+# ── 직전 7일 캘린더 (차트용 — 출고 0인 날 포함) ──
+from datetime import timedelta as _Td
+_today = _Date.today()
+last7_calendar = [(_today - _Td(days=6-i)) for i in range(7)]  # 오래된 날 → 최신 날
+last7_labels = [f"{d.month}/{d.day}" for d in last7_calendar]
+last7_sale = [sale_by_date.get(lbl, 0) for lbl in last7_labels]
+last7_b2b  = [b2b_by_date.get(lbl, 0)  for lbl in last7_labels]
+last7_gift = [gift_by_date.get(lbl, 0) for lbl in last7_labels]
+patches.append((r"const LAST7_DATES = \[[^\]]*\];", f"const LAST7_DATES = [{','.join(repr(d) for d in last7_labels)}];"))
+patches.append((r"const LAST7_SALE_DAILY = \[[^\]]*\];", f"const LAST7_SALE_DAILY = {js(last7_sale)};"))
+patches.append((r"const LAST7_B2B_DAILY  = \[[^\]]*\];", f"const LAST7_B2B_DAILY  = {js(last7_b2b)};"))
+patches.append((r"const LAST7_GIFT_DAILY = \[[^\]]*\];", f"const LAST7_GIFT_DAILY = {js(last7_gift)};"))
 patches.append((r"const DAILY_KCK  = \[[^\]]+\];", f"const DAILY_KCK  = {js(plat['킥스타터'])};"))
 patches.append((r"const DAILY_KKO  = \[[^\]]+\];", f"const DAILY_KKO  = {js(plat['카카오메이커스'])};"))
 patches.append((r"const DAILY_NAV  = \[[^\]]+\];", f"const DAILY_NAV  = {js(plat['네이버'])};"))
