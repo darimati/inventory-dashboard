@@ -51,6 +51,8 @@ ch_by_date = defaultdict(lambda: defaultdict(int))
 ch_total = defaultdict(int)
 ch_pkg = defaultdict(int)   # 채널별 풀세트 켤레 (시트 자동 감지)
 ch_unit = defaultdict(int)  # 채널별 단품 켤레 (시트 자동 감지)
+ch_pkg_by_month = defaultdict(lambda: defaultdict(int))
+ch_unit_by_month = defaultdict(lambda: defaultdict(int))
 total_sale = total_b2b = total_gift = 0
 size_color_sale = defaultdict(lambda: defaultdict(int))
 
@@ -104,6 +106,9 @@ for r in rows:
         ch_total[ch] += qty
         if is_pkg: ch_pkg[ch] += qty
         else:      ch_unit[ch] += qty
+        ym = f"{y}-{mo:02d}"
+        if is_pkg: ch_pkg_by_month[ym][ch] += qty
+        else:      ch_unit_by_month[ym][ch] += qty
         total_sale += qty
         if '그레이' in color and size: size_color_sale['G'][size] += qty
         elif '베이지' in color and size: size_color_sale['B'][size] += qty
@@ -112,12 +117,18 @@ for r in rows:
         ch_total['마야크루'] += qty
         if is_pkg: ch_pkg['마야크루'] += qty
         else:      ch_unit['마야크루'] += qty
+        ym = f"{y}-{mo:02d}"
+        if is_pkg: ch_pkg_by_month[ym]['마야크루'] += qty
+        else:      ch_unit_by_month[ym]['마야크루'] += qty
         total_b2b += qty
     elif kind == 'gift':
         gift_by_date[label] += qty
         ch_total['샘플'] += qty
         if is_pkg: ch_pkg['샘플'] += qty
         else:      ch_unit['샘플'] += qty
+        ym = f"{y}-{mo:02d}"
+        if is_pkg: ch_pkg_by_month[ym]['샘플'] += qty
+        else:      ch_unit_by_month[ym]['샘플'] += qty
         total_gift += qty
 
 dates = sorted(set(list(sale_by_date.keys())+list(b2b_by_date.keys())+list(gift_by_date.keys())),
@@ -398,6 +409,21 @@ breakdown_block += f"  'B2B (마야크루)':      {{ pkg: {ch_pkg.get('마야크
 breakdown_block += f"  '샘플':                {{ pkg: {ch_pkg.get('샘플',0)}, unit: {ch_unit.get('샘플',0)} }},\n"
 breakdown_block += "};"
 patches.append((r"const CHANNEL_BREAKDOWN_AUTO = \{[\s\S]*?\n\};", breakdown_block))
+
+
+# CHANNEL_BREAKDOWN_AUTO_BY_MONTH (월별 누계 — 정산 토글용)
+_months_sorted = sorted(set(list(ch_pkg_by_month.keys()) + list(ch_unit_by_month.keys())))
+by_month_block = "const CHANNEL_BREAKDOWN_AUTO_BY_MONTH = {\n"
+for _ym in _months_sorted:
+    by_month_block += f"  \"{_ym}\": {{\n"
+    for js_key, sheet_key in ch_keys:
+        _p = ch_pkg_by_month.get(_ym, {}).get(sheet_key, 0)
+        _u = ch_unit_by_month.get(_ym, {}).get(sheet_key, 0)
+        by_month_block += f"    \"{js_key}\": {{ pkg: {_p}, unit: {_u} }},\n"
+    by_month_block += "  },\n"
+by_month_block += "};"
+# regex matches multi-line placeholder for BY_MONTH
+patches.append((r"const CHANNEL_BREAKDOWN_AUTO_BY_MONTH = \{[\s\S]*?\n\};", by_month_block))
 
 # ── 전체 출고 탭 — 채널 바 array (이전엔 누락되어 stale drift 발생) ──
 channels_arr = (
