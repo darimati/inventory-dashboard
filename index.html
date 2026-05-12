@@ -958,6 +958,7 @@
   <div class="tab" onclick="showPage('gift', event)">증정 현황</div>
   <div class="tab" onclick="showPage('todo', event)">투두</div>
   <div class="tab" onclick="showPage('cs', event)">🎧 CS</div>
+  <div class="tab" onclick="showPage('fund', event)">💰 자금 스케줄</div>
 </div>
 
 <!-- ===== PAGE 1: 전체 출고 ===== -->
@@ -2127,6 +2128,119 @@ IF(OR(C2="킥스타터",
     #page-cs .cs-input { background:#1a1a1a; border:1px solid #2a2a2a; color:var(--text); padding:7px 10px; border-radius:4px; font-size:12px; font-family:inherit; }
     #page-cs .cs-input:focus { outline:none; border-color:var(--text); }
   </style>
+</div>
+
+<!-- ===== PAGE 11: 자금 스케줄 ===== -->
+<div id="page-fund" class="page">
+  <style>
+    #page-fund { background: var(--bg); min-height: calc(100vh - 110px); }
+    .fund-header { display: flex; align-items: center; justify-content: space-between; padding: 24px 40px; border-bottom: 1px solid var(--border); }
+    .fund-nav { display: flex; align-items: center; gap: 16px; }
+    .fund-nav button { background: transparent; border: 1px solid var(--border); color: var(--text); width: 32px; height: 32px; border-radius: 4px; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; }
+    .fund-nav button:hover { background: #222; }
+    .fund-month-label { font-size: 18px; font-weight: 700; min-width: 140px; text-align: center; letter-spacing: -0.02em; }
+    .fund-start-wrap { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
+    .fund-start-wrap input { width: 72px; background: #1a1a1a; border: 1px solid var(--border); color: var(--text); padding: 5px 8px; border-radius: 4px; font-size: 13px; text-align: right; font-variant-numeric: tabular-nums; font-family: inherit; }
+    .fund-start-wrap input:focus { outline: none; border-color: var(--text); }
+    .fund-kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border); border-bottom: 1px solid var(--border); }
+    .fund-cal { padding: 12px 40px 40px; }
+    .fund-weekdays { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; margin-bottom: 1px; }
+    .fund-weekdays div { background: #111; padding: 8px; text-align: center; font-size: 10px; color: var(--muted); letter-spacing: 0.08em; }
+    .fund-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background: var(--border); }
+    .fund-day { background: var(--card); min-height: 100px; padding: 8px; }
+    .fund-day.empty { background: #111; min-height: 60px; }
+    .fund-day.today { outline: 2px solid var(--green); outline-offset: -2px; }
+    .fund-day .day-num { font-size: 11px; color: var(--muted); margin-bottom: 6px; font-weight: 600; }
+    .fund-day .day-num.weekend { color: #f87171; }
+    .fund-row { display: flex; align-items: center; gap: 3px; margin-bottom: 2px; }
+    .fund-row .fl { font-size: 9px; width: 14px; flex-shrink: 0; font-weight: 700; }
+    .fund-row .fl.in { color: var(--green); }
+    .fund-row .fl.out { color: var(--red); }
+    .fund-input { width: 100%; background: transparent; border: 1px solid transparent; color: var(--text); padding: 2px 4px; font-size: 11px; text-align: right; font-variant-numeric: tabular-nums; border-radius: 2px; font-family: inherit; }
+    .fund-input:hover { border-color: var(--border); }
+    .fund-input:focus { border-color: var(--text); outline: none; background: #222; }
+    .fund-input.has-val { font-weight: 700; }
+    .fund-memo { width: 100%; background: transparent; border: 1px solid transparent; color: #555; padding: 1px 4px; font-size: 9px; border-radius: 2px; margin-top: 2px; font-family: inherit; }
+    .fund-memo:hover { border-color: var(--border); }
+    .fund-memo:focus { border-color: #555; outline: none; background: #222; color: var(--text); }
+    .fund-memo.has-val { color: #888; }
+    .day-bal { font-size: 9px; color: var(--muted); margin-top: 4px; text-align: right; font-variant-numeric: tabular-nums; border-top: 1px solid #222; padding-top: 3px; }
+    .day-bal.neg { color: var(--red); }
+    /* 정산 입금 예정 */
+    .fund-settle { padding: 0 40px 40px; }
+    .fund-settle-title { font-size: 11px; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+    .fund-settle table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .fund-settle th { padding: 8px 12px; color: var(--muted); font-weight: 400; font-size: 11px; text-align: left; border-bottom: 1px solid var(--border); }
+    .fund-settle td { padding: 9px 12px; border-bottom: 1px solid #222; }
+    .fund-settle td.num { text-align: right; font-variant-numeric: tabular-nums; }
+    .fund-settle .status-badge { font-size: 10px; padding: 2px 8px; border-radius: 10px; cursor: pointer; font-weight: 600; }
+    .fund-settle .status-badge.pending { background: #1a1500; color: var(--yellow); border: 1px solid #3a3000; }
+    .fund-settle .status-badge.done { background: #1a3a2a; color: var(--green); border: 1px solid #2a5a3a; }
+  </style>
+
+  <!-- 헤더: 월 네비게이션 + 월초 잔고 입력 -->
+  <div class="fund-header">
+    <div class="fund-nav">
+      <button id="fund-prev">‹</button>
+      <div class="fund-month-label" id="fund-month-label">2026년 5월</div>
+      <button id="fund-next">›</button>
+    </div>
+    <div class="fund-start-wrap">
+      월초 잔고:&nbsp;<input id="fund-start-balance" type="number" step="1" value="80">&nbsp;백만원
+    </div>
+  </div>
+
+  <!-- KPI 요약 -->
+  <div class="fund-kpi-row">
+    <div class="kpi">
+      <div class="kpi-label">월초 잔고</div>
+      <div class="kpi-value" id="fund-kpi-start" style="font-size:28px;">—</div>
+      <div class="kpi-sub">이월 잔액 (백만원)</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">총 입금</div>
+      <div class="kpi-value green" id="fund-kpi-in" style="font-size:28px;">—</div>
+      <div class="kpi-sub">정산 + 기타 입금</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">총 지출</div>
+      <div class="kpi-value red" id="fund-kpi-out" style="font-size:28px;">—</div>
+      <div class="kpi-sub">물류 + 제조 + 운영 + 기타</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">월말 잔고 (예상)</div>
+      <div class="kpi-value" id="fund-kpi-end" style="font-size:28px;">—</div>
+      <div class="kpi-sub">월초 + 입금 − 지출</div>
+    </div>
+  </div>
+
+  <!-- 캘린더 -->
+  <div class="fund-cal">
+    <div class="fund-weekdays">
+      <div>월 MON</div><div>화 TUE</div><div>수 WED</div><div>목 THU</div><div>금 FRI</div><div style="color:#f87171;">토 SAT</div><div style="color:#f87171;">일 SUN</div>
+    </div>
+    <div class="fund-grid" id="fund-grid"></div>
+  </div>
+
+  <!-- 채널별 정산 입금 예정 -->
+  <div class="fund-settle">
+    <div class="card" style="background:var(--card); padding:28px; border-radius:0;">
+      <div class="fund-settle-title">채널별 정산 입금 예정 <span style="color:#555; font-size:10px; letter-spacing:0;">정산 & ROAS 탭 데이터 연동 · 상태 클릭으로 입금확인 토글</span></div>
+      <table>
+        <thead>
+          <tr>
+            <th>채널</th>
+            <th class="num">예상 정산금 (백만원)</th>
+            <th class="num">입금 예정일</th>
+            <th class="num">상태</th>
+            <th>메모</th>
+          </tr>
+        </thead>
+        <tbody id="fund-settle-body"></tbody>
+      </table>
+    </div>
+  </div>
+
 </div>
 
 <footer>DARIMATI BR-001 출고 관리 · Data: Google Sheets · <span id="footer-date">—</span> · <a href="https://docs.google.com/spreadsheets/d/1ibroQV42xuuvWg4P1kvaCw9RT_JxO9L-6lXVAgNjOhA" style="color:#555; text-decoration:none;">시트 열기 ↗</a></footer>
@@ -3853,6 +3967,7 @@ new Chart(document.getElementById('burndownChart'), {
       detail: '',
       shoes, accessories,
       memo: p.memo || (p.shoeQty ? '' : '악세서리/A/S'),
+      sheetSpecial: p.special || '',
       source: 'sheet',
       sheetChannel: ch,
       status: 'pending',
@@ -3926,11 +4041,14 @@ new Chart(document.getElementById('burndownChart'), {
       const accSummary    = accUniq.length ? accUniq.map(a=>ACC_LABELS[a]||a).join('·') : '';
       const cats = Array.from(new Set(group.map(o => CAT_LABELS[o.category] || '').filter(Boolean)));
       const memos = Array.from(new Set(group.map(o => o.memo || '').filter(Boolean)));
+      const specials = Array.from(new Set(group.map(o => o.sheetSpecial || '').filter(Boolean)));
       const isMerged = group.length >= 2;
-      // 단순화: 메모1 = "합포 N건" 또는 첫 메모 / 특기사항 = 분류만
+      // 단순화: 메모1 = "합포 N건" 또는 첫 메모 / 특기사항 = 분류 + 시트 AH열
       const memoNote = isMerged
         ? `🔗 합포 ${group.length}건`
         : (memos[0] || '');
+      const specialParts = [...cats];
+      if (specials.length) specialParts.push(specials.join(', '));
       rows.push([
         head.recipient || '',         // 받으시는 분
         phone,                         // 받으시는 분 전화
@@ -3943,7 +4061,7 @@ new Chart(document.getElementById('burndownChart'), {
         '',                            // 운임Type
         '',                            // 지불조건
         `${dateTag}-${String(i+1).padStart(3,'0')}`,  // 출고번호
-        cats.join('+'),                // 특기사항 — 분류만
+        specialParts.join(' | '),      // 특기사항 — 분류 + 시트 특기사항(AH열)
         memoNote,                      // 메모1 — 합포 또는 단일 메모
         optionSummary,                 // 메모2 — 사이즈/컬러 옵션
         accSummary,                    // 메모3 — 악세서리
@@ -4409,6 +4527,7 @@ new Chart(document.getElementById('burndownChart'), {
           isPkg: accCount >= 5,
           memo: String(g(COL.memo)||'').trim(),
           item: String(g(COL.item)||'').trim(),
+          special: String(g(COL.special)||'').trim(),
         });
       }
 
@@ -5837,6 +5956,199 @@ document.addEventListener("DOMContentLoaded", function() {
   });
 
   window.__loadAccessoryTab = () => load(false);
+})();
+
+// ── 💰 자금 스케줄 캘린더 ──────────────────────────────
+(function() {
+  const FUND_KEY = 'dari_fund_v1';
+  const SETTLE_KEY = 'dari_fund_settle_v1';
+  let curY = 2026, curM = 5;
+
+  function load() { try { return JSON.parse(localStorage.getItem(FUND_KEY)) || {}; } catch { return {}; } }
+  function save(d) { localStorage.setItem(FUND_KEY, JSON.stringify(d)); }
+  function loadSettle() { try { return JSON.parse(localStorage.getItem(SETTLE_KEY)) || {}; } catch { return {}; } }
+  function saveSettle(d) { localStorage.setItem(SETTLE_KEY, JSON.stringify(d)); }
+  function dk(y,m,d) { return `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`; }
+
+  function getStart(y, m) {
+    const d = load();
+    const k = `start_${y}_${m}`;
+    if (d[k] !== undefined) return d[k];
+    if (y === 2026 && m === 5) return 80; // 8000만원 = 80백만원
+    // 이전 월 말잔 자동 이월
+    const pm = m === 1 ? 12 : m - 1;
+    const py = m === 1 ? y - 1 : y;
+    const ps = getStart(py, pm);
+    const lastD = new Date(py, pm, 0).getDate();
+    let bal = ps;
+    for (let i = 1; i <= lastD; i++) {
+      const dd = d[dk(py, pm, i)] || {};
+      bal += (parseFloat(dd.in) || 0) - (parseFloat(dd.out) || 0);
+    }
+    return bal;
+  }
+
+  function render() {
+    const data = load();
+    const startBal = getStart(curY, curM);
+
+    // 월 라벨
+    document.getElementById('fund-month-label').textContent = `${curY}년 ${curM}월`;
+    document.getElementById('fund-start-balance').value = startBal;
+
+    // 캘린더 그리드
+    const grid = document.getElementById('fund-grid');
+    grid.innerHTML = '';
+    const firstDay = new Date(curY, curM - 1, 1);
+    const lastDate = new Date(curY, curM, 0).getDate();
+    let startDow = (firstDay.getDay() + 6) % 7; // Mon=0
+
+    const today = new Date();
+    const isCurMonth = today.getFullYear() === curY && today.getMonth() + 1 === curM;
+
+    let runBal = startBal;
+
+    // 빈 셀 (앞)
+    for (let i = 0; i < startDow; i++) {
+      const e = document.createElement('div');
+      e.className = 'fund-day empty';
+      grid.appendChild(e);
+    }
+
+    for (let d = 1; d <= lastDate; d++) {
+      const key = dk(curY, curM, d);
+      const dd = data[key] || {};
+      const dow = (startDow + d - 1) % 7;
+      const isWknd = dow >= 5;
+      const isToday = isCurMonth && today.getDate() === d;
+      const inc = parseFloat(dd.in) || 0;
+      const out = parseFloat(dd.out) || 0;
+      runBal += inc - out;
+
+      const cell = document.createElement('div');
+      cell.className = 'fund-day' + (isToday ? ' today' : '');
+      cell.innerHTML = `
+        <div class="day-num${isWknd ? ' weekend' : ''}">${d}</div>
+        <div class="fund-row"><span class="fl in">+</span><input class="fund-input${inc ? ' has-val' : ''}" type="number" step="1" data-k="${key}" data-f="in" value="${inc || ''}" placeholder="입금"></div>
+        <div class="fund-row"><span class="fl out">−</span><input class="fund-input${out ? ' has-val' : ''}" type="number" step="1" data-k="${key}" data-f="out" value="${out || ''}" placeholder="지출"></div>
+        <input class="fund-memo${dd.memo ? ' has-val' : ''}" data-k="${key}" data-f="memo" value="${dd.memo || ''}" placeholder="메모">
+        <div class="day-bal${runBal < 0 ? ' neg' : ''}">${runBal}백만</div>`;
+      grid.appendChild(cell);
+    }
+
+    // 빈 셀 (뒤)
+    const total = startDow + lastDate;
+    for (let i = 0; i < (7 - total % 7) % 7; i++) {
+      const e = document.createElement('div');
+      e.className = 'fund-day empty';
+      grid.appendChild(e);
+    }
+
+    // KPI
+    let tIn = 0, tOut = 0;
+    for (let d = 1; d <= lastDate; d++) {
+      const dd = data[dk(curY, curM, d)] || {};
+      tIn += parseFloat(dd.in) || 0;
+      tOut += parseFloat(dd.out) || 0;
+    }
+    const endBal = startBal + tIn - tOut;
+    document.getElementById('fund-kpi-start').textContent = startBal + '백만';
+    document.getElementById('fund-kpi-in').textContent = '+' + tIn + '백만';
+    document.getElementById('fund-kpi-out').textContent = '−' + tOut + '백만';
+    const endEl = document.getElementById('fund-kpi-end');
+    endEl.textContent = endBal + '백만';
+    endEl.className = 'kpi-value ' + (endBal < 20 ? 'red' : endBal < 50 ? 'yellow' : 'green');
+
+    // 이벤트
+    grid.querySelectorAll('.fund-input, .fund-memo').forEach(inp => {
+      inp.addEventListener('change', () => {
+        const fd = load();
+        const k = inp.dataset.k, f = inp.dataset.f;
+        if (!fd[k]) fd[k] = {};
+        if (f === 'memo') {
+          fd[k][f] = inp.value;
+          if (!inp.value) delete fd[k][f];
+        } else {
+          const v = parseFloat(inp.value) || 0;
+          if (v) fd[k][f] = v; else delete fd[k][f];
+        }
+        if (fd[k] && Object.keys(fd[k]).length === 0) delete fd[k];
+        save(fd);
+        render();
+      });
+    });
+
+    // 정산 입금 예정 표
+    renderSettlement();
+  }
+
+  function renderSettlement() {
+    const sData = loadSettle();
+    const tbody = document.getElementById('fund-settle-body');
+    const mk = `${curY}-${String(curM).padStart(2,'0')}`;
+    // 채널 목록 (정산 탭 연동)
+    const channels = [
+      { ch: '카카오메이커스', note: '풀세트 · 수수료 25%' },
+      { ch: '네이버 스마트스토어', note: '수수료 4%' },
+      { ch: '카카오톡스토어', note: '톡딜 · 수수료 4%' },
+      { ch: '킥스타터', note: 'ACI 운임 별도' },
+      { ch: 'B2B (마야크루)', note: '직접 인도 · 무수수료' },
+    ];
+
+    tbody.innerHTML = channels.map(c => {
+      const sk = `${mk}_${c.ch}`;
+      const sd = sData[sk] || {};
+      const amt = sd.amount || '';
+      const date = sd.date || '';
+      const done = sd.done || false;
+      const memo = sd.memo || '';
+
+      return `<tr>
+        <td>${c.ch}</td>
+        <td class="num"><input class="fund-input" style="width:80px; text-align:right;" type="number" step="1" data-sk="${sk}" data-sf="amount" value="${amt}" placeholder="—"></td>
+        <td class="num"><input class="fund-input" style="width:100px; text-align:center;" type="text" data-sk="${sk}" data-sf="date" value="${date}" placeholder="MM/DD"></td>
+        <td class="num"><span class="status-badge ${done ? 'done' : 'pending'}" data-sk="${sk}" data-toggle="done">${done ? '✓ 입금완료' : '● 예정'}</span></td>
+        <td><input class="fund-memo" style="width:140px;" data-sk="${sk}" data-sf="memo" value="${memo}" placeholder="${c.note}"></td>
+      </tr>`;
+    }).join('');
+
+    // 정산 입금 이벤트
+    tbody.querySelectorAll('.fund-input, .fund-memo').forEach(inp => {
+      inp.addEventListener('change', () => {
+        const sd = loadSettle();
+        const sk = inp.dataset.sk, sf = inp.dataset.sf;
+        if (!sd[sk]) sd[sk] = {};
+        sd[sk][sf] = sf === 'amount' ? (parseFloat(inp.value) || 0) : inp.value;
+        saveSettle(sd);
+      });
+    });
+    tbody.querySelectorAll('.status-badge').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const sd = loadSettle();
+        const sk = btn.dataset.sk;
+        if (!sd[sk]) sd[sk] = {};
+        sd[sk].done = !sd[sk].done;
+        saveSettle(sd);
+        renderSettlement();
+      });
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('fund-prev').addEventListener('click', () => {
+      curM--; if (curM < 1) { curM = 12; curY--; } render();
+    });
+    document.getElementById('fund-next').addEventListener('click', () => {
+      curM++; if (curM > 12) { curM = 1; curY++; } render();
+    });
+    document.getElementById('fund-start-balance').addEventListener('change', e => {
+      const d = load();
+      d[`start_${curY}_${curM}`] = parseFloat(e.target.value) || 0;
+      save(d);
+      render();
+    });
+    render();
+  });
 })();
 
 </script>
