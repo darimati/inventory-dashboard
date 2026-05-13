@@ -958,7 +958,7 @@
   <div class="tab" onclick="showPage('gift', event)">증정 현황</div>
   <div class="tab" onclick="showPage('todo', event)">투두</div>
   <div class="tab" onclick="showPage('cs', event)">🎧 CS</div>
-  <div class="tab" onclick="showPage('fund', event)">💰 자금 스케줄</div>
+  <div class="tab" id="tab-fund" onclick="openFundTab(event)" style="display:none;">💰 자금 스케줄</div>
 </div>
 
 <!-- ===== PAGE 1: 전체 출고 ===== -->
@@ -5958,6 +5958,45 @@ document.addEventListener("DOMContentLoaded", function() {
   });
 
   window.__loadAccessoryTab = () => load(false);
+})();
+
+// ── 💰 자금 스케줄 접근 제어 ─────────────────────────────
+(function() {
+  const FUND_PIN_HASH = '286aee2ea4a5ba67539432dc5ea3865c3b204d3caaccb662995388d156a279cf';
+  const FUND_AUTH_KEY = 'dari_fund_auth';
+
+  async function sha256(msg) {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(msg));
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+  }
+
+  // URL에 ?admin 있으면 탭 표시
+  function checkAdminAccess() {
+    const params = new URLSearchParams(window.location.search);
+    if (params.has('admin')) {
+      const tab = document.getElementById('tab-fund');
+      if (tab) tab.style.display = '';
+    }
+  }
+
+  // PIN 게이트
+  window.openFundTab = async function(ev) {
+    if (sessionStorage.getItem(FUND_AUTH_KEY) === '1') {
+      showPage('fund', ev);
+      return;
+    }
+    const pin = prompt('자금 스케줄 접근 PIN을 입력하세요:');
+    if (!pin) return;
+    const hash = await sha256(pin);
+    if (hash === FUND_PIN_HASH) {
+      sessionStorage.setItem(FUND_AUTH_KEY, '1');
+      showPage('fund', ev);
+    } else {
+      alert('PIN이 틀렸습니다.');
+    }
+  };
+
+  document.addEventListener('DOMContentLoaded', checkAdminAccess);
 })();
 
 // ── 💰 자금 스케줄 캘린더 ──────────────────────────────
