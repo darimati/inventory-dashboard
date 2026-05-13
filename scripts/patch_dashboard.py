@@ -4,12 +4,11 @@ DARIMATI Inventory Dashboard — index.html 자동 patch
 시트 데이터를 집계하여 hardcoded JS 변수들을 갱신.
 
 사용법:
-  python3 patch_dashboard.py <SHEET_JSON> <INDEX_HTML> [INVENTORY_JSON]
+  python3 patch_dashboard.py <SHEET_JSON> <INDEX_HTML>
 
 표준입력:
-  - SHEET_JSON: gviz API 응답 (출고 시트)
+  - SHEET_JSON: gviz API 응답 (발주_취합양식 시트)
   - INDEX_HTML: dashboard index.html
-  - INVENTORY_JSON (optional): gviz API 응답 (5) 잔여재고 탭)
 
 출력:
   - INDEX_HTML 파일을 in-place 수정
@@ -25,7 +24,6 @@ if len(sys.argv) < 3:
 
 sheet_path = sys.argv[1]
 html_path  = sys.argv[2]
-inv_path   = sys.argv[3] if len(sys.argv) >= 4 else None
 
 # ── 1. 시트 파싱 ───────────────────────────
 raw = open(sheet_path).read()
@@ -59,6 +57,14 @@ ch_unit_by_month = defaultdict(lambda: defaultdict(int))
 total_sale = total_b2b = total_gift = 0
 size_color_sale = defaultdict(lambda: defaultdict(int))
 
+# ── 재고 자동차감: 기준점 실사 − 이후 출고 ──
+INV_BASE = {
+    'G': {'240': 93, '250': 59, '260': 90, '270': 61, '280': 33},
+    'B': {'240': 2,  '250': 25, '260': 43, '270': 44, '280': 31}
+}
+INV_BASE_DATE = (2026, 5, 13)  # 5/13 Jiun 실사 기준
+inv_deduct = {'G': defaultdict(int), 'B': defaultdict(int)}
+
 for r in rows:
     c = r['c']
     def g(i):
@@ -85,6 +91,13 @@ for r in rows:
     if qty_raw is None or qty_raw == '' or int(qty_raw or 0) == 0:
         continue
     qty = int(qty_raw)
+
+    # 재고 차감: 기준일 이후 모든 출고 (채널 무관)
+    if (y, mo, dy) > INV_BASE_DATE:
+        if '그레이' in color and size:
+            inv_deduct['G'][size] += qty
+        elif '베이지' in color and size:
+            inv_deduct['B'][size] += qty
 
     if ch == '샘플' or ch == '증정' or '지인' in memo:
         kind = 'gift'
@@ -446,53 +459,39 @@ patches.append((r"const maxCh = \d+;", f"const maxCh = {km};"))
 patches.append((r'(id="ch-makers-mo">)\d+', lambda m, v=mo_km: m.group(1) + str(v)))
 patches.append((r'(id="ch-b2b-mo">)\d+',    lambda m, v=mo_mc: m.group(1) + str(v)))
 
-# ── 잔여재고 탭 자동 반영 (GREY_REM/BEIGE_REM/SOLD/STOCK_AUDIT_DATE) ──
-if inv_path:
-    inv_raw = open(inv_path).read()
-    inv_m = re.search(r'setResponse\((.*)\)', inv_raw, re.DOTALL)
-    if inv_m:
-        inv_data = json.loads(inv_m.group(1))
-        inv_rows = inv_data['table']['rows']
-        # Parse: row labels = "GREY 잔여", "GREY 출고", "BEIGE 잔여", "BEIGE 출고"
-        inv_map = {}  # label -> [240, 250, 260, 270, 280]
-        for ir in inv_rows:
-            ic = ir['c']
-            if not ic or not ic[0] or not ic[0].get('v'):
-                continue
-            lbl = ic[0]['v'].strip()
-            vals = []
-            for ci in range(1, 6):  # cols B-F = 240-280
-                v = ic[ci]['v'] if ci < len(ic) and ic[ci] and ic[ci].get('v') is not None else 0
-                vals.append(int(v))
-            inv_map[lbl] = vals
+# ── 재고 자동차감 (기준점 실사 − 이후 출고 = 잔여) ──
+_sizes = ['240', '250', '260', '270', '280']
+gr = [max(0, INV_BASE['G'].get(s, 0) - inv_deduct['G'].get(s, 0)) for s in _sizes]
+br = [max(0, INV_BASE['B'].get(s, 0) - inv_deduct['B'].get(s, 0)) for s in _sizes]
+grey_rem_js = '{ ' + ', '.join(f'{s}: {v}' for s, v in zip(_sizes, gr)) + ' }'
+beige_rem_js = '{ ' + ', '.join(f'{s}: {v}' for s, v in zip(_sizes, br)) + ' }'
+audit_date = _DateTop.today().strftime('%Y-%m-%d')
 
-        sizes = ['240', '250', '260', '270', '280']
-        if 'GREY 잔여' in inv_map and 'BEIGE 잔여' in inv_map:
-            gr = inv_map['GREY 잔여']
-            br = inv_map['BEIGE 잔여']
-            grey_rem_js = '{ ' + ', '.join(f'{s}: {v}' for s, v in zip(sizes, gr)) + ' }'
-            beige_rem_js = '{ ' + ', '.join(f'{s}: {v}' for s, v in zip(sizes, br)) + ' }'
-            audit_date = _DateTop.today().strftime('%Y-%m-%d')
+patches.append((r"const GREY_REM\s*=\s*\{[^}]+\};",
+                f"const GREY_REM  = {grey_rem_js};"))
+patches.append((r"const BEIGE_REM\s*=\s*\{[^}]+\};",
+                f"const BEIGE_REM = {beige_rem_js};"))
+patches.append((r"const STOCK_AUDIT_DATE = '[^']+';",
+                f"const STOCK_AUDIT_DATE = '{audit_date}';"))
 
-            patches.append((r"const GREY_REM\s*=\s*\{[^}]+\};",
-                            f"const GREY_REM  = {grey_rem_js};"))
-            patches.append((r"const BEIGE_REM\s*=\s*\{[^}]+\};",
-                            f"const BEIGE_REM = {beige_rem_js};"))
-            patches.append((r"const STOCK_AUDIT_DATE = '[^']+';",
-                            f"const STOCK_AUDIT_DATE = '{audit_date}';"))
-            print(f"잔여재고: GREY {dict(zip(sizes,gr))} / BEIGE {dict(zip(sizes,br))}")
+# SOLD = 기준점까지 누적 출고 + 이후 출고
+gs_base = [INV_BASE['G'].get(s, 0) for s in _sizes]  # 기준점 잔여 (실사)
+bs_base = [INV_BASE['B'].get(s, 0) for s in _sizes]
+# 전체 출고 = 초기입고 - 현재잔여. SOLD는 SALE_BY_SIZE와 별도 (전체 출고)
+gs_sold = [ssale['G'].get(s, 0) + inv_deduct['G'].get(s, 0) for s in _sizes]
+bs_sold = [ssale['B'].get(s, 0) + inv_deduct['B'].get(s, 0) for s in _sizes]
+patches.append((
+    r"const GREY_SOLD\s*=\s*\[[^\]]+\]\.reduce\(\(a,b\)=>a\+b,0\);\s*//.*",
+    f"const GREY_SOLD  = [{','.join(str(v) for v in gs_sold)}].reduce((a,b)=>a+b,0);   // {sum(gs_sold)}"
+))
+patches.append((
+    r"const BEIGE_SOLD\s*=\s*\[[^\]]+\]\.reduce\(\(a,b\)=>a\+b,0\);\s*//.*",
+    f"const BEIGE_SOLD = [{','.join(str(v) for v in bs_sold)}].reduce((a,b)=>a+b,0);       // {sum(bs_sold)}"
+))
 
-        if 'GREY 출고' in inv_map and 'BEIGE 출고' in inv_map:
-            gs = inv_map['GREY 출고']
-            bs = inv_map['BEIGE 출고']
-            patches.append((
-                r"const GREY_SOLD\s*=\s*\[[^\]]+\]\.reduce\(\(a,b\)=>a\+b,0\);\s*//.*",
-                f"const GREY_SOLD  = [{','.join(str(v) for v in gs)}].reduce((a,b)=>a+b,0);   // {sum(gs)}"
-            ))
-            patches.append((
-                r"const BEIGE_SOLD\s*=\s*\[[^\]]+\]\.reduce\(\(a,b\)=>a\+b,0\);\s*//.*",
-                f"const BEIGE_SOLD = [{','.join(str(v) for v in bs)}].reduce((a,b)=>a+b,0);       // {sum(bs)}"
-            ))
+_ded_g = sum(inv_deduct['G'].values())
+_ded_b = sum(inv_deduct['B'].values())
+print(f"재고: GREY {dict(zip(_sizes,gr))}({sum(gr)}) / BEIGE {dict(zip(_sizes,br))}({sum(br)}) | 기준일 이후 차감 G:{_ded_g} B:{_ded_b}")
 
 # Apply (3-tuple = (pattern, repl, count); 2-tuple defaults count=1)
 applied = 0

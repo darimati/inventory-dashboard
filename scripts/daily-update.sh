@@ -25,8 +25,6 @@ CS_VAULT_DIR="${CS_VAULT_DIR:-$HOME/Desktop/09_클로드_개발/obsidian/vault/C
 SHEET_ID="${SHEET_ID:-1ibroQV42xuuvWg4P1kvaCw9RT_JxO9L-6lXVAgNjOhA}"
 SHEET_GID_OUT="${SHEET_GID_OUT:-890805647}"
 SHEET_URL="https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&gid=${SHEET_GID_OUT}"
-INV_SHEET_URL="https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=5)%20%EC%9E%94%EC%97%AC%EC%9E%AC%EA%B3%A0"
-INV_CACHE="$CACHE_DIR/inv-out.json"
 
 NOTIFY="${NOTIFY:-true}"
 AUTO_PUSH="${AUTO_PUSH:-true}"  # Phase 2 — 자동 commit + push
@@ -66,13 +64,6 @@ if ! curl -sf --max-time 30 -o "$SHEET_CACHE" "$SHEET_URL"; then
   exit 1
 fi
 
-# 잔여재고 탭 fetch (재고 자동 갱신용)
-log "Fetching 잔여재고 tab"
-if ! curl -sf --max-time 30 -o "$INV_CACHE" "$INV_SHEET_URL"; then
-  log "WARN · 잔여재고 fetch 실패 (출고 패치만 진행)"
-  INV_CACHE=""
-fi
-
 # ── 3.5 CS 케이스 집계 (옵시디언 CS/cases/ → cs-out.json) ──
 if [[ -f "$CS_AGGREGATOR" ]]; then
   if python3 "$CS_AGGREGATOR" --out "$CS_CACHE" 2>>"$LOG_FILE"; then
@@ -95,8 +86,6 @@ cat "$SHEET_CACHE" > "$hash_in"
 for f in "${OBSIDIAN_FILES[@]}"; do
   [[ -f "$f" ]] && cat "$f" >> "$hash_in"
 done
-# 잔여재고 변동도 hash에 포함
-[[ -n "$INV_CACHE" && -f "$INV_CACHE" ]] && cat "$INV_CACHE" >> "$hash_in"
 # CS 변동도 hash에 포함 — 케이스 추가/지침서 갱신 시 변동 감지
 [[ -f "$CS_CACHE" ]] && cat "$CS_CACHE" >> "$hash_in"
 [[ -d "$CS_VAULT_DIR" ]] && find "$CS_VAULT_DIR" -name "*.md" -exec cat {} \; >> "$hash_in" 2>/dev/null
@@ -120,10 +109,8 @@ git reset --hard origin/main --quiet 2>>"$LOG_FILE" || {
   exit 1
 }
 
-# ── 6. patch_dashboard.py 실행 (잔여재고 탭 포함) ─────────────
-INV_ARG=""
-[[ -n "$INV_CACHE" && -f "$INV_CACHE" ]] && INV_ARG="$INV_CACHE"
-PATCH_SUMMARY=$(python3 "$PATCHER" "$SHEET_CACHE" "$REPO_DIR/index.html" $INV_ARG 2>&1) || {
+# ── 6. patch_dashboard.py 실행 (발주_취합 → 출고+재고 자동차감) ─────────────
+PATCH_SUMMARY=$(python3 "$PATCHER" "$SHEET_CACHE" "$REPO_DIR/index.html" 2>&1) || {
   log "ERROR · patch_dashboard.py 실패: $PATCH_SUMMARY"
   notify "DARIMATI Dashboard" "Patch 실패 — 로그 확인"
   exit 1
