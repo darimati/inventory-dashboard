@@ -2685,8 +2685,8 @@ document.getElementById('updated-at').textContent = '업데이트: ' + new Date(
 }
 
 // ── 재고 현황 계산 ──
-// 신발 재고 — 5/13 실물 재고 (Jiun 실사) + 시트 자동 갱신 (잔여재고 탭 보정 필요)
-const GREY_REM  = { 240: 93, 250: 59, 260: 90, 270: 61, 280: 33 };
+// 신발 재고 — 5/13 실사 + Grey 240 입고 250개 반영 (Matt 5/13)
+const GREY_REM  = { 240: 343, 250: 59, 260: 90, 270: 61, 280: 33 };
 const BEIGE_REM = { 240: 2,  250: 25, 260: 43, 270: 44, 280: 31 };
 const STOCK_AUDIT_DATE = '2026-05-13';
 const SIZES = ['240','250','260','270','280'];
