@@ -24,6 +24,91 @@ const INVENTORY_GID = 583958144;    // 잔여재고 시트 (선택, 향후)
 
 const REAL_CHANNELS = ['킥스타터', '카카오메이커스', '네이버', '카카오톡스토어'];
 
+/**
+ * doPost(e) — 출고 콘솔에서 새 주문 받아 발주_취합양식 탭 하단에 행 추가
+ * payload (JSON): { token, orders: [{...order...}] }
+ * 보안: 매트가 직접 발급한 token으로 1차 인증 (단순 share secret)
+ */
+const POST_TOKEN = 'darimati-console-2026';  // 매트가 console fetch에 같이 보낼 토큰
+
+function doPost(e) {
+  try {
+    const body = JSON.parse(e.postData.contents || '{}');
+    if (body.token !== POST_TOKEN) {
+      return ContentService.createTextOutput(JSON.stringify({error: 'unauthorized'}))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    const orders = body.orders || [];
+    if (!orders.length) {
+      return ContentService.createTextOutput(JSON.stringify({error: 'no orders'}))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    const ss = SpreadsheetApp.openById(SHEET_ID);
+    const sheet = ss.getSheets().find(s => s.getSheetId() === OUTGOING_GID);
+    if (!sheet) throw new Error('outgoing sheet not found');
+
+    const today = new Date();
+    const dateStr = `${today.getMonth()+1}/${today.getDate()}`;
+    const appended = [];
+
+    orders.forEach(order => {
+      // category → 판매처(C) 매핑
+      let chC = '';
+      if (order.category === 'sale') {
+        const m = { makers: '카카오메이커스', naver: '네이버', talkdeal: '카카오톡스토어', kickstarter: '킥스타터' };
+        chC = m[order.channel] || order.channel || '';
+      } else if (order.category === 'sample') chC = '샘플';
+      else if (order.category === 'b2b') chC = '마야크루';
+      else if (order.category === 'direct') chC = '직접';
+
+      const delivD = (order.category === 'direct') ? '직접전달' : '한진택배';
+      const statusE = '1) 입력 완료';
+      const recipient = order.recipient || '';
+      const phone = order.phone || '';
+      const fullAddr = [order.zip, order.address, order.detail].filter(Boolean).join(' ');
+      const accSet = new Set(order.accessories || []);
+      const hasAcc = key => accSet.has(key) ? 1 : '';
+
+      // shoes 배열의 각 켤레마다 row 1개
+      const shoes = (order.shoes && order.shoes.length) ? order.shoes : [{size:'', color:''}];
+      shoes.forEach((sh, idx) => {
+        // 컬럼 A~Z (26개)
+        const row = new Array(26).fill('');
+        row[0] = dateStr;                            // A 포장
+        row[1] = '';                                 // B 송장-출고 (한진 후 자동 입력)
+        row[2] = chC;                                // C 판매처
+        row[3] = delivD;                             // D 배송방법
+        row[4] = statusE;                            // E 상태
+        row[5] = '';                                 // F 운송장
+        row[6] = recipient;                          // G 받는 분
+        row[7] = (idx === 0) ? (order.memo || (order.reason || '')) : '';  // H 메모 — 첫 row에만
+        row[8] = sh.color || '';                     // I 컬러
+        row[9] = sh.size ? `${sh.size}mm` : '';      // J 사이즈
+        row[10] = 1;                                 // K 신발
+        if (idx === 0) {
+          row[11] = hasAcc('lace');                  // L 깔창 (정정: 슈레이스가 L? 시트 헤더 재확인 필요)
+          row[12] = hasAcc('lace');                  // M 슈레이스
+          row[14] = hasAcc('sticker');               // O 스티커
+          row[15] = hasAcc('hat');                   // P 모자
+          row[18] = hasAcc('towel');                 // S 타월
+          row[19] = hasAcc('belt');                  // T 벨트
+          row[20] = hasAcc('flask');                 // U 플라스크
+          row[21] = hasAcc('shoebag');               // V 슈백
+          row[22] = recipient;                       // W 받으시는 분 (수령인과 동일하다고 가정)
+          row[23] = phone;                           // X 받으시는 분 전화
+        }
+        sheet.appendRow(row);
+        appended.push({ recipient, size: sh.size, color: sh.color });
+      });
+    });
+    return ContentService.createTextOutput(JSON.stringify({ok: true, appended}))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch (err) {
+    return ContentService.createTextOutput(JSON.stringify({error: err.message, stack: err.stack}))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
 function doGet(e) {
   try {
     const data = aggregateOutgoing();

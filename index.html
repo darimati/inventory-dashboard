@@ -2961,6 +2961,12 @@ const COGS = {
   package: 90614,  // 풀패키지 = 단품 + 모자 7,056 + 슈백 5,635 + 타올 3,949 + 벨트 5,340 + 반사스티커 179
 };
 
+// === 출고 콘솔 → 시트 동기 (Apps Script Web App) ===
+// 매트가 Apps Script Deploy 후 URL을 아래 상수에 넣어주세요
+// 빈 문자열이면 시트 동기 비활성 (콘솔만 동작, localStorage만 저장)
+const CONSOLE_WEBAPP_URL = '';
+const CONSOLE_WEBAPP_TOKEN = 'darimati-console-2026';  // apps-script-aggregator.gs와 동일 값
+
 // === 채널별 자동 감지 (시트 악세서리 컬럼으로 풀세트/단품 분류) ===
 // patch_dashboard.py가 매번 갱신 — 매트가 직접 수정하지 말 것
 const CHANNEL_BREAKDOWN_AUTO = {
@@ -3912,6 +3918,25 @@ new Chart(document.getElementById('burndownChart'), {
     $('#oc-qty').value = 1;
     renderShoeSlots(1);
     $('#oc-recipient').focus();
+
+    // 시트 sync — Apps Script Web App에 새 주문 전송 (URL 없으면 skip)
+    if (CONSOLE_WEBAPP_URL && CONSOLE_WEBAPP_URL.startsWith('https://')) {
+      fetch(CONSOLE_WEBAPP_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ token: CONSOLE_WEBAPP_TOKEN, orders: [order] }),
+      }).then(r => r.json()).then(d => {
+        if (d && d.ok) {
+          console.log('[Sheet sync] OK:', d.appended);
+          const t = document.getElementById('oc-toast');
+          if (t) { t.textContent = '✅ 시트에도 반영됨'; t.style.opacity = 1; setTimeout(() => { t.style.opacity = 0; }, 2000); }
+        } else {
+          console.warn('[Sheet sync] failed:', d);
+          const t = document.getElementById('oc-toast');
+          if (t) { t.textContent = '⚠️ 시트 동기 실패 — 콘솔만 저장됨'; t.style.opacity = 1; setTimeout(() => { t.style.opacity = 0; }, 3000); }
+        }
+      }).catch(e => console.warn('[Sheet sync] network:', e.message));
+    }
   }
 
   // ── 시트 오늘 대기열 → 누적 list 흡수 ─────────
