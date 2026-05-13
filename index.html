@@ -5692,13 +5692,14 @@ document.addEventListener("DOMContentLoaded", function() {
   // 출고 시트 컬럼 인덱스 (0-base)
   const COL_PACK = 0, COL_SHIP = 1, COL_STATUS = 4;
   const ACC_COL = { hat:15, shoebag:21, towel:18, belt:19, flask:20, lace:12, sticker:14 };
-  // STORAGE_KEY v2: 2026-05-05 Slack 봇 실사 반영 (모자/슈백/타올/벨트). 매트가 UI에서 입력하면 localStorage 덮어씀.
-  const STORAGE_KEY = 'dari_acc_initial_stock_v2';
+  // STORAGE_KEY v3: 2026-05-13 Jiun 실사 반영. 기준일 이후 출고만 차감.
+  const STORAGE_KEY = 'dari_acc_initial_stock_v3';
   const PHYSICAL_STOCK_DEFAULT = {
-    hat: 83, shoebag: 117, towel: 47, belt: 44,
-    flask: 0, lace: 0, sticker: 0  // 미실사 (다음 갱신 시 입력)
+    hat: 84, shoebag: 118, towel: 48, belt: 44,
+    flask: 1, lace: 1, sticker: 0
   };
-  const ACC_AUDIT_DATE = '2026-05-05';
+  const ACC_AUDIT_DATE = '2026-05-13';
+  const ACC_BASE_DATE = new Date(2026, 4, 13); // 5/13 기준 — 이후 출고만 차감
   const SHEET_ID = '1ibroQV42xuuvWg4P1kvaCw9RT_JxO9L-6lXVAgNjOhA';
   const SHEET_GID = '890805647';
   const URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&gid=${SHEET_GID}`;
@@ -5757,6 +5758,7 @@ document.addEventListener("DOMContentLoaded", function() {
       if (status !== '3) 출고 완료') continue;
       const d = parseGvizDate(g(COL_SHIP)) || parseGvizDate(g(COL_PACK));
       if (!d) continue;
+      if (d <= ACC_BASE_DATE) continue; // 기준일 이후 출고만 차감
       const dk = dKey(d);
       let any = 0;
       const day = byDate[dk] || ACC_KEYS.reduce((o,k)=>(o[k]=0,o), {});
