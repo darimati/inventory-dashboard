@@ -4,11 +4,12 @@ DARIMATI Inventory Dashboard — index.html 자동 patch
 시트 데이터를 집계하여 hardcoded JS 변수들을 갱신.
 
 사용법:
-  python3 patch_dashboard.py <SHEET_JSON> <INDEX_HTML>
+  python3 patch_dashboard.py <SHEET_JSON> <INDEX_HTML> [INVENTORY_JSON]
 
 표준입력:
   - SHEET_JSON: gviz API 응답 (출고 시트)
   - INDEX_HTML: dashboard index.html
+  - INVENTORY_JSON (optional): gviz API 응답 (5) 잔여재고 탭)
 
 출력:
   - INDEX_HTML 파일을 in-place 수정
@@ -16,13 +17,15 @@ DARIMATI Inventory Dashboard — index.html 자동 patch
 """
 import json, re, sys
 from collections import defaultdict
+from datetime import date as _DateTop
 
 if len(sys.argv) < 3:
-    print("Usage: patch_dashboard.py <SHEET_JSON> <INDEX_HTML>", file=sys.stderr)
+    print("Usage: patch_dashboard.py <SHEET_JSON> <INDEX_HTML> [INVENTORY_JSON]", file=sys.stderr)
     sys.exit(1)
 
 sheet_path = sys.argv[1]
 html_path  = sys.argv[2]
+inv_path   = sys.argv[3] if len(sys.argv) >= 4 else None
 
 # ── 1. 시트 파싱 ───────────────────────────
 raw = open(sheet_path).read()
@@ -442,6 +445,54 @@ patches.append((r"const maxCh = \d+;", f"const maxCh = {km};"))
 # ── 채널 매트릭스 비고 (커머스 허브 = 월별) ──
 patches.append((r'(id="ch-makers-mo">)\d+', lambda m, v=mo_km: m.group(1) + str(v)))
 patches.append((r'(id="ch-b2b-mo">)\d+',    lambda m, v=mo_mc: m.group(1) + str(v)))
+
+# ── 잔여재고 탭 자동 반영 (GREY_REM/BEIGE_REM/SOLD/STOCK_AUDIT_DATE) ──
+if inv_path:
+    inv_raw = open(inv_path).read()
+    inv_m = re.search(r'setResponse\((.*)\)', inv_raw, re.DOTALL)
+    if inv_m:
+        inv_data = json.loads(inv_m.group(1))
+        inv_rows = inv_data['table']['rows']
+        # Parse: row labels = "GREY 잔여", "GREY 출고", "BEIGE 잔여", "BEIGE 출고"
+        inv_map = {}  # label -> [240, 250, 260, 270, 280]
+        for ir in inv_rows:
+            ic = ir['c']
+            if not ic or not ic[0] or not ic[0].get('v'):
+                continue
+            lbl = ic[0]['v'].strip()
+            vals = []
+            for ci in range(1, 6):  # cols B-F = 240-280
+                v = ic[ci]['v'] if ci < len(ic) and ic[ci] and ic[ci].get('v') is not None else 0
+                vals.append(int(v))
+            inv_map[lbl] = vals
+
+        sizes = ['240', '250', '260', '270', '280']
+        if 'GREY 잔여' in inv_map and 'BEIGE 잔여' in inv_map:
+            gr = inv_map['GREY 잔여']
+            br = inv_map['BEIGE 잔여']
+            grey_rem_js = '{ ' + ', '.join(f'{s}: {v}' for s, v in zip(sizes, gr)) + ' }'
+            beige_rem_js = '{ ' + ', '.join(f'{s}: {v}' for s, v in zip(sizes, br)) + ' }'
+            audit_date = _DateTop.today().strftime('%Y-%m-%d')
+
+            patches.append((r"const GREY_REM\s*=\s*\{[^}]+\};",
+                            f"const GREY_REM  = {grey_rem_js};"))
+            patches.append((r"const BEIGE_REM\s*=\s*\{[^}]+\};",
+                            f"const BEIGE_REM = {beige_rem_js};"))
+            patches.append((r"const STOCK_AUDIT_DATE = '[^']+';",
+                            f"const STOCK_AUDIT_DATE = '{audit_date}';"))
+            print(f"잔여재고: GREY {dict(zip(sizes,gr))} / BEIGE {dict(zip(sizes,br))}")
+
+        if 'GREY 출고' in inv_map and 'BEIGE 출고' in inv_map:
+            gs = inv_map['GREY 출고']
+            bs = inv_map['BEIGE 출고']
+            patches.append((
+                r"const GREY_SOLD\s*=\s*\[[^\]]+\]\.reduce\(\(a,b\)=>a\+b,0\);\s*//.*",
+                f"const GREY_SOLD  = [{','.join(str(v) for v in gs)}].reduce((a,b)=>a+b,0);   // {sum(gs)}"
+            ))
+            patches.append((
+                r"const BEIGE_SOLD\s*=\s*\[[^\]]+\]\.reduce\(\(a,b\)=>a\+b,0\);\s*//.*",
+                f"const BEIGE_SOLD = [{','.join(str(v) for v in bs)}].reduce((a,b)=>a+b,0);       // {sum(bs)}"
+            ))
 
 # Apply (3-tuple = (pattern, repl, count); 2-tuple defaults count=1)
 applied = 0

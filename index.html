@@ -2685,10 +2685,10 @@ document.getElementById('updated-at').textContent = '업데이트: ' + new Date(
 }
 
 // ── 재고 현황 계산 ──
-// 신발 재고 — 2026-05-05 Slack 봇 실사 (반품 포함 최신, 출처: accessory-stock.md)
-const GREY_REM  = { 240: 6,  250: 63, 260: 93, 270: 65, 280: 34 };
-const BEIGE_REM = { 240: 2,  250: 26, 260: 42, 270: 44, 280: 31 };
-const STOCK_AUDIT_DATE = '2026-05-05';
+// 신발 재고 — Google Sheet '5) 잔여재고' 탭 자동 반영 (SSOT)
+const GREY_REM  = { 240: 2,  250: 70, 260: 119, 270: 62, 280: 34 };
+const BEIGE_REM = { 240: 7,  250: 26, 260: 44,  270: 43, 280: 32 };
+const STOCK_AUDIT_DATE = '2026-05-13';
 const SIZES = ['240','250','260','270','280'];
 
 const TOTAL_GREY  = Object.values(GREY_REM).reduce((a,b)=>a+b,0);   // 261
@@ -2707,8 +2707,8 @@ const TOTAL_REM   = TOTAL_GREY + TOTAL_BEIGE;                         // 406
 }
 
 // 초기 재고 (잔여 + 출고)
-const GREY_SOLD  = [32,23,22,25,9].reduce((a,b)=>a+b,0);   // 111
-const BEIGE_SOLD = [14,6,3,5,3].reduce((a,b)=>a+b,0);       // 31
+const GREY_SOLD  = [42,30,31,38,16].reduce((a,b)=>a+b,0);   // 157
+const BEIGE_SOLD = [17,10,4,5,4].reduce((a,b)=>a+b,0);       // 40
 const INITIAL = TOTAL_REM + GREY_SOLD + BEIGE_SOLD;          // 671
 
 const DAILY_SALE  = 11.4;  // 실판매 기준 (증정·B2B 제외)
