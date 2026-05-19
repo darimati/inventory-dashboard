@@ -1645,14 +1645,14 @@ IF(OR(C2="킥스타터",
     <div class="card">
       <div class="card-title">
         <span style="color:var(--grey)">●</span> GREY 사이즈별 잔여
-        <span style="color:#555; font-size:10px; margin-left:6px;">총 367켤레</span>
+        <span style="color:#555; font-size:10px; margin-left:6px;">총 <span id="grey-section-total">—</span>켤레</span>
       </div>
       <div id="grey-inv-bars" style="margin-top:14px;"></div>
     </div>
     <div class="card">
       <div class="card-title">
         <span style="color:var(--beige)">●</span> BEIGE 사이즈별 잔여
-        <span style="color:#555; font-size:10px; margin-left:6px;">총 162켤레</span>
+        <span style="color:#555; font-size:10px; margin-left:6px;">총 <span id="beige-section-total">—</span>켤레</span>
       </div>
       <div id="beige-inv-bars" style="margin-top:14px;"></div>
     </div>
@@ -1691,10 +1691,10 @@ IF(OR(C2="킥스타터",
       <div class="chart-wrap medium"><canvas id="colorRatioChart"></canvas></div>
       <div style="margin-top:14px; font-size:11px; line-height:2;">
         <div style="display:flex; justify-content:space-between; color:#aaa;">
-          <span><span style="color:var(--grey)">●</span> GREY</span><span><strong>367</strong> · 69%</span>
+          <span><span style="color:var(--grey)">●</span> GREY</span><span><strong id="ratio-grey-count">—</strong> · <span id="ratio-grey-pct">—</span>%</span>
         </div>
         <div style="display:flex; justify-content:space-between; color:#aaa;">
-          <span><span style="color:var(--beige)">●</span> BEIGE</span><span><strong>162</strong> · 31%</span>
+          <span><span style="color:var(--beige)">●</span> BEIGE</span><span><strong id="ratio-beige-count">—</strong> · <span id="ratio-beige-pct">—</span>%</span>
         </div>
       </div>
     </div>
@@ -2691,9 +2691,9 @@ const BEIGE_REM = { 240: 2,  250: 25, 260: 43, 270: 44, 280: 31 };
 const STOCK_AUDIT_DATE = '2026-05-13';
 const SIZES = ['240','250','260','270','280'];
 
-const TOTAL_GREY  = Object.values(GREY_REM).reduce((a,b)=>a+b,0);   // 261
+const TOTAL_GREY  = Object.values(GREY_REM).reduce((a,b)=>a+b,0);   // 586
 const TOTAL_BEIGE = Object.values(BEIGE_REM).reduce((a,b)=>a+b,0);  // 145
-const TOTAL_REM   = TOTAL_GREY + TOTAL_BEIGE;                         // 406
+const TOTAL_REM   = TOTAL_GREY + TOTAL_BEIGE;                         // 731
 
 // 재고 KPI 동적 채움 (실사 데이터 변경 시 한 곳만 수정 — GREY_REM/BEIGE_REM)
 {
@@ -2704,6 +2704,15 @@ const TOTAL_REM   = TOTAL_GREY + TOTAL_BEIGE;                         // 406
   setText('kpi-stock-audit', STOCK_AUDIT_DATE);
   setText('gift-stock-ref',  TOTAL_REM);
   setText('gift-rounds-est', Math.floor(TOTAL_REM / 10) + '회');
+  // 사이즈별 잔여 섹션 타이틀 + 컬러 비율 텍스트 (동적)
+  setText('grey-section-total',  TOTAL_GREY);
+  setText('beige-section-total', TOTAL_BEIGE);
+  setText('ratio-grey-count',  TOTAL_GREY);
+  setText('ratio-beige-count', TOTAL_BEIGE);
+  const greyPct  = Math.round(TOTAL_GREY / TOTAL_REM * 100);
+  const beigePct = 100 - greyPct;
+  setText('ratio-grey-pct',  greyPct);
+  setText('ratio-beige-pct', beigePct);
 }
 
 // 초기 재고 (잔여 + 출고)
