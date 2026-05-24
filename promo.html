@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>다리마티 · 프로모션 대시보드</title>
+
+  <!--
+  ================================================================
+  📋 구글 시트 설정 가이드
+  ================================================================
+
+  1. 구글 시트 컬럼 구성 (1행 = 헤더, 아래부터 데이터):
+     A: 별칭        (예: 세럼, 토너, 크림)
+     B: SKU         (예: SKU-001)
+     C: 유형        (라이브 / 기획전 / 어필리에이트 / 유튜브 / 기타)
+     D: 노출여부    (O 또는 X)
+     E: 프로모션명  (예: 05.25 네쇼라, 5월 브랜드위크)
+     F: 시작일      (예: 2025.05.25 또는 05.25)
+     G: 종료일      (예: 2025.05.31 — 상시이면 빈칸)
+     H: 정가        (숫자만, 예: 45000)
+     I: 할인가      (숫자만, 예: 38000)
+     J: 쿠폰적용가  (숫자만, 예: 31500 — 최종 소비자 결제가)
+     K: 수수료율(%) (숫자만, 예: 5.85)
+     L: 원가        (숫자만, 예: 12000)
+     M: 판매량      (종료 후 입력, 예: 312)
+     N: 매출        (종료 후 입력, 예: 10296000)
+     O: 비고        (자유 텍스트)
+
+  2. CSV 게시 방법:
+     파일 → 공유 → 웹에 게시 → 해당 시트 선택 → CSV → 링크 복사
+
+  3. 아래 CONFIG.SHEET_URL 에 복사한 링크를 붙여넣으세요.
+
+  ================================================================
+  -->
+
+  <style>
+    /* ── 리셋 & 베이스 ───────────────────────────────────── */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans KR', sans-serif;
+      background: #0f1117;
+      color: #e8e8e8;
+      font-size: 12px;
+      padding: 20px 24px;
+      min-height: 100vh;
+    }
+
+    /* ── 탑바 ────────────────────────────────────────────── */
+    .top-bar {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 18px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid #1e2130;
+    }
+    .top-title { font-size: 14px; font-weight: 700; color: #ccc; }
+    .top-right  { display: flex; align-items: center; gap: 12px; }
+    .top-date   { font-size: 11px; color: #555; }
+    .back-link {
+      font-size: 11px; color: #555; text-decoration: none;
+      border: 1px solid #2a2d3a; padding: 5px 12px; border-radius: 6px;
+      transition: all 0.15s;
+    }
+    .back-link:hover { border-color: #555; color: #ccc; }
+    .refresh-btn {
+      background: #1a1d27; border: 1px solid #2a2d3a;
+      color: #888; padding: 5px 12px; border-radius: 6px;
+      cursor: pointer; font-size: 11px; transition: all 0.15s;
+    }
+    .refresh-btn:hover { border-color: #555; color: #ccc; }
+
+    /* ── 섹션 공통 ───────────────────────────────────────── */
+    .section { margin-bottom: 18px; }
+    .section-label {
+      font-size: 10px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.08em;
+      color: #555; margin-bottom: 8px;
+    }
+    .divider { border: none; border-top: 1px solid #1e2130; margin: 16px 0; }
+
+    /* ── 상태 메시지 ─────────────────────────────────────── */
+    .msg-loading { color: #555; font-size: 12px; padding: 16px 0; }
+    .msg-error {
+      color: #FF6B6B; font-size: 12px;
+      padding: 12px 14px; border-radius: 6px;
+      background: rgba(255,82,82,0.07);
+      border: 1px solid rgba(255,82,82,0.2);
+      line-height: 1.6;
+    }
+    .msg-empty { color: #444; font-size: 11px; padding: 8px 0; }
+
+    /* ── 최저가 카드 ─────────────────────────────────────── */
+    .lowest-cards { display: flex; gap: 8px; flex-wrap: wrap; }
+    .lcard {
+      background: #1a1d27; border: 1.5px solid #2a2d3a;
+      border-radius: 8px; padding: 10px 14px;
+      flex: 1; min-width: 140px; max-width: 220px;
+      position: relative;
+    }
+    .lcard.warn { border-color: #FF5252; }
+    .lcard-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      position: absolute; top: 10px; right: 10px;
+    }
+    .lcard-dot.pulse { animation: blink 1.5s infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.25} }
+    .lcard-alias   { font-size: 11px; font-weight: 700; color: #ccc; }
+    .lcard-sku     { font-size: 9.5px; color: #555; margin-bottom: 6px; font-family: monospace; }
+    .lcard-channel { font-size: 10px; font-weight: 700; margin-bottom: 3px; }
+    .lcard-price   { font-size: 18px; font-weight: 800; }
+    .lcard-listprice { font-size: 10px; color: #555; text-decoration: line-through; margin-left: 4px; }
+    .lcard-margin  { font-size: 10px; color: #69B2FF; margin-top: 4px; }
+
+    /* ── 타임라인 칩 ─────────────────────────────────────── */
+    .tl-chips { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+    .tl-chip {
+      display: flex; align-items: center; gap: 5px;
+      background: #1a1d27; border: 1px solid #2a2d3a;
+      border-radius: 20px; padding: 4px 10px;
+    }
+    .tl-dot   { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+    .tl-text  { font-size: 10.5px; }
+    .tl-dday  { font-size: 9.5px; color: #555; margin-left: 2px; }
+
+    /* ── 메인 테이블 ─────────────────────────────────────── */
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; min-width: 1080px; }
+
+    /* 컬럼 그룹 배경 */
+    .cg-id      { background: rgba(99,102,241,0.07); }
+    .cg-promo   { background: rgba(16,185,129,0.05); }
+    .cg-period  { background: rgba(100,160,255,0.06); }
+    .cg-result  { background: rgba(239,68,68,0.07); }
+    .cg-scheme  { background: rgba(245,158,11,0.05); }
+    .cg-archive { background: rgba(150,100,255,0.07); }
+
+    thead tr.group-row th {
+      font-size: 9px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.05em; padding: 5px 8px 3px;
+      text-align: center; color: #555;
+      border-bottom: 1px solid #1e2130;
+    }
+    thead tr.col-row th {
+      font-size: 10px; font-weight: 600; color: #666;
+      padding: 5px 8px; text-align: left;
+      border-bottom: 1.5px solid #252836;
+      white-space: nowrap;
+    }
+    tbody tr { border-bottom: 1px solid #161920; transition: background 0.1s; }
+    tbody tr:hover { background: rgba(255,255,255,0.025); }
+    tbody tr.ended { opacity: 0.42; }
+    td { padding: 8px 8px; vertical-align: middle; }
+
+    /* 셀 스타일 */
+    .td-alias  { font-weight: 700; font-size: 12px; color: #e0e0e0; white-space: nowrap; }
+    .td-sku    { font-size: 10px; color: #555; font-family: monospace; }
+
+    .type-badge {
+      display: inline-block; font-size: 9.5px;
+      padding: 2px 7px; border-radius: 4px;
+      font-weight: 700; white-space: nowrap;
+    }
+    .type-live   { background: rgba(255,82,82,0.15);   color: #FF8A80; }
+    .type-event  { background: rgba(255,215,64,0.12);  color: #FFD740; }
+    .type-aff    { background: rgba(156,39,176,0.15);  color: #CE93D8; }
+    .type-yt     { background: rgba(255,87,34,0.15);   color: #FF8A65; }
+    .type-other  { background: rgba(120,120,120,0.15); color: #aaa;    }
+
+    .expose-o { color: #69F0AE; font-weight: 700; }
+    .expose-x { color: #444;   font-weight: 700; }
+    .promo-name { font-size: 11.5px; color: #ccc; white-space: nowrap; }
+
+    /* 기간 셀 */
+    .period-wrap  { display: flex; flex-direction: column; gap: 3px; min-width: 120px; }
+    .period-dates { font-size: 10.5px; color: #aaa; white-space: nowrap; }
+    .period-bar-bg   { background: #1e2130; border-radius: 3px; height: 4px; overflow: hidden; }
+    .period-bar-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
+    .period-label { font-size: 9.5px; margin-top: 1px; }
+
+    .td-finalprice { font-size: 14px; font-weight: 800; white-space: nowrap; }
+    .td-marginpct  { font-size: 13px; font-weight: 700; white-space: nowrap; }
+
+    /* 스킴 셀 */
+    .sv      { font-size: 10.5px; }
+    .sv-dim  { color: #3a3a3a; text-decoration: line-through; }
+    .sv-mid  { color: #777; }
+    .sv-lo   { color: #FF8A80; font-weight: 700; }
+    .sv-num  { color: #69B2FF; font-weight: 700; }
+    .sv-pct  { color: #69B2FF; }
+
+    .status-badge {
+      display: inline-block; font-size: 9px;
+      padding: 2px 7px; border-radius: 4px; font-weight: 700;
+    }
+    .s-active   { background: rgba(105,240,174,0.15); color: #69F0AE; }
+    .s-upcoming { background: rgba(120,120,140,0.25); color: #777; }
+    .s-end      { background: rgba(255,255,255,0.05); color: #444; }
+
+    .arc-val   { font-size: 12px; font-weight: 600; white-space: nowrap; }
+    .arc-sub   { font-size: 9.5px; color: #555; margin-top: 1px; }
+    .arc-empty { color: #333; font-size: 11px; }
+
+    .table-note { font-size: 10px; color: #333; margin-top: 8px; padding: 4px 8px; line-height: 1.7; }
+
+    /* ── 셋업 배너 (URL 미설정 시 표시) ─────────────────── */
+    .setup-banner {
+      background: rgba(255,215,64,0.08); border: 1px solid rgba(255,215,64,0.25);
+      border-radius: 8px; padding: 14px 18px; margin-bottom: 18px;
+      font-size: 11.5px; color: #FFD740; line-height: 1.8;
+    }
+    .setup-banner strong { font-size: 13px; display: block; margin-bottom: 6px; }
+    .setup-banner code {
+      background: rgba(0,0,0,0.3); padding: 1px 6px; border-radius: 3px;
+      font-family: monospace; font-size: 11px; color: #aaa;
+    }
+  </style>
+</head>
+<body>
+
+<div id="app">
+  <div class="top-bar">
+    <div class="top-title" id="pageTitle">— · 프로모션 대시보드</div>
+    <div class="top-right">
+      <a class="back-link" href="index.html">← 출고 현황</a>
+      <span class="top-date" id="lastUpdated"></span>
+      <button class="refresh-btn" onclick="loadData()">↻ 새로고침</button>
+    </div>
+  </div>
+
+  <div id="setupBanner" class="setup-banner" style="display:none">
+    <strong>⚠️ 구글 시트 연결 필요</strong>
+    아래 파일 상단의 <code>CONFIG.SHEET_URL</code> 값을 구글 시트 CSV 게시 링크로 교체하세요.<br>
+    구글 시트 → 파일 → 공유 → 웹에 게시 → 해당 시트 → CSV → 링크 복사
+  </div>
+
+  <!-- 최저가 카드 -->
+  <div class="section">
+    <div class="section-label">📍 상품별 현재 최저가 채널</div>
+    <div class="lowest-cards" id="lowestCards">
+      <span class="msg-loading">로딩 중...</span>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- 타임라인 칩 -->
+  <div class="section">
+    <div class="section-label">🗓 진행중 · 예정 프로모션</div>
+    <div class="tl-chips" id="timelineChips">
+      <span class="msg-loading">로딩 중...</span>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- 메인 테이블 -->
+  <div class="section">
+    <div class="section-label">📋 전체 프로모션 · 캠페인 현황</div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr class="group-row">
+            <th colspan="2" class="cg-id">식별</th>
+            <th colspan="3" class="cg-promo">프로모션 정보</th>
+            <th colspan="1" class="cg-period">기간</th>
+            <th colspan="2" class="cg-result">핵심 지표</th>
+            <th colspan="5" class="cg-scheme">가격 스킴</th>
+            <th colspan="3" class="cg-archive">아카이브 · 성과</th>
+          </tr>
+          <tr class="col-row">
+            <th class="cg-id">별칭</th>
+            <th class="cg-id">SKU</th>
+            <th class="cg-promo">유형</th>
+            <th class="cg-promo">노출</th>
+            <th class="cg-promo">프로모션명</th>
+            <th class="cg-period">기간 · 진행률</th>
+            <th class="cg-result">최종 혜택가</th>
+            <th class="cg-result">마진율</th>
+            <th class="cg-scheme">정가</th>
+            <th class="cg-scheme">할인가</th>
+            <th class="cg-scheme">쿠폰적용가</th>
+            <th class="cg-scheme">우리 마진</th>
+            <th class="cg-scheme">마진율</th>
+            <th class="cg-archive">상태</th>
+            <th class="cg-archive">판매량</th>
+            <th class="cg-archive">매출</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody">
+          <tr><td colspan="16" class="msg-loading" style="padding:20px 8px">로딩 중...</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="table-note">
+      * 최종 혜택가 = 쿠폰 포함 소비자 실결제가 &nbsp;·&nbsp;
+      정산금액 = 쿠폰적용가 × (1 − 수수료율%) &nbsp;·&nbsp;
+      우리 마진 = 정산금액 − 원가 &nbsp;·&nbsp;
+      마진율 = 우리 마진 ÷ 정산금액
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script>
+
+// ================================================================
+// ⚙️  CONFIG — 여기만 수정하세요
+// ================================================================
+const CONFIG = {
+
+  // 구글 시트 CSV 게시 URL (구글 시트 > 파일 > 공유 > 웹에 게시 > CSV)
+  SHEET_URL: 'YOUR_GOOGLE_SHEETS_CSV_URL_HERE',
+
+  // 브랜드명 (페이지 제목에 표시)
+  BRAND_NAME: '다리마티',
+
+  // 기본 수수료율 (%) — 시트에 값이 없을 때 사용
+  // 수수료율 확정 후 수정하세요
+  DEFAULT_COMM_RATE: 5.85,
+
+  // 구글 시트 1행 헤더와 정확히 일치해야 합니다
+  COL: {
+    alias:      '별칭',
+    sku:        'SKU',
+    type:       '유형',
+    exposed:    '노출여부',
+    promoName:  '프로모션명',
+    startDate:  '시작일',
+    endDate:    '종료일',
+    listPrice:  '정가',
+    salePrice:  '할인가',
+    finalPrice: '쿠폰적용가',
+    commRate:   '수수료율(%)',
+    cogs:       '원가',
+    salesQty:   '판매량',
+    revenue:    '매출',
+    notes:      '비고',
+  },
+};
+// ================================================================
+
+
+// ── 유틸 함수 ────────────────────────────────────────────────────
+
+function parseDate(str) {
+  if (!str) return null;
+  const s = str.toString().trim();
+  if (!s || s === '상시' || s === '-' || s === '—') return null;
+
+  // YYYY.MM.DD 또는 YYYY-MM-DD
+  const fullMatch = s.match(/^(\d{4})[.\-](\d{1,2})[.\-](\d{1,2})$/);
+  if (fullMatch) return new Date(+fullMatch[1], +fullMatch[2] - 1, +fullMatch[3]);
+
+  // MM.DD (올해 기준)
+  const shortMatch = s.match(/^(\d{1,2})\.(\d{2})$/);
+  if (shortMatch) {
+    const now = new Date();
+    const dt  = new Date(now.getFullYear(), +shortMatch[1] - 1, +shortMatch[2]);
+    // 6개월 이상 과거면 내년으로 처리
+    if (now - dt > 180 * 86400000) dt.setFullYear(dt.getFullYear() + 1);
+    return dt;
+  }
+
+  const d = new Date(s);
+  return isNaN(d.getTime()) ? null : d;
+}
+
+function parseNum(v) {
+  if (v === null || v === undefined || v === '') return 0;
+  return Number(String(v).replace(/[^\d.]/g, '')) || 0;
+}
+
+function fmtDate(d) {
+  if (!d) return null;
+  return `${d.getMonth() + 1}/${d.getDate()}`;
+}
+
+function fmtWon(n) {
+  return n ? n.toLocaleString('ko-KR') + '원' : '—';
+}
+
+function fmtPct(r) {
+  return (isFinite(r) && r !== 0) ? (r * 100).toFixed(1) + '%' : '—';
+}
+
+function today() {
+  const d = new Date(); d.setHours(0, 0, 0, 0); return d;
+}
+
+function getStatus(start, end) {
+  const t = today();
+  if (end && end < t) return '종료';
+  if (start && start > t) return '예정';
+  return '진행중';
+}
+
+function getProgress(start, end) {
+  if (!start) return -1; // 상시
+  const t = today();
+  if (!end) return 50;   // 종료일 없는 진행중 = 50% (상시)
+  if (t < start) return 0;
+  if (t > end)   return 100;
+  const total = end - start;
+  return total > 0 ? Math.round(((t - start) / total) * 100) : 100;
+}
+
+function getDdayLabel(start, end, status) {
+  const t = today();
+  if (status === '종료') return '종료';
+  if (status === '예정' && start) {
+    const d = Math.round((start - t) / 86400000);
+    return d === 0 ? 'D-day' : `예정 D-${d}`;
+  }
+  if (!end) return '상시 운영';
+  const d = Math.round((end - t) / 86400000);
+  if (d < 0)  return '종료';
+  if (d === 0) return '오늘 마감';
+  return `D-${d}`;
+}
+
+function getTypeClass(type) {
+  if (!type) return 'type-other';
+  const t = type.trim();
+  if (['라이브', '쇼핑라이브', '네쇼라'].some(k => t.includes(k))) return 'type-live';
+  if (['기획전', '행사', '브랜드데이', '브랜드위크'].some(k => t.includes(k))) return 'type-event';
+  if (['어필리에이트', '어필'].some(k => t.includes(k)))  return 'type-aff';
+  if (['유튜브', 'YT', 'youtube'].some(k => t.toLowerCase().includes(k.toLowerCase()))) return 'type-yt';
+  return 'type-other';
+}
+
+function getTypeColor(type) {
+  return { 'type-live': '#FF5252', 'type-event': '#FFD740', 'type-aff': '#CE93D8', 'type-yt': '#FF8A65', 'type-other': '#888' }[getTypeClass(type)] || '#888';
+}
+
+
+// ── 데이터 처리 ──────────────────────────────────────────────────
+
+function processRow(raw) {
+  const C   = CONFIG.COL;
+  const get = (k) => (raw[C[k]] !== undefined ? raw[C[k]] : '').toString().trim();
+
+  const start  = parseDate(get('startDate'));
+  const end    = parseDate(get('endDate'));
+  const status = getStatus(start, end);
+  const prog   = getProgress(start, end);
+
+  const listPrice  = parseNum(get('listPrice'));
+  const salePrice  = parseNum(get('salePrice'));
+  const finalPrice = parseNum(get('finalPrice'));
+  const commRateRaw = parseNum(get('commRate'));
+  const commRate   = (commRateRaw || CONFIG.DEFAULT_COMM_RATE) / 100;
+  const cogs       = parseNum(get('cogs'));
+  const salesQty   = parseNum(get('salesQty'));
+  const revenue    = parseNum(get('revenue'));
+
+  // 정산금액 = 쿠폰적용가 × (1 - 수수료율)
+  const settle     = finalPrice * (1 - commRate);
+  const margin     = settle > 0 ? settle - cogs : 0;
+  const marginRate = settle > 0 ? margin / settle : 0;
+
+  return {
+    alias: get('alias'), sku: get('sku'),
+    type: get('type'), exposed: get('exposed').toUpperCase(),
+    promoName: get('promoName'),
+    start, end, status, prog,
+    listPrice, salePrice, finalPrice,
+    commRate, cogs, salesQty, revenue,
+    settle, margin, marginRate,
+    notes: get('notes'),
+  };
+}
+
+
+// ── 렌더링 ───────────────────────────────────────────────────────
+
+function renderLowestCards(rows) {
+  const active = rows.filter(r => r.status === '진행중' && r.finalPrice > 0);
+  const el = document.getElementById('lowestCards');
+
+  if (active.length === 0) {
+    el.innerHTML = '<span class="msg-empty">진행중인 프로모션이 없습니다</span>';
+    return;
+  }
+
+  // 상품별 그룹핑
+  const byAlias = active.reduce((acc, r) => {
+    if (!acc[r.alias]) acc[r.alias] = [];
+    acc[r.alias].push(r);
+    return acc;
+  }, {});
+
+  el.innerHTML = Object.entries(byAlias).map(([alias, promos]) => {
+    const lowest    = promos.reduce((a, b) => a.finalPrice < b.finalPrice ? a : b);
+    const isWarning = promos.length > 1 || lowest.finalPrice < (lowest.listPrice * 0.85);
+    const color     = isWarning ? '#FF5252' : '#69F0AE';
+    const arrow     = isWarning ? '⬇ 최저 · ' : '✓ ';
+
+    return `<div class="lcard${isWarning ? ' warn' : ''}">
+      <div class="lcard-dot${isWarning ? ' pulse' : ''}" style="background:${color}"></div>
+      <div class="lcard-alias">${alias}</div>
+      <div class="lcard-sku">${lowest.sku}</div>
+      <div class="lcard-channel" style="color:${color}">${arrow}${lowest.promoName}</div>
+      <div>
+        <span class="lcard-price" style="color:${color}">${lowest.finalPrice.toLocaleString('ko-KR')}원</span>
+        ${lowest.listPrice ? `<span class="lcard-listprice">${lowest.listPrice.toLocaleString('ko-KR')}원</span>` : ''}
+      </div>
+      <div class="lcard-margin">마진 ${fmtPct(lowest.marginRate)} · 정산 ${fmtWon(Math.round(lowest.settle))}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderTimeline(rows) {
+  const visible = rows.filter(r => r.status !== '종료');
+  const el = document.getElementById('timelineChips');
+
+  if (visible.length === 0) {
+    el.innerHTML = '<span class="msg-empty">진행중이거나 예정된 프로모션이 없습니다</span>';
+    return;
+  }
+
+  // 진행중 먼저, 예정은 D-day 순
+  const sorted = [...visible].sort((a, b) => {
+    if (a.status !== b.status) return a.status === '진행중' ? -1 : 1;
+    return (a.start || new Date(0)) - (b.start || new Date(0));
+  });
+
+  el.innerHTML = sorted.map(r => {
+    const color    = getTypeColor(r.type);
+    const ddayText = getDdayLabel(r.start, r.end, r.status);
+    return `<div class="tl-chip">
+      <div class="tl-dot" style="background:${color}"></div>
+      <div class="tl-text">${r.promoName}</div>
+      <div class="tl-dday">${ddayText}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderTable(rows) {
+  const statusOrder = { '진행중': 0, '예정': 1, '종료': 2 };
+  const sorted = [...rows].sort((a, b) =>
+    (statusOrder[a.status] ?? 9) - (statusOrder[b.status] ?? 9)
+  );
+
+  const tbody = document.getElementById('tableBody');
+  if (sorted.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="16" class="msg-empty" style="padding:20px 8px">시트에 데이터가 없습니다</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = sorted.map(r => {
+    const ended = r.status === '종료';
+
+    // 기간 셀
+    const dateStr = (() => {
+      if (!r.start && !r.end) return '상시';
+      return `${fmtDate(r.start) || '?'} ~ ${r.end ? fmtDate(r.end) : '상시'}`;
+    })();
+    const prog       = r.prog < 0 ? 50 : r.prog;
+    const barColor   = ended ? '#2a2a2a' : r.status === '예정' ? '#444' : '#69F0AE';
+    const labelColor = ended ? '#3a3a3a' : r.status === '예정' ? '#666' : '#69F0AE';
+    const ddayLabel  = getDdayLabel(r.start, r.end, r.status);
+
+    // 최종가 색상
+    const fpColor = !r.finalPrice ? '#444' : (r.finalPrice < (r.listPrice || Infinity) * 0.8 ? '#FF8A80' : '#bbb');
+
+    // 마진율 색상
+    const mrColor = !r.marginRate ? '#444' : '#69B2FF';
+
+    // 상태 뱃지
+    const statusBadge = {
+      '진행중': '<span class="status-badge s-active">진행중</span>',
+      '예정':   '<span class="status-badge s-upcoming">예정</span>',
+      '종료':   '<span class="status-badge s-end">종료</span>',
+    }[r.status] || '';
+
+    // 노출 여부
+    const exposeHtml = r.exposed === 'O' ? '<span class="expose-o">O</span>' : '<span class="expose-x">X</span>';
+
+    // 스킴 값
+    const fpLabel = r.finalPrice ? r.finalPrice.toLocaleString('ko-KR') : '—';
+    const spLabel = r.salePrice  ? r.salePrice.toLocaleString('ko-KR')  : '—';
+    const lpLabel = r.listPrice  ? r.listPrice.toLocaleString('ko-KR')  : '—';
+
+    return `<tr class="${ended ? 'ended' : ''}">
+      <td class="cg-id"><div class="td-alias">${r.alias || '—'}</div></td>
+      <td class="cg-id"><div class="td-sku">${r.sku || '—'}</div></td>
+      <td class="cg-promo"><span class="type-badge ${getTypeClass(r.type)}">${r.type || '—'}</span></td>
+      <td class="cg-promo">${exposeHtml}</td>
+      <td class="cg-promo"><div class="promo-name">${r.promoName || '—'}</div></td>
+      <td class="cg-period">
+        <div class="period-wrap">
+          <div class="period-dates">${dateStr}</div>
+          <div class="period-bar-bg">
+            <div class="period-bar-fill" style="width:${prog}%;background:${barColor}"></div>
+          </div>
+          <div class="period-label" style="color:${labelColor}">${ddayLabel}</div>
+        </div>
+      </td>
+      <td class="cg-result"><div class="td-finalprice" style="color:${fpColor}">${r.finalPrice ? r.finalPrice.toLocaleString('ko-KR') + '원' : '—'}</div></td>
+      <td class="cg-result"><div class="td-marginpct" style="color:${mrColor}">${fmtPct(r.marginRate)}</div></td>
+      <td class="cg-scheme"><span class="sv sv-dim">${lpLabel}</span></td>
+      <td class="cg-scheme"><span class="sv sv-mid">${spLabel}</span></td>
+      <td class="cg-scheme"><span class="sv sv-lo">${fpLabel}</span></td>
+      <td class="cg-scheme"><span class="sv sv-num">${r.margin ? Math.round(r.margin).toLocaleString('ko-KR') + '원' : '—'}</span></td>
+      <td class="cg-scheme"><span class="sv sv-pct">${fmtPct(r.marginRate)}</span></td>
+      <td class="cg-archive">${statusBadge}</td>
+      <td class="cg-archive">
+        ${r.salesQty
+          ? `<div class="arc-val">${r.salesQty.toLocaleString('ko-KR')}개</div>`
+          : `<div class="arc-empty">—</div>`}
+      </td>
+      <td class="cg-archive">
+        ${r.revenue
+          ? `<div class="arc-val">${r.revenue.toLocaleString('ko-KR')}원</div>`
+          : `<div class="arc-empty">—</div>`}
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+
+// ── 메인 로더 ────────────────────────────────────────────────────
+
+function loadData() {
+  const updated = document.getElementById('lastUpdated');
+  updated.textContent = '로딩 중...';
+
+  if (CONFIG.SHEET_URL === 'YOUR_GOOGLE_SHEETS_CSV_URL_HERE') {
+    document.getElementById('setupBanner').style.display = 'block';
+    updated.textContent = 'URL 미설정';
+    document.getElementById('lowestCards').innerHTML = '<span class="msg-empty">CONFIG.SHEET_URL을 설정하세요</span>';
+    document.getElementById('timelineChips').innerHTML = '';
+    document.getElementById('tableBody').innerHTML = '<tr><td colspan="16" class="msg-empty" style="padding:20px 8px">CONFIG.SHEET_URL을 설정하세요</td></tr>';
+    return;
+  }
+
+  Papa.parse(CONFIG.SHEET_URL, {
+    download: true,
+    header: true,
+    skipEmptyLines: true,
+    complete: ({ data, errors }) => {
+      if (errors.length) console.warn('[CSV] parse warnings:', errors);
+
+      const rows = data
+        .filter(r => Object.values(r).some(v => v && String(v).trim()))
+        .map(processRow)
+        .filter(r => r.alias || r.promoName); // 빈 행 제외
+
+      renderLowestCards(rows);
+      renderTimeline(rows);
+      renderTable(rows);
+
+      const now = new Date();
+      updated.textContent = `업데이트: ${now.getMonth()+1}/${now.getDate()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+    },
+    error: (err) => {
+      updated.textContent = '로드 실패';
+      document.getElementById('lowestCards').innerHTML =
+        `<div class="msg-error">⚠️ 데이터를 불러오지 못했습니다.<br>
+         SHEET_URL이 올바른지, 구글 시트가 웹에 게시되었는지 확인하세요.<br>
+         <small style="color:#888">${err.message || ''}</small></div>`;
+    },
+  });
+}
+
+// ── 초기화 ───────────────────────────────────────────────────────
+document.getElementById('pageTitle').textContent = CONFIG.BRAND_NAME + ' · 프로모션 대시보드';
+loadData();
+
+</script>
+</body>
+</html>
