@@ -267,6 +267,7 @@
             <th colspan="2" class="cg-result">핵심 지표</th>
             <th colspan="5" class="cg-scheme">가격 스킴</th>
             <th colspan="3" class="cg-archive">아카이브 · 성과</th>
+            <th colspan="1" class="cg-id">링크</th>
           </tr>
           <tr class="col-row">
             <th class="cg-id">별칭</th>
@@ -285,10 +286,11 @@
             <th class="cg-archive">상태</th>
             <th class="cg-archive">판매량</th>
             <th class="cg-archive">매출</th>
+            <th class="cg-id">링크</th>
           </tr>
         </thead>
         <tbody id="tableBody">
-          <tr><td colspan="16" class="msg-loading" style="padding:20px 8px">로딩 중...</td></tr>
+          <tr><td colspan="17" class="msg-loading" style="padding:20px 8px">로딩 중...</td></tr>
         </tbody>
       </table>
     </div>
@@ -336,6 +338,7 @@ const CONFIG = {
     salesQty:   '판매량',
     revenue:    '매출',
     notes:      '비고',
+    link:       '링크',
   },
 };
 // ================================================================
@@ -468,6 +471,7 @@ function processRow(raw) {
     commRate, cogs, salesQty, revenue,
     settle, margin, marginRate,
     notes: get('notes'),
+    link: get('link'),
   };
 }
 
@@ -544,7 +548,7 @@ function renderTable(rows) {
 
   const tbody = document.getElementById('tableBody');
   if (sorted.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="16" class="msg-empty" style="padding:20px 8px">시트에 데이터가 없습니다</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="17" class="msg-empty" style="padding:20px 8px">시트에 데이터가 없습니다</td></tr>';
     return;
   }
 
@@ -615,6 +619,7 @@ function renderTable(rows) {
           ? `<div class="arc-val">${r.revenue.toLocaleString('ko-KR')}원</div>`
           : `<div class="arc-empty">—</div>`}
       </td>
+      <td class="cg-id">${r.link ? `<a href="${r.link}" target="_blank" style="color:#69B2FF;text-decoration:none;font-size:10px;">링크 ↗</a>` : '<span class="arc-empty">—</span>'}</td>
     </tr>`;
   }).join('');
 }
@@ -631,7 +636,7 @@ function loadData() {
     updated.textContent = 'URL 미설정';
     document.getElementById('lowestCards').innerHTML = '<span class="msg-empty">CONFIG.SHEET_URL을 설정하세요</span>';
     document.getElementById('timelineChips').innerHTML = '';
-    document.getElementById('tableBody').innerHTML = '<tr><td colspan="16" class="msg-empty" style="padding:20px 8px">CONFIG.SHEET_URL을 설정하세요</td></tr>';
+    document.getElementById('tableBody').innerHTML = '<tr><td colspan="17" class="msg-empty" style="padding:20px 8px">CONFIG.SHEET_URL을 설정하세요</td></tr>';
     return;
   }
 
