@@ -293,56 +293,49 @@ patches.append((
     0
 ))
 
-# 주별
-def wk(label):
+# ── 주별 동적 계산 (W1=런칭일, W2=첫 정규주, W3+=캘린더 주 단위) ──
+from datetime import timedelta as _Td2
+_W3_START = _Date(2026, 4, 27)  # W3 시작 월요일
+
+def assign_week(label):
     m, d = map(int, label.split('/'))
-    if m == 4 and d == 17: return 0
-    if m == 4 and 20 <= d <= 24: return 1
-    return 2
-ws = [0,0,0]; wb = [0,0,0]; wd = [0,0,0]
+    dt = _Date(2026, m, d)
+    if dt == _Date(2026, 4, 17): return 0   # W1
+    if _Date(2026, 4, 20) <= dt <= _Date(2026, 4, 24): return 1  # W2
+    return max(2, (dt - _W3_START).days // 7 + 2)
+
+_max_wk = max(assign_week(d) for d in dates) if dates else 2
+_nw = _max_wk + 1
+
+ws = [0]*_nw; wb = [0]*_nw; wd = [0]*_nw
 for i, lab in enumerate(dates):
-    w = wk(lab)
+    w = assign_week(lab)
     ws[w] += sale[i]; wb[w] += b2b[i]
     if (sale[i]+b2b[i]+gift[i]) > 0: wd[w] += 1
-wr = [round(ws[i]/wd[i],1) if wd[i]>0 else 0 for i in range(3)]
+wr = [round(ws[i]/wd[i],1) if wd[i]>0 else 0 for i in range(_nw)]
 
+# 주별 라벨 생성
+_week_labels = ['W1  (4/17)', 'W2  (4/20~24)']
+_today_wk = _Date.today()
+for wi in range(2, _nw):
+    mon = _W3_START + _Td2(days=(wi-2)*7)
+    fri = mon + _Td2(days=4)
+    rng = f"{mon.month}/{mon.day}~{fri.month}/{fri.day}"
+    is_current = mon <= _today_wk <= fri + _Td2(days=2)
+    _week_labels.append(f"W{wi+1}  ({rng}{', 진행중' if is_current else ''})")
+
+patches.append((r"const weekLabels = \[[^\]]+\];",
+                f"const weekLabels = [{','.join(repr(l) for l in _week_labels)}];"))
 patches.append((r"const weekSale = \[[\d, ]+\];", f"const weekSale = {js(ws)};"))
 patches.append((r"const weekB2B  = \[[\d, ]+\];", f"const weekB2B  = {js(wb)};"))
 patches.append((r"const weekDays = \[[\d, ]+\];", f"const weekDays = {js(wd)};"))
 
-# 모멘텀 W1/W2/W3 켤레
-for label, val in [('W1 · 4/17', ws[0]), ('W2 · 4/20~24', ws[1]), (r'W3 · 4/27~ \(진행중\)', ws[2])]:
-    pat = rf'({label}[\s\S]{{0,200}}?<div style="font-size:18px; font-weight:700;">)\d+(<span)'
-    patches.append((pat, lambda m, v=val: m.group(1) + str(v) + m.group(2)))
+# (모멘텀 사이드바는 JS 동적 렌더링으로 전환 — HTML 패치 불필요)
 
-# 모멘텀 일평균
-patches.append((r'(W1 · 4/17[\s\S]*?<div style="color:#aaa;">)[\d.]+(</div>)',
-                lambda m: m.group(1) + str(wr[0]) + m.group(2)))
-patches.append((r'(W2 · 4/20~24[\s\S]*?<div style="color:#f87171;">)[\d.]+( ↓</div>)',
-                lambda m: m.group(1) + str(wr[1]) + m.group(2)))
-patches.append((r'(W3 · 4/27~ \(진행중\)[\s\S]*?<div style="color:#facc15;">)[\d.]+( ↑</div>)',
-                lambda m: m.group(1) + str(wr[2]) + m.group(2)))
-
-# 다음 주 예상 (현재 진행중 W3 페이스 × 5 영업일)
-forecast = round(wr[2] * 5)
-patches.append((
-    r'((?:5월 1주 예상|다음 주 예상) \(W3 페이스 기준\)</div>\s*<div style="font-size:22px; font-weight:700; color:#4ade80;">)~\d+',
-    lambda m: m.group(1) + f'~{forecast}'
-))
-# 라벨 마이그레이션: "5월 1주 예상" → "다음 주 예상"
-patches.append((
-    r'5월 1주 예상 \(W3 페이스 기준\)',
-    '다음 주 예상 (W3 페이스 기준)'
-))
-patches.append((
-    r'<div style="color:#555; font-size:10px; margin-top:4px;">[\d.]+/일 × \d+ 영업일</div>',
-    f'<div style="color:#555; font-size:10px; margin-top:4px;">{wr[2]}/일 × 5 영업일</div>'
-))
-
-# WEEK_TOTAL_ROWS
+# WEEK_TOTAL_ROWS (동적)
 def aw(s, e):
     t = {'kck':0,'kko':0,'nav':0,'ktk':0,'sale':0,'b2b':0,'gift':0}
-    for i in range(s, e+1):
+    for i in range(s, min(e+1, n)):
         t['kck'] += plat['킥스타터'][i]
         t['kko'] += plat['카카오메이커스'][i]
         t['nav'] += plat['네이버'][i]
@@ -350,26 +343,23 @@ def aw(s, e):
         t['sale'] += sale[i]; t['b2b'] += b2b[i]; t['gift'] += gift[i]
     t['total'] = t['sale']+t['b2b']+t['gift']
     return t
-w1e = w2e = -1
+
+# 주별 인덱스 범위 계산
+_wk_ranges = [[] for _ in range(_nw)]
 for i, lab in enumerate(dates):
-    m, d = map(int, lab.split('/'))
-    if m == 4 and d <= 17: w1e = i
-    if m == 4 and d <= 24: w2e = i
-w1d = aw(0, w1e); w2d = aw(w1e+1, w2e); w3d = aw(w2e+1, n-1)
-wt = ("const WEEK_TOTAL_ROWS = [\n"
-    f"  {{ after: {w1e}, label: 'W1 소계', kck:{w1d['kck']}, kko:{w1d['kko']},  nav:{w1d['nav']}, ktk:{w1d['ktk']}, sale:{w1d['sale']}, b2b:{w1d['b2b']},  gift:{w1d['gift']}, total:{w1d['total']} }},\n"
-    f"  {{ after: {w2e}, label: 'W2 소계', kck:{w2d['kck']},  kko:{w2d['kko']}, nav:{w2d['nav']}, ktk:{w2d['ktk']}, sale:{w2d['sale']}, b2b:{w2d['b2b']}, gift:{w2d['gift']}, total:{w2d['total']} }},\n"
-    f"  {{ after: {n-1}, label: 'W3 소계', kck:{w3d['kck']}, kko:{w3d['kko']}, nav:{w3d['nav']}, ktk:{w3d['ktk']}, sale:{w3d['sale']}, b2b:{w3d['b2b']},  gift:{w3d['gift']}, total:{w3d['total']} }},\n"
-    "];")
+    _wk_ranges[assign_week(lab)].append(i)
+
+wt = "const WEEK_TOTAL_ROWS = [\n"
+for wi in range(_nw):
+    if not _wk_ranges[wi]: continue
+    s, e = _wk_ranges[wi][0], _wk_ranges[wi][-1]
+    wd_data = aw(s, e)
+    wt += f"  {{ after: {e}, label: 'W{wi+1} 소계', kck:{wd_data['kck']}, kko:{wd_data['kko']}, nav:{wd_data['nav']}, ktk:{wd_data['ktk']}, sale:{wd_data['sale']}, b2b:{wd_data['b2b']}, gift:{wd_data['gift']}, total:{wd_data['total']} }},\n"
+wt += "];"
 patches.append((r"const WEEK_TOTAL_ROWS = \[[\s\S]*?\n\];", wt))
 
-# WEEK_LABEL
-wl = []
-for lab in dates:
-    m, d = map(int, lab.split('/'))
-    if m == 4 and d == 17: wl.append('W1')
-    elif m == 4 and 20 <= d <= 24: wl.append('W2')
-    else: wl.append('W3')
+# WEEK_LABEL (동적)
+wl = [f'W{assign_week(lab)+1}' for lab in dates]
 patches.append((r"const WEEK_LABEL = \[[^\]]+\];",
                 f"const WEEK_LABEL = [{','.join(repr(x) for x in wl)}];"))
 
@@ -511,5 +501,5 @@ print(f"런칭 누적 (4/17~{dates[-1] if dates else '—'}): 실판매 {total_s
 print(f"{cur_m}월 누계 ({mo_range}): 실판매 {mo_sale} / B2B {mo_b2b} / 증정 {mo_gift} = {mo_total} ({mo_n}일)")
 print(f"누적 채널: 메이커스 {km} · 킥 {ks} · B2B {mc} · 네 {nv} · 톡 {kt} · 증정 {total_gift}")
 print(f"{cur_m}월 채널: 메이커스 {mo_km} · 킥 {mo_ks} · B2B {mo_mc} · 네 {mo_nv} · 톡 {mo_kt} · 증정 {mo_gift}")
-print(f"W1={ws[0]}/{wr[0]} W2={ws[1]}/{wr[1]} W3={ws[2]}/{wr[2]}")
+print(' '.join(f"W{i+1}={ws[i]}/{wr[i]}" for i in range(_nw)))
 print(f"패치 적용: {applied}/{len(patches)}")

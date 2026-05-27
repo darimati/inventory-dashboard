@@ -1363,46 +1363,7 @@ IF(OR(C2="킥스타터",
     </div>
     <div class="card">
       <div class="card-title">주차별 모멘텀 & 예측</div>
-      <div style="font-size:12px; line-height:1.6; margin-top:10px;">
-        <div style="display:flex; justify-content:space-between; align-items:baseline; padding:10px 0; border-bottom:1px solid #222;">
-          <div>
-            <div style="color:#888; font-size:10px; letter-spacing:0.04em;">W1 · 4/17</div>
-            <div style="font-size:18px; font-weight:700;">27<span style="font-size:11px; color:#888; font-weight:400;"> 켤레</span></div>
-          </div>
-          <div style="text-align:right;">
-            <div style="color:#888; font-size:10px;">일평균</div>
-            <div style="color:#aaa;">27.0</div>
-          </div>
-        </div>
-        <div style="display:flex; justify-content:space-between; align-items:baseline; padding:10px 0; border-bottom:1px solid #222;">
-          <div>
-            <div style="color:#888; font-size:10px; letter-spacing:0.04em;">W2 · 4/20~24</div>
-            <div style="font-size:18px; font-weight:700;">41<span style="font-size:11px; color:#888; font-weight:400;"> 켤레</span></div>
-          </div>
-          <div style="text-align:right;">
-            <div style="color:#888; font-size:10px;">일평균</div>
-            <div style="color:#f87171;">8.2 ↓</div>
-          </div>
-        </div>
-        <div style="display:flex; justify-content:space-between; align-items:baseline; padding:10px 0; border-bottom:1px solid #222;">
-          <div>
-            <div style="color:#888; font-size:10px; letter-spacing:0.04em;">W3 · 4/27~ (진행중)</div>
-            <div style="font-size:18px; font-weight:700;">137<span style="font-size:11px; color:#888; font-weight:400;"> 켤레</span></div>
-          </div>
-          <div style="text-align:right;">
-            <div style="color:#888; font-size:10px;">일평균</div>
-            <div style="color:#facc15;">7.2 ↑</div>
-          </div>
-        </div>
-        <div style="margin-top:14px; padding:14px; background:#0d1620; border-radius:6px; border-left:3px solid #4ade80;">
-          <div style="color:#aaa; font-size:10px; letter-spacing:0.04em; margin-bottom:6px;">다음 주 예상 (W3 페이스 기준)</div>
-          <div style="font-size:22px; font-weight:700; color:#4ade80;">~36 <span style="font-size:11px; color:#888; font-weight:400;">켤레</span></div>
-          <div style="color:#555; font-size:10px; margin-top:4px;">7.2/일 × 5 영업일</div>
-        </div>
-        <div style="margin-top:10px; font-size:10px; color:#555; line-height:1.7;">
-          W2 일평균 하락은 B2B 30켤레 단발성으로 인한 기준 변동 영향. 실판매 모멘텀은 W3에서 회복.
-        </div>
-      </div>
+      <div id="momentum-container" style="font-size:12px; line-height:1.6; margin-top:10px;"></div>
     </div>
   </div>
 
@@ -2478,11 +2439,11 @@ new Chart(document.getElementById('beigeChart'), {
 });
 
 // ── 주별 판매 속도 (실판매+B2B 스택 + 일평균 선) ──
-const weekLabels = ['W1  (4/17)', 'W2  (4/20~24)', 'W3  (4/27~, 진행중)'];
+const weekLabels = ['W1  (4/17)','W2  (4/20~24)','W3  (4/27~5/1)','W4  (5/4~5/8)','W5  (5/11~5/15)','W6  (5/18~5/22)','W7  (5/25~5/29, 진행중)'];
 // 실판매: W1=22, W2=36, W3=42 | B2B: W1=0, W2=30, W3=0
-const weekSale = [27, 41, 137];
-const weekB2B  = [0, 30, 0];
-const weekDays = [1, 5, 19];  // 출고일 수
+const weekSale = [27, 41, 49, 9, 25, 9, 45];
+const weekB2B  = [0, 30, 0, 0, 0, 0, 0];
+const weekDays = [1, 5, 4, 4, 5, 4, 2];  // 출고일 수
 const weekRate = weekSale.map((s,i) => +(s/weekDays[i]).toFixed(1));
 
 new Chart(document.getElementById('weeklyVelocityChart'), {
@@ -2534,16 +2495,50 @@ new Chart(document.getElementById('weeklyVelocityChart'), {
   }
 });
 
+// ── 주차별 모멘텀 사이드바 (동적 렌더링) ──
+{
+  const mEl = document.getElementById('momentum-container');
+  let mHtml = '';
+  weekLabels.forEach((label, i) => {
+    const rate = weekRate[i];
+    const prevRate = i > 0 ? weekRate[i-1] : null;
+    const trendColor = prevRate === null ? '#aaa' : (rate > prevRate ? '#4ade80' : (rate < prevRate ? '#f87171' : '#aaa'));
+    const trendArrow = prevRate === null ? '' : (rate > prevRate ? ' ↑' : (rate < prevRate ? ' ↓' : ''));
+    mHtml += `<div style="display:flex; justify-content:space-between; align-items:baseline; padding:8px 0; border-bottom:1px solid #222;">
+      <div>
+        <div style="color:#888; font-size:10px; letter-spacing:0.04em;">${label.replace(/\s+/g, ' ')}</div>
+        <div style="font-size:16px; font-weight:700;">${weekSale[i]}<span style="font-size:11px; color:#888; font-weight:400;"> 켤레</span></div>
+      </div>
+      <div style="text-align:right;">
+        <div style="color:#888; font-size:10px;">일평균</div>
+        <div style="color:${trendColor};">${rate}${trendArrow}</div>
+      </div>
+    </div>`;
+  });
+  const lastRate = weekRate[weekRate.length - 1];
+  const forecast = Math.round(lastRate * 5);
+  mHtml += `<div style="margin-top:14px; padding:14px; background:#0d1620; border-radius:6px; border-left:3px solid #4ade80;">
+    <div style="color:#aaa; font-size:10px; letter-spacing:0.04em; margin-bottom:6px;">다음 주 예상 (W${weekLabels.length} 페이스 기준)</div>
+    <div style="font-size:22px; font-weight:700; color:#4ade80;">~${forecast} <span style="font-size:11px; color:#888; font-weight:400;">켤레</span></div>
+    <div style="color:#555; font-size:10px; margin-top:4px;">${lastRate}/일 × 5 영업일</div>
+  </div>`;
+  mEl.innerHTML = mHtml;
+}
+
 // ── 일별 출고 상세 시트 ──
 const DAILY_KCK  = [25, 1, 6, 4, 0, 2, 10, 3, 1, 0, 0, 0, 0, 0, 1, 0, 0, 4, 6, 0, 0, 0, 0, 0, 0];
 const DAILY_KKO  = [0, 18, 4, 1, 0, 1, 5, 2, 19, 7, 4, 0, 0, 0, 1, 5, 0, 0, 0, 1, 0, 0, 0, 2, 0];
 const DAILY_NAV  = [2, 1, 0, 0, 0, 1, 0, 0, 0, 2, 4, 0, 0, 0, 4, 0, 3, 0, 1, 3, 3, 2, 0, 40, 3];
 const DAILY_KTK  = [0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-const WEEK_LABEL = ['W1','W2','W2','W2','W2','W2','W3','W3','W3','W3','W3','W3','W3','W3','W3','W3','W3','W3','W3','W3','W3','W3','W3','W3','W3'];
+const WEEK_LABEL = ['W1','W2','W2','W2','W2','W2','W3','W3','W3','W3','W4','W4','W4','W4','W5','W5','W5','W5','W5','W6','W6','W6','W6','W7','W7'];
 const WEEK_TOTAL_ROWS = [
-  { after: 0, label: 'W1 소계', kck:25, kko:0,  nav:2, ktk:0, sale:27, b2b:0,  gift:7, total:34 },
-  { after: 5, label: 'W2 소계', kck:13,  kko:24, nav:2, ktk:2, sale:41, b2b:30, gift:7, total:78 },
-  { after: 24, label: 'W3 소계', kck:25, kko:46, nav:65, ktk:1, sale:137, b2b:0,  gift:35, total:172 },
+  { after: 0, label: 'W1 소계', kck:25, kko:0, nav:2, ktk:0, sale:27, b2b:0, gift:7, total:34 },
+  { after: 5, label: 'W2 소계', kck:13, kko:24, nav:2, ktk:2, sale:41, b2b:30, gift:7, total:78 },
+  { after: 9, label: 'W3 소계', kck:14, kko:33, nav:2, ktk:0, sale:49, b2b:0, gift:5, total:54 },
+  { after: 13, label: 'W4 소계', kck:0, kko:4, nav:4, ktk:1, sale:9, b2b:0, gift:7, total:16 },
+  { after: 18, label: 'W5 소계', kck:11, kko:6, nav:8, ktk:0, sale:25, b2b:0, gift:12, total:37 },
+  { after: 22, label: 'W6 소계', kck:0, kko:1, nav:8, ktk:0, sale:9, b2b:0, gift:4, total:13 },
+  { after: 24, label: 'W7 소계', kck:0, kko:2, nav:43, ktk:0, sale:45, b2b:0, gift:7, total:52 },
 ];
 
 const dsBody = document.getElementById('daily-sheet-body');
@@ -4804,7 +4799,7 @@ new Chart(document.getElementById('burndownChart'), {
 // ━━ CS 대시보드 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // 데이터 소스 = 옵시디언 CS/cases/*.md (build 시 cs-aggregate.py + inject_cs_data.py 주입)
 // 마티봇이 모은 13건은 CASE-003~015로 옵시디언 마이그레이션됨 (단일 진실원 유지)
-window.CS_DATA = /* CS_DATA_START */{"generated_at":"2026-05-27 17:10:16","total":0,"by_channel":{},"by_type":{},"by_size":{},"by_sku":{},"by_tag":{},"by_recovery":{},"by_outcome":{},"by_status":{},"by_month":{},"matrix_type_size":{},"retention_rate":null,"manual_candidates":[],"min_freq_threshold":3,"cases":[]}/* CS_DATA_END */;
+window.CS_DATA = /* CS_DATA_START */{"generated_at":"2026-05-27 17:28:35","total":0,"by_channel":{},"by_type":{},"by_size":{},"by_sku":{},"by_tag":{},"by_recovery":{},"by_outcome":{},"by_status":{},"by_month":{},"matrix_type_size":{},"retention_rate":null,"manual_candidates":[],"min_freq_threshold":3,"cases":[]}/* CS_DATA_END */;
 
 // 옵시디언 → 마티봇 UI 매핑 (outcome 'pending' → status 'pending', 그 외 → 'resolved')
 const CS_CASES = ((window.CS_DATA && window.CS_DATA.cases) || [])
