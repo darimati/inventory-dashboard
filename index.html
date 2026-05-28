@@ -1875,23 +1875,23 @@ IF(OR(C2="킥스타터",
   <div class="kpi-row" style="grid-template-columns: repeat(4, 1fr);">
     <div class="kpi">
       <div class="kpi-label">누적 증정</div>
-      <div class="kpi-value" style="color:#9ca3af;">9</div>
+      <div class="kpi-value" style="color:#9ca3af;" id="gift-kpi-total">—</div>
       <div class="kpi-sub">켤레 · 4/17 이후 누적</div>
     </div>
     <div class="kpi">
       <div class="kpi-label">재고 영향</div>
-      <div class="kpi-value" style="color:#9ca3af;">9</div>
-      <div class="kpi-sub">켤레 차감 · 전체 출고의 6%</div>
+      <div class="kpi-value" style="color:#9ca3af;" id="gift-kpi-impact">—</div>
+      <div class="kpi-sub" id="gift-kpi-impact-sub">켤레 차감</div>
     </div>
     <div class="kpi">
       <div class="kpi-label">실판매 대비</div>
-      <div class="kpi-value" style="color:#9ca3af; font-size:24px;">0.9일</div>
-      <div class="kpi-sub">증정 10켤레 = 실판매 약 0.9일치</div>
+      <div class="kpi-value" style="color:#9ca3af; font-size:24px;" id="gift-kpi-days">—</div>
+      <div class="kpi-sub" id="gift-kpi-days-sub">증정 = 실판매 약 N일치</div>
     </div>
     <div class="kpi">
-      <div class="kpi-label">상태</div>
-      <div class="kpi-value green" style="font-size:20px;">캠페인 종료</div>
-      <div class="kpi-sub">초기 샘플링 완료 · 현재 진행 없음</div>
+      <div class="kpi-label">이번 달 증정</div>
+      <div class="kpi-value" style="color:#9ca3af;" id="gift-kpi-month">—</div>
+      <div class="kpi-sub" id="gift-kpi-month-sub">켤레</div>
     </div>
   </div>
 
@@ -1899,33 +1899,28 @@ IF(OR(C2="킥스타터",
   <div class="grid-full" style="margin-top:1px;">
     <div class="card">
       <div class="card-title">일별 증정 수량</div>
-      <div style="position:relative; height:300px;"><canvas id="giftDailyChart"></canvas></div>
+      <div style="position:relative; height:400px;"><canvas id="giftDailyChart"></canvas></div>
     </div>
   </div>
 
-  <!-- 증정 내역 + 운영 원칙 (가로 배치) -->
+  <!-- 일별 증정 상세 + 운영 원칙 (풀 너비) -->
   <div class="grid-full" style="margin-top:1px;">
-    <div class="card">
-      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:24px;">
-        <div>
-          <div class="card-title">증정 목적별 내역</div>
-          <table class="data-table">
-            <thead><tr><th>날짜</th><th>수량</th><th>목적</th><th>비고</th></tr></thead>
-            <tbody>
-              <tr><td>4/17</td><td class="num">6</td><td>샘플·인플루언서</td><td style="color:#555; font-size:11px;">런칭 초기 배포</td></tr>
-              <tr><td>4/21</td><td class="num">1</td><td>지인</td><td style="color:#555; font-size:11px;"></td></tr>
-              <tr><td>4/22</td><td class="num">1</td><td>지인</td><td style="color:#555; font-size:11px;"></td></tr>
-              <tr><td>4/28</td><td class="num">1</td><td>샘플</td><td style="color:#555; font-size:11px;"></td></tr>
-              <tr class="total"><td>합계</td><td class="num">9</td><td colspan="2">—</td></tr>
-            </tbody>
-          </table>
+    <div class="card" style="padding:20px 28px;">
+      <div style="display:flex; gap:24px;">
+        <div style="flex:2;">
+          <div class="card-title">일별 증정 상세</div>
+          <div style="overflow-x:auto;">
+            <table class="data-table" id="gift-detail-table">
+              <thead><tr><th>날짜</th><th class="num">수량</th></tr></thead>
+              <tbody id="gift-detail-body"></tbody>
+            </table>
+          </div>
         </div>
-        <div style="padding:14px; background:#111; border-radius:6px; border-left:3px solid #374151; align-self:start;">
+        <div style="flex:1; padding:14px; background:#111; border-radius:6px; border-left:3px solid #374151; align-self:start;">
           <div style="font-size:12px; font-weight:700; color:#9ca3af; margin-bottom:8px;">증정 운영 원칙</div>
           <div style="font-size:11px; color:#555; line-height:2;">
             <div>· 캠페인 집행 여부는 <strong style="color:#9ca3af;">재고 여유</strong>에 따라 결정</div>
             <div>· 잔여재고 300켤레 미만 → 증정 캠페인 중단 권장</div>
-            <div>· 증정 10켤레 ≈ 실판매 약 0.9일치 소진 영향</div>
             <div>· 재고 충분 시 인플루언서 활용한 캠페인 적극 검토</div>
           </div>
         </div>
@@ -2686,7 +2681,7 @@ new Chart(document.getElementById('giftDailyChart'), {
     maintainAspectRatio: false,
     scales: {
       x: { ...axisDefaults.x },
-      y: { ...axisDefaults.y, max: 10, title: { display: true, text: '켤레', color: '#555', font: { size: 10 } } }
+      y: { ...axisDefaults.y, title: { display: true, text: '켤레', color: '#555', font: { size: 10 } } }
     },
     plugins: {
       legend: { display: false },
@@ -2694,6 +2689,47 @@ new Chart(document.getElementById('giftDailyChart'), {
     }
   }
 });
+
+// ── 증정 KPI 동적 계산 ──
+{
+  const giftTotal = GIFT_DAILY.reduce((a,b) => a+b, 0);
+  const saleTotal = SALE_DAILY.reduce((a,b) => a+b, 0);
+  const allTotal = giftTotal + saleTotal + B2B_DAILY.reduce((a,b) => a+b, 0);
+  const giftPct = allTotal > 0 ? (giftTotal / allTotal * 100).toFixed(0) : 0;
+  const avgSale = saleTotal / BIZ_DAYS;
+  const giftDays = avgSale > 0 ? (giftTotal / avgSale).toFixed(1) : '—';
+  // 이번 달 증정
+  const moGift = MO_GIFT_DAILY.reduce((a,b) => a+b, 0);
+
+  document.getElementById('gift-kpi-total').textContent = giftTotal;
+  document.getElementById('gift-kpi-impact').textContent = giftTotal;
+  document.getElementById('gift-kpi-impact-sub').textContent = `켤레 차감 · 전체 출고의 ${giftPct}%`;
+  document.getElementById('gift-kpi-days').textContent = giftDays + '일';
+  document.getElementById('gift-kpi-days-sub').textContent = `증정 ${giftTotal}켤레 = 실판매 약 ${giftDays}일치`;
+  document.getElementById('gift-kpi-month').textContent = moGift;
+  document.getElementById('gift-kpi-month-sub').textContent = `켤레 · ${MO_RANGE}`;
+
+  // 일별 증정 상세 테이블 (증정 > 0인 날만)
+  const tbody = document.getElementById('gift-detail-body');
+  let detailHtml = '';
+  let detailTotal = 0;
+  DATES.forEach((d, i) => {
+    if (GIFT_DAILY[i] > 0) {
+      detailHtml += `<tr><td>${d}</td><td class="num">${GIFT_DAILY[i]}</td></tr>`;
+      detailTotal += GIFT_DAILY[i];
+    }
+  });
+  detailHtml += `<tr class="total"><td>합계</td><td class="num">${detailTotal}</td></tr>`;
+  tbody.innerHTML = detailHtml;
+
+  // 재고 영향 비교 카드
+  const krStock = Object.values(GREY_REM).reduce((a,b) => a+b, 0) + Object.values(BEIGE_REM).reduce((a,b) => a+b, 0);
+  const rounds = Math.floor(krStock / 10);
+  const stockRef = document.getElementById('gift-stock-ref');
+  const roundsEst = document.getElementById('gift-rounds-est');
+  if (stockRef) stockRef.textContent = krStock;
+  if (roundsEst) roundsEst.textContent = rounds + '회';
+}
 
 document.getElementById('updated-at').textContent = '업데이트: ' + new Date().toLocaleDateString('ko-KR', {month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit'});
 {
