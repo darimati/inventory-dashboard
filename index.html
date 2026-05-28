@@ -1895,30 +1895,39 @@ IF(OR(C2="킥스타터",
     </div>
   </div>
 
-  <div class="grid-2">
+  <!-- 일별 증정 차트 (풀 너비) -->
+  <div class="grid-full" style="margin-top:1px;">
     <div class="card">
       <div class="card-title">일별 증정 수량</div>
-      <div class="chart-wrap tall"><canvas id="giftDailyChart"></canvas></div>
+      <div style="position:relative; height:300px;"><canvas id="giftDailyChart"></canvas></div>
     </div>
+  </div>
+
+  <!-- 증정 내역 + 운영 원칙 (가로 배치) -->
+  <div class="grid-full" style="margin-top:1px;">
     <div class="card">
-      <div class="card-title">증정 목적별 내역</div>
-      <table class="data-table" style="margin-bottom:20px;">
-        <thead><tr><th>날짜</th><th>수량</th><th>목적</th><th>비고</th></tr></thead>
-        <tbody>
-          <tr><td>4/17</td><td class="num">6</td><td>샘플·인플루언서</td><td style="color:#555; font-size:11px;">런칭 초기 배포</td></tr>
-          <tr><td>4/21</td><td class="num">1</td><td>지인</td><td style="color:#555; font-size:11px;"></td></tr>
-          <tr><td>4/22</td><td class="num">1</td><td>지인</td><td style="color:#555; font-size:11px;"></td></tr>
-          <tr><td>4/28</td><td class="num">1</td><td>샘플</td><td style="color:#555; font-size:11px;"></td></tr>
-          <tr class="total"><td>합계</td><td class="num">9</td><td colspan="2">—</td></tr>
-        </tbody>
-      </table>
-      <div style="padding:14px; background:#111; border-radius:6px; border-left:3px solid #374151;">
-        <div style="font-size:12px; font-weight:700; color:#9ca3af; margin-bottom:8px;">증정 운영 원칙</div>
-        <div style="font-size:11px; color:#555; line-height:2;">
-          <div>· 캠페인 집행 여부는 <strong style="color:#9ca3af;">재고 여유</strong>에 따라 결정</div>
-          <div>· 잔여재고 300켤레 미만 → 증정 캠페인 중단 권장</div>
-          <div>· 증정 10켤레 ≈ 실판매 약 0.9일치 소진 영향</div>
-          <div>· 재고 충분 시 인플루언서 활용한 캠페인 적극 검토</div>
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:24px;">
+        <div>
+          <div class="card-title">증정 목적별 내역</div>
+          <table class="data-table">
+            <thead><tr><th>날짜</th><th>수량</th><th>목적</th><th>비고</th></tr></thead>
+            <tbody>
+              <tr><td>4/17</td><td class="num">6</td><td>샘플·인플루언서</td><td style="color:#555; font-size:11px;">런칭 초기 배포</td></tr>
+              <tr><td>4/21</td><td class="num">1</td><td>지인</td><td style="color:#555; font-size:11px;"></td></tr>
+              <tr><td>4/22</td><td class="num">1</td><td>지인</td><td style="color:#555; font-size:11px;"></td></tr>
+              <tr><td>4/28</td><td class="num">1</td><td>샘플</td><td style="color:#555; font-size:11px;"></td></tr>
+              <tr class="total"><td>합계</td><td class="num">9</td><td colspan="2">—</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="padding:14px; background:#111; border-radius:6px; border-left:3px solid #374151; align-self:start;">
+          <div style="font-size:12px; font-weight:700; color:#9ca3af; margin-bottom:8px;">증정 운영 원칙</div>
+          <div style="font-size:11px; color:#555; line-height:2;">
+            <div>· 캠페인 집행 여부는 <strong style="color:#9ca3af;">재고 여유</strong>에 따라 결정</div>
+            <div>· 잔여재고 300켤레 미만 → 증정 캠페인 중단 권장</div>
+            <div>· 증정 10켤레 ≈ 실판매 약 0.9일치 소진 영향</div>
+            <div>· 재고 충분 시 인플루언서 활용한 캠페인 적극 검토</div>
+          </div>
         </div>
       </div>
     </div>
@@ -2673,6 +2682,8 @@ new Chart(document.getElementById('giftDailyChart'), {
     }]
   },
   options: {
+    responsive: true,
+    maintainAspectRatio: false,
     scales: {
       x: { ...axisDefaults.x },
       y: { ...axisDefaults.y, max: 10, title: { display: true, text: '켤레', color: '#555', font: { size: 10 } } }
