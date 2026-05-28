@@ -1352,18 +1352,22 @@ IF(OR(C2="킥스타터",
     </div>
   </div>
 
-  <!-- 주별 판매 속도 + 모멘텀 사이드 카드 -->
-  <div class="grid-2" style="margin-top:1px; grid-template-columns: 3fr 1fr;">
+  <!-- 주별 판매 속도 (풀 너비) -->
+  <div class="grid-full" style="margin-top:1px;">
     <div class="card">
       <div class="card-title" style="margin-bottom:6px;">
         주별 판매 속도
         <span style="color:#555; font-size:10px; margin-left:8px;">주간 누적 켤레 (막대 · 실판매+B2B) · 실판매 일평균 (노란선)</span>
       </div>
-      <div style="position:relative; height:280px;"><canvas id="weeklyVelocityChart"></canvas></div>
+      <div style="position:relative; height:320px;"><canvas id="weeklyVelocityChart"></canvas></div>
     </div>
+  </div>
+
+  <!-- 주차별 모멘텀 (가로 배치) -->
+  <div class="grid-full" style="margin-top:1px;">
     <div class="card">
       <div class="card-title">주차별 모멘텀 & 예측</div>
-      <div id="momentum-container" style="font-size:12px; line-height:1.6; margin-top:10px;"></div>
+      <div id="momentum-container" style="font-size:12px; line-height:1.6; margin-top:10px; display:flex; flex-wrap:wrap; gap:12px 24px;"></div>
     </div>
   </div>
 
@@ -2495,7 +2499,7 @@ new Chart(document.getElementById('weeklyVelocityChart'), {
   }
 });
 
-// ── 주차별 모멘텀 사이드바 (동적 렌더링) ──
+// ── 주차별 모멘텀 (가로 카드 렌더링) ──
 {
   const mEl = document.getElementById('momentum-container');
   let mHtml = '';
@@ -2504,23 +2508,18 @@ new Chart(document.getElementById('weeklyVelocityChart'), {
     const prevRate = i > 0 ? weekRate[i-1] : null;
     const trendColor = prevRate === null ? '#aaa' : (rate > prevRate ? '#4ade80' : (rate < prevRate ? '#f87171' : '#aaa'));
     const trendArrow = prevRate === null ? '' : (rate > prevRate ? ' ↑' : (rate < prevRate ? ' ↓' : ''));
-    mHtml += `<div style="display:flex; justify-content:space-between; align-items:baseline; padding:8px 0; border-bottom:1px solid #222;">
-      <div>
-        <div style="color:#888; font-size:10px; letter-spacing:0.04em;">${label.replace(/\s+/g, ' ')}</div>
-        <div style="font-size:16px; font-weight:700;">${weekSale[i]}<span style="font-size:11px; color:#888; font-weight:400;"> 켤레</span></div>
-      </div>
-      <div style="text-align:right;">
-        <div style="color:#888; font-size:10px;">일평균</div>
-        <div style="color:${trendColor};">${rate}${trendArrow}</div>
-      </div>
+    mHtml += `<div style="flex:1; min-width:120px; padding:10px 14px; background:#161b22; border-radius:6px;">
+      <div style="color:#888; font-size:10px; letter-spacing:0.04em;">${label.replace(/\s+/g, ' ')}</div>
+      <div style="font-size:20px; font-weight:700; margin:4px 0 2px;">${weekSale[i]}<span style="font-size:11px; color:#888; font-weight:400;"> 켤레</span></div>
+      <div style="font-size:11px;">일평균 <span style="color:${trendColor}; font-weight:600;">${rate}${trendArrow}</span></div>
     </div>`;
   });
   const lastRate = weekRate[weekRate.length - 1];
   const forecast = Math.round(lastRate * 5);
-  mHtml += `<div style="margin-top:14px; padding:14px; background:#0d1620; border-radius:6px; border-left:3px solid #4ade80;">
-    <div style="color:#aaa; font-size:10px; letter-spacing:0.04em; margin-bottom:6px;">다음 주 예상 (W${weekLabels.length} 페이스 기준)</div>
-    <div style="font-size:22px; font-weight:700; color:#4ade80;">~${forecast} <span style="font-size:11px; color:#888; font-weight:400;">켤레</span></div>
-    <div style="color:#555; font-size:10px; margin-top:4px;">${lastRate}/일 × 5 영업일</div>
+  mHtml += `<div style="flex:1; min-width:140px; padding:10px 14px; background:#0d1620; border-radius:6px; border-left:3px solid #4ade80;">
+    <div style="color:#aaa; font-size:10px; letter-spacing:0.04em;">다음 주 예상</div>
+    <div style="font-size:20px; font-weight:700; color:#4ade80; margin:4px 0 2px;">~${forecast} <span style="font-size:11px; color:#888; font-weight:400;">켤레</span></div>
+    <div style="color:#555; font-size:10px;">${lastRate}/일 × 5영업일</div>
   </div>`;
   mEl.innerHTML = mHtml;
 }
