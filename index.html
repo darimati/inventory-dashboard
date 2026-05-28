@@ -2222,6 +2222,14 @@ function showPage(id, ev) {
   if (id === 'accessory' && typeof window.__loadAccessoryTab === 'function') {
     window.__loadAccessoryTab();
   }
+  // hidden 상태에서 생성된 Chart.js 차트 리사이즈
+  requestAnimationFrame(() => {
+    const page = document.getElementById('page-' + id);
+    page.querySelectorAll('canvas').forEach(c => {
+      const chart = Chart.getChart(c);
+      if (chart) chart.resize();
+    });
+  });
 }
 
 const DATES = ['4/17','4/20','4/21','4/22','4/23','4/24','4/27','4/28','4/29','4/30','5/4','5/6','5/7','5/10','5/11','5/12','5/13','5/14','5/15','5/18','5/19','5/20','5/21','5/26','5/27'];
@@ -2459,13 +2467,15 @@ new Chart(document.getElementById('weeklyVelocityChart'), {
         label: '실판매', data: weekSale,
         backgroundColor: 'rgba(74,222,128,0.22)', borderColor: 'rgba(74,222,128,0.85)',
         borderWidth: 1.5, borderRadius: 3,
-        stack: 'w', yAxisID: 'y', order: 3
+        stack: 'w', yAxisID: 'y', order: 3,
+        categoryPercentage: 0.7, barPercentage: 0.85
       },
       {
         label: 'B2B', data: weekB2B,
         backgroundColor: 'rgba(167,139,250,0.22)', borderColor: 'rgba(167,139,250,0.85)',
         borderWidth: 1.5, borderRadius: 3,
-        stack: 'w', yAxisID: 'y', order: 3
+        stack: 'w', yAxisID: 'y', order: 3,
+        categoryPercentage: 0.7, barPercentage: 0.85
       },
       {
         label: '실판매 일평균 (켤레/일)', data: weekRate, type: 'line',
@@ -2485,6 +2495,8 @@ new Chart(document.getElementById('weeklyVelocityChart'), {
     ]
   },
   options: {
+    responsive: true,
+    maintainAspectRatio: false,
     scales: {
       x: { ...axisDefaults.x, ticks: { color: '#888', font: { size: 12 } } },
       y: { ...axisDefaults.y, stacked: true, title: { display: true, text: '주간 누계 (켤레)', color: '#555', font: { size: 11 } } },
