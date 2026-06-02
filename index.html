@@ -2691,58 +2691,6 @@ new Chart(document.getElementById('giftDailyChart'), {
   }
 });
 
-// ── 증정 KPI 동적 계산 ──
-{
-  const giftTotal = GIFT_DAILY.reduce((a,b) => a+b, 0);
-  const saleTotal = SALE_DAILY.reduce((a,b) => a+b, 0);
-  const allTotal = giftTotal + saleTotal + B2B_DAILY.reduce((a,b) => a+b, 0);
-  const giftPct = allTotal > 0 ? (giftTotal / allTotal * 100).toFixed(0) : 0;
-  const avgSale = saleTotal / BIZ_DAYS;
-  const giftDays = avgSale > 0 ? (giftTotal / avgSale).toFixed(1) : '—';
-  // 이번 달 증정
-  const moGift = MO_GIFT_DAILY.reduce((a,b) => a+b, 0);
-
-  document.getElementById('gift-kpi-total').textContent = giftTotal;
-  document.getElementById('gift-kpi-impact').textContent = giftTotal;
-  document.getElementById('gift-kpi-impact-sub').textContent = `켤레 차감 · 전체 출고의 ${giftPct}%`;
-  document.getElementById('gift-kpi-days').textContent = giftDays + '일';
-  document.getElementById('gift-kpi-days-sub').textContent = `증정 ${giftTotal}켤레 = 실판매 약 ${giftDays}일치`;
-  document.getElementById('gift-kpi-month').textContent = moGift;
-  document.getElementById('gift-kpi-month-sub').textContent = `켤레 · ${MO_RANGE}`;
-
-  // 일별 증정 상세 테이블 (증정 > 0인 날만)
-  const tbody = document.getElementById('gift-detail-body');
-  let detailHtml = '';
-  let detailTotal = 0;
-  DATES.forEach((d, i) => {
-    if (GIFT_DAILY[i] > 0) {
-      detailHtml += `<tr><td>${d}</td><td class="num">${GIFT_DAILY[i]}</td></tr>`;
-      detailTotal += GIFT_DAILY[i];
-    }
-  });
-  detailHtml += `<tr class="total"><td>합계</td><td class="num">${detailTotal}</td></tr>`;
-  tbody.innerHTML = detailHtml;
-
-  // 재고 영향 비교 카드
-  const krStock = Object.values(GREY_REM).reduce((a,b) => a+b, 0) + Object.values(BEIGE_REM).reduce((a,b) => a+b, 0);
-  const rounds = Math.floor(krStock / 10);
-  const stockRef = document.getElementById('gift-stock-ref');
-  const roundsEst = document.getElementById('gift-rounds-est');
-  if (stockRef) stockRef.textContent = krStock;
-  if (roundsEst) roundsEst.textContent = rounds + '회';
-}
-
-document.getElementById('updated-at').textContent = '업데이트: ' + new Date().toLocaleDateString('ko-KR', {month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit'});
-{
-  const d = new Date();
-  const fd = document.getElementById('footer-date');
-  if (fd) fd.textContent = `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}`;
-  // 시차 일치: .dyn-month → 시스템 today의 월 (월별 KPI 라벨이 자동으로 따라감)
-  // 데이터 값은 patch_dashboard.py가 cron 시 채움 (월별 집계).
-  const curM = d.getMonth() + 1;
-  document.querySelectorAll('.dyn-month').forEach(el => { el.textContent = String(curM); });
-}
-
 // ── 재고 현황 계산 ──
 // 신발 재고 — 5/13 실사 + Grey 240 입고 250개 반영 (Matt 5/13)
 const GREY_REM  = { 240: 323, 250: 32, 260: 66, 270: 30, 280: 18 };
@@ -2806,6 +2754,58 @@ const SALE_BY_SIZE = {
   BEIGE: { 240:6, 250:4, 260:1, 270:2, 280:3 },
 };
 const BIZ_DAYS = 28;
+
+// ── 증정 KPI 동적 계산 ──
+{
+  const giftTotal = GIFT_DAILY.reduce((a,b) => a+b, 0);
+  const saleTotal = SALE_DAILY.reduce((a,b) => a+b, 0);
+  const allTotal = giftTotal + saleTotal + B2B_DAILY.reduce((a,b) => a+b, 0);
+  const giftPct = allTotal > 0 ? (giftTotal / allTotal * 100).toFixed(0) : 0;
+  const avgSale = saleTotal / BIZ_DAYS;
+  const giftDays = avgSale > 0 ? (giftTotal / avgSale).toFixed(1) : '—';
+  // 이번 달 증정
+  const moGift = MO_GIFT_DAILY.reduce((a,b) => a+b, 0);
+
+  document.getElementById('gift-kpi-total').textContent = giftTotal;
+  document.getElementById('gift-kpi-impact').textContent = giftTotal;
+  document.getElementById('gift-kpi-impact-sub').textContent = `켤레 차감 · 전체 출고의 ${giftPct}%`;
+  document.getElementById('gift-kpi-days').textContent = giftDays + '일';
+  document.getElementById('gift-kpi-days-sub').textContent = `증정 ${giftTotal}켤레 = 실판매 약 ${giftDays}일치`;
+  document.getElementById('gift-kpi-month').textContent = moGift;
+  document.getElementById('gift-kpi-month-sub').textContent = `켤레 · ${MO_RANGE}`;
+
+  // 일별 증정 상세 테이블 (증정 > 0인 날만)
+  const tbody = document.getElementById('gift-detail-body');
+  let detailHtml = '';
+  let detailTotal = 0;
+  DATES.forEach((d, i) => {
+    if (GIFT_DAILY[i] > 0) {
+      detailHtml += `<tr><td>${d}</td><td class="num">${GIFT_DAILY[i]}</td></tr>`;
+      detailTotal += GIFT_DAILY[i];
+    }
+  });
+  detailHtml += `<tr class="total"><td>합계</td><td class="num">${detailTotal}</td></tr>`;
+  tbody.innerHTML = detailHtml;
+
+  // 재고 영향 비교 카드
+  const krStock = Object.values(GREY_REM).reduce((a,b) => a+b, 0) + Object.values(BEIGE_REM).reduce((a,b) => a+b, 0);
+  const rounds = Math.floor(krStock / 10);
+  const stockRef = document.getElementById('gift-stock-ref');
+  const roundsEst = document.getElementById('gift-rounds-est');
+  if (stockRef) stockRef.textContent = krStock;
+  if (roundsEst) roundsEst.textContent = rounds + '회';
+}
+
+document.getElementById('updated-at').textContent = '업데이트: ' + new Date().toLocaleDateString('ko-KR', {month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit'});
+{
+  const d = new Date();
+  const fd = document.getElementById('footer-date');
+  if (fd) fd.textContent = `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}`;
+  // 시차 일치: .dyn-month → 시스템 today의 월 (월별 KPI 라벨이 자동으로 따라감)
+  // 데이터 값은 patch_dashboard.py가 cron 시 채움 (월별 집계).
+  const curM = d.getMonth() + 1;
+  document.querySelectorAll('.dyn-month').forEach(el => { el.textContent = String(curM); });
+}
 
 const skuList = [];  // 사이즈+컬러 단위 (SKU)
 SIZES.forEach(s => {
