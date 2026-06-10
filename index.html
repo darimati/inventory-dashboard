@@ -4070,6 +4070,7 @@ new Chart(document.getElementById('burndownChart'), {
       shoes, accessories,
       memo: p.memo || (p.shoeQty ? '' : '악세서리/A/S'),
       sheetSpecial: p.special || '',
+      sheetItem: p.item || '',
       source: 'sheet',
       sheetChannel: ch,
       status: 'pending',
@@ -4129,7 +4130,7 @@ new Chart(document.getElementById('burndownChart'), {
     const groups = groupOrdersForShipping(shippable);
     const mergedGroups = groups.filter(g => g.length >= 2);
     const rows = [
-      ['받으시는 분','받으시는 분 전화','받는분담당자','받는분핸드폰','받는분우편번호','받는분총주소','수량','품목명','운임Type','지불조건','출고번호','특기사항','메모1','메모2','메모3','메모4']
+      ['받는분','받는분연락처','우편번호','총주소','품목명','수량','특기사항']
     ];
     const dateTag = state.today;
     groups.forEach((group, i) => {
@@ -4137,45 +4138,29 @@ new Chart(document.getElementById('burndownChart'), {
       const fullAddress = (head.address || '') + (head.detail ? ' ' + head.detail : '');
       const phone = head.phone || '';
       const allShoes = group.flatMap(o => o.shoes || []);
-      const allAcc   = group.flatMap(o => o.accessories || []);
-      const accUniq  = Array.from(new Set(allAcc));
-      const optionSummary = allShoes.map(s => `${s.size}mm/${s.color}`).join(', ');
-      const accSummary    = accUniq.length ? accUniq.map(a=>ACC_LABELS[a]||a).join('·') : '';
-      const cats = Array.from(new Set(group.map(o => CAT_LABELS[o.category] || '').filter(Boolean)));
-      const memos = Array.from(new Set(group.map(o => o.memo || '').filter(Boolean)));
+      // 품목명: 발주시트 AE열(sheetItem)에서 추출, 합포 시 고유값 병합
+      const items = Array.from(new Set(group.map(o => o.sheetItem || '').filter(Boolean)));
+      const itemName = items.length ? items.join(', ') : '';
+      // 수량: 합포 시 합산
+      const totalQty = allShoes.length || 1;
+      // 특기사항: 발주시트 AH열(sheetSpecial)에서 추출 (메모 대신)
       const specials = Array.from(new Set(group.map(o => o.sheetSpecial || '').filter(Boolean)));
-      const isMerged = group.length >= 2;
-      // 단순화: 메모1 = "합포 N건" 또는 첫 메모 / 특기사항 = 분류 + 시트 AH열
-      const memoNote = isMerged
-        ? `🔗 합포 ${group.length}건`
-        : (memos[0] || '');
-      const specialParts = [...cats];
-      if (specials.length) specialParts.push(specials.join(', '));
+      const specialNote = specials.join(', ');
       rows.push([
-        head.recipient || '',         // 받으시는 분
-        phone,                         // 받으시는 분 전화
-        head.recipient || '',         // 받는분담당자
-        phone,                         // 받는분핸드폰
+        head.recipient || '',         // 받는분
+        phone,                         // 받는분연락처
         head.zip || '',                // 우편번호
         fullAddress,                   // 총주소
-        allShoes.length,               // 수량 (합산)
-        'BR-001',                      // 품목명 — 제품명만
-        '',                            // 운임Type
-        '',                            // 지불조건
-        `${dateTag}-${String(i+1).padStart(3,'0')}`,  // 출고번호
-        specialParts.join(' | '),      // 특기사항 — 분류 + 시트 특기사항(AH열)
-        memoNote,                      // 메모1 — 합포 또는 단일 메모
-        optionSummary,                 // 메모2 — 사이즈/컬러 옵션
-        accSummary,                    // 메모3 — 악세서리
-        ''                             // 메모4
+        itemName,                      // 품목명 — 발주시트 AE열
+        totalQty,                      // 수량 (합산)
+        specialNote,                   // 특기사항 — 발주시트 AH열
       ]);
     });
 
     const ws = XLSX.utils.aoa_to_sheet(rows);
     // 컬럼 너비
     ws['!cols'] = [
-      {wch:12},{wch:14},{wch:12},{wch:14},{wch:8},{wch:50},{wch:6},{wch:10},
-      {wch:8},{wch:8},{wch:14},{wch:14},{wch:14},{wch:28},{wch:18},{wch:10}
+      {wch:12},{wch:14},{wch:8},{wch:50},{wch:16},{wch:6},{wch:20}
     ];
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
@@ -5797,7 +5782,7 @@ document.addEventListener("DOMContentLoaded", function() {
   // STORAGE_KEY v3: 5/5 실사 기준 — 이후 출고만 시트에서 차감.
   const STORAGE_KEY = 'dari_acc_initial_stock_v3';
   const PHYSICAL_STOCK_DEFAULT = {
-    hat: 83, shoebag: 117, towel: 47, belt: 44,
+    hat: 83, shoebag: 117, towel: 47, belt: 444,  // belt: 44(5/5 실사) + 400(6/5 입고)
     flask: 0, lace: 0, sticker: 0  // 5/5 미실사
   };
   const ACC_AUDIT_DATE = '2026-05-05';
