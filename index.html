@@ -955,6 +955,7 @@
   <div class="tab" onclick="showPage('stock', event)">KR 재고 & 재발주</div>
   <div class="tab" onclick="showPage('accessory', event)">악세서리 재고</div>
   <div class="tab" onclick="showPage('hk', event)">HK 재고</div>
+  <div class="tab" onclick="showPage('nship', event)">N배송</div>
   <div class="tab" onclick="showPage('gift', event)">증정 현황</div>
   <div class="tab" onclick="showPage('todo', event)">투두</div>
   <div class="tab" onclick="showPage('cs', event)">🎧 CS</div>
@@ -1864,6 +1865,91 @@ IF(OR(C2="킥스타터",
     <div class="card">
       <div class="card-title">HK 사이즈 비율</div>
       <div class="chart-wrap medium"><canvas id="hkSizeRatioChart"></canvas></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ===== PAGE: N배송 재고 ===== -->
+<div id="page-nship" class="page">
+
+  <div class="kpi-row" style="grid-template-columns: repeat(4, 1fr);">
+    <div class="kpi">
+      <div class="kpi-label">N배송 입고</div>
+      <div class="kpi-value" id="nship-kpi-total">109</div>
+      <div class="kpi-sub">6/9 입고 · KR 재고에서 이동</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">그레이 (단품+풀패키지)</div>
+      <div class="kpi-value" style="color:var(--grey);" id="nship-kpi-grey">71</div>
+      <div class="kpi-sub">단품 44 + 풀패키지 27</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">베이지 (단품+풀패키지)</div>
+      <div class="kpi-value" style="color:var(--beige);" id="nship-kpi-beige">38</div>
+      <div class="kpi-sub">단품 23 + 풀패키지 15</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">N배송 잔여</div>
+      <div class="kpi-value green" id="nship-kpi-remain">109</div>
+      <div class="kpi-sub">대표상품 판매 차감 후</div>
+    </div>
+  </div>
+
+  <!-- N배송 설명 -->
+  <div class="grid-full">
+    <div class="card" style="background:#0d1a14; border-left:3px solid #4ade80;">
+      <div style="display:flex; gap:16px; align-items:flex-start; font-size:12px; line-height:1.8;">
+        <div style="font-size:24px;">📦</div>
+        <div style="flex:1;">
+          <div style="color:var(--text); font-weight:600; margin-bottom:4px;">N배송 — 네이버 스마트스토어 풀필먼트</div>
+          <div style="color:#aaa;">
+            KR 창고 재고 → 11번가 셀러위탁센터 이동분 (입고번호 119791).
+            <strong style="color:#fff;">대표상품 13462747167</strong> 판매 시 N배송 재고에서 차감.
+            KR 창고에서는 이미 빠진 수량이나 DARIMATI 총 재고에는 포함.
+          </div>
+          <div style="color:#666; margin-top:6px; font-size:11px;">
+            입고처: 인천광역시 서구 북항단지로 91 11번가 셀러위탁센터 4층 · 김금비 010-5840-9784 · 평일 09:30~17:00
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- N배송 사이즈별 잔여 바 -->
+  <div class="grid-full" style="margin-top:1px;">
+    <div class="card">
+      <div class="card-title">
+        <span style="color:var(--green)">●</span> N배송 사이즈별 잔여
+        <span style="color:#555; font-size:10px; margin-left:6px;" id="nship-bar-sub">총 109켤레 · 입고 기준</span>
+      </div>
+      <div id="nship-inv-bars" style="margin-top:14px;"></div>
+    </div>
+  </div>
+
+  <!-- N배송 상세 테이블 + 사이즈 비율 -->
+  <div class="grid-3" style="margin-top:1px;">
+    <div class="card" style="grid-column: span 2;">
+      <div class="card-title">N배송 사이즈별 잔여 상세 <span style="color:#555; font-size:10px; margin-left:6px;">구성별 분리 (입고 − 판매)</span></div>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>사이즈</th>
+            <th class="num" style="color:var(--grey);">단품 G</th>
+            <th class="num" style="color:var(--grey);">풀패키지 G</th>
+            <th class="num" style="color:var(--beige);">단품 B</th>
+            <th class="num" style="color:var(--beige);">풀패키지 B</th>
+            <th class="num">합계</th>
+            <th class="num" style="color:var(--red);">판매</th>
+            <th class="num" style="color:var(--green);">잔여</th>
+          </tr>
+        </thead>
+        <tbody id="nship-size-body"></tbody>
+      </table>
+    </div>
+    <div class="card">
+      <div class="card-title">N배송 사이즈 비율</div>
+      <div class="chart-wrap medium"><canvas id="nshipSizeChart"></canvas></div>
     </div>
   </div>
 
@@ -3018,6 +3104,97 @@ new Chart(document.getElementById('hkSizeRatioChart'), {
     }
   }
 });
+
+// ── N배송 재고 (6/9 입고 기준 109EA · KR→11번가 셀러위탁센터) ──
+const NSHIP_GREY_SINGLE  = { 240:12, 250:8, 260:8, 270:8, 280:8 };
+const NSHIP_GREY_PKG     = { 240:7,  250:5, 260:5, 270:5, 280:5 };
+const NSHIP_BEIGE_SINGLE = { 240:5,  250:5, 260:5, 270:5, 280:3 };
+const NSHIP_BEIGE_PKG    = { 240:3,  250:3, 260:3, 270:3, 280:3 };
+const NSHIP_SOLD         = { 240:0,  250:0, 260:0, 270:0, 280:0 };
+
+// N배송 합산
+const NSHIP_TOTAL_BY_SIZE = {};
+SIZES.forEach(s => {
+  NSHIP_TOTAL_BY_SIZE[s] = (NSHIP_GREY_SINGLE[s]||0) + (NSHIP_GREY_PKG[s]||0)
+                         + (NSHIP_BEIGE_SINGLE[s]||0) + (NSHIP_BEIGE_PKG[s]||0);
+});
+const NSHIP_TOTAL = Object.values(NSHIP_TOTAL_BY_SIZE).reduce((a,b)=>a+b,0);
+const NSHIP_SOLD_TOTAL = Object.values(NSHIP_SOLD).reduce((a,b)=>a+b,0);
+
+// N배송 잔여 (사이즈별)
+const NSHIP_REM = {};
+SIZES.forEach(s => { NSHIP_REM[s] = Math.max(0, NSHIP_TOTAL_BY_SIZE[s] - (NSHIP_SOLD[s]||0)); });
+const NSHIP_REM_TOTAL = Object.values(NSHIP_REM).reduce((a,b)=>a+b,0);
+
+// KPI 동적 갱신
+const nshipKpiRemain = document.getElementById('nship-kpi-remain');
+if (nshipKpiRemain) nshipKpiRemain.textContent = NSHIP_REM_TOTAL;
+const nshipBarSub = document.getElementById('nship-bar-sub');
+if (nshipBarSub) nshipBarSub.textContent = NSHIP_SOLD_TOTAL > 0
+  ? `잔여 ${NSHIP_REM_TOTAL}켤레 · 판매 ${NSHIP_SOLD_TOTAL}켤레 차감`
+  : `총 ${NSHIP_TOTAL}켤레 · 입고 기준`;
+
+// N배송 바 차트
+renderInvBars('nship-inv-bars', NSHIP_REM, '#4ade80');
+
+// N배송 테이블
+const nshipBody = document.getElementById('nship-size-body');
+if (nshipBody) {
+  SIZES.forEach(s => {
+    const gs = NSHIP_GREY_SINGLE[s], gp = NSHIP_GREY_PKG[s];
+    const bs = NSHIP_BEIGE_SINGLE[s], bp = NSHIP_BEIGE_PKG[s];
+    const total = NSHIP_TOTAL_BY_SIZE[s];
+    const sold = NSHIP_SOLD[s] || 0;
+    const rem = NSHIP_REM[s];
+    nshipBody.innerHTML += `<tr>
+      <td style="font-weight:600;">${s}mm</td>
+      <td class="num" style="color:var(--grey);">${gs}</td>
+      <td class="num" style="color:var(--grey);">${gp}</td>
+      <td class="num" style="color:var(--beige);">${bs}</td>
+      <td class="num" style="color:var(--beige);">${bp}</td>
+      <td class="num">${total}</td>
+      <td class="num" style="color:var(--red);">${sold}</td>
+      <td class="num" style="color:var(--green); font-weight:700;">${rem}</td>
+    </tr>`;
+  });
+  const gsT=Object.values(NSHIP_GREY_SINGLE).reduce((a,b)=>a+b,0);
+  const gpT=Object.values(NSHIP_GREY_PKG).reduce((a,b)=>a+b,0);
+  const bsT=Object.values(NSHIP_BEIGE_SINGLE).reduce((a,b)=>a+b,0);
+  const bpT=Object.values(NSHIP_BEIGE_PKG).reduce((a,b)=>a+b,0);
+  nshipBody.innerHTML += `<tr class="total">
+    <td>합계</td>
+    <td class="num" style="color:var(--grey);">${gsT}</td>
+    <td class="num" style="color:var(--grey);">${gpT}</td>
+    <td class="num" style="color:var(--beige);">${bsT}</td>
+    <td class="num" style="color:var(--beige);">${bpT}</td>
+    <td class="num">${NSHIP_TOTAL}</td>
+    <td class="num" style="color:var(--red);">${NSHIP_SOLD_TOTAL}</td>
+    <td class="num" style="color:var(--green); font-weight:700;">${NSHIP_REM_TOTAL}</td>
+  </tr>`;
+}
+
+// N배송 사이즈 비율 도넛
+const nshipChartEl = document.getElementById('nshipSizeChart');
+if (nshipChartEl) {
+  new Chart(nshipChartEl, {
+    type: 'doughnut',
+    data: {
+      labels: SIZES.map(s => `${s}mm (${NSHIP_REM[s]})`),
+      datasets: [{
+        data: SIZES.map(s => NSHIP_REM[s]),
+        backgroundColor: ['#166534', '#22c55e', '#4ade80', '#86efac', '#bbf7d0'],
+        borderWidth: 0, hoverOffset: 6
+      }]
+    },
+    options: {
+      cutout: '60%',
+      plugins: {
+        legend: { position: 'bottom', labels: { color: '#888', font: { size: 10 }, padding: 6, boxWidth: 8 } },
+        tooltip: { callbacks: { label: c => ` ${c.parsed}켤레 (${(c.parsed/NSHIP_REM_TOTAL*100).toFixed(0)}%)` } }
+      }
+    }
+  });
+}
 
 // 팀 투두는 matibot_todo (DARI BOARD)를 iframe으로 풀 임베드.
 // 데이터 관리 모두 그쪽 시스템에서 처리 (tasks.json + 자체 UI).

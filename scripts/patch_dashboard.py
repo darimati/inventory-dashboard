@@ -65,6 +65,10 @@ INV_BASE = {
 INV_BASE_DATE = (2026, 5, 13)  # 5/13 Jiun 실사 기준
 inv_deduct = {'G': defaultdict(int), 'B': defaultdict(int)}
 
+# ── N배송 판매 차감: 6/9 이후 네이버 대표상품(13462747167) 판매분 ──
+NSHIP_BASE_DATE = (2026, 6, 9)
+nship_sold = defaultdict(int)  # 사이즈별 판매 차감
+
 for r in rows:
     c = r['c']
     def g(i):
@@ -98,6 +102,10 @@ for r in rows:
             inv_deduct['G'][size] += qty
         elif '베이지' in color and size:
             inv_deduct['B'][size] += qty
+
+    # N배송 차감: 6/9 이후 네이버 채널 판매분 (대표상품 13462747167)
+    if ch == '네이버' and (y, mo, dy) >= NSHIP_BASE_DATE and size:
+        nship_sold[size] += qty
 
     if ch == '샘플' or ch == '증정' or '지인' in memo:
         kind = 'gift'
@@ -482,6 +490,13 @@ patches.append((
 _ded_g = sum(inv_deduct['G'].values())
 _ded_b = sum(inv_deduct['B'].values())
 print(f"재고: GREY {dict(zip(_sizes,gr))}({sum(gr)}) / BEIGE {dict(zip(_sizes,br))}({sum(br)}) | 기준일 이후 차감 G:{_ded_g} B:{_ded_b}")
+
+# ── N배송 판매 차감 패치 ──
+nship_sold_js = '{ ' + ', '.join(f'{s}:{nship_sold.get(s,0)}' for s in _sizes) + ' }'
+patches.append((r"const NSHIP_SOLD\s*=\s*\{[^}]+\};",
+                f"const NSHIP_SOLD         = {nship_sold_js};"))
+_nship_total_sold = sum(nship_sold.values())
+print(f"N배송: 판매 차감 {dict((s, nship_sold.get(s,0)) for s in _sizes)} ({_nship_total_sold})")
 
 # Apply (3-tuple = (pattern, repl, count); 2-tuple defaults count=1)
 applied = 0
