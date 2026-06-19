@@ -2780,10 +2780,10 @@ new Chart(document.getElementById('giftDailyChart'), {
 });
 
 // ── 재고 현황 계산 ──
-// 신발 재고 — 5/13 실사 + Grey 240 입고 250개 반영 (Matt 5/13)
-const GREY_REM  = { 240: 173, 250: 19, 260: 83, 270: 15, 280: 5 };
+// 신발 재고 — 5/13 실사 + Grey 240 입고 250개 반영 (Matt 5/13) + 6/19 그레이 240-270 반환 +1
+const GREY_REM  = { 240: 174, 250: 20, 260: 84, 270: 16, 280: 5 };
 const BEIGE_REM = { 240: 7, 250: 23, 260: 28, 270: 32, 280: 37 };
-const STOCK_AUDIT_DATE = '2026-06-19';
+const STOCK_AUDIT_DATE = '2026-06-19';  // 6/19 그레이 신발+깔창 반환분 반영
 const SIZES = ['240','250','260','270','280'];
 
 const TOTAL_GREY  = Object.values(GREY_REM).reduce((a,b)=>a+b,0);   // 586
