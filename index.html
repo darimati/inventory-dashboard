@@ -60,9 +60,15 @@
 
   .card { background: var(--card); padding: 28px; }
   .card-title { font-size: 11px; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
-  .chart-wrap.tall { position: relative; height: 260px; }
-  .chart-wrap.medium { position: relative; height: 220px; }
-  .chart-wrap.short { position: relative; height: 170px; }
+  .chart-wrap.tall { position: relative; height: 220px; }
+  .chart-wrap.medium { position: relative; height: 180px; }
+  .chart-wrap.short { position: relative; height: 140px; }
+
+  /* collapsible sections */
+  .collapse-toggle { display:inline-flex; align-items:center; gap:4px; background:transparent; border:1px solid #333; color:#888; padding:3px 10px; border-radius:4px; cursor:pointer; font-size:10px; font-family:inherit; transition:all 0.15s; margin-left:8px; }
+  .collapse-toggle:hover { color:#ccc; border-color:#555; }
+  .collapsible { overflow:hidden; transition: max-height 0.3s ease; }
+  .collapsible.collapsed { max-height:0 !important; }
 
   /* TABLE */
   .data-table { width: 100%; border-collapse: collapse; font-size: 12px; }
@@ -1360,7 +1366,7 @@ IF(OR(C2="킥스타터",
         주별 판매 속도
         <span style="color:#555; font-size:10px; margin-left:8px;">주간 누적 켤레 (막대 · 실판매+B2B) · 실판매 일평균 (노란선)</span>
       </div>
-      <div style="position:relative; height:360px;"><canvas id="weeklyVelocityChart"></canvas></div>
+      <div style="position:relative; height:220px;"><canvas id="weeklyVelocityChart"></canvas></div>
     </div>
   </div>
 
@@ -1372,28 +1378,32 @@ IF(OR(C2="킥스타터",
     </div>
   </div>
 
-  <!-- 일별 상세 시트 — 풀 너비 -->
+  <!-- 일별 상세 시트 — 풀 너비 (접기/펼치기) -->
   <div class="grid-full" style="margin-top:1px;">
     <div class="card">
-      <div class="card-title" style="margin-bottom:12px;">일별 출고 상세 <span style="color:#555; font-size:10px; margin-left:6px;">채널별 · 주별 소계 포함</span></div>
-      <div style="overflow-x:auto;">
-        <table class="data-table" style="min-width:700px;">
-          <thead>
-            <tr>
-              <th style="width:60px;">날짜</th>
-              <th style="width:32px; color:#555;">주</th>
-              <th class="num" style="color:#b0c4d8;">킥스타터</th>
-              <th class="num" style="color:#d4b896;">카카오<br>메이커스</th>
-              <th class="num" style="color:#7c9bb5;">네이버</th>
-              <th class="num" style="color:#a0a0a0;">카카오톡<br>스토어</th>
-              <th class="num" style="color:#4ade80; font-weight:700;">실판매<br>소계</th>
-              <th class="num" style="color:#a78bfa;">B2B</th>
-              <th class="num" style="color:#6b7280;">증정</th>
-              <th class="num" style="font-weight:700;">일 합계</th>
-            </tr>
-          </thead>
-          <tbody id="daily-sheet-body"></tbody>
-        </table>
+      <div class="card-title" style="margin-bottom:12px;">일별 출고 상세 <span style="color:#555; font-size:10px; margin-left:6px;">채널별 · 주별 소계 포함</span>
+        <button class="collapse-toggle" id="daily-sheet-toggle" onclick="toggleDailySheet()">▼ 펼치기</button>
+      </div>
+      <div id="daily-sheet-wrap" class="collapsible collapsed" style="max-height:2000px;">
+        <div style="overflow-x:auto;">
+          <table class="data-table" style="min-width:700px;">
+            <thead>
+              <tr>
+                <th style="width:60px;">날짜</th>
+                <th style="width:32px; color:#555;">주</th>
+                <th class="num" style="color:#b0c4d8;">킥스타터</th>
+                <th class="num" style="color:#d4b896;">카카오<br>메이커스</th>
+                <th class="num" style="color:#7c9bb5;">네이버</th>
+                <th class="num" style="color:#a0a0a0;">카카오톡<br>스토어</th>
+                <th class="num" style="color:#4ade80; font-weight:700;">실판매<br>소계</th>
+                <th class="num" style="color:#a78bfa;">B2B</th>
+                <th class="num" style="color:#6b7280;">증정</th>
+                <th class="num" style="font-weight:700;">일 합계</th>
+              </tr>
+            </thead>
+            <tbody id="daily-sheet-body"></tbody>
+          </table>
+        </div>
       </div>
     </div>
   </div>
@@ -1403,7 +1413,7 @@ IF(OR(C2="킥스타터",
     <div class="card">
       <div class="card-title">채널 점유율 <span style="color:#555; font-size:10px; margin-left:6px;"><span class="dyn-month">5</span>월 누계 · 전체 <span id="month-share-total">43</span>켤레 (실판매 <span id="month-share-sale">43</span> + B2B <span id="month-share-b2b">0</span>)</span></div>
       <div style="display:grid; grid-template-columns: 280px 1fr; gap:32px; align-items:center; margin-top:10px;">
-        <div style="position:relative; height:240px;"><canvas id="platformShareChart"></canvas></div>
+        <div style="position:relative; height:180px;"><canvas id="platformShareChart"></canvas></div>
         <div id="platform-share-bars" style="font-size:12px; line-height:1.8;"></div>
       </div>
     </div>
@@ -1689,11 +1699,14 @@ IF(OR(C2="킥스타터",
     </div>
   </div>
 
-  <!-- 재발주 체크리스트 (사이즈×컬러별) -->
+  <!-- 재발주 체크리스트 (사이즈×컬러별 · 접기/펼치기) -->
   <div class="grid-full" style="margin-top:1px;">
     <div class="card">
-      <div class="card-title">재발주 체크리스트 <span style="color:#555; font-size:10px; margin-left:6px;">사이즈 × 컬러별 · 리드타임 60일 기준</span></div>
-      <div id="reorder-detail-list" style="margin-top:10px;"></div>
+      <div class="card-title">재발주 체크리스트 <span style="color:#555; font-size:10px; margin-left:6px;">사이즈 × 컬러별 · 리드타임 60일 기준</span>
+        <button class="collapse-toggle" id="reorder-toggle" onclick="toggleReorder()">▼ 펼치기</button>
+      </div>
+      <div id="reorder-collapsible" class="collapsible collapsed" style="max-height:1200px;">
+        <div id="reorder-detail-list" style="margin-top:10px;"></div>
       <div style="margin-top:14px; padding:14px; background:#111; border-radius:6px; border-left:3px solid var(--yellow);">
         <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px;">
           <strong style="color:var(--yellow); font-size:12px;">재발주 권장 물량 (사이즈·컬러 차등)</strong>
@@ -1704,6 +1717,7 @@ IF(OR(C2="킥스타터",
           ※ 위 수치는 런칭 이후 출고 패턴 기반 추정. 실제 발주 시 시즌성·캠페인 등 추가 변수 반영 필요.
         </div>
       </div>
+      </div><!-- /reorder-collapsible -->
     </div>
   </div>
 
@@ -1985,16 +1999,19 @@ IF(OR(C2="킥스타터",
   <div class="grid-full" style="margin-top:1px;">
     <div class="card">
       <div class="card-title">일별 증정 수량</div>
-      <div style="position:relative; height:400px;"><canvas id="giftDailyChart"></canvas></div>
+      <div style="position:relative; height:220px;"><canvas id="giftDailyChart"></canvas></div>
     </div>
   </div>
 
-  <!-- 일별 증정 상세 + 운영 원칙 (풀 너비) -->
+  <!-- 일별 증정 상세 + 운영 원칙 (풀 너비 · 접기) -->
   <div class="grid-full" style="margin-top:1px;">
     <div class="card" style="padding:20px 28px;">
+      <div class="card-title">일별 증정 상세 + 운영 원칙
+        <button class="collapse-toggle" id="gift-detail-toggle" onclick="toggleGiftDetail()">▼ 펼치기</button>
+      </div>
+      <div id="gift-detail-wrap" class="collapsible collapsed" style="max-height:1200px;">
       <div style="display:flex; gap:24px;">
         <div style="flex:2;">
-          <div class="card-title">일별 증정 상세</div>
           <div style="overflow-x:auto;">
             <table class="data-table" id="gift-detail-table">
               <thead><tr><th>날짜</th><th class="num">수량</th></tr></thead>
@@ -2011,6 +2028,7 @@ IF(OR(C2="킥스타터",
           </div>
         </div>
       </div>
+      </div><!-- /gift-detail-wrap -->
     </div>
   </div>
 
@@ -2302,6 +2320,17 @@ IF(OR(C2="킥스타터",
 <footer>DARIMATI BR-001 출고 관리 · Data: Google Sheets · <span id="footer-date">—</span> · <a href="https://docs.google.com/spreadsheets/d/1ibroQV42xuuvWg4P1kvaCw9RT_JxO9L-6lXVAgNjOhA" style="color:#555; text-decoration:none;">시트 열기 ↗</a></footer>
 
 <script>
+// ── 접기/펼치기 토글 헬퍼 ──
+function _toggle(wrapId, btnId) {
+  const wrap = document.getElementById(wrapId);
+  const btn = document.getElementById(btnId);
+  const collapsed = wrap.classList.toggle('collapsed');
+  btn.textContent = collapsed ? '▼ 펼치기' : '▲ 접기';
+}
+function toggleDailySheet() { _toggle('daily-sheet-wrap', 'daily-sheet-toggle'); }
+function toggleReorder() { _toggle('reorder-collapsible', 'reorder-toggle'); }
+function toggleGiftDetail() { _toggle('gift-detail-wrap', 'gift-detail-toggle'); }
+
 // ── 탭 전환 ──
 function showPage(id, ev) {
   ev = ev || window.event;
