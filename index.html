@@ -2810,10 +2810,10 @@ new Chart(document.getElementById('giftDailyChart'), {
 });
 
 // ── 재고 현황 계산 ──
-// 신발 재고 — 5/13 실사 + Grey 240 입고 250개 반영 (Matt 5/13) + 6/19 그레이 240-270 반환 +1 + 6/24 베이지 240 출고 1
+// 신발 재고 — 5/13 실사 + Grey 240 입고 250개 반영 (Matt 5/13) + 6/19 그레이 240-270 반환 +1 + 6/24 베이지 240 재고 +1
 const GREY_REM  = { 240: 168, 250: 17, 260: 80, 270: 14, 280: 5 };
-const BEIGE_REM = { 240: 5, 250: 22, 260: 28, 270: 32, 280: 37 };
-const STOCK_AUDIT_DATE = '2026-06-24';  // 6/24 베이지 240 출고 1 반영
+const BEIGE_REM = { 240: 7, 250: 22, 260: 28, 270: 32, 280: 37 };
+const STOCK_AUDIT_DATE = '2026-06-24';  // 6/24 베이지 240 재고 +1 반영
 const SIZES = ['240','250','260','270','280'];
 
 const TOTAL_GREY  = Object.values(GREY_REM).reduce((a,b)=>a+b,0);   // 586
@@ -2842,7 +2842,7 @@ const TOTAL_REM   = TOTAL_GREY + TOTAL_BEIGE;                         // 731
 
 // 초기 재고 (잔여 + 출고)
 const GREY_SOLD  = [67,62,57,59,26].reduce((a,b)=>a+b,0);   // 271
-const BEIGE_SOLD = [17,10,5,5,4].reduce((a,b)=>a+b,0);       // 41
+const BEIGE_SOLD = [16,10,5,5,4].reduce((a,b)=>a+b,0);       // 40
 const INITIAL = TOTAL_REM + GREY_SOLD + BEIGE_SOLD;          // 671
 
 const DAILY_SALE  = 11.4;  // 실판매 기준 (증정·B2B 제외)
