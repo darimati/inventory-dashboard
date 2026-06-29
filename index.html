@@ -2374,10 +2374,10 @@ const MO_B2B_DAILY  = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 const MO_GIFT_DAILY = [2, 4, 6, 1, 8, 11, 3, 3, 12, 4, 5, 6, 5, 4, 6, 2, 58, 7, 4];
 const MO_RANGE = '6/1~6/26';
 // 직전 7일 캘린더 (출고 0인 날 포함 — 차트용 · patch_dashboard.py가 채움)
-const LAST7_DATES = ['6/20','6/21','6/22','6/23','6/24','6/25','6/26'];
-const LAST7_SALE_DAILY = [0, 0, 1, 0, 1, 2, 1];
+const LAST7_DATES = ['6/23','6/24','6/25','6/26','6/27','6/28','6/29'];
+const LAST7_SALE_DAILY = [0, 1, 2, 1, 0, 0, 0];
 const LAST7_B2B_DAILY  = [0, 0, 0, 0, 0, 0, 0];
-const LAST7_GIFT_DAILY = [0, 0, 6, 2, 58, 7, 4];
+const LAST7_GIFT_DAILY = [2, 58, 7, 4, 0, 0, 0];
 const axisDefaults = {
   x: { grid: { color: '#222' }, ticks: { color: '#666', font: { size: 10 } } },
   y: { grid: { color: '#222' }, ticks: { color: '#666', font: { size: 10 } }, beginAtZero: true }
@@ -2570,7 +2570,7 @@ new Chart(document.getElementById('beigeChart'), {
 });
 
 // ── 주별 판매 속도 (실판매+B2B 스택 + 일평균 선) ──
-const weekLabels = ['W1  (4/17)','W2  (4/20~24)','W3  (4/27~5/1)','W4  (5/4~5/8)','W5  (5/11~5/15)','W6  (5/18~5/22)','W7  (5/25~5/29)','W8  (6/1~6/5)','W9  (6/8~6/12)','W10  (6/15~6/19)','W11  (6/22~6/26, 진행중)'];
+const weekLabels = ['W1  (4/17)','W2  (4/20~24)','W3  (4/27~5/1)','W4  (5/4~5/8)','W5  (5/11~5/15)','W6  (5/18~5/22)','W7  (5/25~5/29)','W8  (6/1~6/5)','W9  (6/8~6/12)','W10  (6/15~6/19)','W11  (6/22~6/26)'];
 // 실판매: W1=22, W2=36, W3=42 | B2B: W1=0, W2=30, W3=0
 const weekSale = [27, 41, 49, 9, 25, 9, 50, 19, 20, 3, 5];
 const weekB2B  = [0, 30, 0, 0, 0, 0, 0, 0, 0, 0, 0];
@@ -2813,7 +2813,7 @@ new Chart(document.getElementById('giftDailyChart'), {
 // 신발 재고 — 5/13 실사 + Grey 240 입고 250개 반영 (Matt 5/13) + 6/19 그레이 240-270 반환 +1 + 6/24 베이지 240 재고 +1
 const GREY_REM  = { 240: 143, 250: 9, 260: 57, 270: 0, 280: 0 };
 const BEIGE_REM = { 240: 3, 250: 18, 260: 28, 270: 11, 280: 26 };
-const STOCK_AUDIT_DATE = '2026-06-26';  // 6/24 베이지 240 재고 +1 반영
+const STOCK_AUDIT_DATE = '2026-06-29';  // 6/24 베이지 240 재고 +1 반영
 const SIZES = ['240','250','260','270','280'];
 
 const TOTAL_GREY  = Object.values(GREY_REM).reduce((a,b)=>a+b,0);   // 586
