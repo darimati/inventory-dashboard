@@ -2374,10 +2374,10 @@ const MO_B2B_DAILY  = [0, 0, 0];
 const MO_GIFT_DAILY = [10, 2, 2];
 const MO_RANGE = '7/1~7/6';
 // 직전 7일 캘린더 (출고 0인 날 포함 — 차트용 · patch_dashboard.py가 채움)
-const LAST7_DATES = ['6/30','7/1','7/2','7/3','7/4','7/5','7/6'];
-const LAST7_SALE_DAILY = [1, 0, 0, 0, 0, 0, 2];
+const LAST7_DATES = ['7/1','7/2','7/3','7/4','7/5','7/6','7/7'];
+const LAST7_SALE_DAILY = [0, 0, 0, 0, 0, 2, 0];
 const LAST7_B2B_DAILY  = [0, 0, 0, 0, 0, 0, 0];
-const LAST7_GIFT_DAILY = [1, 10, 0, 2, 0, 0, 2];
+const LAST7_GIFT_DAILY = [10, 0, 2, 0, 0, 2, 0];
 const axisDefaults = {
   x: { grid: { color: '#222' }, ticks: { color: '#666', font: { size: 10 } } },
   y: { grid: { color: '#222' }, ticks: { color: '#666', font: { size: 10 } }, beginAtZero: true }
@@ -2815,7 +2815,7 @@ new Chart(document.getElementById('giftDailyChart'), {
 // 신발 재고 — 5/13 실사 + Grey 240 입고 250개 반영 (Matt 5/13) + 6/19 그레이 240-270 반환 +1 + 6/24 베이지 240 재고 +1
 const GREY_REM  = { 240: 141, 250: 4, 260: 52, 270: 0, 280: 0 };
 const BEIGE_REM = { 240: 3, 250: 18, 260: 28, 270: 10, 280: 25 };
-const STOCK_AUDIT_DATE = '2026-07-06';  // 6/24 베이지 240 재고 +1 반영
+const STOCK_AUDIT_DATE = '2026-07-07';  // 6/24 베이지 240 재고 +1 반영
 const SIZES = ['240','250','260','270','280'];
 
 const TOTAL_GREY  = Object.values(GREY_REM).reduce((a,b)=>a+b,0);   // 586
