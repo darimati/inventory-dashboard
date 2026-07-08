@@ -1807,9 +1807,9 @@ IF(OR(C2="킥스타터",
 
   <div class="kpi-row" style="grid-template-columns: repeat(4, 1fr);">
     <div class="kpi">
-      <div class="kpi-label">HK 잔여 (입고 기준)</div>
-      <div class="kpi-value">305</div>
-      <div class="kpi-sub">GREY only · KS 발송 후 차감 필요</div>
+      <div class="kpi-label">HK 실재고</div>
+      <div class="kpi-value">206</div>
+      <div class="kpi-sub">GREY only · 7/8 실사 반영</div>
     </div>
     <div class="kpi">
       <div class="kpi-label">예상 KS 해외 발송</div>
@@ -1823,8 +1823,8 @@ IF(OR(C2="킥스타터",
     </div>
     <div class="kpi">
       <div class="kpi-label">D2C 가용 (예상)</div>
-      <div class="kpi-value green">~243</div>
-      <div class="kpi-sub">Shopify 글로벌 판매 풀</div>
+      <div class="kpi-value green">~144</div>
+      <div class="kpi-sub">206 − KS ~42 − 시딩 ~20</div>
     </div>
   </div>
 
@@ -1836,7 +1836,7 @@ IF(OR(C2="킥스타터",
         <div style="flex:1;">
           <div style="color:var(--text); font-weight:600; margin-bottom:4px;">홍콩 물류창고 — 글로벌 D2C 거점</div>
           <div style="color:#aaa;">
-            진강 공장 → 홍콩 ACI 3PL (5팔레트 305족 GREY).
+            홍콩 ACI 3PL — 입고 254족 / 출고 48족 / 잔여 206족 GREY (7/8 실사).
             <strong style="color:#fff;">KS 해외 백커 직배송</strong> + <strong style="color:#fff;">미국 바이럴 시딩</strong> + <strong style="color:#fff;">Shopify D2C</strong> 3가지 용도.
             한국 채널과 분리 운영 — HKG→US 운임 우월 (ACI 데이터 기준).
           </div>
@@ -1859,21 +1859,21 @@ IF(OR(C2="킥스타터",
   <!-- HK 사이즈×색상 테이블 + 사이즈 비율 -->
   <div class="grid-3" style="margin-top:1px;">
     <div class="card" style="grid-column: span 2;">
-      <div class="card-title">HK 사이즈별 잔여 상세 <span style="color:#555; font-size:10px; margin-left:6px;">팔레트별 구성 포함</span></div>
+      <div class="card-title">HK 사이즈별 재고 상세 <span style="color:#555; font-size:10px; margin-left:6px;">7/8 실사 기준</span></div>
       <table class="data-table">
         <thead>
           <tr>
             <th>사이즈</th>
-            <th class="num">Full Pkg (HK#1)</th>
-            <th class="num">Shoe-only (HK#2~5)</th>
-            <th class="num" style="color:var(--grey);">합계 GREY</th>
+            <th class="num">입고</th>
+            <th class="num">출고</th>
+            <th class="num" style="color:var(--grey);">잔여 GREY</th>
             <th class="num">비중</th>
           </tr>
         </thead>
         <tbody id="hk-size-body"></tbody>
       </table>
       <div style="margin-top:12px; font-size:10px; color:#555; line-height:1.7;">
-        팔레트 구성 — HK#1: 풀세트 72족 / HK#2: 260mm×6 / HK#3: 270mm×6 / HK#4~5: 89족 (마지막 17족)
+        출처: DARIMATIHK26.xlsx · 누적입고 254족 / 누적출고 48족 / 실재고 206족
       </div>
     </div>
     <div class="card">
@@ -3087,33 +3087,35 @@ new Chart(document.getElementById('sizeRatioChart'), {
   }
 });
 
-// ── HK 재고 (입고 기준 305 GREY only · 진강→홍콩 1차 lot) ──
-const HK_GREY_FULL    = { 240: 3,  250: 15, 260: 18, 270: 18, 280: 18 };  // HK#1 풀패키지
-const HK_GREY_SINGLE  = { 240: 2,  250: 35, 260: 82, 270: 82, 280: 32 };  // HK#2~5 단품
-const HK_GREY_TOTAL   = { 240: 5,  250: 50, 260: 100, 270: 100, 280: 50 };
-const HK_TOTAL = Object.values(HK_GREY_TOTAL).reduce((a,b)=>a+b,0);  // 305
+// ── HK 재고 (GREY only · 7/8 실사 기준) ──
+const HK_GREY_IN      = { 240: 4,  250: 39, 260: 79, 270: 90, 280: 42 };  // 누적 입고
+const HK_GREY_OUT     = { 240: 3,  250: 13, 260: 3,  270: 15, 280: 14 };  // 누적 출고
+const HK_GREY_TOTAL   = { 240: 1,  250: 26, 260: 76, 270: 75, 280: 28 };  // 실재고
+const HK_TOTAL = Object.values(HK_GREY_TOTAL).reduce((a,b)=>a+b,0);  // 206
 
 renderInvBars('hk-grey-inv-bars', HK_GREY_TOTAL, '#b0c4d8');
 
 // HK 사이즈별 테이블
 const hkBody = document.getElementById('hk-size-body');
+const HK_IN_TOTAL = Object.values(HK_GREY_IN).reduce((a,b)=>a+b,0);
+const HK_OUT_TOTAL = Object.values(HK_GREY_OUT).reduce((a,b)=>a+b,0);
 SIZES.forEach(s => {
-  const full = HK_GREY_FULL[s];
-  const single = HK_GREY_SINGLE[s];
+  const inp = HK_GREY_IN[s];
+  const out = HK_GREY_OUT[s];
   const total = HK_GREY_TOTAL[s];
   const pct = (total / HK_TOTAL * 100).toFixed(0);
   hkBody.innerHTML += `<tr>
     <td style="font-weight:600;">${s}mm</td>
-    <td class="num" style="color:#888;">${full}</td>
-    <td class="num" style="color:#888;">${single}</td>
+    <td class="num" style="color:#888;">${inp}</td>
+    <td class="num" style="color:#e88;">${out}</td>
     <td class="num" style="color:var(--grey); font-weight:700;">${total}</td>
     <td class="num" style="color:#666;">${pct}%</td>
   </tr>`;
 });
 hkBody.innerHTML += `<tr class="total">
   <td>합계</td>
-  <td class="num">72</td>
-  <td class="num">233</td>
+  <td class="num">${HK_IN_TOTAL}</td>
+  <td class="num">${HK_OUT_TOTAL}</td>
   <td class="num" style="color:var(--grey);">${HK_TOTAL}</td>
   <td class="num">100%</td>
 </tr>`;
