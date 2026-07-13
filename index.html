@@ -3035,13 +3035,14 @@ SIZES.forEach(s => {
 });
 
 // ── 잔여 사이즈 바 렌더 ──
-function renderInvBars(containerId, remObj, color) {
+function renderInvBars(containerId, remObj, color, sizes) {
   const el = document.getElementById(containerId);
   if (!el) return;
-  const values = Object.values(remObj);
+  const sizeList = sizes || SIZES;
+  const values = sizeList.map(s => remObj[s] || 0);
   const maxVal = Math.max(...values, 1);
   el.innerHTML = '';
-  SIZES.forEach(s => {
+  sizeList.forEach(s => {
     const v = remObj[s] || 0;
     const pct = (v / maxVal * 100).toFixed(0);
     el.innerHTML += `<div class="inv-size-row">
@@ -3140,16 +3141,17 @@ new Chart(document.getElementById('hkSizeRatioChart'), {
   }
 });
 
-// ── N배송 재고 (6/9 입고 기준 109EA · KR→11번가 셀러위탁센터) ──
-const NSHIP_GREY_SINGLE  = { 240:12, 250:8, 260:8, 270:8, 280:8 };
-const NSHIP_GREY_PKG     = { 240:7,  250:5, 260:5, 270:5, 280:5 };
-const NSHIP_BEIGE_SINGLE = { 240:5,  250:5, 260:5, 270:5, 280:3 };
-const NSHIP_BEIGE_PKG    = { 240:3,  250:3, 260:3, 270:3, 280:3 };
-const NSHIP_SOLD         = { 240:5, 250:3, 260:5, 270:3, 280:2 };
+// ── N배송 재고 (누적: 1차 109EA 6/9 + 2차 15EA 7/6 + 3차 67EA 7/10 = 191EA) ──
+const NSHIP_SIZES = ['230','240','250','260','270','280'];
+const NSHIP_GREY_SINGLE  = { 230:10, 240:24, 250:16, 260:15, 270:15, 280:15 };
+const NSHIP_GREY_PKG     = { 230:4,  240:12, 250:5,  260:5,  270:5,  280:5 };
+const NSHIP_BEIGE_SINGLE = { 230:8,  240:7,  250:9,  260:5,  270:5,  280:7 };
+const NSHIP_BEIGE_PKG    = { 230:4,  240:3,  250:3,  260:3,  270:3,  280:3 };
+const NSHIP_SOLD         = { 230:0, 240:5, 250:3, 260:5, 270:3, 280:2 };
 
 // N배송 합산
 const NSHIP_TOTAL_BY_SIZE = {};
-SIZES.forEach(s => {
+NSHIP_SIZES.forEach(s => {
   NSHIP_TOTAL_BY_SIZE[s] = (NSHIP_GREY_SINGLE[s]||0) + (NSHIP_GREY_PKG[s]||0)
                          + (NSHIP_BEIGE_SINGLE[s]||0) + (NSHIP_BEIGE_PKG[s]||0);
 });
@@ -3158,7 +3160,7 @@ const NSHIP_SOLD_TOTAL = Object.values(NSHIP_SOLD).reduce((a,b)=>a+b,0);
 
 // N배송 잔여 (사이즈별)
 const NSHIP_REM = {};
-SIZES.forEach(s => { NSHIP_REM[s] = Math.max(0, NSHIP_TOTAL_BY_SIZE[s] - (NSHIP_SOLD[s]||0)); });
+NSHIP_SIZES.forEach(s => { NSHIP_REM[s] = Math.max(0, NSHIP_TOTAL_BY_SIZE[s] - (NSHIP_SOLD[s]||0)); });
 const NSHIP_REM_TOTAL = Object.values(NSHIP_REM).reduce((a,b)=>a+b,0);
 
 // KPI 동적 갱신
@@ -3170,12 +3172,12 @@ if (nshipBarSub) nshipBarSub.textContent = NSHIP_SOLD_TOTAL > 0
   : `총 ${NSHIP_TOTAL}켤레 · 입고 기준`;
 
 // N배송 바 차트
-renderInvBars('nship-inv-bars', NSHIP_REM, '#4ade80');
+renderInvBars('nship-inv-bars', NSHIP_REM, '#4ade80', NSHIP_SIZES);
 
 // N배송 테이블
 const nshipBody = document.getElementById('nship-size-body');
 if (nshipBody) {
-  SIZES.forEach(s => {
+  NSHIP_SIZES.forEach(s => {
     const gs = NSHIP_GREY_SINGLE[s], gp = NSHIP_GREY_PKG[s];
     const bs = NSHIP_BEIGE_SINGLE[s], bp = NSHIP_BEIGE_PKG[s];
     const total = NSHIP_TOTAL_BY_SIZE[s];
@@ -3214,10 +3216,10 @@ if (nshipChartEl) {
   new Chart(nshipChartEl, {
     type: 'doughnut',
     data: {
-      labels: SIZES.map(s => `${s}mm (${NSHIP_REM[s]})`),
+      labels: NSHIP_SIZES.map(s => `${s}mm (${NSHIP_REM[s]})`),
       datasets: [{
-        data: SIZES.map(s => NSHIP_REM[s]),
-        backgroundColor: ['#166534', '#22c55e', '#4ade80', '#86efac', '#bbf7d0'],
+        data: NSHIP_SIZES.map(s => NSHIP_REM[s]),
+        backgroundColor: ['#0f5132', '#166534', '#22c55e', '#4ade80', '#86efac', '#bbf7d0'],
         borderWidth: 0, hoverOffset: 6
       }]
     },
