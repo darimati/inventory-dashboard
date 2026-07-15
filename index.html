@@ -989,8 +989,8 @@
   <div class="kpi-row">
     <div class="kpi">
       <div class="kpi-label"><span class="dyn-month">5</span>월 누계 출고</div>
-      <div class="kpi-value" id="ovw-kpi-total">87</div>
-      <div class="kpi-sub">켤레 · <span class="dyn-month-range">7/1~7/14</span></div>
+      <div class="kpi-value" id="ovw-kpi-total">88</div>
+      <div class="kpi-sub">켤레 · <span class="dyn-month-range">7/1~7/15</span></div>
     </div>
     <div class="kpi">
       <div class="kpi-label">실판매 <span class="badge sale">SALE</span></div>
@@ -1004,13 +1004,13 @@
     </div>
     <div class="kpi">
       <div class="kpi-label">증정·샘플 <span class="badge gift">GIFT</span></div>
-      <div class="kpi-value red" id="ovw-kpi-gift">17</div>
+      <div class="kpi-value red" id="ovw-kpi-gift">18</div>
       <div class="kpi-sub">샘플·인플루언서·지인</div>
     </div>
     <div class="kpi">
       <div class="kpi-label">일평균 실판매</div>
-      <div class="kpi-value yellow" id="ovw-kpi-avg">8.8</div>
-      <div class="kpi-sub">켤레 / 출고일 (<span id="ovw-kpi-days">8</span>일)</div>
+      <div class="kpi-value yellow" id="ovw-kpi-avg">7.8</div>
+      <div class="kpi-sub">켤레 / 출고일 (<span id="ovw-kpi-days">9</span>일)</div>
     </div>
   </div>
 
@@ -1335,7 +1335,7 @@ IF(OR(C2="킥스타터",
     <div class="kpi" style="border-right: 1px solid #333;">
       <div class="kpi-label"><span class="dyn-month">5</span>월 누계 판매</div>
       <div class="kpi-value green" style="font-size:40px;" id="month-kpi-total">70</div>
-      <div class="kpi-sub" style="line-height:1.9;">실판매 <strong style="color:#4ade80;" id="month-kpi-sale">70</strong> + B2B <strong style="color:#a78bfa;" id="month-kpi-b2b">0</strong> · <span class="dyn-month-range">7/1~7/14</span></div>
+      <div class="kpi-sub" style="line-height:1.9;">실판매 <strong style="color:#4ade80;" id="month-kpi-sale">70</strong> + B2B <strong style="color:#a78bfa;" id="month-kpi-b2b">0</strong> · <span class="dyn-month-range">7/1~7/15</span></div>
     </div>
     <div class="kpi">
       <div class="kpi-label">킥스타터</div>
@@ -2351,33 +2351,33 @@ function showPage(id, ev) {
   });
 }
 
-const DATES = ['4/17','4/20','4/21','4/22','4/23','4/24','4/27','4/28','4/29','4/30','5/4','5/6','5/7','5/10','5/11','5/12','5/13','5/14','5/15','5/18','5/19','5/20','5/21','5/26','5/27','5/28','5/29','6/1','6/2','6/4','6/5','6/8','6/9','6/10','6/11','6/12','6/15','6/16','6/17','6/18','6/19','6/22','6/23','6/24','6/25','6/26','6/30','7/1','7/3','7/6','7/8','7/9','7/10','7/13','7/14'];
+const DATES = ['4/17','4/20','4/21','4/22','4/23','4/24','4/27','4/28','4/29','4/30','5/4','5/6','5/7','5/10','5/11','5/12','5/13','5/14','5/15','5/18','5/19','5/20','5/21','5/26','5/27','5/28','5/29','6/1','6/2','6/4','6/5','6/8','6/9','6/10','6/11','6/12','6/15','6/16','6/17','6/18','6/19','6/22','6/23','6/24','6/25','6/26','6/30','7/1','7/3','7/6','7/8','7/9','7/10','7/13','7/14','7/15'];
 
 // 플랫폼별 일별 실판매 (클릭 상세용)
 const PLATFORM_DAILY = {
-  '킥스타터':[25, 1, 6, 4, 0, 2, 10, 3, 1, 0, 0, 0, 0, 0, 1, 0, 0, 4, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-  '카카오메이커스':[0, 18, 4, 1, 0, 1, 5, 2, 19, 7, 4, 0, 0, 0, 1, 5, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-  '네이버':  [2, 1, 0, 0, 0, 1, 0, 0, 0, 2, 4, 0, 0, 0, 4, 0, 3, 0, 1, 3, 3, 2, 0, 40, 3, 4, 1, 6, 4, 7, 2, 11, 4, 3, 1, 0, 0, 0, 2, 0, 0, 1, 0, 1, 2, 1, 1, 0, 0, 2, 1, 0, 65, 2, 0],
-  '카카오톡스토어':[0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  '킥스타터':[25, 1, 6, 4, 0, 2, 10, 3, 1, 0, 0, 0, 0, 0, 1, 0, 0, 4, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  '카카오메이커스':[0, 18, 4, 1, 0, 1, 5, 2, 19, 7, 4, 0, 0, 0, 1, 5, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  '네이버':  [2, 1, 0, 0, 0, 1, 0, 0, 0, 2, 4, 0, 0, 0, 4, 0, 3, 0, 1, 3, 3, 2, 0, 40, 3, 4, 1, 6, 4, 7, 2, 11, 4, 3, 1, 0, 0, 0, 2, 0, 0, 1, 0, 1, 2, 1, 1, 0, 0, 2, 1, 0, 65, 2, 0, 0],
+  '카카오톡스토어':[0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
 };
 const PLATFORM_COLORS = {
   '킥스타터': '#b0c4d8', '카카오메이커스': '#d4b896', '네이버': '#7c9bb5', '카카오톡스토어': '#a0a0a0'
 };
-const SALE_DAILY = [27, 20, 10, 5, 0, 6, 15, 5, 20, 9, 9, 0, 0, 0, 6, 5, 3, 4, 7, 4, 3, 2, 0, 42, 3, 4, 1, 6, 4, 7, 2, 11, 4, 3, 1, 1, 0, 1, 2, 0, 0, 1, 0, 1, 2, 1, 1, 0, 0, 2, 1, 0, 65, 2, 0];
-const B2B_DAILY  = [0, 0, 0, 0, 30, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-const GIFT_DAILY = [7, 0, 3, 3, 0, 1, 2, 0, 0, 3, 4, 1, 1, 1, 5, 0, 0, 7, 0, 0, 0, 0, 4, 4, 3, 6, 2, 2, 4, 6, 1, 8, 11, 3, 3, 12, 4, 5, 6, 5, 4, 6, 2, 58, 7, 4, 1, 10, 2, 2, 0, 2, 0, 0, 1];
+const SALE_DAILY = [27, 20, 10, 5, 0, 6, 15, 5, 20, 9, 9, 0, 0, 0, 6, 5, 3, 4, 7, 4, 3, 2, 0, 42, 3, 4, 1, 6, 4, 7, 2, 11, 4, 3, 1, 1, 0, 1, 2, 0, 0, 1, 0, 1, 2, 1, 1, 0, 0, 2, 1, 0, 65, 2, 0, 0];
+const B2B_DAILY  = [0, 0, 0, 0, 30, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+const GIFT_DAILY = [7, 0, 3, 3, 0, 1, 2, 0, 0, 3, 4, 1, 1, 1, 5, 0, 0, 7, 0, 0, 0, 0, 4, 4, 3, 6, 2, 2, 4, 6, 1, 8, 11, 3, 3, 12, 4, 5, 6, 5, 4, 6, 2, 58, 7, 4, 1, 10, 2, 2, 0, 2, 0, 0, 1, 1];
 
 // 월별 (시스템 today의 월 — patch_dashboard.py가 채움)
-const MO_DATES = ['7/1','7/3','7/6','7/8','7/9','7/10','7/13','7/14'];
-const MO_SALE_DAILY = [0, 0, 2, 1, 0, 65, 2, 0];
-const MO_B2B_DAILY  = [0, 0, 0, 0, 0, 0, 0, 0];
-const MO_GIFT_DAILY = [10, 2, 2, 0, 2, 0, 0, 1];
-const MO_RANGE = '7/1~7/14';
+const MO_DATES = ['7/1','7/3','7/6','7/8','7/9','7/10','7/13','7/14','7/15'];
+const MO_SALE_DAILY = [0, 0, 2, 1, 0, 65, 2, 0, 0];
+const MO_B2B_DAILY  = [0, 0, 0, 0, 0, 0, 0, 0, 0];
+const MO_GIFT_DAILY = [10, 2, 2, 0, 2, 0, 0, 1, 1];
+const MO_RANGE = '7/1~7/15';
 // 직전 7일 캘린더 (출고 0인 날 포함 — 차트용 · patch_dashboard.py가 채움)
-const LAST7_DATES = ['7/8','7/9','7/10','7/11','7/12','7/13','7/14'];
-const LAST7_SALE_DAILY = [1, 0, 65, 0, 0, 2, 0];
+const LAST7_DATES = ['7/9','7/10','7/11','7/12','7/13','7/14','7/15'];
+const LAST7_SALE_DAILY = [0, 65, 0, 0, 2, 0, 0];
 const LAST7_B2B_DAILY  = [0, 0, 0, 0, 0, 0, 0];
-const LAST7_GIFT_DAILY = [0, 2, 0, 0, 0, 0, 1];
+const LAST7_GIFT_DAILY = [2, 0, 0, 0, 0, 1, 1];
 const axisDefaults = {
   x: { grid: { color: '#222' }, ticks: { color: '#666', font: { size: 10 } } },
   y: { grid: { color: '#222' }, ticks: { color: '#666', font: { size: 10 } }, beginAtZero: true }
@@ -2451,9 +2451,9 @@ _dailyChart = new Chart(document.getElementById('dailyStackedChart'), {
 _typeChart = new Chart(document.getElementById('typeChart'), {
   type: 'doughnut',
   data: {
-    labels: ['실판매 (70)', 'B2B·행사 (0)', '증정·샘플 (17)'],
+    labels: ['실판매 (70)', 'B2B·행사 (0)', '증정·샘플 (18)'],
     datasets: [{
-      data: [70, 0, 17],
+      data: [70, 0, 18],
       backgroundColor: ['#4ade80', '#a78bfa', '#374151'],
       borderWidth: 0, hoverOffset: 6
     }]
@@ -2537,7 +2537,7 @@ const channels = [
   { name: '카카오메이커스', count: 70, color: '#d4b896' },
   { name: '킥스타터', count: 64, color: '#b0c4d8' },
   { name: 'B2B · 마야크루', count: 30, color: '#a78bfa' },
-  { name: '증정·샘플', count: 226, color: '#374151' },
+  { name: '증정·샘플', count: 227, color: '#374151' },
   { name: '네이버', count: 190, color: '#7c9bb5' },
   { name: '카카오톡스토어', count: 4, color: '#8b7355' },
 ];
@@ -2574,7 +2574,7 @@ const weekLabels = ['W1  (4/17)','W2  (4/20~24)','W3  (4/27~5/1)','W4  (5/4~5/8)
 // 실판매: W1=22, W2=36, W3=42 | B2B: W1=0, W2=30, W3=0
 const weekSale = [27, 41, 49, 9, 25, 9, 50, 19, 20, 3, 5, 1, 68, 2];
 const weekB2B  = [0, 30, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-const weekDays = [1, 5, 4, 4, 5, 4, 4, 4, 5, 5, 5, 3, 4, 2];  // 출고일 수
+const weekDays = [1, 5, 4, 4, 5, 4, 4, 4, 5, 5, 5, 3, 4, 3];  // 출고일 수
 const weekRate = weekSale.map((s,i) => +(s/weekDays[i]).toFixed(1));
 
 new Chart(document.getElementById('weeklyVelocityChart'), {
@@ -2660,11 +2660,11 @@ new Chart(document.getElementById('weeklyVelocityChart'), {
 }
 
 // ── 일별 출고 상세 시트 ──
-const DAILY_KCK  = [25, 1, 6, 4, 0, 2, 10, 3, 1, 0, 0, 0, 0, 0, 1, 0, 0, 4, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-const DAILY_KKO  = [0, 18, 4, 1, 0, 1, 5, 2, 19, 7, 4, 0, 0, 0, 1, 5, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-const DAILY_NAV  = [2, 1, 0, 0, 0, 1, 0, 0, 0, 2, 4, 0, 0, 0, 4, 0, 3, 0, 1, 3, 3, 2, 0, 40, 3, 4, 1, 6, 4, 7, 2, 11, 4, 3, 1, 0, 0, 0, 2, 0, 0, 1, 0, 1, 2, 1, 1, 0, 0, 2, 1, 0, 65, 2, 0];
-const DAILY_KTK  = [0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-const WEEK_LABEL = ['W1','W2','W2','W2','W2','W2','W3','W3','W3','W3','W4','W4','W4','W4','W5','W5','W5','W5','W5','W6','W6','W6','W6','W7','W7','W7','W7','W8','W8','W8','W8','W9','W9','W9','W9','W9','W10','W10','W10','W10','W10','W11','W11','W11','W11','W11','W12','W12','W12','W13','W13','W13','W13','W14','W14'];
+const DAILY_KCK  = [25, 1, 6, 4, 0, 2, 10, 3, 1, 0, 0, 0, 0, 0, 1, 0, 0, 4, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+const DAILY_KKO  = [0, 18, 4, 1, 0, 1, 5, 2, 19, 7, 4, 0, 0, 0, 1, 5, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+const DAILY_NAV  = [2, 1, 0, 0, 0, 1, 0, 0, 0, 2, 4, 0, 0, 0, 4, 0, 3, 0, 1, 3, 3, 2, 0, 40, 3, 4, 1, 6, 4, 7, 2, 11, 4, 3, 1, 0, 0, 0, 2, 0, 0, 1, 0, 1, 2, 1, 1, 0, 0, 2, 1, 0, 65, 2, 0, 0];
+const DAILY_KTK  = [0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+const WEEK_LABEL = ['W1','W2','W2','W2','W2','W2','W3','W3','W3','W3','W4','W4','W4','W4','W5','W5','W5','W5','W5','W6','W6','W6','W6','W7','W7','W7','W7','W8','W8','W8','W8','W9','W9','W9','W9','W9','W10','W10','W10','W10','W10','W11','W11','W11','W11','W11','W12','W12','W12','W13','W13','W13','W13','W14','W14','W14'];
 const WEEK_TOTAL_ROWS = [
   { after: 0, label: 'W1 소계', kck:25, kko:0, nav:2, ktk:0, sale:27, b2b:0, gift:7, total:34 },
   { after: 5, label: 'W2 소계', kck:13, kko:24, nav:2, ktk:2, sale:41, b2b:30, gift:7, total:78 },
@@ -2679,7 +2679,7 @@ const WEEK_TOTAL_ROWS = [
   { after: 45, label: 'W11 소계', kck:0, kko:0, nav:5, ktk:0, sale:5, b2b:0, gift:77, total:82 },
   { after: 48, label: 'W12 소계', kck:0, kko:0, nav:1, ktk:0, sale:1, b2b:0, gift:13, total:14 },
   { after: 52, label: 'W13 소계', kck:0, kko:0, nav:68, ktk:0, sale:68, b2b:0, gift:4, total:72 },
-  { after: 54, label: 'W14 소계', kck:0, kko:0, nav:2, ktk:0, sale:2, b2b:0, gift:1, total:3 },
+  { after: 55, label: 'W14 소계', kck:0, kko:0, nav:2, ktk:0, sale:2, b2b:0, gift:2, total:4 },
 ];
 
 const dsBody = document.getElementById('daily-sheet-body');
@@ -2728,8 +2728,8 @@ dsBody.innerHTML += `<tr class="total">
   <td class="num" style="color:#a0a0a0;">4</td>
   <td class="num green">328</td>
   <td class="num" style="color:#a78bfa;">30</td>
-  <td class="num" style="color:#6b7280;">226</td>
-  <td class="num">584</td>
+  <td class="num" style="color:#6b7280;">227</td>
+  <td class="num">585</td>
 </tr>`;
 
 // ── 플랫폼 점유율 (B2B 포함 133켤레) + 옆 막대 legend ──
@@ -2814,9 +2814,9 @@ new Chart(document.getElementById('giftDailyChart'), {
 
 // ── 재고 현황 계산 ──
 // 신발 재고 — 5/13 실사 + Grey 240 입고 250개 반영 (Matt 5/13) + 6/19 그레이 240-270 반환 +1 + 6/24 베이지 240 재고 +1
-const GREY_REM  = { 240: 128, 250: 0, 260: 46, 270: 0, 280: 0 };
+const GREY_REM  = { 240: 128, 250: 0, 260: 45, 270: 0, 280: 0 };
 const BEIGE_REM = { 240: 0, 250: 14, 260: 28, 270: 10, 280: 21 };
-const STOCK_AUDIT_DATE = '2026-07-14';  // 6/24 베이지 240 재고 +1 반영
+const STOCK_AUDIT_DATE = '2026-07-15';  // 6/24 베이지 240 재고 +1 반영
 const SIZES = ['240','250','260','270','280'];
 
 const TOTAL_GREY  = Object.values(GREY_REM).reduce((a,b)=>a+b,0);   // 586
@@ -2844,7 +2844,7 @@ const TOTAL_REM   = TOTAL_GREY + TOTAL_BEIGE;                         // 731
 }
 
 // 초기 재고 (잔여 + 출고)
-const GREY_SOLD  = [121,94,97,91,48].reduce((a,b)=>a+b,0);   // 451
+const GREY_SOLD  = [121,94,98,91,48].reduce((a,b)=>a+b,0);   // 452
 const BEIGE_SOLD = [25,23,5,27,25].reduce((a,b)=>a+b,0);       // 105
 const INITIAL = TOTAL_REM + GREY_SOLD + BEIGE_SOLD;          // 671
 
@@ -2874,7 +2874,7 @@ const SALE_BY_SIZE = {
   GREY:  { 240:61, 250:61, 260:54, 270:62, 280:32 },
   BEIGE: { 240:14, 250:11, 260:4, 270:3, 280:8 },
 };
-const BIZ_DAYS = 55;
+const BIZ_DAYS = 56;
 
 // ── 증정 KPI 동적 계산 ──
 {
@@ -3259,7 +3259,7 @@ const CHANNEL_BREAKDOWN_AUTO = {
   '카카오톡스토어':       { pkg: 0, unit: 4 },
   '킥스타터':            { pkg: 24, unit: 40 },
   'B2B (마야크루)':      { pkg: 0, unit: 30 },
-  '샘플':                { pkg: 16, unit: 210 },
+  '샘플':                { pkg: 16, unit: 211 },
 };
 
 // === 월별 채널 breakdown — patch_dashboard.py가 자동 갱신 ===
@@ -3294,7 +3294,7 @@ const CHANNEL_BREAKDOWN_AUTO_BY_MONTH = {
     "카카오톡스토어": { pkg: 0, unit: 0 },
     "킥스타터": { pkg: 0, unit: 0 },
     "B2B (마야크루)": { pkg: 0, unit: 0 },
-    "샘플": { pkg: 1, unit: 16 },
+    "샘플": { pkg: 1, unit: 17 },
   },
 };
 
