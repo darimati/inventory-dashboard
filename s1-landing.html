@@ -31,6 +31,55 @@ body {
   color: var(--text);
   line-height: 1.7;
   -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* ── KEYFRAME ANIMATIONS ─────────────── */
+@keyframes float {
+  0%, 100% { transform: translateY(0) rotate(-2deg); }
+  50% { transform: translateY(-18px) rotate(1deg); }
+}
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 20px var(--accent-glow), 0 0 60px rgba(255,65,54,0.1); }
+  50% { box-shadow: 0 0 30px var(--accent-glow), 0 0 80px rgba(255,65,54,0.2); }
+}
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+@keyframes ticker-scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes border-glow {
+  0%, 100% { border-color: rgba(255,65,54,0.2); }
+  50% { border-color: rgba(255,65,54,0.5); }
+}
+@keyframes topbar-pulse {
+  0%, 100% { background: var(--accent); }
+  50% { background: #e6392e; }
+}
+@keyframes slide-in-right {
+  from { opacity: 0; transform: translateX(40px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes count-pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+  100% { transform: scale(1); }
 }
 
 /* ── UTILITY ──────────────────────────── */
@@ -72,8 +121,19 @@ h3 { font-size: clamp(18px, 2.5vw, 24px); font-weight: 600; line-height: 1.3; }
   position: sticky;
   top: 0;
   z-index: 100;
+  animation: topbar-pulse 3s ease-in-out infinite;
 }
 .topbar a { color: white; text-decoration: underline; }
+.topbar .urgency-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background: #fff;
+  border-radius: 50%;
+  margin-right: 6px;
+  animation: pulse-glow 1.5s ease-in-out infinite;
+  vertical-align: middle;
+}
 
 /* ── NAV ──────────────────────────────── */
 .nav {
@@ -128,8 +188,22 @@ h3 { font-size: clamp(18px, 2.5vw, 24px); font-weight: 600; line-height: 1.3; }
   width: 80%;
   height: 200%;
   background: radial-gradient(ellipse, var(--accent-glow) 0%, transparent 70%);
-  opacity: 0.4;
+  opacity: 0.5;
   pointer-events: none;
+  animation: gradient-shift 8s ease-in-out infinite;
+  background-size: 200% 200%;
+}
+.hero::after {
+  content: '';
+  position: absolute;
+  bottom: -20%;
+  left: -20%;
+  width: 60%;
+  height: 60%;
+  background: radial-gradient(circle, rgba(255,65,54,0.15) 0%, transparent 70%);
+  pointer-events: none;
+  animation: gradient-shift 12s ease-in-out infinite reverse;
+  background-size: 200% 200%;
 }
 .hero .container {
   display: grid;
@@ -139,16 +213,24 @@ h3 { font-size: clamp(18px, 2.5vw, 24px); font-weight: 600; line-height: 1.3; }
   position: relative;
   z-index: 1;
 }
-.hero-content { max-width: 560px; }
-.hero-content .badge { margin-bottom: 20px; }
+.hero-content { max-width: 560px; animation: fade-up 1s ease-out; }
+.hero-content .badge { margin-bottom: 20px; animation: scale-in 0.8s ease-out 0.3s both; }
 .hero-content h1 { margin-bottom: 20px; }
 .hero-content h1 .price-strike {
   text-decoration: line-through;
   color: var(--text-secondary);
   font-weight: 400;
 }
+.hero-content h1 .text-accent {
+  background: linear-gradient(90deg, #ff4136, #ff8c1a, #ff4136);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 3s linear infinite;
+}
 .hero-content p { font-size: 18px; color: var(--text-secondary); margin-bottom: 32px; }
-.hero-actions { display: flex; gap: 16px; flex-wrap: wrap; }
+.hero-actions { display: flex; gap: 16px; flex-wrap: wrap; animation: fade-up 1s ease-out 0.5s both; }
 .btn-primary {
   background: var(--accent);
   color: white;
@@ -163,8 +245,19 @@ h3 { font-size: clamp(18px, 2.5vw, 24px); font-weight: 600; line-height: 1.3; }
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  animation: pulse-glow 2.5s ease-in-out infinite;
+  position: relative;
+  overflow: hidden;
 }
-.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 30px var(--accent-glow); }
+.btn-primary::after {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%;
+  width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  animation: shimmer 2.5s ease-in-out infinite;
+}
+.btn-primary:hover { transform: translateY(-2px) scale(1.03); box-shadow: 0 8px 40px var(--accent-glow); }
 .btn-secondary {
   background: transparent;
   color: var(--text);
@@ -174,20 +267,33 @@ h3 { font-size: clamp(18px, 2.5vw, 24px); font-weight: 600; line-height: 1.3; }
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
-  transition: border-color 0.3s;
+  transition: all 0.3s;
   text-decoration: none;
 }
-.btn-secondary:hover { border-color: var(--text-secondary); }
+.btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
 
 .hero-image {
   position: relative;
   display: flex;
   justify-content: center;
+  animation: slide-in-right 1s ease-out 0.3s both;
 }
 .hero-image img {
   max-width: 100%;
   border-radius: 20px;
   box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  animation: float 6s ease-in-out infinite;
+}
+.hero-image::before {
+  content: '';
+  position: absolute;
+  inset: -20px;
+  background: radial-gradient(circle at center, var(--accent-glow), transparent 70%);
+  border-radius: 30px;
+  z-index: -1;
+  opacity: 0.4;
+  filter: blur(30px);
+  animation: pulse-glow 3s ease-in-out infinite;
 }
 
 /* ── STATS BAR ────────────────────────── */
@@ -196,6 +302,7 @@ h3 { font-size: clamp(18px, 2.5vw, 24px); font-weight: 600; line-height: 1.3; }
   border-top: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
   padding: 40px 0;
+  position: relative;
 }
 .stats-grid {
   display: grid;
@@ -203,11 +310,21 @@ h3 { font-size: clamp(18px, 2.5vw, 24px); font-weight: 600; line-height: 1.3; }
   gap: 32px;
   text-align: center;
 }
+.stat-item {
+  transition: transform 0.3s;
+}
+.stat-item:hover {
+  transform: scale(1.05);
+}
 .stat-item .stat-number {
   font-size: 36px;
   font-weight: 800;
   color: var(--accent);
   display: block;
+  font-variant-numeric: tabular-nums;
+}
+.stat-item .stat-number.counted {
+  animation: count-pulse 0.5s ease-out;
 }
 .stat-item .stat-label {
   font-size: 13px;
@@ -216,6 +333,35 @@ h3 { font-size: clamp(18px, 2.5vw, 24px); font-weight: 600; line-height: 1.3; }
   letter-spacing: 1px;
   margin-top: 4px;
 }
+
+/* ── SOCIAL PROOF TICKER ─────────────── */
+.ticker-bar {
+  background: #050505;
+  border-bottom: 1px solid var(--border);
+  padding: 12px 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.ticker-track {
+  display: inline-flex;
+  animation: ticker-scroll 30s linear infinite;
+}
+.ticker-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 32px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+.ticker-item .dot {
+  width: 6px; height: 6px;
+  background: var(--green);
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.ticker-item strong { color: var(--text); }
 
 /* ── STORY ────────────────────────────── */
 .story-step {
@@ -274,7 +420,8 @@ h3 { font-size: clamp(18px, 2.5vw, 24px); font-weight: 600; line-height: 1.3; }
   border-radius: 12px;
   transition: background 0.3s;
 }
-.credential-item:hover { background: rgba(255,255,255,0.08); }
+.credential-item:hover { background: rgba(255,255,255,0.08); transform: translateX(4px); }
+.credential-item { transition: background 0.3s, transform 0.3s; }
 .credential-icon {
   font-size: 20px;
   flex-shrink: 0;
@@ -312,10 +459,34 @@ h3 { font-size: clamp(18px, 2.5vw, 24px); font-weight: 600; line-height: 1.3; }
   border: 1px solid var(--border);
   border-radius: 16px;
   padding: 32px 24px;
-  transition: border-color 0.3s, transform 0.3s;
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  position: relative;
+  overflow: hidden;
 }
-.feature-card:hover { border-color: var(--accent); transform: translateY(-4px); }
-.feature-card .icon { font-size: 32px; margin-bottom: 16px; display: block; }
+.feature-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent), #ff8c1a);
+  transform: scaleX(0);
+  transition: transform 0.4s;
+  transform-origin: left;
+}
+.feature-card:hover { border-color: var(--accent); transform: translateY(-6px); box-shadow: 0 12px 40px rgba(255,65,54,0.15); }
+.feature-card:hover::before { transform: scaleX(1); }
+.feature-card .icon {
+  font-size: 32px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  background: rgba(255,65,54,0.08);
+  border-radius: 14px;
+  border: 1px solid rgba(255,65,54,0.15);
+}
 .feature-card h3 { font-size: 18px; margin-bottom: 8px; }
 .feature-card p { color: var(--text-secondary); font-size: 14px; line-height: 1.6; }
 
@@ -461,6 +632,138 @@ h3 { font-size: clamp(18px, 2.5vw, 24px); font-weight: 600; line-height: 1.3; }
   font-weight: 600;
 }
 
+/* ── INTERVIEW VIDEO ──────────────────── */
+.video-wrapper {
+  position: relative;
+  max-width: 800px;
+  margin: 0 auto;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+  border: 2px solid rgba(255,65,54,0.2);
+  animation: border-glow 3s ease-in-out infinite;
+}
+.video-wrapper video {
+  width: 100%;
+  display: block;
+  background: #000;
+}
+.video-play-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.4);
+  cursor: pointer;
+  transition: background 0.3s;
+}
+.video-play-overlay:hover { background: rgba(0,0,0,0.2); }
+.play-btn-circle {
+  width: 80px;
+  height: 80px;
+  background: var(--accent);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: pulse-glow 2s ease-in-out infinite;
+  transition: transform 0.3s;
+}
+.play-btn-circle:hover { transform: scale(1.1); }
+.play-btn-circle svg {
+  width: 32px;
+  height: 32px;
+  fill: white;
+  margin-left: 4px;
+}
+
+/* ── CHAMPION BADGE ──────────────────── */
+.champion-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, rgba(255,215,0,0.15), rgba(255,215,0,0.05));
+  border: 1px solid rgba(255,215,0,0.3);
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gold);
+}
+
+/* ── FLOATING MOBILE CTA ─────────────── */
+.floating-cta {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(10,10,10,0.95);
+  backdrop-filter: blur(20px);
+  border-top: 1px solid var(--border);
+  padding: 12px 20px;
+  z-index: 98;
+  transform: translateY(100%);
+  transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+.floating-cta.visible { transform: translateY(0); }
+.floating-cta .inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 600px;
+  margin: 0 auto;
+}
+.floating-cta .price-info {
+  font-size: 14px;
+  font-weight: 600;
+}
+.floating-cta .price-info .old { text-decoration: line-through; color: var(--text-secondary); font-weight: 400; }
+.floating-cta .price-info .new { color: var(--accent); font-size: 20px; font-weight: 800; }
+.floating-cta .cta-btn {
+  background: var(--accent);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  text-decoration: none;
+  animation: pulse-glow 2.5s ease-in-out infinite;
+}
+
+/* ── COMPARISON BAR ──────────────────── */
+.vs-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  margin: 40px auto 0;
+  max-width: 700px;
+  flex-wrap: wrap;
+}
+.vs-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 16px 24px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  min-width: 140px;
+}
+.vs-item.winner {
+  background: rgba(255,65,54,0.08);
+  border-color: rgba(255,65,54,0.3);
+}
+.vs-item .brand { font-size: 12px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; }
+.vs-item .price { font-size: 24px; font-weight: 800; }
+.vs-item.winner .price { color: var(--accent); }
+.vs-divider { font-size: 20px; font-weight: 700; color: var(--text-secondary); }
+
 /* ── FOOTER ───────────────────────────── */
 .footer {
   padding: 40px 0;
@@ -475,6 +778,7 @@ h3 { font-size: clamp(18px, 2.5vw, 24px); font-weight: 600; line-height: 1.3; }
   .hero .container { grid-template-columns: 1fr; gap: 40px; text-align: center; }
   .hero-content { max-width: 100%; }
   .hero-actions { justify-content: center; }
+  .hero-image img { animation: float 6s ease-in-out infinite; max-width: 80%; }
   .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 24px; }
   .credentials-list { grid-template-columns: 1fr; }
   .gallery-grid { grid-template-columns: 1fr 1fr; }
@@ -487,6 +791,11 @@ h3 { font-size: clamp(18px, 2.5vw, 24px); font-weight: 600; line-height: 1.3; }
   .cta-perks { flex-direction: column; align-items: center; }
   .section { padding: 60px 0; }
   #champion > .container > div { grid-template-columns: 1fr !important; }
+  .floating-cta { display: block; }
+  .vs-bar { gap: 12px; }
+  .vs-item { min-width: 100px; padding: 12px 16px; }
+  .play-btn-circle { width: 60px; height: 60px; }
+  .play-btn-circle svg { width: 24px; height: 24px; }
 }
 </style>
 </head>
@@ -494,7 +803,7 @@ h3 { font-size: clamp(18px, 2.5vw, 24px); font-weight: 600; line-height: 1.3; }
 
 <!-- TOP BAR -->
 <div class="topbar">
-  🚨 NEW MODEL DROPPING SOON — <a href="#signup">Get early access →</a>
+  <span class="urgency-dot"></span> NEW MODEL DROPPING SOON — <a href="#signup">Get early access →</a>
 </div>
 
 <!-- NAV -->
@@ -511,10 +820,15 @@ h3 { font-size: clamp(18px, 2.5vw, 24px); font-weight: 600; line-height: 1.3; }
     <div class="hero-content">
       <span class="badge">Coming to the US</span>
       <h1>Premium Performance.<br><span class="price-strike">$180+</span> → <span class="text-accent">$89</span></h1>
-      <p>The hybrid training shoe built by HYROX athletes. Same premium materials. No retail markup. Tested across 7+ countries and 15+ prototypes.</p>
+      <p>The hybrid training shoe built by HYROX athletes. Same premium A-TPU materials. No retail markup. Tested across 7+ countries.</p>
       <div class="hero-actions">
-        <a href="#signup" class="btn-primary">📩 Get Early Access</a>
+        <a href="#signup" class="btn-primary">Get Early Access →</a>
         <a href="#story" class="btn-secondary">Our Story ↓</a>
+      </div>
+      <div style="margin-top:24px; display:flex; gap:20px; flex-wrap:wrap; opacity:0.7; font-size:12px; color:var(--text-secondary);">
+        <span>✓ Free shipping</span>
+        <span>✓ 30-day returns</span>
+        <span>✓ Athlete-tested</span>
       </div>
     </div>
     <div class="hero-image">
@@ -544,6 +858,29 @@ h3 { font-size: clamp(18px, 2.5vw, 24px); font-weight: 600; line-height: 1.3; }
         <span class="stat-label">Countries Competing</span>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- SOCIAL PROOF TICKER -->
+<div class="ticker-bar">
+  <div class="ticker-track">
+    <div class="ticker-item"><span class="dot"></span> <strong>Jake M.</strong> from Denver signed up</div>
+    <div class="ticker-item"><span class="dot"></span> <strong>Sarah K.</strong> from Austin signed up</div>
+    <div class="ticker-item"><span class="dot"></span> <strong>218%</strong> funded on Kickstarter</div>
+    <div class="ticker-item"><span class="dot"></span> <strong>Marcus L.</strong> from Portland signed up</div>
+    <div class="ticker-item"><span class="dot"></span> <strong>#1 Rated</strong> by RoadTrailRun</div>
+    <div class="ticker-item"><span class="dot"></span> <strong>Diana R.</strong> from Miami signed up</div>
+    <div class="ticker-item"><span class="dot"></span> <strong>REXtream</strong> Official Champion Shoe</div>
+    <div class="ticker-item"><span class="dot"></span> <strong>Chris P.</strong> from San Diego signed up</div>
+    <!-- Duplicate for seamless scroll -->
+    <div class="ticker-item"><span class="dot"></span> <strong>Jake M.</strong> from Denver signed up</div>
+    <div class="ticker-item"><span class="dot"></span> <strong>Sarah K.</strong> from Austin signed up</div>
+    <div class="ticker-item"><span class="dot"></span> <strong>218%</strong> funded on Kickstarter</div>
+    <div class="ticker-item"><span class="dot"></span> <strong>Marcus L.</strong> from Portland signed up</div>
+    <div class="ticker-item"><span class="dot"></span> <strong>#1 Rated</strong> by RoadTrailRun</div>
+    <div class="ticker-item"><span class="dot"></span> <strong>Diana R.</strong> from Miami signed up</div>
+    <div class="ticker-item"><span class="dot"></span> <strong>REXtream</strong> Official Champion Shoe</div>
+    <div class="ticker-item"><span class="dot"></span> <strong>Chris P.</strong> from San Diego signed up</div>
   </div>
 </div>
 
@@ -596,17 +933,22 @@ h3 { font-size: clamp(18px, 2.5vw, 24px); font-weight: 600; line-height: 1.3; }
   <div class="container">
     <div class="text-center" style="margin-bottom: 40px;">
       <span class="badge">Athlete Interview</span>
-      <h2>🎬 Hear From a DARIMATI Athlete</h2>
+      <h2>Hear From a DARIMATI Athlete</h2>
       <p class="text-secondary" style="margin-top:8px;">A French functional fitness competitor shares his experience with BR-001</p>
     </div>
 
-    <div style="max-width: 800px; margin: 0 auto; border-radius: 16px; overflow: hidden; box-shadow: 0 12px 40px rgba(0,0,0,0.5);">
-      <video controls playsinline preload="metadata" poster="assets/rextream-champion.jpg" style="width:100%; display:block; background:#000;">
+    <div class="video-wrapper" id="videoWrapper">
+      <video id="interviewVideo" playsinline preload="metadata" muted loop
+        poster="assets/rextream-champion.jpg">
         <source src="assets/darimati-france-interview.mp4" type="video/mp4">
-        Your browser does not support the video element.
       </video>
+      <div class="video-play-overlay" id="videoOverlay" onclick="playFullVideo()">
+        <div class="play-btn-circle">
+          <svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg>
+        </div>
+      </div>
     </div>
-    <p class="text-center text-secondary" style="margin-top:16px; font-size:13px;">🔊 Turn on audio for the full interview</p>
+    <p class="text-center text-secondary" style="margin-top:16px; font-size:13px;">Tap to play with sound</p>
   </div>
 </section>
 
@@ -744,6 +1086,30 @@ h3 { font-size: clamp(18px, 2.5vw, 24px); font-weight: 600; line-height: 1.3; }
   </div>
 </section>
 
+<!-- PRICE COMPARISON -->
+<section class="section" id="compare" style="padding-top:0;">
+  <div class="container">
+    <div class="text-center" style="margin-bottom:32px;">
+      <h3 style="color:var(--text-secondary); font-weight:500; font-size:16px;">Same materials. Different price.</h3>
+    </div>
+    <div class="vs-bar">
+      <div class="vs-item">
+        <span class="brand">Nike Metcon 9</span>
+        <span class="price" style="color:var(--text-secondary);text-decoration:line-through;">$150</span>
+      </div>
+      <div class="vs-item">
+        <span class="brand">NoBull Trainer+</span>
+        <span class="price" style="color:var(--text-secondary);text-decoration:line-through;">$169</span>
+      </div>
+      <div class="vs-divider">vs</div>
+      <div class="vs-item winner">
+        <span class="brand">DARIMATI BR-001</span>
+        <span class="price">$89</span>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- FEATURES -->
 <section class="section section-dark" id="features">
   <div class="container">
@@ -870,9 +1236,9 @@ h3 { font-size: clamp(18px, 2.5vw, 24px); font-weight: 600; line-height: 1.3; }
 <section class="cta-section section" id="signup">
   <div class="container">
     <div class="cta-box">
-      <span class="badge">Early Access</span>
-      <h2>A New Model Is Launching Soon</h2>
-      <p>Be the first to know when we drop in the US. Early subscribers get exclusive pricing, limited colorways, and free shipping.</p>
+      <span class="badge" style="animation: pulse-glow 2s ease-in-out infinite;">Limited Early Access</span>
+      <h2>The Next Model Is Almost Here</h2>
+      <p>Be the first to know when we drop in the US. Early subscribers get <strong style="color:var(--text);">exclusive pricing, limited colorways, and free shipping.</strong></p>
 
       <div class="cta-perks">
         <div class="cta-perk"><span class="check">✓</span> Launch day pricing</div>
@@ -898,12 +1264,22 @@ h3 { font-size: clamp(18px, 2.5vw, 24px); font-weight: 600; line-height: 1.3; }
   <div class="container">
     <p style="font-size:18px; font-weight:700; margin-bottom:8px;">DARIMATI</p>
     <p>Built by athletes, for athletes. No middleman. No markup.</p>
-    <p style="margin-top:12px;">© 2025 DARIMATI. All rights reserved.</p>
+    <p style="margin-top:12px;">&copy; 2025 DARIMATI. All rights reserved.</p>
   </div>
 </footer>
 
+<!-- FLOATING MOBILE CTA -->
+<div class="floating-cta" id="floatingCta">
+  <div class="inner">
+    <div class="price-info">
+      <span class="old">$180+</span> <span class="new">$89</span>
+    </div>
+    <a href="#signup" class="cta-btn">Get Early Access →</a>
+  </div>
+</div>
+
 <script>
-// Smooth scroll for anchor links
+// ── Smooth scroll ──
 document.querySelectorAll('a[href^="#"]').forEach(a => {
   a.addEventListener('click', e => {
     e.preventDefault();
@@ -912,7 +1288,85 @@ document.querySelectorAll('a[href^="#"]').forEach(a => {
   });
 });
 
-// Email form handler
+// ── Video play handler ──
+function playFullVideo() {
+  const video = document.getElementById('interviewVideo');
+  const overlay = document.getElementById('videoOverlay');
+  video.muted = false;
+  video.loop = false;
+  video.controls = true;
+  video.currentTime = 0;
+  video.play();
+  overlay.style.display = 'none';
+}
+
+// Auto-play video muted when in viewport
+const videoEl = document.getElementById('interviewVideo');
+const videoObs = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      videoEl.play().catch(() => {});
+    } else {
+      videoEl.pause();
+    }
+  });
+}, { threshold: 0.3 });
+if (videoEl) videoObs.observe(videoEl);
+
+// ── Animated number counters ──
+function animateCounter(el, target, suffix = '', prefix = '') {
+  const duration = 1500;
+  const start = performance.now();
+  const isFloat = target % 1 !== 0;
+
+  function update(now) {
+    const elapsed = now - start;
+    const progress = Math.min(elapsed / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+    const current = Math.round(eased * target);
+    el.textContent = prefix + (isFloat ? (eased * target).toFixed(0) : current) + suffix;
+    if (progress < 1) requestAnimationFrame(update);
+    else el.classList.add('counted');
+  }
+  requestAnimationFrame(update);
+}
+
+const statsObs = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const counters = entry.target.querySelectorAll('.stat-number');
+      counters.forEach(c => {
+        const text = c.textContent.trim();
+        if (c.dataset.animated) return;
+        c.dataset.animated = 'true';
+        if (text.startsWith('$')) animateCounter(c, parseInt(text.replace(/\D/g,'')), '', '$');
+        else if (text.includes('%')) animateCounter(c, parseInt(text), '%');
+        else if (text.includes('+')) animateCounter(c, parseInt(text), '+');
+        else animateCounter(c, parseInt(text));
+      });
+      statsObs.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.5 });
+
+const statsBar = document.querySelector('.stats-bar');
+if (statsBar) statsObs.observe(statsBar);
+
+// ── Floating CTA on mobile ──
+const floatingCta = document.getElementById('floatingCta');
+const heroSection = document.querySelector('.hero');
+if (floatingCta && heroSection) {
+  window.addEventListener('scroll', () => {
+    const heroBottom = heroSection.getBoundingClientRect().bottom;
+    if (heroBottom < 0) {
+      floatingCta.classList.add('visible');
+    } else {
+      floatingCta.classList.remove('visible');
+    }
+  }, { passive: true });
+}
+
+// ── Email form handler ──
 function handleSubmit(e) {
   e.preventDefault();
   const email = document.getElementById('emailInput').value;
@@ -923,8 +1377,6 @@ function handleSubmit(e) {
   btn.textContent = 'Submitting...';
   btn.disabled = true;
 
-  // Google Forms or webhook endpoint placeholder
-  // Replace FORM_ID and ENTRY_ID with your actual Google Form values
   const WEBHOOK_URL = '';
 
   if (WEBHOOK_URL) {
@@ -934,7 +1386,6 @@ function handleSubmit(e) {
       body: JSON.stringify({ email: email, source: 's1-half-price', timestamp: new Date().toISOString() })
     }).then(() => showSuccess()).catch(() => showSuccess());
   } else {
-    // Demo mode: just show success
     setTimeout(() => showSuccess(), 800);
   }
 
@@ -946,22 +1397,37 @@ function handleSubmit(e) {
   return false;
 }
 
-// Fade-in animation on scroll
-const observer = new IntersectionObserver((entries) => {
+// ── Scroll fade-in with stagger ──
+const fadeObs = new IntersectionObserver((entries) => {
   entries.forEach(entry => {
     if (entry.isIntersecting) {
       entry.target.style.opacity = '1';
       entry.target.style.transform = 'translateY(0)';
+      fadeObs.unobserve(entry.target);
     }
   });
 }, { threshold: 0.1 });
 
-document.querySelectorAll('.story-step, .credential-item, .feature-card, .review-card').forEach(el => {
+document.querySelectorAll('.story-step, .credential-item, .feature-card, .review-card, .vs-item, .gallery-grid img').forEach((el, i) => {
   el.style.opacity = '0';
-  el.style.transform = 'translateY(20px)';
-  el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
-  observer.observe(el);
+  el.style.transform = 'translateY(24px)';
+  el.style.transition = `opacity 0.6s ease ${i % 6 * 0.1}s, transform 0.6s ease ${i % 6 * 0.1}s`;
+  fadeObs.observe(el);
 });
+
+// ── Parallax subtle effect on credentials background ──
+const credSection = document.querySelector('.credentials-section');
+if (credSection) {
+  window.addEventListener('scroll', () => {
+    const rect = credSection.getBoundingClientRect();
+    const visible = rect.top < window.innerHeight && rect.bottom > 0;
+    if (visible) {
+      const progress = (window.innerHeight - rect.top) / (window.innerHeight + rect.height);
+      const before = credSection.querySelector(':scope');
+      credSection.style.setProperty('--parallax-y', `${(progress - 0.5) * 30}px`);
+    }
+  }, { passive: true });
+}
 </script>
 
 </body>
