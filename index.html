@@ -554,6 +554,119 @@ h3 { font-size: clamp(18px, 2.5vw, 24px); font-weight: 600; line-height: 1.3; }
 }
 .feature-card h3 { font-size: 18px; margin-bottom: 8px; }
 .feature-card p { color: var(--text-secondary); font-size: 14px; line-height: 1.6; }
+.feature-card { cursor: pointer; }
+
+/* ── FEATURE MODAL ────────────────────── */
+.feature-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+.feature-modal-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+.feature-modal {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  max-width: 640px;
+  width: 92%;
+  max-height: 85vh;
+  overflow-y: auto;
+  position: relative;
+  transform: translateY(24px) scale(0.96);
+  transition: transform 0.35s cubic-bezier(0.25,0.46,0.45,0.94);
+}
+.feature-modal-overlay.active .feature-modal {
+  transform: translateY(0) scale(1);
+}
+.feature-modal-img {
+  width: 100%;
+  height: 260px;
+  object-fit: cover;
+  border-radius: 20px 20px 0 0;
+  display: block;
+}
+.feature-modal-body {
+  padding: 32px;
+}
+.feature-modal-body .icon {
+  font-size: 32px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  background: rgba(255,65,54,0.08);
+  border-radius: 14px;
+  border: 1px solid rgba(255,65,54,0.15);
+}
+.feature-modal-body h3 {
+  font-size: 22px;
+  margin-bottom: 12px;
+  color: var(--text-primary);
+}
+.feature-modal-body .modal-desc {
+  color: var(--text-secondary);
+  font-size: 15px;
+  line-height: 1.75;
+  margin-bottom: 20px;
+}
+.feature-modal-body .modal-specs {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.feature-modal-body .spec-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+.feature-modal-body .spec-row .spec-bullet {
+  color: var(--accent);
+  font-weight: 700;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.feature-modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.5);
+  border: 1px solid rgba(255,255,255,0.15);
+  color: #fff;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+  z-index: 1;
+}
+.feature-modal-close:hover { background: rgba(255,65,54,0.6); }
+@media (max-width: 600px) {
+  .feature-modal { max-width: 100%; width: 96%; }
+  .feature-modal-img { height: 180px; }
+  .feature-modal-body { padding: 24px; }
+  .feature-modal-body h3 { font-size: 20px; }
+}
 
 /* ── REVIEWS ──────────────────────────── */
 .reviews-grid {
@@ -1143,6 +1256,51 @@ h3 { font-size: clamp(18px, 2.5vw, 24px); font-weight: 600; line-height: 1.3; }
   </div>
 </section>
 
+<!-- CORE MOVEMENTS: JUMP + LUNGE (Solution to pain points above) -->
+<section class="section section-dark" id="movements">
+  <div class="container">
+    <div class="text-center" style="margin-bottom: 40px;">
+      <span class="badge">Built For Two Things</span>
+      <h2>Jump Higher. Lunge Stronger.</h2>
+      <p class="text-secondary" style="margin-top:8px;">Two movements that define hybrid fitness. DARIMATI was engineered for both.</p>
+    </div>
+
+    <div class="movements-grid">
+      <!-- JUMP -->
+      <div class="movement-card">
+        <img class="movement-img" src="assets/jump-action.jpg" alt="DARIMATI Box Jump — explosive rebound and grip at REXtream 2026" loading="lazy">
+        <div class="movement-overlay"></div>
+        <div class="movement-content">
+          <span class="movement-tag">Jump</span>
+          <h3>Box Jumps.<br>Burpees. Rebounds.</h3>
+          <p>Nitrogen-infused A-TPU gives you explosive rebound on takeoff. Competition-grade rubber grips the box on landing. No slip. No hesitation.</p>
+          <div class="movement-specs">
+            <span class="movement-spec">A-TPU Rebound</span>
+            <span class="movement-spec">Landing Grip</span>
+            <span class="movement-spec">Cushion on Impact</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- LUNGE -->
+      <div class="movement-card">
+        <img class="movement-img" src="https://cdn.shopify.com/s/files/1/0775/5956/2452/files/hero.png" alt="DARIMATI Lunge — stability and alignment" loading="lazy">
+        <div class="movement-overlay"></div>
+        <div class="movement-content">
+          <span class="movement-tag">Lunge</span>
+          <h3>Walking Lunges.<br>Stability in Motion.</h3>
+          <p>Wide-foot-first last keeps your foot-to-knee alignment locked in. Moving under load? The outsole tracks straight. No wobble. No rolling.</p>
+          <div class="movement-specs">
+            <span class="movement-spec">Wide-Foot Stability</span>
+            <span class="movement-spec">Knee Alignment</span>
+            <span class="movement-spec">Lateral Lock</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- STATS BAR -->
 <div class="stats-bar">
   <div class="container">
@@ -1228,51 +1386,6 @@ h3 { font-size: clamp(18px, 2.5vw, 24px); font-weight: 600; line-height: 1.3; }
         <div>
           <h3>The Result: BR-001</h3>
           <p>Nitrogen-infused A-TPU foam that most brands can't even source. Competition-grade rubber outsole. Wide-foot-friendly last design. Box jump grip that doesn't slip. Treadmill bounce that doesn't drag. <strong>Starting at $99. Direct to athlete.</strong></p>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- CORE MOVEMENTS: JUMP + LUNGE -->
-<section class="section section-dark" id="movements">
-  <div class="container">
-    <div class="text-center" style="margin-bottom: 40px;">
-      <span class="badge">Built For Two Things</span>
-      <h2>Jump Higher. Lunge Stronger.</h2>
-      <p class="text-secondary" style="margin-top:8px;">Two movements that define hybrid fitness. DARIMATI was engineered for both.</p>
-    </div>
-
-    <div class="movements-grid">
-      <!-- JUMP -->
-      <div class="movement-card">
-        <img class="movement-img" src="assets/jump-action.jpg" alt="DARIMATI Box Jump — explosive rebound and grip at REXtream 2026" loading="lazy">
-        <div class="movement-overlay"></div>
-        <div class="movement-content">
-          <span class="movement-tag">Jump</span>
-          <h3>Box Jumps.<br>Burpees. Rebounds.</h3>
-          <p>Nitrogen-infused A-TPU gives you explosive rebound on takeoff. Competition-grade rubber grips the box on landing. No slip. No hesitation.</p>
-          <div class="movement-specs">
-            <span class="movement-spec">A-TPU Rebound</span>
-            <span class="movement-spec">Landing Grip</span>
-            <span class="movement-spec">Cushion on Impact</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- LUNGE -->
-      <div class="movement-card">
-        <img class="movement-img" src="https://cdn.shopify.com/s/files/1/0775/5956/2452/files/hero.png" alt="DARIMATI Lunge — stability and alignment" loading="lazy">
-        <div class="movement-overlay"></div>
-        <div class="movement-content">
-          <span class="movement-tag">Lunge</span>
-          <h3>Walking Lunges.<br>Stability in Motion.</h3>
-          <p>Wide-foot-first last keeps your foot-to-knee alignment locked in. Moving under load? The outsole tracks straight. No wobble. No rolling.</p>
-          <div class="movement-specs">
-            <span class="movement-spec">Wide-Foot Stability</span>
-            <span class="movement-spec">Knee Alignment</span>
-            <span class="movement-spec">Lateral Lock</span>
-          </div>
         </div>
       </div>
     </div>
@@ -1828,6 +1941,48 @@ document.querySelectorAll('.story-step, .credential-item, .feature-card, .review
   fadeObs.observe(el);
 });
 
+// ── Feature Modal Logic ──
+const featureModals = {
+  'Wide-Foot-First Design': 'modal-wide-foot',
+  'Competition-Grade Grip': 'modal-grip',
+  'Nitrogen-Infused A-TPU': 'modal-atpu',
+  'Hybrid Versatility': 'modal-hybrid',
+  'Direct-to-Athlete Price': 'modal-price',
+  '15+ Prototypes Tested': 'modal-prototypes'
+};
+
+document.querySelectorAll('.feature-card').forEach(card => {
+  card.addEventListener('click', () => {
+    const title = card.querySelector('h3')?.textContent?.trim();
+    const modalId = featureModals[title];
+    if (modalId) {
+      const overlay = document.getElementById(modalId);
+      if (overlay) {
+        overlay.classList.add('active');
+        document.body.style.overflow = 'hidden';
+      }
+    }
+  });
+});
+
+document.querySelectorAll('.feature-modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay || e.target.classList.contains('feature-modal-close')) {
+      overlay.classList.remove('active');
+      document.body.style.overflow = '';
+    }
+  });
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    document.querySelectorAll('.feature-modal-overlay.active').forEach(o => {
+      o.classList.remove('active');
+      document.body.style.overflow = '';
+    });
+  }
+});
+
 // ── Parallax subtle effect on credentials background ──
 const credSection = document.querySelector('.credentials-section');
 if (credSection) {
@@ -1842,6 +1997,122 @@ if (credSection) {
   }, { passive: true });
 }
 </script>
+
+<!-- ═══ FEATURE DETAIL MODALS ═══ -->
+
+<!-- 1. Wide-Foot-First Design -->
+<div class="feature-modal-overlay" id="modal-wide-foot">
+  <div class="feature-modal">
+    <button class="feature-modal-close">&times;</button>
+    <img class="feature-modal-img" src="https://cdn.shopify.com/s/files/1/0775/5956/2452/files/04.png?v=1776313172" alt="BR-001 Wide Foot Last Design">
+    <div class="feature-modal-body">
+      <span class="icon">🦶</span>
+      <h3>Wide-Foot-First Design</h3>
+      <p class="modal-desc">Most brands design for a standard-width last, then stretch it for "wide" versions. We did the opposite. The BR-001 was built from day one around a wider last &mdash; because your feet shouldn't have to conform to the shoe.</p>
+      <div class="modal-specs">
+        <div class="spec-row"><span class="spec-bullet">&bull;</span><span>20+ last iterations to perfect the toe box volume and midfoot wrap</span></div>
+        <div class="spec-row"><span class="spec-bullet">&bull;</span><span>Integrated upper structure distributes pressure evenly &mdash; no hot spots</span></div>
+        <div class="spec-row"><span class="spec-bullet">&bull;</span><span>Inspired by Bridge Mechanics&trade;: the entire upper works as one continuous load-bearing system</span></div>
+        <div class="spec-row"><span class="spec-bullet">&bull;</span><span>Fits true to size with natural toe splay &mdash; no break-in period required</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 2. Competition-Grade Grip -->
+<div class="feature-modal-overlay" id="modal-grip">
+  <div class="feature-modal">
+    <button class="feature-modal-close">&times;</button>
+    <img class="feature-modal-img" src="https://cdn.shopify.com/s/files/1/0775/5956/2452/files/08.png?v=1776313172" alt="BR-001 Outsole Grip Detail">
+    <div class="feature-modal-body">
+      <span class="icon">🧱</span>
+      <h3>Competition-Grade Grip</h3>
+      <p class="modal-desc">The outsole uses a high-density rubber compound originally developed for mixed urban terrain &mdash; concrete, asphalt, gym floors, and everything in between. The multi-directional tread pattern locks into any surface during explosive lateral movements.</p>
+      <div class="modal-specs">
+        <div class="spec-row"><span class="spec-bullet">&bull;</span><span>Engineered for box jumps, sled pushes, rope climbs, and lateral shuffles</span></div>
+        <div class="spec-row"><span class="spec-bullet">&bull;</span><span>Rubber compound tested on concrete, rubber flooring, turf, and wet surfaces</span></div>
+        <div class="spec-row"><span class="spec-bullet">&bull;</span><span>Flat, ground-aligned geometry ensures maximum surface contact</span></div>
+        <div class="spec-row"><span class="spec-bullet">&bull;</span><span>500km+ durability testing &mdash; no delamination, no wear-through</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 3. Nitrogen-Infused A-TPU -->
+<div class="feature-modal-overlay" id="modal-atpu">
+  <div class="feature-modal">
+    <button class="feature-modal-close">&times;</button>
+    <img class="feature-modal-img" src="https://cdn.shopify.com/s/files/1/0775/5956/2452/files/09.png?v=1776313172" alt="BR-001 A-TPU Midsole Cushioning">
+    <div class="feature-modal-body">
+      <span class="icon">☁️</span>
+      <h3>Nitrogen-Infused A-TPU</h3>
+      <p class="modal-desc">Cheap EVA foam compresses, flattens, and loses energy return within months. Our nitrogen-infused A-TPU (Thermoplastic Polyurethane) foam is harder to manufacture, but it maintains its bounce and structural integrity over thousands of miles. This is the core of our Stable Core&trade; technology.</p>
+      <div class="modal-specs">
+        <div class="spec-row"><span class="spec-bullet">&bull;</span><span>Stable Core&trade; midsole: consistent support that doesn't degrade over time</span></div>
+        <div class="spec-row"><span class="spec-bullet">&bull;</span><span>Nitrogen infusion creates micro air cells for superior energy return</span></div>
+        <div class="spec-row"><span class="spec-bullet">&bull;</span><span>Ground-aligned geometry prevents torsional instability during dynamic movements</span></div>
+        <div class="spec-row"><span class="spec-bullet">&bull;</span><span>Full marathon tested &mdash; same responsiveness at mile 1 and mile 26</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 4. Hybrid Versatility -->
+<div class="feature-modal-overlay" id="modal-hybrid">
+  <div class="feature-modal">
+    <button class="feature-modal-close">&times;</button>
+    <img class="feature-modal-img" src="https://cdn.shopify.com/s/files/1/0775/5956/2452/files/hero.png" alt="BR-001 Hybrid Training Versatility">
+    <div class="feature-modal-body">
+      <span class="icon">⚡</span>
+      <h3>Hybrid Versatility</h3>
+      <p class="modal-desc">Most athletes own separate shoes for lifting, running, and cross-training. The BR-001 was engineered as one shoe that handles all three &mdash; powered by our Fit in Motion system with the Easy Swap Lace Lock.</p>
+      <div class="modal-specs">
+        <div class="spec-row"><span class="spec-bullet">&bull;</span><span>Easy Swap Lace Lock: independent dual-zone lacing adjusts from loose daily wear to locked-in training fit in seconds</span></div>
+        <div class="spec-row"><span class="spec-bullet">&bull;</span><span>Stable enough for heavy squats and deadlifts</span></div>
+        <div class="spec-row"><span class="spec-bullet">&bull;</span><span>Responsive enough for treadmill intervals and outdoor runs</span></div>
+        <div class="spec-row"><span class="spec-bullet">&bull;</span><span>Lateral support for competition-level functional fitness movements</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 5. Direct-to-Athlete Price -->
+<div class="feature-modal-overlay" id="modal-price">
+  <div class="feature-modal">
+    <button class="feature-modal-close">&times;</button>
+    <img class="feature-modal-img" src="https://cdn.shopify.com/s/files/1/0775/5956/2452/files/dariamti_shoe.jpg?v=1776313172" alt="BR-001 Direct-to-Athlete Pricing">
+    <div class="feature-modal-body">
+      <span class="icon">💰</span>
+      <h3>Direct-to-Athlete Price</h3>
+      <p class="modal-desc">Nike Metcon 9 costs $150. NoBull Trainer+ costs $169. Reebok Nano X4 costs $150. We deliver the same (or better) performance at $99 &mdash; because we don't pay for retail shelf space or celebrity endorsements.</p>
+      <div class="modal-specs">
+        <div class="spec-row"><span class="spec-bullet">&bull;</span><span>No retail markup &mdash; sold direct from our workshop to your door</span></div>
+        <div class="spec-row"><span class="spec-bullet">&bull;</span><span>No sponsorship tax &mdash; zero athlete endorsement fees baked into the price</span></div>
+        <div class="spec-row"><span class="spec-bullet">&bull;</span><span>Kickstarter-proven: 214% funded, 88 backers trusted us before we shipped</span></div>
+        <div class="spec-row"><span class="spec-bullet">&bull;</span><span>Premium materials (A-TPU, competition rubber) at an honest price point</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 6. 15+ Prototypes Tested -->
+<div class="feature-modal-overlay" id="modal-prototypes">
+  <div class="feature-modal">
+    <button class="feature-modal-close">&times;</button>
+    <img class="feature-modal-img" src="https://cdn.shopify.com/s/files/1/0775/5956/2452/files/11.png?v=1776313172" alt="BR-001 Prototype Testing">
+    <div class="feature-modal-body">
+      <span class="icon">🧪</span>
+      <h3>15+ Prototypes Tested</h3>
+      <p class="modal-desc">This isn't a shoe that was designed in a boardroom and shipped to athletes. Every single version was worn, tested, and iterated by real athletes in real training sessions and competitions across 7 countries &mdash; from HYROX floors in Seoul to CrossFit boxes in Los Angeles.</p>
+      <div class="modal-specs">
+        <div class="spec-row"><span class="spec-bullet">&bull;</span><span>15+ prototype iterations &mdash; each one tested until failure</span></div>
+        <div class="spec-row"><span class="spec-bullet">&bull;</span><span>500km+ cumulative durability testing per version</span></div>
+        <div class="spec-row"><span class="spec-bullet">&bull;</span><span>Full marathon tested for long-distance resilience</span></div>
+        <div class="spec-row"><span class="spec-bullet">&bull;</span><span>Validated by athletes across 7 countries in HYROX, CrossFit, and functional fitness competitions</span></div>
+      </div>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>
