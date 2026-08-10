@@ -297,6 +297,70 @@ h3 { font-size: clamp(18px, 2.5vw, 24px); font-weight: 600; line-height: 1.3; }
   animation: pulse-glow 3s ease-in-out infinite;
 }
 
+/* ── PAIN POINTS ──────────────────────── */
+.pain-section {
+  background: linear-gradient(180deg, var(--bg) 0%, #0d0505 50%, var(--bg) 100%);
+  padding: 72px 0;
+  position: relative;
+  overflow: hidden;
+}
+.pain-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  max-width: 960px;
+  margin: 0 auto;
+}
+.pain-card {
+  background: rgba(255,65,54,0.04);
+  border: 1px solid rgba(255,65,54,0.15);
+  border-radius: 16px;
+  padding: 32px 24px;
+  text-align: center;
+  transition: all 0.4s;
+  position: relative;
+}
+.pain-card:hover {
+  border-color: rgba(255,65,54,0.4);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 30px rgba(255,65,54,0.1);
+}
+.pain-icon {
+  font-size: 40px;
+  margin-bottom: 16px;
+  display: block;
+}
+.pain-card h3 {
+  font-size: 17px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: var(--accent);
+}
+.pain-card p {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+.pain-arrow {
+  display: flex;
+  justify-content: center;
+  margin-top: 36px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.pain-arrow span {
+  background: var(--accent);
+  color: white;
+  padding: 10px 24px;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 700;
+}
+@media (max-width: 768px) {
+  .pain-grid { grid-template-columns: 1fr; gap: 16px; }
+}
+
 /* ── STATS BAR ────────────────────────── */
 .stats-bar {
   background: var(--surface);
@@ -1028,21 +1092,53 @@ h3 { font-size: clamp(18px, 2.5vw, 24px); font-weight: 600; line-height: 1.3; }
   </video>
   <div class="container">
     <div class="hero-content">
-      <span class="badge">Coming to the US</span>
-      <h1>Premium Performance.<br><span class="price-strike">$200+</span> → <span class="text-accent">$99</span></h1>
-      <p>The hybrid training shoe that won REXtream 2026. Same premium A-TPU. No retail markup. Tested by champions across 7+ countries.</p>
+      <span class="badge">Built For Jumps & Lunges</span>
+      <h1>Unstable landings?<br>Knee wobble on lunges?<br><span class="text-accent">We fixed it.</span></h1>
+      <p>The shoe built for athletes who jump and lunge under load. REXtream 2026 champion-verified. <strong style="color:var(--text);"><span class="price-strike" style="font-size:inherit;">$200+</span> → $99.</strong></p>
       <div class="hero-actions">
         <a href="#signup" class="btn-primary">Get Early Access →</a>
-        <a href="#story" class="btn-secondary">Our Story ↓</a>
+        <a href="#pain" class="btn-secondary">See The Problem ↓</a>
       </div>
       <div style="margin-top:24px; display:flex; gap:20px; flex-wrap:wrap; opacity:0.7; font-size:12px; color:var(--text-secondary);">
-        <span>✓ Free shipping</span>
-        <span>✓ 30-day returns</span>
-        <span>✓ REXtream champion shoe</span>
+        <span>✓ A-TPU rebound</span>
+        <span>✓ Competition-grade grip</span>
+        <span>✓ Wide-foot stability</span>
       </div>
     </div>
     <div class="hero-image">
       <img src="https://cdn.shopify.com/s/files/1/0775/5956/2452/files/dariamti_shoe.jpg?v=1776313172" alt="DARIMATI BR-001 Hybrid Training Shoe">
+    </div>
+  </div>
+</section>
+
+<!-- PAIN POINTS -->
+<section class="pain-section" id="pain">
+  <div class="container">
+    <div class="text-center" style="margin-bottom:40px;">
+      <h2 style="font-size:clamp(22px, 3.5vw, 32px); font-weight:800;">Sound familiar?</h2>
+      <p class="text-secondary" style="margin-top:8px;">These problems kill your performance — and your joints.</p>
+    </div>
+
+    <div class="pain-grid">
+      <div class="pain-card">
+        <span class="pain-icon">💥</span>
+        <h3>Unstable Box Jump Landings</h3>
+        <p>You land on the box and your foot shifts. The sole doesn't grip. One bad landing and your ankle pays the price.</p>
+      </div>
+      <div class="pain-card">
+        <span class="pain-icon">🦵</span>
+        <h3>Knee Twisting on Lunges</h3>
+        <p>Walking lunges under load — your knee drifts inward because the shoe can't hold your foot-to-knee alignment straight.</p>
+      </div>
+      <div class="pain-card">
+        <span class="pain-icon">🧊</span>
+        <h3>Slipping From Bad Grip</h3>
+        <p>Sled push, box jump, lateral shuffle — one slip and you lose power, lose time, or worse, get injured.</p>
+      </div>
+    </div>
+
+    <div class="pain-arrow">
+      <span>DARIMATI was built to solve exactly this ↓</span>
     </div>
   </div>
 </section>
