@@ -1957,13 +1957,13 @@ document.querySelectorAll('.feature-card').forEach(card => {
   });
 });
 
-document.querySelectorAll('.feature-modal-overlay').forEach(overlay => {
-  overlay.addEventListener('click', (e) => {
-    if (e.target === overlay || e.target.classList.contains('feature-modal-close')) {
-      overlay.classList.remove('active');
-      document.body.style.overflow = '';
-    }
-  });
+document.addEventListener('click', (e) => {
+  const overlay = e.target.closest('.feature-modal-overlay');
+  if (!overlay) return;
+  if (e.target === overlay || e.target.closest('.feature-modal-close')) {
+    overlay.classList.remove('active');
+    document.body.style.overflow = '';
+  }
 });
 
 document.addEventListener('keydown', (e) => {
