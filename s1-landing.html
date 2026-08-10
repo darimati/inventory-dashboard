@@ -1959,7 +1959,19 @@ document.querySelectorAll('.feature-card').forEach(card => {
 
 document.querySelectorAll('.feature-modal-overlay').forEach(overlay => {
   overlay.addEventListener('click', (e) => {
-    if (e.target === overlay || e.target.classList.contains('feature-modal-close')) {
+    if (e.target === overlay || e.target.closest('.feature-modal-close')) {
+      overlay.classList.remove('active');
+      document.body.style.overflow = '';
+    }
+  });
+});
+
+// Direct close button handler (backup)
+document.querySelectorAll('.feature-modal-close').forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const overlay = btn.closest('.feature-modal-overlay');
+    if (overlay) {
       overlay.classList.remove('active');
       document.body.style.overflow = '';
     }
