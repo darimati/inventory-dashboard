@@ -1001,6 +1001,7 @@ h3 { font-size: clamp(18px, 2.5vw, 24px); font-weight: 600; line-height: 1.3; }
   .floating-cta { display: block; }
   .vs-bar { gap: 12px; }
   .vs-item { min-width: 100px; padding: 12px 16px; }
+  #problems [style*="grid-template-columns"] { grid-template-columns: 1fr !important; max-width: 400px !important; }
   .play-btn-circle { width: 60px; height: 60px; }
   .play-btn-circle svg { width: 24px; height: 24px; }
 }
@@ -1028,12 +1029,13 @@ h3 { font-size: clamp(18px, 2.5vw, 24px); font-weight: 600; line-height: 1.3; }
   </video>
   <div class="container">
     <div class="hero-content">
-      <span class="badge">Coming to the US</span>
-      <h1>Premium Performance.<br><span class="price-strike">$200+</span> → <span class="text-accent">$99</span></h1>
-      <p>The hybrid training shoe that won REXtream 2026. Same premium A-TPU. No retail markup. Tested by champions across 7+ countries.</p>
+      <span class="badge" style="background:rgba(255,65,54,0.15); color:var(--accent);">Sound familiar?</span>
+      <h1 style="line-height:1.15;">Landing wobbles.<br>Knees twist.<br>Feet slip.</h1>
+      <p style="font-size:18px; margin-bottom:8px;">If your shoes can't handle jumps and lunges, they can't handle hybrid training.</p>
+      <p style="font-size:15px; color:var(--accent); font-weight:700; letter-spacing:0.5px; margin-bottom:24px;">PREMIUM HYBRID PERFORMANCE — BUILT FOR JUMP & LUNGE<br><span class="price-strike" style="font-size:22px;">$200+</span> <span style="font-size:22px;">→</span> <span class="text-accent" style="font-size:28px; font-weight:900;">$99</span></p>
       <div class="hero-actions">
         <a href="#signup" class="btn-primary">Get Early Access →</a>
-        <a href="#story" class="btn-secondary">Our Story ↓</a>
+        <a href="#problems" class="btn-secondary">See The Problem ↓</a>
       </div>
       <div style="margin-top:24px; display:flex; gap:20px; flex-wrap:wrap; opacity:0.7; font-size:12px; color:var(--text-secondary);">
         <span>✓ Free shipping</span>
@@ -1044,6 +1046,33 @@ h3 { font-size: clamp(18px, 2.5vw, 24px); font-weight: 600; line-height: 1.3; }
     <div class="hero-image">
       <img src="https://cdn.shopify.com/s/files/1/0775/5956/2452/files/dariamti_shoe.jpg?v=1776313172" alt="DARIMATI BR-001 Hybrid Training Shoe">
     </div>
+  </div>
+</section>
+
+<!-- PROBLEM SCENES -->
+<section class="section" id="problems" style="padding:48px 0;">
+  <div class="container">
+    <div class="text-center" style="margin-bottom:36px;">
+      <span class="badge" style="background:rgba(255,65,54,0.12); color:var(--accent);">The Problem With Your Current Shoes</span>
+    </div>
+    <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:20px; max-width:900px; margin:0 auto;">
+      <div style="background:rgba(255,65,54,0.04); border:1px solid rgba(255,65,54,0.15); border-radius:16px; padding:28px 20px; text-align:center;">
+        <div style="font-size:36px; margin-bottom:12px;">⬆️</div>
+        <h3 style="font-size:18px; font-weight:800; margin-bottom:8px; color:var(--accent);">JUMP</h3>
+        <p style="font-size:14px; color:var(--text-secondary); line-height:1.7;">Landing wobbles on box jumps. Ankles feel unstable on the catch. Cushioning dies after 100 reps. You hesitate before every jump.</p>
+      </div>
+      <div style="background:rgba(255,65,54,0.04); border:1px solid rgba(255,65,54,0.15); border-radius:16px; padding:28px 20px; text-align:center;">
+        <div style="font-size:36px; margin-bottom:12px;">🦵</div>
+        <h3 style="font-size:18px; font-weight:800; margin-bottom:8px; color:var(--accent);">LUNGE</h3>
+        <p style="font-size:14px; color:var(--text-secondary); line-height:1.7;">Knees twist during walking lunges. Midfoot collapses under load. No lateral control — your form breaks down rep after rep.</p>
+      </div>
+      <div style="background:rgba(255,65,54,0.04); border:1px solid rgba(255,65,54,0.15); border-radius:16px; padding:28px 20px; text-align:center;">
+        <div style="font-size:36px; margin-bottom:12px;">🧊</div>
+        <h3 style="font-size:18px; font-weight:800; margin-bottom:8px; color:var(--accent);">GRIP</h3>
+        <p style="font-size:14px; color:var(--text-secondary); line-height:1.7;">Feet slip on gym floors. Zero traction on takeoff. No confidence in your push-off — every explosive move is a gamble.</p>
+      </div>
+    </div>
+    <p class="text-center" style="margin-top:28px; font-size:16px; color:var(--text);">If you've felt any of this — <strong style="color:var(--accent);">your shoes are the problem, not you.</strong></p>
   </div>
 </section>
 
