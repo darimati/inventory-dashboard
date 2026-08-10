@@ -2066,35 +2066,7 @@ document.querySelectorAll('.feature-card').forEach(card => {
   });
 });
 
-document.querySelectorAll('.feature-modal-overlay').forEach(overlay => {
-  overlay.addEventListener('click', (e) => {
-    if (e.target === overlay) {
-      overlay.classList.remove('active');
-      document.body.style.overflow = '';
-    }
-  });
-});
-
-document.querySelectorAll('.feature-modal-close').forEach(btn => {
-  btn.addEventListener('click', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const overlay = btn.closest('.feature-modal-overlay');
-    if (overlay) {
-      overlay.classList.remove('active');
-      document.body.style.overflow = '';
-    }
-  });
-});
-
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') {
-    document.querySelectorAll('.feature-modal-overlay.active').forEach(o => {
-      o.classList.remove('active');
-      document.body.style.overflow = '';
-    });
-  }
-});
+// modal close handlers moved to after modal HTML (see below)
 
 // ── Parallax subtle effect on credentials background ──
 const credSection = document.querySelector('.credentials-section');
@@ -2226,6 +2198,37 @@ if (credSection) {
     </div>
   </div>
 </div>
+
+<script>
+// ── Modal close handlers (must be after modal HTML) ──
+document.querySelectorAll('.feature-modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) {
+      overlay.classList.remove('active');
+      document.body.style.overflow = '';
+    }
+  });
+});
+document.querySelectorAll('.feature-modal-close').forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const overlay = btn.closest('.feature-modal-overlay');
+    if (overlay) {
+      overlay.classList.remove('active');
+      document.body.style.overflow = '';
+    }
+  });
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    document.querySelectorAll('.feature-modal-overlay.active').forEach(o => {
+      o.classList.remove('active');
+      document.body.style.overflow = '';
+    });
+  }
+});
+</script>
 
 </body>
 </html>
