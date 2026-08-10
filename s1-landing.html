@@ -297,6 +297,70 @@ h3 { font-size: clamp(18px, 2.5vw, 24px); font-weight: 600; line-height: 1.3; }
   animation: pulse-glow 3s ease-in-out infinite;
 }
 
+/* ── PAIN POINTS ──────────────────────── */
+.pain-section {
+  background: linear-gradient(180deg, var(--bg) 0%, #0d0505 50%, var(--bg) 100%);
+  padding: 72px 0;
+  position: relative;
+  overflow: hidden;
+}
+.pain-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  max-width: 960px;
+  margin: 0 auto;
+}
+.pain-card {
+  background: rgba(255,65,54,0.04);
+  border: 1px solid rgba(255,65,54,0.15);
+  border-radius: 16px;
+  padding: 32px 24px;
+  text-align: center;
+  transition: all 0.4s;
+  position: relative;
+}
+.pain-card:hover {
+  border-color: rgba(255,65,54,0.4);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 30px rgba(255,65,54,0.1);
+}
+.pain-icon {
+  font-size: 40px;
+  margin-bottom: 16px;
+  display: block;
+}
+.pain-card h3 {
+  font-size: 17px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: var(--accent);
+}
+.pain-card p {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+.pain-arrow {
+  display: flex;
+  justify-content: center;
+  margin-top: 36px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.pain-arrow span {
+  background: var(--accent);
+  color: white;
+  padding: 10px 24px;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 700;
+}
+@media (max-width: 768px) {
+  .pain-grid { grid-template-columns: 1fr; gap: 16px; }
+}
+
 /* ── STATS BAR ────────────────────────── */
 .stats-bar {
   background: var(--surface);
@@ -490,6 +554,119 @@ h3 { font-size: clamp(18px, 2.5vw, 24px); font-weight: 600; line-height: 1.3; }
 }
 .feature-card h3 { font-size: 18px; margin-bottom: 8px; }
 .feature-card p { color: var(--text-secondary); font-size: 14px; line-height: 1.6; }
+.feature-card { cursor: pointer; }
+
+/* ── FEATURE MODAL ────────────────────── */
+.feature-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+.feature-modal-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+.feature-modal {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  max-width: 640px;
+  width: 92%;
+  max-height: 85vh;
+  overflow-y: auto;
+  position: relative;
+  transform: translateY(24px) scale(0.96);
+  transition: transform 0.35s cubic-bezier(0.25,0.46,0.45,0.94);
+}
+.feature-modal-overlay.active .feature-modal {
+  transform: translateY(0) scale(1);
+}
+.feature-modal-img {
+  width: 100%;
+  height: 260px;
+  object-fit: cover;
+  border-radius: 20px 20px 0 0;
+  display: block;
+}
+.feature-modal-body {
+  padding: 32px;
+}
+.feature-modal-body .icon {
+  font-size: 32px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  background: rgba(255,65,54,0.08);
+  border-radius: 14px;
+  border: 1px solid rgba(255,65,54,0.15);
+}
+.feature-modal-body h3 {
+  font-size: 22px;
+  margin-bottom: 12px;
+  color: var(--text-primary);
+}
+.feature-modal-body .modal-desc {
+  color: var(--text-secondary);
+  font-size: 15px;
+  line-height: 1.75;
+  margin-bottom: 20px;
+}
+.feature-modal-body .modal-specs {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.feature-modal-body .spec-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+.feature-modal-body .spec-row .spec-bullet {
+  color: var(--accent);
+  font-weight: 700;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.feature-modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.5);
+  border: 1px solid rgba(255,255,255,0.15);
+  color: #fff;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+  z-index: 1;
+}
+.feature-modal-close:hover { background: rgba(255,65,54,0.6); }
+@media (max-width: 600px) {
+  .feature-modal { max-width: 100%; width: 96%; }
+  .feature-modal-img { height: 180px; }
+  .feature-modal-body { padding: 24px; }
+  .feature-modal-body h3 { font-size: 20px; }
+}
 
 /* ── REVIEWS ──────────────────────────── */
 .reviews-grid {
@@ -1001,7 +1178,6 @@ h3 { font-size: clamp(18px, 2.5vw, 24px); font-weight: 600; line-height: 1.3; }
   .floating-cta { display: block; }
   .vs-bar { gap: 12px; }
   .vs-item { min-width: 100px; padding: 12px 16px; }
-  #problems [style*="grid-template-columns"] { grid-template-columns: 1fr !important; max-width: 400px !important; }
   .play-btn-circle { width: 60px; height: 60px; }
   .play-btn-circle svg { width: 24px; height: 24px; }
 }
@@ -1011,7 +1187,7 @@ h3 { font-size: clamp(18px, 2.5vw, 24px); font-weight: 600; line-height: 1.3; }
 
 <!-- TOP BAR -->
 <div class="topbar">
-  <span class="urgency-dot"></span> NEW MODEL DROPPING SOON — <a href="#signup">Get your 10%+ discount code →</a>
+  <span class="urgency-dot"></span> NEW MODEL DROPPING SOON — <a href="#signup">Get early access →</a>
 </div>
 
 <!-- NAV -->
@@ -1029,18 +1205,17 @@ h3 { font-size: clamp(18px, 2.5vw, 24px); font-weight: 600; line-height: 1.3; }
   </video>
   <div class="container">
     <div class="hero-content">
-      <span class="badge" style="background:rgba(255,65,54,0.15); color:var(--accent);">Sound familiar?</span>
-      <h1 style="line-height:1.15;">Landing wobbles.<br>Knees twist.<br>Feet slip.</h1>
-      <p style="font-size:18px; margin-bottom:8px;">If your shoes can't handle jumps and lunges, they can't handle hybrid training.</p>
-      <p style="font-size:15px; color:var(--accent); font-weight:700; letter-spacing:0.5px; margin-bottom:24px;">PREMIUM HYBRID PERFORMANCE — BUILT FOR JUMP & LUNGE<br><span class="price-strike" style="font-size:22px;">$200+</span> <span style="font-size:22px;">→</span> <span class="text-accent" style="font-size:28px; font-weight:900;">$99</span></p>
+      <span class="badge">Built For Jumps & Lunges</span>
+      <h1>Unstable landings?<br>Knee wobble on lunges?<br><span class="text-accent">We fixed it.</span></h1>
+      <p>The shoe built for athletes who jump and lunge under load. REXtream 2026 champion-verified. <strong style="color:var(--text);"><span class="price-strike" style="font-size:inherit;">$200+</span> → $99.</strong></p>
       <div class="hero-actions">
         <a href="#signup" class="btn-primary">Get Early Access →</a>
-        <a href="#problems" class="btn-secondary">See The Problem ↓</a>
+        <a href="#pain" class="btn-secondary">See The Problem ↓</a>
       </div>
       <div style="margin-top:24px; display:flex; gap:20px; flex-wrap:wrap; opacity:0.7; font-size:12px; color:var(--text-secondary);">
-        <span>✓ Free shipping</span>
-        <span>✓ 30-day returns</span>
-        <span>✓ REXtream champion shoe</span>
+        <span>✓ A-TPU rebound</span>
+        <span>✓ Competition-grade grip</span>
+        <span>✓ Wide-foot stability</span>
       </div>
     </div>
     <div class="hero-image">
@@ -1049,74 +1224,34 @@ h3 { font-size: clamp(18px, 2.5vw, 24px); font-weight: 600; line-height: 1.3; }
   </div>
 </section>
 
-<!-- PROBLEM SCENES -->
-<section class="section" id="problems" style="padding:48px 0;">
+<!-- PAIN POINTS -->
+<section class="pain-section" id="pain">
   <div class="container">
-    <div class="text-center" style="margin-bottom:36px;">
-      <span class="badge" style="background:rgba(255,65,54,0.12); color:var(--accent);">The Problem With Your Current Shoes</span>
-    </div>
-    <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:20px; max-width:900px; margin:0 auto;">
-      <div style="background:rgba(255,65,54,0.04); border:1px solid rgba(255,65,54,0.15); border-radius:16px; padding:28px 20px; text-align:center;">
-        <div style="font-size:36px; margin-bottom:12px;">⬆️</div>
-        <h3 style="font-size:18px; font-weight:800; margin-bottom:8px; color:var(--accent);">JUMP</h3>
-        <p style="font-size:14px; color:var(--text-secondary); line-height:1.7;">Landing wobbles on box jumps. Ankles feel unstable on the catch. Cushioning dies after 100 reps. You hesitate before every jump.</p>
-      </div>
-      <div style="background:rgba(255,65,54,0.04); border:1px solid rgba(255,65,54,0.15); border-radius:16px; padding:28px 20px; text-align:center;">
-        <div style="font-size:36px; margin-bottom:12px;">🦵</div>
-        <h3 style="font-size:18px; font-weight:800; margin-bottom:8px; color:var(--accent);">LUNGE</h3>
-        <p style="font-size:14px; color:var(--text-secondary); line-height:1.7;">Knees twist during walking lunges. Midfoot collapses under load. No lateral control — your form breaks down rep after rep.</p>
-      </div>
-      <div style="background:rgba(255,65,54,0.04); border:1px solid rgba(255,65,54,0.15); border-radius:16px; padding:28px 20px; text-align:center;">
-        <div style="font-size:36px; margin-bottom:12px;">🧊</div>
-        <h3 style="font-size:18px; font-weight:800; margin-bottom:8px; color:var(--accent);">GRIP</h3>
-        <p style="font-size:14px; color:var(--text-secondary); line-height:1.7;">Feet slip on gym floors. Zero traction on takeoff. No confidence in your push-off — every explosive move is a gamble.</p>
-      </div>
-    </div>
-    <p class="text-center" style="margin-top:28px; font-size:16px; color:var(--text);">If you've felt any of this — <strong style="color:var(--accent);">your shoes are the problem, not you.</strong></p>
-  </div>
-</section>
-
-<!-- CORE MOVEMENTS: JUMP + LUNGE -->
-<section class="section section-dark" id="movements">
-  <div class="container">
-    <div class="text-center" style="margin-bottom: 40px;">
-      <span class="badge">Built For Two Things</span>
-      <h2>Jump Higher. Lunge Stronger.</h2>
-      <p class="text-secondary" style="margin-top:8px;">Two movements that define hybrid fitness. DARIMATI was engineered for both.</p>
+    <div class="text-center" style="margin-bottom:40px;">
+      <h2 style="font-size:clamp(22px, 3.5vw, 32px); font-weight:800;">Sound familiar?</h2>
+      <p class="text-secondary" style="margin-top:8px;">These problems kill your performance — and your joints.</p>
     </div>
 
-    <div class="movements-grid">
-      <!-- JUMP -->
-      <div class="movement-card">
-        <img class="movement-img" src="assets/jump-action.jpg" alt="DARIMATI Box Jump — explosive rebound and grip at REXtream 2026" loading="lazy">
-        <div class="movement-overlay"></div>
-        <div class="movement-content">
-          <span class="movement-tag">Jump</span>
-          <h3>Box Jumps.<br>Burpees. Rebounds.</h3>
-          <p>Nitrogen-infused A-TPU gives you explosive rebound on takeoff. Competition-grade rubber grips the box on landing. No slip. No hesitation.</p>
-          <div class="movement-specs">
-            <span class="movement-spec">A-TPU Rebound</span>
-            <span class="movement-spec">Landing Grip</span>
-            <span class="movement-spec">Cushion on Impact</span>
-          </div>
-        </div>
+    <div class="pain-grid">
+      <div class="pain-card">
+        <span class="pain-icon">💥</span>
+        <h3>Unstable Box Jump Landings</h3>
+        <p>You land on the box and your foot shifts. The sole doesn't grip. One bad landing and your ankle pays the price.</p>
       </div>
+      <div class="pain-card">
+        <span class="pain-icon">🦵</span>
+        <h3>Knee Twisting on Lunges</h3>
+        <p>Walking lunges under load — your knee drifts inward because the shoe can't hold your foot-to-knee alignment straight.</p>
+      </div>
+      <div class="pain-card">
+        <span class="pain-icon">🧊</span>
+        <h3>Slipping From Bad Grip</h3>
+        <p>Sled push, box jump, lateral shuffle — one slip and you lose power, lose time, or worse, get injured.</p>
+      </div>
+    </div>
 
-      <!-- LUNGE -->
-      <div class="movement-card">
-        <img class="movement-img" src="https://cdn.shopify.com/s/files/1/0775/5956/2452/files/hero.png" alt="DARIMATI Lunge — stability and alignment" loading="lazy">
-        <div class="movement-overlay"></div>
-        <div class="movement-content">
-          <span class="movement-tag">Lunge</span>
-          <h3>Walking Lunges.<br>Stability in Motion.</h3>
-          <p>Wide-foot-first last keeps your foot-to-knee alignment locked in. Moving under load? The outsole tracks straight. No wobble. No rolling.</p>
-          <div class="movement-specs">
-            <span class="movement-spec">Wide-Foot Stability</span>
-            <span class="movement-spec">Knee Alignment</span>
-            <span class="movement-spec">Lateral Lock</span>
-          </div>
-        </div>
-      </div>
+    <div class="pain-arrow">
+      <span>DARIMATI was built to solve exactly this ↓</span>
     </div>
   </div>
 </section>
@@ -1181,7 +1316,7 @@ h3 { font-size: clamp(18px, 2.5vw, 24px); font-weight: 600; line-height: 1.3; }
         <div class="story-icon">❌</div>
         <div>
           <h3>The Problem</h3>
-          <p>The Adidas Dropset Elite? $275. Puma Hyrox Deviate Nitro Elite? $260. On Cloud X 4? $160. Nike Metcon? $150. Hybrid shoes from big brands start at $200+. You're paying for retail shelf space, athlete sponsorships, and Super Bowl ads — not better performance.</p>
+          <p>Every training shoe costs $150+. Running shoes? $170+. Hybrid? Easily $200+. You're paying for retail shelf space, athlete sponsorships, and Super Bowl ads — not better performance.</p>
         </div>
       </div>
 
@@ -1206,6 +1341,51 @@ h3 { font-size: clamp(18px, 2.5vw, 24px); font-weight: 600; line-height: 1.3; }
         <div>
           <h3>The Result: BR-001</h3>
           <p>Nitrogen-infused A-TPU foam that most brands can't even source. Competition-grade rubber outsole. Wide-foot-friendly last design. Box jump grip that doesn't slip. Treadmill bounce that doesn't drag. <strong>Starting at $99. Direct to athlete.</strong></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CORE MOVEMENTS: JUMP + LUNGE -->
+<section class="section section-dark" id="movements">
+  <div class="container">
+    <div class="text-center" style="margin-bottom: 40px;">
+      <span class="badge">Built For Two Things</span>
+      <h2>Jump Higher. Lunge Stronger.</h2>
+      <p class="text-secondary" style="margin-top:8px;">Two movements that define hybrid fitness. DARIMATI was engineered for both.</p>
+    </div>
+
+    <div class="movements-grid">
+      <!-- JUMP -->
+      <div class="movement-card">
+        <img class="movement-img" src="assets/jump-action.jpg" alt="DARIMATI Box Jump — explosive rebound and grip at REXtream 2026" loading="lazy">
+        <div class="movement-overlay"></div>
+        <div class="movement-content">
+          <span class="movement-tag">Jump</span>
+          <h3>Box Jumps.<br>Burpees. Rebounds.</h3>
+          <p>Nitrogen-infused A-TPU gives you explosive rebound on takeoff. Competition-grade rubber grips the box on landing. No slip. No hesitation.</p>
+          <div class="movement-specs">
+            <span class="movement-spec">A-TPU Rebound</span>
+            <span class="movement-spec">Landing Grip</span>
+            <span class="movement-spec">Cushion on Impact</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- LUNGE -->
+      <div class="movement-card">
+        <img class="movement-img" src="https://cdn.shopify.com/s/files/1/0775/5956/2452/files/hero.png" alt="DARIMATI Lunge — stability and alignment" loading="lazy">
+        <div class="movement-overlay"></div>
+        <div class="movement-content">
+          <span class="movement-tag">Lunge</span>
+          <h3>Walking Lunges.<br>Stability in Motion.</h3>
+          <p>Wide-foot-first last keeps your foot-to-knee alignment locked in. Moving under load? The outsole tracks straight. No wobble. No rolling.</p>
+          <div class="movement-specs">
+            <span class="movement-spec">Wide-Foot Stability</span>
+            <span class="movement-spec">Knee Alignment</span>
+            <span class="movement-spec">Lateral Lock</span>
+          </div>
         </div>
       </div>
     </div>
@@ -1240,38 +1420,6 @@ h3 { font-size: clamp(18px, 2.5vw, 24px); font-weight: 600; line-height: 1.3; }
       </div>
     </div>
     <p class="text-center text-secondary" style="margin-top:16px; font-size:13px;">Tap to play with sound</p>
-  </div>
-</section>
-
-<!-- REXTREAM CHAMPION -->
-<section class="section section-dark" id="champion">
-  <div class="container">
-    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:48px; align-items:center;">
-      <div>
-        <span class="badge">Champion Verified</span>
-        <h2>🏆 REXtream 2025 Champion</h2>
-        <p style="color:var(--text-secondary); margin-top:16px; font-size:16px; line-height:1.8;">
-          DARIMATI is the <strong style="color:var(--text);">official shoe of REXtream</strong> — Korea's premier hybrid fitness competition. The 1st place winners competed and won wearing DARIMATI.
-        </p>
-        <div style="margin-top:24px; display:flex; flex-direction:column; gap:12px;">
-          <div style="display:flex; align-items:center; gap:10px;">
-            <span style="color:var(--gold); font-size:20px;">🥇</span>
-            <span><strong>1st Place</strong> — Hybrid Division Champions</span>
-          </div>
-          <div style="display:flex; align-items:center; gap:10px;">
-            <span style="color:var(--gold); font-size:20px;">💰</span>
-            <span><strong>₩1,000,000</strong> prize — competing in DARIMATI</span>
-          </div>
-          <div style="display:flex; align-items:center; gap:10px;">
-            <span style="color:var(--gold); font-size:20px;">👟</span>
-            <span><strong>Official Shoe Partner</strong> — REXtream × DARIMATI</span>
-          </div>
-        </div>
-      </div>
-      <div style="border-radius:16px; overflow:hidden; box-shadow: 0 12px 40px rgba(0,0,0,0.4);">
-        <img src="assets/rextream-champion.jpg" alt="REXtream 2025 Champions on Podium wearing DARIMATI" style="width:100%; display:block;" loading="lazy">
-      </div>
-    </div>
   </div>
 </section>
 
@@ -1357,6 +1505,38 @@ h3 { font-size: clamp(18px, 2.5vw, 24px); font-weight: 600; line-height: 1.3; }
   </div>
 </section>
 
+<!-- REXTREAM CHAMPION -->
+<section class="section section-dark" id="champion">
+  <div class="container">
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:48px; align-items:center;">
+      <div>
+        <span class="badge">Champion Verified</span>
+        <h2>🏆 REXtream 2025 Champion</h2>
+        <p style="color:var(--text-secondary); margin-top:16px; font-size:16px; line-height:1.8;">
+          DARIMATI is the <strong style="color:var(--text);">official shoe of REXtream</strong> — Korea's premier hybrid fitness competition. The 1st place winners competed and won wearing DARIMATI.
+        </p>
+        <div style="margin-top:24px; display:flex; flex-direction:column; gap:12px;">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <span style="color:var(--gold); font-size:20px;">🥇</span>
+            <span><strong>1st Place</strong> — Hybrid Division Champions</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:10px;">
+            <span style="color:var(--gold); font-size:20px;">💰</span>
+            <span><strong>₩1,000,000</strong> prize — competing in DARIMATI</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:10px;">
+            <span style="color:var(--gold); font-size:20px;">👟</span>
+            <span><strong>Official Shoe Partner</strong> — REXtream × DARIMATI</span>
+          </div>
+        </div>
+      </div>
+      <div style="border-radius:16px; overflow:hidden; box-shadow: 0 12px 40px rgba(0,0,0,0.4);">
+        <img src="assets/rextream-champion.jpg" alt="REXtream 2025 Champions on Podium wearing DARIMATI" style="width:100%; display:block;" loading="lazy">
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- PRESS / REVIEW PHOTOS -->
 <section class="section" id="press">
   <div class="container">
@@ -1368,7 +1548,7 @@ h3 { font-size: clamp(18px, 2.5vw, 24px); font-weight: 600; line-height: 1.3; }
 
     <div class="gallery-grid" style="grid-template-columns: repeat(3, 1fr);">
       <img src="https://blogger.googleusercontent.com/img/a/AVvXsEiCAJL2rl4SzLOGHpp3aS8wf47H2-tl_2T7Ohx_K_9XYmlBHtpGFQhmMdxXaEQSJTD_Vb0Wto4J9qs1orUN5SNzBx4JR4BjjqERUCLzdKBMWlYLwhPvbOOEcO9B6y-lad1mTgdE4_domL1ngJql1kRwGNZfZhk-Wk0AOLbM-injYN1wH_XY59fung" alt="BR-001 Review — RoadTrailRun" loading="lazy">
-      <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgCsdC1EfBknKmKIstmek_TjXRTW2hg69T_DwNVInGZsLmwzgzau3yW1qI-pCRZLZmDBq4EdpA4K6T_ofAun2yX0AygJWRqUCQyc7Ch6x2Unjv6nT9ni8F2yJdPohh9_zRIN-io6qxeolTOb5b9gmW-hx4lxsCLroginiTQMqaOQ2fSRmUHzJWOvwk5NNF5/w640-h480/Darimati%20BR001%20-%208.jpg" alt="BR-001 Side View — RunRepeat Review" loading="lazy">
+      <img src="https://blogger.googleusercontent.com/img/a/AVvXsEhfSlPA8u6sAaiGE07h-DvoQY60Lr_J5OolBawSLFZfWEyAXagRcbHQeJfq10p3kuDyto5l2x8nkrd3HCNxM-Sc2utahpYiB9wOXSsW3JhqSKnm9P-acAjGMR7HVx89n6yw8cJqlo3e3JAlrryZ8ZdTqyBXtf2wuUV67xEr6oHUcsnESgOWImc6Tw" alt="BR-001 Side View — Review" loading="lazy">
       <img src="https://blogger.googleusercontent.com/img/a/AVvXsEgEwBNqR4P8bK3gDjfJKUxW1MNAYDLog_PEN-vt0x0arLCSGyWQjlqrlgm9vM0Bic8zt-LEA6RtGOWdfjW4Z_Wr4anzRjqqWjpdT1CT82iyBvYmOnCE_9k6HqoGpSa8YQIjJwG7EpRYUlgr7DylITz_WGmav2vNN4MaLt3ZtmUU0xmY4hm-trnVHg=w565-h376" alt="BR-001 Detail — Outsole" loading="lazy">
       <img src="https://blogger.googleusercontent.com/img/a/AVvXsEgqUtMgUf3fYoL_ZSG7v7yP5bvOTTR_WGqSh90DWJ0kIIwNbZDOW0wixmCI0I6_7Afnq70eyVK72-LK8WCG0-3QAlPU7JzX6HKiBwWvWifY4yhGdNTHGYdXM5uUALworTtVYlL72OQCouFB076VdomrCsJ-xTm7W1_tRLIPqoh3Ky0g9bV5POOj2w" alt="BR-001 Performance Test" loading="lazy">
       <img src="https://blogger.googleusercontent.com/img/a/AVvXsEgfimPNPdHQC8g2NPDgrcSGXSVCMKVymcsiNNloDWS7viuLIMTWlIgHwfF5xC8A5vMH6J9h3vaW2643volMAghPP0zLT-4C03NKBdfRitgnY6HCUlSQwUpB6HkvphKs54Zk5kKlXSnWlYs2UVv0hC7lnSKKH79OrU4zgpas5vhKEgb7hBWtTH264w" alt="BR-001 Midsole Construction" loading="lazy">
@@ -1381,36 +1561,32 @@ h3 { font-size: clamp(18px, 2.5vw, 24px); font-weight: 600; line-height: 1.3; }
 <section class="section" id="compare" style="padding-top:0;">
   <div class="container">
     <div class="text-center" style="margin-bottom:32px;">
-      <h3 style="color:var(--text-secondary); font-weight:500; font-size:16px;">Same materials. Better performance. Half the price.</h3>
+      <h3 style="color:var(--text-secondary); font-weight:500; font-size:18px;">They charge $200+. We charge $99.<br><span style="font-size:14px; font-weight:400;">Same performance. No retail markup.</span></h3>
     </div>
-    <div class="vs-bar" style="max-width:900px;">
+    <div class="vs-bar" style="gap:16px;">
       <div class="vs-item">
-        <span class="brand">Adidas Dropset Elite</span>
-        <span class="price" style="color:var(--text-secondary);text-decoration:line-through;">$275</span>
-      </div>
-      <div class="vs-item">
-        <span class="brand">Puma x Hyrox Deviate Nitro Elite</span>
-        <span class="price" style="color:var(--text-secondary);text-decoration:line-through;">$260</span>
+        <span class="brand">Nike Metcon 9</span>
+        <span class="price" style="color:var(--text-secondary);text-decoration:line-through;">$150</span>
       </div>
       <div class="vs-item">
         <span class="brand">NoBull Trainer+</span>
         <span class="price" style="color:var(--text-secondary);text-decoration:line-through;">$169</span>
       </div>
       <div class="vs-item">
-        <span class="brand">On Cloud X 4</span>
-        <span class="price" style="color:var(--text-secondary);text-decoration:line-through;">$160</span>
+        <span class="brand">Adidas Dropset Elite</span>
+        <span class="price" style="color:var(--text-secondary);text-decoration:line-through;">$180</span>
       </div>
       <div class="vs-item">
-        <span class="brand">Nike Metcon 9</span>
+        <span class="brand">On Cloudsurfer</span>
         <span class="price" style="color:var(--text-secondary);text-decoration:line-through;">$150</span>
       </div>
-      <div class="vs-divider">vs</div>
-      <div class="vs-item winner">
-        <span class="brand">DARIMATI BR-001</span>
+      <div class="vs-divider" style="font-size:24px; font-weight:900;">vs</div>
+      <div class="vs-item winner" style="min-width:180px; padding:20px 28px;">
+        <span class="brand" style="font-size:13px; letter-spacing:1.5px;">DARIMATI BR-001</span>
         <span class="price" style="font-size:32px;">$99</span>
+        <span style="font-size:11px; color:var(--green); font-weight:600; margin-top:4px;">BETTER PERFORMANCE. HALF THE PRICE.</span>
       </div>
     </div>
-    <p class="text-center text-secondary" style="margin-top:20px; font-size:14px;">Same A-TPU foam. Same competition-grade outsole. No retail markup. No sponsorship tax.</p>
   </div>
 </section>
 
@@ -1544,7 +1720,7 @@ h3 { font-size: clamp(18px, 2.5vw, 24px); font-weight: 600; line-height: 1.3; }
     <p class="text-secondary" style="margin-top:8px; font-size:17px;">BR-001 won championships. The next model takes its DNA further.</p>
 
     <div class="next-silhouette-wrap">
-      <img class="next-silhouette" src="https://raw.githubusercontent.com/darimati/darimati-dash/main/public/media/black-shoe-silhouette.jpg" alt="Next DARIMATI model — Black Edition">
+      <img class="next-silhouette" src="https://cdn.shopify.com/s/files/1/0775/5956/2452/files/04.png?v=1776313172" alt="Next DARIMATI model — silhouette">
       <span class="next-silhouette-q">?</span>
     </div>
 
@@ -1585,24 +1761,24 @@ h3 { font-size: clamp(18px, 2.5vw, 24px); font-weight: 600; line-height: 1.3; }
 <section class="cta-section section" id="signup">
   <div class="container">
     <div class="cta-box">
-      <span class="badge" style="animation: pulse-glow 2s ease-in-out infinite;">Exclusive Early Access</span>
-      <h2>Sign Up Now — Get the Best Discount Code</h2>
-      <p>Subscribe today and receive <strong style="color:var(--accent);">a guaranteed 10%+ discount code</strong> when our new model drops. Early subscribers always get the lowest price — no exceptions.</p>
+      <span class="badge" style="animation: pulse-glow 2s ease-in-out infinite;">Early Access</span>
+      <h2>Get Your Discount Code Before Anyone Else</h2>
+      <p>Sign up now and receive the <strong style="color:var(--accent);">lowest discount code guaranteed — minimum 10% off</strong> when the new model drops. What's coming will exceed everything you expect.</p>
 
       <div class="cta-perks">
-        <div class="cta-perk"><span class="check">✓</span> Guaranteed 10%+ off — best price, period</div>
-        <div class="cta-perk"><span class="check">✓</span> Exclusive early access before public launch</div>
-        <div class="cta-perk"><span class="check">✓</span> Free shipping on first order</div>
+        <div class="cta-perk"><span class="check">✓</span> Guaranteed 10%+ discount code</div>
+        <div class="cta-perk"><span class="check">✓</span> First access to the new model</div>
+        <div class="cta-perk"><span class="check">✓</span> Free shipping</div>
       </div>
 
       <form class="email-form" id="signupForm" onsubmit="return handleSubmit(event)">
         <input type="email" id="emailInput" placeholder="your@email.com" required>
-        <button type="submit" id="submitBtn">Get My Discount Code →</button>
+        <button type="submit" id="submitBtn">Get Notified</button>
       </form>
-      <p class="email-note">No spam. Unsubscribe anytime. Your code will be sent when the new model launches.</p>
+      <p class="email-note">No spam. Unsubscribe anytime. We only email about the launch.</p>
 
       <div class="email-success" id="successMsg">
-        ✅ You're in! When our new model drops, you'll get more than you expected. Your exclusive discount code is secured.
+        ✅ You're in! Your exclusive discount code (10%+ off) will be sent when the new model drops. It's going to be worth the wait.
       </div>
     </div>
   </div>
@@ -1623,7 +1799,7 @@ h3 { font-size: clamp(18px, 2.5vw, 24px); font-weight: 600; line-height: 1.3; }
     <div class="price-info">
       <span class="old">$200+</span> <span class="new">$99</span>
     </div>
-    <a href="#signup" class="cta-btn">Get 10%+ Off →</a>
+    <a href="#signup" class="cta-btn">Get Early Access →</a>
   </div>
 </div>
 
@@ -1726,13 +1902,18 @@ function handleSubmit(e) {
   btn.textContent = 'Submitting...';
   btn.disabled = true;
 
-  const WEBHOOK_URL = 'https://garden-acquisitions-variable-ballot.trycloudflare.com';
+  // WEBHOOK_URL will be set once Google Sheet integration is ready
+  const WEBHOOK_URL = '';
 
-  fetch(WEBHOOK_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email: email, source: 's1-half-price', page: 'S1 Landing' })
-  }).then(() => showSuccess()).catch(() => showSuccess());
+  if (WEBHOOK_URL) {
+    fetch(WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email, source: 's1-launch', page: 'S1 Landing' })
+    }).then(() => showSuccess()).catch(() => showSuccess());
+  } else {
+    showSuccess();
+  }
 
   function showSuccess() {
     form.style.display = 'none';
@@ -1760,6 +1941,48 @@ document.querySelectorAll('.story-step, .credential-item, .feature-card, .review
   fadeObs.observe(el);
 });
 
+// ── Feature Modal Logic ──
+const featureModals = {
+  'Wide-Foot-First Design': 'modal-wide-foot',
+  'Competition-Grade Grip': 'modal-grip',
+  'Nitrogen-Infused A-TPU': 'modal-atpu',
+  'Hybrid Versatility': 'modal-hybrid',
+  'Direct-to-Athlete Price': 'modal-price',
+  '15+ Prototypes Tested': 'modal-prototypes'
+};
+
+document.querySelectorAll('.feature-card').forEach(card => {
+  card.addEventListener('click', () => {
+    const title = card.querySelector('h3')?.textContent?.trim();
+    const modalId = featureModals[title];
+    if (modalId) {
+      const overlay = document.getElementById(modalId);
+      if (overlay) {
+        overlay.classList.add('active');
+        document.body.style.overflow = 'hidden';
+      }
+    }
+  });
+});
+
+document.querySelectorAll('.feature-modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay || e.target.classList.contains('feature-modal-close')) {
+      overlay.classList.remove('active');
+      document.body.style.overflow = '';
+    }
+  });
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    document.querySelectorAll('.feature-modal-overlay.active').forEach(o => {
+      o.classList.remove('active');
+      document.body.style.overflow = '';
+    });
+  }
+});
+
 // ── Parallax subtle effect on credentials background ──
 const credSection = document.querySelector('.credentials-section');
 if (credSection) {
@@ -1774,6 +1997,122 @@ if (credSection) {
   }, { passive: true });
 }
 </script>
+
+<!-- ═══ FEATURE DETAIL MODALS ═══ -->
+
+<!-- 1. Wide-Foot-First Design -->
+<div class="feature-modal-overlay" id="modal-wide-foot">
+  <div class="feature-modal">
+    <button class="feature-modal-close">&times;</button>
+    <img class="feature-modal-img" src="https://cdn.shopify.com/s/files/1/0775/5956/2452/files/04.png?v=1776313172" alt="BR-001 Wide Foot Last Design">
+    <div class="feature-modal-body">
+      <span class="icon">🦶</span>
+      <h3>Wide-Foot-First Design</h3>
+      <p class="modal-desc">Most brands design for a standard-width last, then stretch it for "wide" versions. We did the opposite. The BR-001 was built from day one around a wider last &mdash; because your feet shouldn't have to conform to the shoe.</p>
+      <div class="modal-specs">
+        <div class="spec-row"><span class="spec-bullet">&bull;</span><span>20+ last iterations to perfect the toe box volume and midfoot wrap</span></div>
+        <div class="spec-row"><span class="spec-bullet">&bull;</span><span>Integrated upper structure distributes pressure evenly &mdash; no hot spots</span></div>
+        <div class="spec-row"><span class="spec-bullet">&bull;</span><span>Inspired by Bridge Mechanics&trade;: the entire upper works as one continuous load-bearing system</span></div>
+        <div class="spec-row"><span class="spec-bullet">&bull;</span><span>Fits true to size with natural toe splay &mdash; no break-in period required</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 2. Competition-Grade Grip -->
+<div class="feature-modal-overlay" id="modal-grip">
+  <div class="feature-modal">
+    <button class="feature-modal-close">&times;</button>
+    <img class="feature-modal-img" src="https://cdn.shopify.com/s/files/1/0775/5956/2452/files/08.png?v=1776313172" alt="BR-001 Outsole Grip Detail">
+    <div class="feature-modal-body">
+      <span class="icon">🧱</span>
+      <h3>Competition-Grade Grip</h3>
+      <p class="modal-desc">The outsole uses a high-density rubber compound originally developed for mixed urban terrain &mdash; concrete, asphalt, gym floors, and everything in between. The multi-directional tread pattern locks into any surface during explosive lateral movements.</p>
+      <div class="modal-specs">
+        <div class="spec-row"><span class="spec-bullet">&bull;</span><span>Engineered for box jumps, sled pushes, rope climbs, and lateral shuffles</span></div>
+        <div class="spec-row"><span class="spec-bullet">&bull;</span><span>Rubber compound tested on concrete, rubber flooring, turf, and wet surfaces</span></div>
+        <div class="spec-row"><span class="spec-bullet">&bull;</span><span>Flat, ground-aligned geometry ensures maximum surface contact</span></div>
+        <div class="spec-row"><span class="spec-bullet">&bull;</span><span>500km+ durability testing &mdash; no delamination, no wear-through</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 3. Nitrogen-Infused A-TPU -->
+<div class="feature-modal-overlay" id="modal-atpu">
+  <div class="feature-modal">
+    <button class="feature-modal-close">&times;</button>
+    <img class="feature-modal-img" src="https://cdn.shopify.com/s/files/1/0775/5956/2452/files/09.png?v=1776313172" alt="BR-001 A-TPU Midsole Cushioning">
+    <div class="feature-modal-body">
+      <span class="icon">☁️</span>
+      <h3>Nitrogen-Infused A-TPU</h3>
+      <p class="modal-desc">Cheap EVA foam compresses, flattens, and loses energy return within months. Our nitrogen-infused A-TPU (Thermoplastic Polyurethane) foam is harder to manufacture, but it maintains its bounce and structural integrity over thousands of miles. This is the core of our Stable Core&trade; technology.</p>
+      <div class="modal-specs">
+        <div class="spec-row"><span class="spec-bullet">&bull;</span><span>Stable Core&trade; midsole: consistent support that doesn't degrade over time</span></div>
+        <div class="spec-row"><span class="spec-bullet">&bull;</span><span>Nitrogen infusion creates micro air cells for superior energy return</span></div>
+        <div class="spec-row"><span class="spec-bullet">&bull;</span><span>Ground-aligned geometry prevents torsional instability during dynamic movements</span></div>
+        <div class="spec-row"><span class="spec-bullet">&bull;</span><span>Full marathon tested &mdash; same responsiveness at mile 1 and mile 26</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 4. Hybrid Versatility -->
+<div class="feature-modal-overlay" id="modal-hybrid">
+  <div class="feature-modal">
+    <button class="feature-modal-close">&times;</button>
+    <img class="feature-modal-img" src="https://cdn.shopify.com/s/files/1/0775/5956/2452/files/hero.png" alt="BR-001 Hybrid Training Versatility">
+    <div class="feature-modal-body">
+      <span class="icon">⚡</span>
+      <h3>Hybrid Versatility</h3>
+      <p class="modal-desc">Most athletes own separate shoes for lifting, running, and cross-training. The BR-001 was engineered as one shoe that handles all three &mdash; powered by our Fit in Motion system with the Easy Swap Lace Lock.</p>
+      <div class="modal-specs">
+        <div class="spec-row"><span class="spec-bullet">&bull;</span><span>Easy Swap Lace Lock: independent dual-zone lacing adjusts from loose daily wear to locked-in training fit in seconds</span></div>
+        <div class="spec-row"><span class="spec-bullet">&bull;</span><span>Stable enough for heavy squats and deadlifts</span></div>
+        <div class="spec-row"><span class="spec-bullet">&bull;</span><span>Responsive enough for treadmill intervals and outdoor runs</span></div>
+        <div class="spec-row"><span class="spec-bullet">&bull;</span><span>Lateral support for competition-level functional fitness movements</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 5. Direct-to-Athlete Price -->
+<div class="feature-modal-overlay" id="modal-price">
+  <div class="feature-modal">
+    <button class="feature-modal-close">&times;</button>
+    <img class="feature-modal-img" src="https://cdn.shopify.com/s/files/1/0775/5956/2452/files/dariamti_shoe.jpg?v=1776313172" alt="BR-001 Direct-to-Athlete Pricing">
+    <div class="feature-modal-body">
+      <span class="icon">💰</span>
+      <h3>Direct-to-Athlete Price</h3>
+      <p class="modal-desc">Nike Metcon 9 costs $150. NoBull Trainer+ costs $169. Reebok Nano X4 costs $150. We deliver the same (or better) performance at $99 &mdash; because we don't pay for retail shelf space or celebrity endorsements.</p>
+      <div class="modal-specs">
+        <div class="spec-row"><span class="spec-bullet">&bull;</span><span>No retail markup &mdash; sold direct from our workshop to your door</span></div>
+        <div class="spec-row"><span class="spec-bullet">&bull;</span><span>No sponsorship tax &mdash; zero athlete endorsement fees baked into the price</span></div>
+        <div class="spec-row"><span class="spec-bullet">&bull;</span><span>Kickstarter-proven: 214% funded, 88 backers trusted us before we shipped</span></div>
+        <div class="spec-row"><span class="spec-bullet">&bull;</span><span>Premium materials (A-TPU, competition rubber) at an honest price point</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 6. 15+ Prototypes Tested -->
+<div class="feature-modal-overlay" id="modal-prototypes">
+  <div class="feature-modal">
+    <button class="feature-modal-close">&times;</button>
+    <img class="feature-modal-img" src="https://cdn.shopify.com/s/files/1/0775/5956/2452/files/11.png?v=1776313172" alt="BR-001 Prototype Testing">
+    <div class="feature-modal-body">
+      <span class="icon">🧪</span>
+      <h3>15+ Prototypes Tested</h3>
+      <p class="modal-desc">This isn't a shoe that was designed in a boardroom and shipped to athletes. Every single version was worn, tested, and iterated by real athletes in real training sessions and competitions across 7 countries &mdash; from HYROX floors in Seoul to CrossFit boxes in Los Angeles.</p>
+      <div class="modal-specs">
+        <div class="spec-row"><span class="spec-bullet">&bull;</span><span>15+ prototype iterations &mdash; each one tested until failure</span></div>
+        <div class="spec-row"><span class="spec-bullet">&bull;</span><span>500km+ cumulative durability testing per version</span></div>
+        <div class="spec-row"><span class="spec-bullet">&bull;</span><span>Full marathon tested for long-distance resilience</span></div>
+        <div class="spec-row"><span class="spec-bullet">&bull;</span><span>Validated by athletes across 7 countries in HYROX, CrossFit, and functional fitness competitions</span></div>
+      </div>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>
