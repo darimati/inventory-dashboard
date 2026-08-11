@@ -238,24 +238,16 @@ button{cursor:pointer;font-family:var(--font)}
 .lifestyle-item img{width:100%;height:100%;object-fit:cover;transition:transform .5s}
 .lifestyle-item:hover img{transform:scale(1.04)}
 
-/* ── Video Feature Section ── */
-.video-feature{max-width:var(--max-w);margin:0 auto;padding:80px var(--gap)}
-.video-feature-split{display:grid;grid-template-columns:1.2fr .8fr;gap:48px;align-items:center}
-.video-feature-player{position:relative;background:var(--black);overflow:hidden}
-.video-feature-player video{width:100%;display:block}
-.video-feature-text .editorial-eyebrow{margin-bottom:12px}
-.video-feature-text h2{font-size:24px;font-weight:600;letter-spacing:-.3px;line-height:1.3;margin-bottom:16px}
-.video-feature-text p{font-size:14px;color:var(--gray-600);line-height:1.8}
+/* ── Video Feature Centered ── */
+.video-feature-centered{display:flex;justify-content:center;padding:80px var(--gap);background:var(--white)}
+.video-feature-centered video{width:50%;display:block;background:var(--black)}
 
 /* ── REXtream Champion ── */
 .champion{position:relative;width:100%;overflow:hidden;background:var(--black)}
-.champion img{width:100%;height:480px;object-fit:cover;opacity:.6}
+.champion video,.champion img{width:100%;height:480px;object-fit:cover;opacity:.6}
 .champion-overlay{position:absolute;inset:0;display:flex;flex-direction:column;
   align-items:center;justify-content:center;text-align:center;color:var(--white);padding:0 20px}
-.champion-overlay-eyebrow{font-size:10px;font-weight:600;letter-spacing:2px;
-  text-transform:uppercase;color:rgba(255,255,255,.6);margin-bottom:12px}
-.champion-overlay h2{font-size:32px;font-weight:700;letter-spacing:-.3px;margin-bottom:8px}
-.champion-overlay p{font-size:14px;color:rgba(255,255,255,.65);max-width:440px}
+.champion-overlay h2{font-size:32px;font-weight:700;letter-spacing:-.3px}
 
 /* ── Tech Grid ── */
 .tech-section{padding:80px 0;background:var(--off-white);border-top:1px solid var(--gray-200)}
@@ -361,12 +353,12 @@ button{cursor:pointer;font-family:var(--font)}
   .lab-grid{grid-template-columns:1fr 1fr}
   .hero-video-banner{height:320px}
   .hero-video-overlay h2{font-size:24px}
-  .video-feature-split{grid-template-columns:1fr}
+  .video-feature-centered video{width:90%}
   .lifestyle-grid{grid-template-columns:1fr 1fr}
   .lifestyle-grid .span-2{grid-column:span 1}
   .next-teaser-split{grid-template-columns:1fr}
   .price-bar-label{width:100px;font-size:11px}
-  .champion img{height:320px}
+  .champion video,.champion img{height:320px}
   .champion-overlay h2{font-size:24px}
   .gif-strip img{width:100%;height:auto}
 }
@@ -588,29 +580,25 @@ button{cursor:pointer;font-family:var(--font)}
   </video>
   <div class="hero-video-overlay">
     <h2>One Shoe. Every Movement.</h2>
-    <p>Jump. Lunge. Run. The BR-001 was built for athletes who refuse to compromise.</p>
   </div>
 </div>
 
 <!-- ═══ Hybrid Movements ═══ -->
 <section class="movements">
   <div class="movements-header">
-    <p class="movements-header-eyebrow">Hybrid Performance</p>
-    <h2 class="movements-header-title">Built for How You Actually Train</h2>
+    <h2 class="movements-header-title">Built for How You Train</h2>
   </div>
   <div class="movements-grid">
     <div class="movement-card">
       <img src="assets/jump-action.jpg" alt="DARIMATI Box Jump — explosive rebound and grip" loading="lazy">
       <div class="movement-card-overlay">
         <h3>Jump &amp; Land</h3>
-        <p>A-TPU foam absorbs impact. CPU outsole grips the box. Bridge Mechanics&trade; stabilizes on landing.</p>
       </div>
     </div>
     <div class="movement-card">
       <img src="https://cdn.shopify.com/s/files/1/0775/5956/2452/files/hero.png" alt="DARIMATI Lunge — stability and alignment" loading="lazy">
       <div class="movement-card-overlay">
         <h3>Lunge &amp; Push</h3>
-        <p>Wide forefoot + Stable Core&trade; keeps your knee-to-ankle alignment locked during loaded lunges.</p>
       </div>
     </div>
   </div>
@@ -621,23 +609,22 @@ button{cursor:pointer;font-family:var(--font)}
   <div class="feature-strip-inner">
     <div class="feature-strip-header">
       <h2>Built Different</h2>
-      <p>Engineered for athletes who train across disciplines.</p>
     </div>
     <div class="features-grid">
       <div>
         <div class="feat-icon">&#9889;</div>
         <div class="feat-title">Explosive Rebound</div>
-        <div class="feat-desc">Nitrogen-infused A-TPU foam delivers top-14% energy return. Lab-verified by RunRepeat.</div>
+        <div class="feat-desc">Top-14% energy return. Lab-verified by RunRepeat.</div>
       </div>
       <div>
         <div class="feat-icon">&#9878;</div>
         <div class="feat-title">Bridge Mechanics&trade;</div>
-        <div class="feat-desc">Patented hinge structure distributes load evenly during lateral cuts, lunges, and sprints.</div>
+        <div class="feat-desc">Distributes load evenly during lateral cuts and sprints.</div>
       </div>
       <div>
         <div class="feat-icon">&#9727;</div>
         <div class="feat-title">Competition Grip</div>
-        <div class="feat-desc">CPU full-length outsole with multi-directional tread. Grips gym rubber, wet concrete, and box surfaces.</div>
+        <div class="feat-desc">CPU outsole grips gym, wet concrete, and box surfaces.</div>
       </div>
     </div>
   </div>
@@ -651,13 +638,12 @@ button{cursor:pointer;font-family:var(--font)}
     </div>
     <div class="editorial-text">
       <p class="editorial-eyebrow">Core Technology</p>
-      <h2 class="editorial-heading">Stability That Doesn't Sacrifice Speed</h2>
-      <p class="editorial-body">Most stability shoes make you slower. Most running shoes make you unstable. Bridge Mechanics&trade; solves both &mdash; a hinged midsole structure that flexes with your foot's natural motion while locking down during heavy loads.</p>
+      <h2 class="editorial-heading">Stability Without Sacrificing Speed</h2>
       <ul class="specs-list">
-        <li><span class="check">&#10003;</span> Distributes load across full midsole</li>
-        <li><span class="check">&#10003;</span> Natural foot articulation maintained</li>
-        <li><span class="check">&#10003;</span> Tested across 500km+ per prototype</li>
-        <li><span class="check">&#10003;</span> Full marathon validated</li>
+        <li><span class="check">&#10003;</span> Load distributed across full midsole</li>
+        <li><span class="check">&#10003;</span> Natural foot articulation</li>
+        <li><span class="check">&#10003;</span> 500km+ per prototype tested</li>
+        <li><span class="check">&#10003;</span> Marathon validated</li>
       </ul>
     </div>
   </div>
@@ -677,11 +663,10 @@ button{cursor:pointer;font-family:var(--font)}
     <div class="editorial-text">
       <p class="editorial-eyebrow">Fit Engineering</p>
       <h2 class="editorial-heading">Wide-Foot-First Design</h2>
-      <p class="editorial-body">20+ last iterations. Not a wide version of a narrow shoe &mdash; built wide from the start. Your toes splay naturally during explosive movements. Foot-to-knee alignment stays locked in during loaded lunges.</p>
       <ul class="specs-list">
-        <li><span class="check">&#10003;</span> Wider forefoot, standard heel cup</li>
-        <li><span class="check">&#10003;</span> Dual-path lacing for fit adjustment</li>
-        <li><span class="check">&#10003;</span> True-to-size (recommend half-up)</li>
+        <li><span class="check">&#10003;</span> Wider forefoot, standard heel</li>
+        <li><span class="check">&#10003;</span> Dual-path lacing system</li>
+        <li><span class="check">&#10003;</span> 20+ last iterations</li>
       </ul>
     </div>
   </div>
@@ -713,9 +698,8 @@ button{cursor:pointer;font-family:var(--font)}
 <section class="lab-section" id="lab-test">
   <div class="lab-inner">
     <div class="lab-header">
-      <p class="lab-header-eyebrow">RunRepeat Lab Data</p>
       <h2 class="lab-header-title">Tested. Measured. Proven.</h2>
-      <p class="lab-header-sub">Independent lab testing by RunRepeat confirms top-14% energy return across 2,000+ shoes tested. Watch the raw footage.</p>
+      <p class="lab-header-sub">RunRepeat lab data &mdash; top 14% energy return across 2,000+ shoes.</p>
     </div>
     <div class="lab-grid">
       <div class="lab-card">
@@ -826,7 +810,6 @@ button{cursor:pointer;font-family:var(--font)}
 <section class="lifestyle">
   <div class="lifestyle-inner">
     <div class="lifestyle-header">
-      <p class="lifestyle-header-eyebrow">In The Wild</p>
       <h2 class="lifestyle-header-title">From Gym to Street</h2>
     </div>
     <div class="lifestyle-grid">
@@ -850,19 +833,10 @@ button{cursor:pointer;font-family:var(--font)}
 </section>
 
 <!-- ═══ Athlete Interview Video ═══ -->
-<section class="video-feature">
-  <div class="video-feature-split">
-    <div class="video-feature-player">
-      <video controls preload="metadata" poster="assets/rextream-champion.jpg">
-        <source src="assets/darimati-france-interview.mp4" type="video/mp4">
-      </video>
-    </div>
-    <div class="video-feature-text">
-      <p class="editorial-eyebrow">Athlete Stories</p>
-      <h2>From Paris CrossFit to the Podium</h2>
-      <p>Hear from athletes who train and compete internationally in the BR-001. Built in Seoul, tested across 7+ countries, worn by champions.</p>
-    </div>
-  </div>
+<section class="video-feature-centered">
+  <video controls preload="metadata" poster="assets/rextream-champion.jpg">
+    <source src="assets/darimati-france-interview.mp4" type="video/mp4">
+  </video>
 </section>
 
 <!-- Reviews -->
@@ -894,11 +868,11 @@ button{cursor:pointer;font-family:var(--font)}
 
 <!-- ═══ REXtream Champion ═══ -->
 <div class="champion">
-  <img src="assets/rextream-champion.jpg" alt="REXtream 2026 Champions wearing DARIMATI" loading="lazy">
+  <video autoplay muted loop playsinline poster="assets/rextream-champion.jpg">
+    <source src="assets/athlete-loop.mp4" type="video/mp4">
+  </video>
   <div class="champion-overlay">
-    <p class="champion-overlay-eyebrow">Competition Proven</p>
     <h2>REXtream 2026 Champion</h2>
-    <p>The winning shoe of Korea's premier hybrid fitness competition. Tested under competition pressure.</p>
   </div>
 </div>
 
@@ -952,7 +926,6 @@ button{cursor:pointer;font-family:var(--font)}
     <div class="next-teaser-text">
       <p class="editorial-eyebrow">Coming Soon</p>
       <h2>The Next Chapter</h2>
-      <p>We're not stopping at one. The next DARIMATI model is in development. Be the first to know.</p>
       <div class="notify-form">
         <input type="email" class="notify-input" placeholder="Enter your email">
         <button class="notify-btn" onclick="notifySignup()">Notify Me</button>
