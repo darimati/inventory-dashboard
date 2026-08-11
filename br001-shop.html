@@ -1,0 +1,1153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DARIMATI BR-001 — Hybrid Training Shoe | $129</title>
+<meta name="description" content="The hybrid training shoe built for HYROX, CrossFit, and city running. Bridge Mechanics™ + A-TPU cushioning. $129 with free US shipping.">
+<meta property="og:title" content="DARIMATI BR-001 — The Hybrid Training Shoe">
+<meta property="og:description" content="Built for jumps, lunges, and runs. Kickstarter 218% funded. Starting at $129.">
+<meta property="og:image" content="https://cdn.shopify.com/s/files/1/0775/5956/2452/files/dariamti_shoe.jpg?v=1776313172">
+<meta property="og:type" content="product">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #ffffff;
+  --bg-alt: #f7f7f5;
+  --bg-dark: #1a1a1a;
+  --text: #1a1a1a;
+  --text-secondary: #6b6b6b;
+  --text-light: #999;
+  --accent: #c8102e;
+  --accent-hover: #a00d24;
+  --border: #e5e5e5;
+  --border-light: #f0f0f0;
+  --green: #2d8a4e;
+  --gold: #b8860b;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── ANNOUNCEMENT BAR ─────────────── */
+.announce-bar {
+  background: var(--bg-dark);
+  color: #fff;
+  text-align: center;
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+}
+.announce-bar a { color: #fff; text-decoration: underline; }
+
+/* ── NAVIGATION ───────────────────── */
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(255,255,255,0.95);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border-light);
+  padding: 0 24px;
+}
+.nav-inner {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 60px;
+}
+.nav-logo img { height: 22px; }
+.nav-links { display: flex; gap: 32px; }
+.nav-links a {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  text-decoration: none;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+.nav-links a:hover { color: var(--accent); }
+.nav-cart {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ── PRODUCT SECTION ──────────────── */
+.product-section {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 60px;
+  align-items: start;
+  padding-top: 40px;
+  padding-bottom: 60px;
+}
+
+/* Image Gallery */
+.gallery {
+  position: sticky;
+  top: 80px;
+}
+.gallery-main {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--bg-alt);
+  cursor: zoom-in;
+  margin-bottom: 12px;
+}
+.gallery-main img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+.gallery-main:hover img { transform: scale(1.05); }
+.gallery-thumbs {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+}
+.gallery-thumb {
+  aspect-ratio: 1;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 2px solid transparent;
+  cursor: pointer;
+  background: var(--bg-alt);
+  transition: border-color 0.2s;
+}
+.gallery-thumb.active { border-color: var(--text); }
+.gallery-thumb:hover { border-color: var(--text-light); }
+.gallery-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Product Info */
+.product-info {
+  padding-top: 20px;
+}
+.product-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #fef3cd;
+  color: var(--gold);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 4px;
+  margin-bottom: 16px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+.product-title {
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1.2;
+  margin-bottom: 8px;
+  letter-spacing: -0.5px;
+}
+.product-subtitle {
+  font-size: 16px;
+  color: var(--text-secondary);
+  margin-bottom: 20px;
+  line-height: 1.6;
+}
+.product-reviews-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+  font-size: 14px;
+}
+.stars { color: var(--gold); letter-spacing: 2px; }
+.review-count { color: var(--text-secondary); text-decoration: underline; cursor: pointer; }
+
+.product-price {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.product-price-note {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 28px;
+}
+
+/* Size Selector */
+.option-label {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.option-label a {
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--text-secondary);
+  text-decoration: underline;
+  font-size: 12px;
+}
+.size-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 24px;
+}
+.size-btn {
+  padding: 14px 0;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s;
+  font-family: inherit;
+  color: var(--text);
+}
+.size-btn:hover { border-color: var(--text); }
+.size-btn.active {
+  border-color: var(--text);
+  background: var(--text);
+  color: #fff;
+}
+.size-btn.sold-out {
+  opacity: 0.3;
+  cursor: not-allowed;
+  text-decoration: line-through;
+}
+
+/* Add to Cart */
+.add-to-cart {
+  width: 100%;
+  padding: 18px;
+  background: var(--bg-dark);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-family: inherit;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+.add-to-cart:hover { background: #333; }
+.add-to-cart:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.buy-now {
+  width: 100%;
+  padding: 18px;
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-family: inherit;
+  letter-spacing: 0.5px;
+  margin-bottom: 24px;
+}
+.buy-now:hover { border-color: var(--text); }
+
+/* Trust Signals */
+.trust-signals {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border-light);
+}
+.trust-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+.trust-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+
+/* Product Details Accordion */
+.accordions {
+  margin-top: 32px;
+  border-top: 1px solid var(--border);
+}
+.accordion-item {
+  border-bottom: 1px solid var(--border);
+}
+.accordion-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 0;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  user-select: none;
+}
+.accordion-header:hover { color: var(--accent); }
+.accordion-icon {
+  font-size: 20px;
+  font-weight: 300;
+  transition: transform 0.3s;
+}
+.accordion-item.open .accordion-icon { transform: rotate(45deg); }
+.accordion-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.4s ease;
+}
+.accordion-body-inner {
+  padding: 0 0 20px;
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.8;
+}
+.accordion-body-inner ul {
+  list-style: none;
+  padding: 0;
+}
+.accordion-body-inner li {
+  padding: 4px 0;
+  padding-left: 16px;
+  position: relative;
+}
+.accordion-body-inner li::before {
+  content: '—';
+  position: absolute;
+  left: 0;
+  color: var(--text-light);
+}
+
+/* ── FEATURES STRIP ───────────────── */
+.features-strip {
+  background: var(--bg-alt);
+  padding: 80px 24px;
+}
+.features-strip-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+.features-strip h2 {
+  text-align: center;
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  letter-spacing: -0.5px;
+}
+.features-strip .subtitle {
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 16px;
+  margin-bottom: 56px;
+}
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 48px;
+}
+.feature-card { text-align: center; }
+.feature-icon {
+  width: 56px;
+  height: 56px;
+  background: var(--bg-dark);
+  color: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  margin: 0 auto 20px;
+}
+.feature-card h3 {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  letter-spacing: -0.2px;
+}
+.feature-card p {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+
+/* ── SPLIT FEATURE ────────────────── */
+.split-section {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 80px 24px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: center;
+}
+.split-section.reverse { direction: rtl; }
+.split-section.reverse > * { direction: ltr; }
+.split-image {
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--bg-alt);
+}
+.split-image img {
+  width: 100%;
+  display: block;
+}
+.split-content { max-width: 500px; }
+.split-content .overline {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 16px;
+}
+.split-content h2 {
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1.2;
+  margin-bottom: 16px;
+  letter-spacing: -0.5px;
+}
+.split-content p {
+  font-size: 16px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+.split-content .specs-list {
+  list-style: none;
+  padding: 0;
+  margin-top: 24px;
+}
+.split-content .specs-list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  font-size: 14px;
+  font-weight: 500;
+}
+.split-content .specs-list .check {
+  color: var(--green);
+  font-size: 16px;
+}
+
+/* ── SOCIAL PROOF BAR ─────────────── */
+.proof-bar {
+  background: var(--bg-dark);
+  color: #fff;
+  padding: 48px 24px;
+}
+.proof-bar-inner {
+  max-width: 1000px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 32px;
+  text-align: center;
+}
+.proof-item .number {
+  font-size: 36px;
+  font-weight: 800;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+.proof-item .label {
+  font-size: 12px;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* ── REVIEWS ──────────────────────── */
+.reviews-section {
+  padding: 80px 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+.reviews-section h2 {
+  font-size: 28px;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 48px;
+}
+.reviews-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+.review-card {
+  padding: 28px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.review-stars {
+  color: var(--gold);
+  font-size: 14px;
+  letter-spacing: 2px;
+  margin-bottom: 12px;
+}
+.review-text {
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--text);
+  margin-bottom: 16px;
+}
+.review-author {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+.review-author strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* ── CREDENTIALS ──────────────────── */
+.cred-section {
+  background: var(--bg-alt);
+  padding: 80px 24px;
+}
+.cred-section h2 {
+  text-align: center;
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 48px;
+}
+.cred-grid {
+  max-width: 900px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+.cred-item {
+  text-align: center;
+  padding: 24px 16px;
+}
+.cred-item .icon { font-size: 28px; margin-bottom: 12px; }
+.cred-item .title {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.cred-item .sub {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+/* ── BOTTOM CTA ───────────────────── */
+.bottom-cta {
+  background: var(--bg-dark);
+  color: #fff;
+  text-align: center;
+  padding: 80px 24px;
+}
+.bottom-cta h2 {
+  font-size: 36px;
+  font-weight: 800;
+  margin-bottom: 12px;
+  letter-spacing: -0.5px;
+}
+.bottom-cta p {
+  color: #999;
+  font-size: 16px;
+  margin-bottom: 32px;
+}
+.bottom-cta .cta-btn {
+  display: inline-block;
+  padding: 18px 48px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 700;
+  text-decoration: none;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  transition: background 0.3s;
+}
+.bottom-cta .cta-btn:hover { background: var(--accent-hover); }
+
+/* ── FOOTER ───────────────────────── */
+.footer {
+  padding: 40px 24px;
+  border-top: 1px solid var(--border);
+  text-align: center;
+}
+.footer-links {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  margin-bottom: 16px;
+}
+.footer-links a {
+  font-size: 12px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.footer-links a:hover { color: var(--text); }
+.footer-copy {
+  font-size: 12px;
+  color: var(--text-light);
+}
+
+/* ── STICKY MOBILE CTA ───────────── */
+.sticky-cta {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(255,255,255,0.97);
+  backdrop-filter: blur(12px);
+  border-top: 1px solid var(--border);
+  padding: 12px 16px;
+  z-index: 200;
+}
+.sticky-cta-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 600px;
+  margin: 0 auto;
+}
+.sticky-cta .price {
+  font-size: 20px;
+  font-weight: 700;
+}
+.sticky-cta .btn {
+  padding: 14px 28px;
+  background: var(--bg-dark);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* ── RESPONSIVE ───────────────────── */
+@media (max-width: 960px) {
+  .product-section {
+    grid-template-columns: 1fr;
+    gap: 32px;
+    padding-top: 20px;
+  }
+  .gallery { position: static; }
+  .nav-links { display: none; }
+  .features-grid { grid-template-columns: 1fr; gap: 32px; }
+  .split-section {
+    grid-template-columns: 1fr;
+    gap: 40px;
+    padding: 60px 24px;
+  }
+  .split-section.reverse { direction: ltr; }
+  .proof-bar-inner { grid-template-columns: repeat(2, 1fr); }
+  .reviews-grid { grid-template-columns: 1fr; }
+  .cred-grid { grid-template-columns: repeat(2, 1fr); }
+  .sticky-cta { display: block; }
+  .product-info { padding-bottom: 80px; }
+  .bottom-cta h2 { font-size: 28px; }
+}
+@media (max-width: 480px) {
+  .size-grid { grid-template-columns: repeat(3, 1fr); }
+  .gallery-thumbs { grid-template-columns: repeat(4, 1fr); }
+  .proof-bar-inner { grid-template-columns: repeat(2, 1fr); gap: 24px; }
+  .cred-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- ANNOUNCEMENT BAR -->
+<div class="announce-bar">
+  Free US Shipping on All Orders &mdash; REXtream 2026 Champion Shoe
+</div>
+
+<!-- NAVIGATION -->
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="https://www.darimati.us" class="nav-logo">
+      <img src="https://www.darimati.us/cdn/shop/files/a8083bc09a0eace4bf1d71ba3d5a2862.png?v=1766728296&width=140" alt="DARIMATI">
+    </a>
+    <div class="nav-links">
+      <a href="#features">Features</a>
+      <a href="#technology">Technology</a>
+      <a href="#reviews">Reviews</a>
+      <a href="https://www.darimati.us" target="_blank">Shop</a>
+    </div>
+    <a href="https://www.darimati.us/cart" class="nav-cart" target="_blank">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+    </a>
+  </div>
+</nav>
+
+<!-- PRODUCT SECTION -->
+<section class="product-section">
+  <!-- Gallery -->
+  <div class="gallery">
+    <div class="gallery-main" id="mainImage">
+      <img src="https://cdn.shopify.com/s/files/1/0775/5956/2452/files/dariamti_shoe.jpg?v=1776313172" alt="DARIMATI BR-001 Side View" id="mainImg">
+    </div>
+    <div class="gallery-thumbs">
+      <div class="gallery-thumb active" onclick="changeImage(this, 'https://cdn.shopify.com/s/files/1/0775/5956/2452/files/dariamti_shoe.jpg?v=1776313172')">
+        <img src="https://cdn.shopify.com/s/files/1/0775/5956/2452/files/dariamti_shoe.jpg?v=1776313172&width=200" alt="Side view">
+      </div>
+      <div class="gallery-thumb" onclick="changeImage(this, 'https://cdn.shopify.com/s/files/1/0775/5956/2452/files/darimati_shoes.jpg?v=1776313172')">
+        <img src="https://cdn.shopify.com/s/files/1/0775/5956/2452/files/darimati_shoes.jpg?v=1776313172&width=200" alt="Pair view">
+      </div>
+      <div class="gallery-thumb" onclick="changeImage(this, 'https://cdn.shopify.com/s/files/1/0775/5956/2452/files/04.png?v=1776313172')">
+        <img src="https://cdn.shopify.com/s/files/1/0775/5956/2452/files/04.png?v=1776313172&width=200" alt="Detail 1">
+      </div>
+      <div class="gallery-thumb" onclick="changeImage(this, 'https://cdn.shopify.com/s/files/1/0775/5956/2452/files/08.png?v=1776313172')">
+        <img src="https://cdn.shopify.com/s/files/1/0775/5956/2452/files/08.png?v=1776313172&width=200" alt="Detail 2">
+      </div>
+      <div class="gallery-thumb" onclick="changeImage(this, 'https://cdn.shopify.com/s/files/1/0775/5956/2452/files/09.png?v=1776313172')">
+        <img src="https://cdn.shopify.com/s/files/1/0775/5956/2452/files/09.png?v=1776313172&width=200" alt="Detail 3">
+      </div>
+    </div>
+  </div>
+
+  <!-- Product Info -->
+  <div class="product-info">
+    <div class="product-badge">&#9733; REXtream 2026 Champion</div>
+    <h1 class="product-title">BR-001 Hybrid Training Shoe</h1>
+    <p class="product-subtitle">Built for athletes who jump, lunge, and run &mdash; without switching shoes. Bridge Mechanics&trade; + A-TPU cushioning in one hybrid platform.</p>
+
+    <div class="product-reviews-summary">
+      <span class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
+      <span style="font-weight:600;">4.9</span>
+      <a href="#reviews" class="review-count">32 reviews</a>
+    </div>
+
+    <div class="product-price">$129</div>
+    <p class="product-price-note">Free shipping &bull; No import duties (Section 321)</p>
+
+    <!-- Color -->
+    <div style="margin-bottom: 24px;">
+      <div class="option-label">Color &mdash; <span id="colorName">Urban Grey</span></div>
+      <div style="display:flex; gap:8px;">
+        <div style="width:36px;height:36px;border-radius:50%;background:#8a8a8a;border:2px solid var(--text);cursor:pointer;" onclick="selectColor(this,'Urban Grey')"></div>
+        <div style="width:36px;height:36px;border-radius:50%;background:#c8b89a;border:2px solid transparent;cursor:pointer;" onclick="selectColor(this,'Sand Beige')"></div>
+      </div>
+    </div>
+
+    <!-- Size -->
+    <div class="option-label">
+      Size (mm)
+      <a href="#size-guide">Size Guide</a>
+    </div>
+    <div class="size-grid" id="sizeGrid">
+      <button class="size-btn" data-variant="48344286626004" onclick="selectSize(this)">230</button>
+      <button class="size-btn" data-variant="48344286658772" onclick="selectSize(this)">240</button>
+      <button class="size-btn" data-variant="48344286691540" onclick="selectSize(this)">250</button>
+      <button class="size-btn" data-variant="48344286724308" onclick="selectSize(this)">260</button>
+      <button class="size-btn active" data-variant="48344286757076" onclick="selectSize(this)">270</button>
+      <button class="size-btn" data-variant="48344286789844" onclick="selectSize(this)">280</button>
+    </div>
+
+    <!-- Add to Cart -->
+    <button class="add-to-cart" id="addToCart" onclick="addToCart()">
+      Add to Cart &mdash; $129
+    </button>
+    <button class="buy-now" onclick="buyNow()">
+      Buy It Now
+    </button>
+
+    <!-- Trust Signals -->
+    <div class="trust-signals">
+      <div class="trust-item">
+        <span class="trust-icon">&#10003;</span>
+        <span>Free express shipping to US (7&ndash;10 days)</span>
+      </div>
+      <div class="trust-item">
+        <span class="trust-icon">&#10003;</span>
+        <span>30-day satisfaction guarantee</span>
+      </div>
+      <div class="trust-item">
+        <span class="trust-icon">&#10003;</span>
+        <span>No import duties under Section 321</span>
+      </div>
+      <div class="trust-item">
+        <span class="trust-icon">&#10003;</span>
+        <span>Kickstarter 218% funded &mdash; proven by 88+ backers</span>
+      </div>
+    </div>
+
+    <!-- Accordions -->
+    <div class="accordions">
+      <div class="accordion-item">
+        <div class="accordion-header" onclick="toggleAccordion(this)">
+          <span>Description</span>
+          <span class="accordion-icon">+</span>
+        </div>
+        <div class="accordion-body">
+          <div class="accordion-body-inner">
+            BR-001 is a hybrid training shoe designed for multi-discipline athletes. The Stable Core&trade; A-TPU midsole delivers responsive cushioning for running efficiency while maintaining firm stability for explosive movements like box jumps and weighted lunges. Bridge Mechanics&trade; distributes load evenly during directional changes. The CPU full-length outsole grips any surface &mdash; gym floors, wet pavement, and trail.
+          </div>
+        </div>
+      </div>
+
+      <div class="accordion-item">
+        <div class="accordion-header" onclick="toggleAccordion(this)">
+          <span>Specifications</span>
+          <span class="accordion-icon">+</span>
+        </div>
+        <div class="accordion-body">
+          <div class="accordion-body-inner">
+            <ul>
+              <li>Weight: 285g (US Men's 9 / 270mm)</li>
+              <li>Drop: 8mm heel-to-toe</li>
+              <li>Midsole: 100% A-TPU foam (nitrogen-infused)</li>
+              <li>Outsole: CPU competition-grade rubber</li>
+              <li>Energy Return: Top 14% (RunRepeat lab)</li>
+              <li>Heel: 67.5% | Forefoot: 68.7%</li>
+              <li>Lacing: Fit in Motion&trade; dual-path system</li>
+              <li>Fit: Wider forefoot, standard heel &mdash; recommend half size up</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="accordion-item" id="size-guide">
+        <div class="accordion-header" onclick="toggleAccordion(this)">
+          <span>Size Guide</span>
+          <span class="accordion-icon">+</span>
+        </div>
+        <div class="accordion-body">
+          <div class="accordion-body-inner">
+            <ul>
+              <li>230mm = US Men's 5 / US Women's 6.5</li>
+              <li>240mm = US Men's 6 / US Women's 7.5</li>
+              <li>250mm = US Men's 7 / US Women's 8.5</li>
+              <li>260mm = US Men's 8 / US Women's 9.5</li>
+              <li>270mm = US Men's 9 / US Women's 10.5</li>
+              <li>280mm = US Men's 10 / US Women's 11.5</li>
+            </ul>
+            <p style="margin-top:12px;">We recommend ordering half a size up from your usual size for the best fit.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="accordion-item">
+        <div class="accordion-header" onclick="toggleAccordion(this)">
+          <span>Shipping &amp; Returns</span>
+          <span class="accordion-icon">+</span>
+        </div>
+        <div class="accordion-body">
+          <div class="accordion-body-inner">
+            <ul>
+              <li>Free express shipping to United States</li>
+              <li>Ships from Seoul, South Korea</li>
+              <li>Delivery: 7&ndash;10 business days</li>
+              <li>No customs/import duties (Section 321 de minimis)</li>
+              <li>30-day return policy &mdash; full refund</li>
+              <li>Contact: support@darimati.us</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES STRIP -->
+<section class="features-strip" id="features">
+  <div class="features-strip-inner">
+    <h2>Built Different</h2>
+    <p class="subtitle">Engineered for athletes who train across disciplines.</p>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">&#9889;</div>
+        <h3>Explosive Rebound</h3>
+        <p>Nitrogen-infused A-TPU foam delivers top-14% energy return. Box jumps feel springier. Runs feel bouncier. Lab-verified by RunRepeat.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">&#9878;</div>
+        <h3>Bridge Mechanics&trade;</h3>
+        <p>Patented hinge structure distributes load evenly during lateral cuts, lunges, and sprints. Stable without feeling stiff.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">&#9727;</div>
+        <h3>Competition Grip</h3>
+        <p>CPU full-length outsole with multi-directional tread. Grips gym rubber, wet concrete, and box surfaces equally well.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TECHNOLOGY: SPLIT 1 -->
+<section class="split-section" id="technology">
+  <div class="split-image">
+    <img src="https://cdn.shopify.com/s/files/1/0775/5956/2452/files/10.png?v=1776313172" alt="Bridge Mechanics Technology" loading="lazy">
+  </div>
+  <div class="split-content">
+    <div class="overline">Core Technology</div>
+    <h2>Stability That Doesn't Sacrifice Speed</h2>
+    <p>Most stability shoes make you slower. Most running shoes make you unstable. Bridge Mechanics&trade; solves both &mdash; a hinged midsole structure that flexes with your foot's natural motion while locking down during heavy loads.</p>
+    <ul class="specs-list">
+      <li><span class="check">&#10003;</span> Distributes load across full midsole</li>
+      <li><span class="check">&#10003;</span> Natural foot articulation maintained</li>
+      <li><span class="check">&#10003;</span> Tested across 500km+ per prototype</li>
+      <li><span class="check">&#10003;</span> Full marathon validated</li>
+    </ul>
+  </div>
+</section>
+
+<!-- TECHNOLOGY: SPLIT 2 -->
+<section class="split-section reverse">
+  <div class="split-image">
+    <img src="https://cdn.shopify.com/s/files/1/0775/5956/2452/files/11.png?v=1776313172" alt="Wide-Foot Design" loading="lazy">
+  </div>
+  <div class="split-content">
+    <div class="overline">Fit Engineering</div>
+    <h2>Wide-Foot-First Design</h2>
+    <p>20+ last iterations. Not a wide version of a narrow shoe &mdash; built wide from the start. Your toes splay naturally during explosive movements. Foot-to-knee alignment stays locked in during loaded lunges.</p>
+    <ul class="specs-list">
+      <li><span class="check">&#10003;</span> Wider forefoot, standard heel cup</li>
+      <li><span class="check">&#10003;</span> Dual-path lacing for fit adjustment</li>
+      <li><span class="check">&#10003;</span> True-to-size (recommend half-up)</li>
+    </ul>
+  </div>
+</section>
+
+<!-- SOCIAL PROOF BAR -->
+<div class="proof-bar">
+  <div class="proof-bar-inner">
+    <div class="proof-item">
+      <div class="number">218%</div>
+      <div class="label">Kickstarter Funded</div>
+    </div>
+    <div class="proof-item">
+      <div class="number">500+</div>
+      <div class="label">US Media Features</div>
+    </div>
+    <div class="proof-item">
+      <div class="number">15+</div>
+      <div class="label">Prototypes Tested</div>
+    </div>
+    <div class="proof-item">
+      <div class="number">7+</div>
+      <div class="label">Countries Competing</div>
+    </div>
+  </div>
+</div>
+
+<!-- REVIEWS -->
+<section class="reviews-section" id="reviews">
+  <h2>What Athletes Say</h2>
+  <div class="reviews-grid">
+    <div class="review-card">
+      <div class="review-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+      <div class="review-text">"PR'd by 4 minutes in my first HYROX race wearing these. The grip on sled push is unreal and the cushion on the runs didn't fade. Best hybrid shoe I've owned."</div>
+      <div class="review-author"><strong>Jake M.</strong> &mdash; Denver, CO</div>
+    </div>
+    <div class="review-card">
+      <div class="review-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+      <div class="review-text">"Half my athletes have switched to these. They hold up through heavy WODs and the running sections without any complaints. At this price point, it's a no-brainer."</div>
+      <div class="review-author"><strong>Sarah K.</strong> &mdash; Austin, TX (CrossFit Coach)</div>
+    </div>
+    <div class="review-card">
+      <div class="review-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+      <div class="review-text">"First shoe that actually fits my wide feet AND performs. No more choosing between comfort and competition. Won my REXtream division in these."</div>
+      <div class="review-author"><strong>Chris P.</strong> &mdash; San Diego, CA</div>
+    </div>
+  </div>
+</section>
+
+<!-- CREDENTIALS -->
+<section class="cred-section">
+  <h2>Trusted Globally</h2>
+  <div class="cred-grid">
+    <div class="cred-item">
+      <div class="icon">&#127942;</div>
+      <div class="title">REXtream Official</div>
+      <div class="sub">Champion shoe</div>
+    </div>
+    <div class="cred-item">
+      <div class="icon">&#127941;</div>
+      <div class="title">HYROX Partner</div>
+      <div class="sub">Official sponsor</div>
+    </div>
+    <div class="cred-item">
+      <div class="icon">&#127947;</div>
+      <div class="title">Anytime Fitness Korea</div>
+      <div class="sub">Official training shoe</div>
+    </div>
+    <div class="cred-item">
+      <div class="icon">&#11088;</div>
+      <div class="title">RunRepeat Top 14%</div>
+      <div class="sub">Lab-tested performance</div>
+    </div>
+    <div class="cred-item">
+      <div class="icon">&#127463;&#127479;</div>
+      <div class="title">Paris CrossFit</div>
+      <div class="sub">Coach training shoe</div>
+    </div>
+    <div class="cred-item">
+      <div class="icon">&#127758;</div>
+      <div class="title">7+ Countries</div>
+      <div class="sub">Athletes competing</div>
+    </div>
+  </div>
+</section>
+
+<!-- BOTTOM CTA -->
+<section class="bottom-cta">
+  <h2>Stop Compromising</h2>
+  <p>One shoe for jumps, lunges, and runs. $129 with free US shipping.</p>
+  <a href="#" class="cta-btn" onclick="buyNow(); return false;">Shop Now</a>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="footer-links">
+    <a href="https://www.darimati.us" target="_blank">Shop</a>
+    <a href="https://www.instagram.com/darimati_us/" target="_blank">Instagram</a>
+    <a href="mailto:support@darimati.us">Contact</a>
+    <a href="#">Privacy</a>
+  </div>
+  <p class="footer-copy">&copy; 2026 DARIMATI Inc. Seoul, South Korea</p>
+</footer>
+
+<!-- STICKY MOBILE CTA -->
+<div class="sticky-cta" id="stickyCta">
+  <div class="sticky-cta-inner">
+    <div>
+      <div class="price">$129</div>
+      <div style="font-size:11px;color:var(--text-secondary);">Free US shipping</div>
+    </div>
+    <button class="btn" onclick="buyNow()">Add to Cart</button>
+  </div>
+</div>
+
+<script>
+// ── Gallery ──
+function changeImage(thumb, url) {
+  document.getElementById('mainImg').src = url;
+  document.querySelectorAll('.gallery-thumb').forEach(t => t.classList.remove('active'));
+  thumb.classList.add('active');
+}
+
+// ── Color Selector ──
+function selectColor(el, name) {
+  document.getElementById('colorName').textContent = name;
+  el.parentElement.querySelectorAll('div').forEach(d => d.style.borderColor = 'transparent');
+  el.style.borderColor = 'var(--text)';
+}
+
+// ── Size Selector ──
+let selectedVariant = '48344286757076'; // default 270
+function selectSize(btn) {
+  if (btn.classList.contains('sold-out')) return;
+  document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  selectedVariant = btn.dataset.variant;
+}
+
+// ── Shopify Cart Integration ──
+const SHOP_DOMAIN = 'www.darimati.us';
+
+function addToCart() {
+  window.open(`https://${SHOP_DOMAIN}/cart/${selectedVariant}:1`, '_blank');
+}
+
+function buyNow() {
+  window.open(`https://${SHOP_DOMAIN}/cart/${selectedVariant}:1`, '_blank');
+}
+
+// ── Accordions ──
+function toggleAccordion(header) {
+  const item = header.parentElement;
+  const body = item.querySelector('.accordion-body');
+  const isOpen = item.classList.contains('open');
+
+  // Close all
+  document.querySelectorAll('.accordion-item').forEach(ai => {
+    ai.classList.remove('open');
+    ai.querySelector('.accordion-body').style.maxHeight = null;
+  });
+
+  if (!isOpen) {
+    item.classList.add('open');
+    body.style.maxHeight = body.scrollHeight + 'px';
+  }
+}
+
+// ── Sticky CTA (mobile) ──
+const stickyCta = document.getElementById('stickyCta');
+const addToCartBtn = document.getElementById('addToCart');
+
+function checkSticky() {
+  if (window.innerWidth > 960) {
+    stickyCta.style.display = 'none';
+    return;
+  }
+  const rect = addToCartBtn.getBoundingClientRect();
+  stickyCta.style.display = rect.bottom < 0 ? 'block' : 'none';
+}
+window.addEventListener('scroll', checkSticky);
+window.addEventListener('resize', checkSticky);
+
+// ── UTM tracking ──
+(function() {
+  const params = new URLSearchParams(window.location.search);
+  const utmKeys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'];
+  const utmData = {};
+  utmKeys.forEach(k => { if (params.get(k)) utmData[k] = params.get(k); });
+  if (Object.keys(utmData).length) {
+    sessionStorage.setItem('darimati_utm', JSON.stringify(utmData));
+  }
+})();
+</script>
+
+</body>
+</html>
