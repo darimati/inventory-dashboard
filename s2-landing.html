@@ -1,0 +1,2114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DARIMATI — The Hybrid Training Shoe Built for Athletes</title>
+    <meta name="description" content="One shoe for jumps, lunges, lifts, and runs. REXtream champion-verified. Starting at $99. The hybrid training shoe that does it all.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0a0a;
+            --surface: #141414;
+            --surface2: #1e1e1e;
+            --border: #2a2a2a;
+            --text: #f5f5f5;
+            --text-secondary: #a0a0a0;
+            --accent: #ff4136;
+            --accent-glow: rgba(255, 65, 54, 0.3);
+            --gold: #ffd700;
+            --green: #2ecc40;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Animations */
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 20px var(--accent-glow); }
+            50% { box-shadow: 0 0 40px var(--accent-glow), 0 0 60px var(--accent-glow); }
+        }
+
+        @keyframes shimmer {
+            0% { background-position: -1000px 0; }
+            100% { background-position: 1000px 0; }
+        }
+
+        @keyframes fade-up {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes ticker-scroll {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
+        @keyframes border-glow {
+            0%, 100% { border-color: var(--border); }
+            50% { border-color: var(--accent); }
+        }
+
+        .animate-on-scroll {
+            opacity: 0;
+            animation: fade-up 0.8s ease forwards;
+        }
+
+        /* Top Bar */
+        .top-bar {
+            background: linear-gradient(90deg, var(--accent), #ff6b5e);
+            color: white;
+            text-align: center;
+            padding: 12px;
+            font-weight: 600;
+            font-size: 14px;
+            letter-spacing: 0.5px;
+            animation: pulse-glow 2s infinite;
+        }
+
+        /* Nav */
+        nav {
+            background: rgba(10, 10, 10, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            padding: 16px 24px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        nav img {
+            height: 32px;
+        }
+
+        .nav-cta {
+            background: var(--accent);
+            color: white;
+            padding: 10px 24px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .nav-cta:hover {
+            background: #ff6b5e;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px var(--accent-glow);
+        }
+
+        /* Container */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* Hero Section */
+        .hero {
+            padding: 80px 0 100px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            align-items: center;
+        }
+
+        .hero-content {
+            z-index: 1;
+        }
+
+        .badge {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--accent), #ff6b5e);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            margin-bottom: 24px;
+        }
+
+        h1 {
+            font-size: clamp(42px, 6vw, 64px);
+            font-weight: 900;
+            line-height: 1.1;
+            margin-bottom: 20px;
+        }
+
+        .shimmer-text {
+            background: linear-gradient(90deg, var(--text), var(--gold), var(--text));
+            background-size: 200% 100%;
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: shimmer 3s infinite linear;
+        }
+
+        .hero-subtitle {
+            font-size: clamp(18px, 2.5vw, 22px);
+            color: var(--text-secondary);
+            margin-bottom: 32px;
+            line-height: 1.6;
+        }
+
+        .cta-group {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: white;
+            padding: 16px 32px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 16px;
+            transition: all 0.3s;
+            display: inline-block;
+        }
+
+        .btn-primary:hover {
+            background: #ff6b5e;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px var(--accent-glow);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--text);
+            padding: 16px 32px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 16px;
+            transition: all 0.3s;
+            display: inline-block;
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            transform: translateY(-2px);
+        }
+
+        .feature-pills {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .pill {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .pill::before {
+            content: '✓';
+            color: var(--green);
+            font-weight: 700;
+        }
+
+        .hero-image {
+            position: relative;
+        }
+
+        .hero-image img {
+            width: 100%;
+            height: auto;
+            animation: float 6s ease-in-out infinite;
+            filter: drop-shadow(0 20px 60px rgba(255, 65, 54, 0.4));
+        }
+
+        /* Hybrid Movements Section - NEW POSITION */
+        .hybrid-movements {
+            padding: 100px 0;
+            background: linear-gradient(180deg, var(--bg) 0%, var(--surface) 50%, var(--bg) 100%);
+        }
+
+        .hybrid-header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .hybrid-header h2 {
+            font-size: clamp(36px, 5vw, 56px);
+            font-weight: 900;
+            margin-bottom: 16px;
+        }
+
+        .hybrid-header p {
+            font-size: clamp(20px, 3vw, 28px);
+            color: var(--accent);
+            font-weight: 700;
+        }
+
+        .movements-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 32px;
+        }
+
+        .movement-card {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .movement-card:hover {
+            transform: translateY(-8px);
+            border-color: var(--accent);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .movement-image {
+            position: relative;
+            height: 400px;
+            overflow: hidden;
+        }
+
+        .movement-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s;
+        }
+
+        .movement-card:hover .movement-image img {
+            transform: scale(1.05);
+        }
+
+        .movement-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to top, rgba(10, 10, 10, 0.95), transparent);
+            padding: 40px 32px 32px;
+        }
+
+        .movement-tag {
+            display: inline-block;
+            background: var(--accent);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+        }
+
+        .movement-title {
+            font-size: 24px;
+            font-weight: 800;
+            margin-bottom: 8px;
+        }
+
+        .movement-desc {
+            color: var(--text-secondary);
+            font-size: 15px;
+            margin-bottom: 20px;
+        }
+
+        .movement-specs {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .spec-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .spec-item::before {
+            content: '●';
+            color: var(--green);
+        }
+
+        /* Stats Bar */
+        .stats-bar {
+            background: var(--surface);
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+            padding: 60px 0;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 40px;
+            text-align: center;
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .stat-number {
+            font-size: clamp(36px, 4vw, 48px);
+            font-weight: 900;
+            color: var(--accent);
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        /* Social Proof Ticker */
+        .ticker-section {
+            background: var(--surface2);
+            padding: 24px 0;
+            overflow: hidden;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .ticker-wrapper {
+            display: flex;
+            animation: ticker-scroll 40s linear infinite;
+        }
+
+        .ticker-item {
+            flex-shrink: 0;
+            padding: 0 40px;
+            font-size: 14px;
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+
+        .ticker-item strong {
+            color: var(--text);
+            font-weight: 700;
+        }
+
+        /* Pain Points */
+        .pain-points {
+            padding: 100px 0;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .section-header h2 {
+            font-size: clamp(36px, 5vw, 48px);
+            font-weight: 900;
+            margin-bottom: 16px;
+        }
+
+        .section-header p {
+            font-size: 18px;
+            color: var(--text-secondary);
+        }
+
+        .pain-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+
+        .pain-card {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 32px;
+            text-align: center;
+        }
+
+        .pain-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .pain-card h3 {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .pain-card p {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .solution-arrow {
+            text-align: center;
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--accent);
+            margin: 40px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .solution-arrow::after {
+            content: '↓';
+            font-size: 32px;
+        }
+
+        /* Video Section */
+        .video-section {
+            padding: 100px 0;
+            background: var(--surface);
+        }
+
+        .video-wrapper {
+            max-width: 900px;
+            margin: 0 auto;
+            position: relative;
+            border-radius: 16px;
+            overflow: hidden;
+            aspect-ratio: 16/9;
+            background: #000;
+        }
+
+        .video-wrapper video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .video-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .video-overlay:hover {
+            background: rgba(0, 0, 0, 0.6);
+        }
+
+        .play-button {
+            width: 80px;
+            height: 80px;
+            background: var(--accent);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            color: white;
+            transition: all 0.3s;
+        }
+
+        .play-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 40px var(--accent-glow);
+        }
+
+        .video-overlay.hidden {
+            display: none;
+        }
+
+        /* Credentials */
+        .credentials {
+            padding: 100px 0;
+        }
+
+        .credentials-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+        }
+
+        .credential-item {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            transition: all 0.3s;
+        }
+
+        .credential-item:hover {
+            border-color: var(--accent);
+            transform: translateX(8px);
+        }
+
+        .credential-icon {
+            font-size: 32px;
+            flex-shrink: 0;
+        }
+
+        .credential-text h4 {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .credential-text p {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        /* Product Gallery */
+        .product-gallery {
+            padding: 100px 0;
+            background: var(--surface);
+        }
+
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+        }
+
+        .gallery-item {
+            aspect-ratio: 1;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            transition: all 0.3s;
+        }
+
+        .gallery-item:hover {
+            transform: scale(1.02);
+            border-color: var(--accent);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .gallery-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* Champion Badge */
+        .champion-badge {
+            padding: 100px 0;
+            text-align: center;
+        }
+
+        .badge-card {
+            background: linear-gradient(135deg, var(--surface2), var(--surface));
+            border: 2px solid var(--gold);
+            border-radius: 16px;
+            padding: 60px 40px;
+            max-width: 800px;
+            margin: 0 auto;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .badge-card::before {
+            content: '';
+            position: absolute;
+            inset: -2px;
+            background: linear-gradient(45deg, var(--gold), transparent, var(--gold));
+            border-radius: 16px;
+            z-index: -1;
+            animation: border-glow 3s infinite;
+        }
+
+        .champion-icon {
+            font-size: 64px;
+            margin-bottom: 24px;
+        }
+
+        .badge-card h3 {
+            font-size: 32px;
+            font-weight: 900;
+            color: var(--gold);
+            margin-bottom: 16px;
+        }
+
+        .badge-card p {
+            font-size: 16px;
+            color: var(--text-secondary);
+            line-height: 1.8;
+        }
+
+        /* Lab Tested */
+        .lab-tested {
+            padding: 100px 0;
+            background: var(--surface);
+        }
+
+        .lab-card {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 60px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            align-items: center;
+        }
+
+        .lab-content h3 {
+            font-size: 36px;
+            font-weight: 900;
+            margin-bottom: 20px;
+        }
+
+        .lab-content p {
+            font-size: 16px;
+            color: var(--text-secondary);
+            line-height: 1.8;
+            margin-bottom: 24px;
+        }
+
+        .lab-stats {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .lab-stat {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            background: var(--surface);
+            border-radius: 8px;
+        }
+
+        .lab-stat-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .lab-stat-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--green);
+        }
+
+        /* Price Comparison */
+        .price-comparison {
+            padding: 100px 0;
+        }
+
+        .comparison-bars {
+            max-width: 800px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .price-bar {
+            position: relative;
+        }
+
+        .price-bar-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .brand-name {
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        .price-value {
+            font-weight: 700;
+            font-size: 18px;
+            color: var(--accent);
+        }
+
+        .price-bar-bg {
+            height: 60px;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .price-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), #ff6b5e);
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding: 0 16px;
+            font-weight: 700;
+            color: white;
+            transition: width 1s ease-out;
+            width: 0;
+        }
+
+        .price-bar.animate .price-bar-fill {
+            width: var(--bar-width);
+        }
+
+        .savings-badge {
+            background: var(--green);
+            color: white;
+            padding: 16px 32px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 700;
+            font-size: 18px;
+            margin-top: 32px;
+        }
+
+        /* Features Grid */
+        .features-grid {
+            padding: 100px 0;
+            background: var(--surface);
+        }
+
+        .features-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+        }
+
+        .feature-card {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 32px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .feature-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-8px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .feature-card-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .feature-card h3 {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .feature-card p {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 16px;
+        }
+
+        .learn-more {
+            color: var(--accent);
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            max-width: 700px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 40px;
+            position: relative;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 20px;
+            color: var(--text);
+            transition: all 0.3s;
+        }
+
+        .modal-close:hover {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: white;
+        }
+
+        .modal-content h3 {
+            font-size: 32px;
+            font-weight: 900;
+            margin-bottom: 24px;
+        }
+
+        .modal-content p {
+            font-size: 16px;
+            color: var(--text-secondary);
+            line-height: 1.8;
+            margin-bottom: 24px;
+        }
+
+        .modal-content ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .modal-content li {
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: start;
+            gap: 12px;
+        }
+
+        .modal-content li::before {
+            content: '✓';
+            color: var(--green);
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        /* Reviews */
+        .reviews {
+            padding: 100px 0;
+        }
+
+        .reviews-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+        }
+
+        .review-card {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 32px;
+        }
+
+        .review-card.featured {
+            grid-column: 1 / -1;
+            background: linear-gradient(135deg, var(--surface2), var(--surface));
+            border-color: var(--accent);
+        }
+
+        .review-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .review-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 20px;
+        }
+
+        .review-info h4 {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .review-info p {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .review-stars {
+            color: var(--gold);
+            font-size: 18px;
+            margin-bottom: 12px;
+        }
+
+        .review-text {
+            font-size: 15px;
+            line-height: 1.7;
+            color: var(--text-secondary);
+        }
+
+        /* Final CTA */
+        .final-cta {
+            padding: 100px 0;
+            background: linear-gradient(180deg, var(--bg), var(--surface));
+        }
+
+        .cta-card {
+            background: var(--surface2);
+            border: 2px solid var(--accent);
+            border-radius: 16px;
+            padding: 60px;
+            text-align: center;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .cta-card h2 {
+            font-size: clamp(32px, 5vw, 48px);
+            font-weight: 900;
+            margin-bottom: 20px;
+        }
+
+        .cta-card p {
+            font-size: 18px;
+            color: var(--text-secondary);
+            margin-bottom: 32px;
+        }
+
+        .email-form {
+            display: flex;
+            gap: 12px;
+            max-width: 500px;
+            margin: 0 auto 32px;
+        }
+
+        .email-form input {
+            flex: 1;
+            padding: 16px 20px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 16px;
+            font-family: inherit;
+        }
+
+        .email-form input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .email-form button {
+            padding: 16px 32px;
+            background: var(--accent);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-weight: 700;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: inherit;
+        }
+
+        .email-form button:hover {
+            background: #ff6b5e;
+            transform: translateY(-2px);
+        }
+
+        .perks-list {
+            display: flex;
+            justify-content: center;
+            gap: 32px;
+            flex-wrap: wrap;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .perk {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .perk::before {
+            content: '✓';
+            color: var(--green);
+            font-weight: 700;
+        }
+
+        /* Next Model Teaser */
+        .next-model {
+            padding: 100px 0;
+            background: var(--bg);
+            text-align: center;
+        }
+
+        .teaser-card {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 60px;
+            max-width: 600px;
+            margin: 0 auto;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .mystery-silhouette {
+            width: 300px;
+            height: 200px;
+            background: linear-gradient(135deg, rgba(255, 65, 54, 0.1), rgba(255, 215, 0, 0.1));
+            margin: 0 auto 32px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 80px;
+            filter: blur(4px);
+        }
+
+        .teaser-card h3 {
+            font-size: 28px;
+            font-weight: 900;
+            margin-bottom: 16px;
+            letter-spacing: 4px;
+        }
+
+        .mystery-specs {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .mystery-spec {
+            color: var(--text-secondary);
+            font-size: 16px;
+        }
+
+        /* Footer */
+        footer {
+            background: var(--surface);
+            border-top: 1px solid var(--border);
+            padding: 60px 0 40px;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .footer-section h4 {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+
+        .footer-section ul {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .footer-section a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.3s;
+        }
+
+        .footer-section a:hover {
+            color: var(--accent);
+        }
+
+        .footer-bottom {
+            border-top: 1px solid var(--border);
+            padding-top: 24px;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        /* Mobile CTA */
+        .mobile-cta {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 10, 10, 0.98);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid var(--border);
+            padding: 16px 24px;
+            z-index: 999;
+        }
+
+        .mobile-cta a {
+            display: block;
+            background: var(--accent);
+            color: white;
+            text-align: center;
+            padding: 16px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 700;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero {
+                grid-template-columns: 1fr;
+                gap: 40px;
+                padding: 60px 0;
+            }
+
+            .hero-image {
+                order: -1;
+            }
+
+            .movements-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .movement-image {
+                height: 300px;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 24px;
+            }
+
+            .pain-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .credentials-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .gallery-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .lab-card {
+                grid-template-columns: 1fr;
+                padding: 40px 24px;
+                gap: 40px;
+            }
+
+            .features-cards {
+                grid-template-columns: 1fr;
+            }
+
+            .reviews-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .footer-content {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .email-form {
+                flex-direction: column;
+            }
+
+            .mobile-cta {
+                display: block;
+            }
+
+            .perks-list {
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .cta-group {
+                flex-direction: column;
+            }
+
+            .btn-primary, .btn-secondary {
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Top Bar -->
+    <div class="top-bar">
+        LIMITED DROP — $99 Early Access Ends Soon
+    </div>
+
+    <!-- Nav -->
+    <nav>
+        <img src="https://www.darimati.us/cdn/shop/files/a8083bc09a0eace4bf1d71ba3d5a2862.png?v=1766728296&width=140" alt="DARIMATI">
+        <a href="#cta" class="nav-cta">Get Early Access →</a>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero container">
+        <div class="hero-content">
+            <div class="badge">THE HYBRID TRAINING SHOE</div>
+            <h1>One Shoe. <span class="shimmer-text">Every Movement.</span></h1>
+            <p class="hero-subtitle">Built for athletes who jump, lunge, lift, and run — in the same session. REXtream champion-verified. Starting at $99.</p>
+            <div class="cta-group">
+                <a href="#cta" class="btn-primary">Get Early Access →</a>
+                <a href="#movements" class="btn-secondary">Watch It In Action ↓</a>
+            </div>
+            <div class="feature-pills">
+                <span class="pill">A-TPU Rebound</span>
+                <span class="pill">Competition Grip</span>
+                <span class="pill">Wide-Foot Stable</span>
+            </div>
+        </div>
+        <div class="hero-image">
+            <img src="https://cdn.shopify.com/s/files/1/0775/5956/2452/files/dariamti_shoe.jpg?v=1776313172" alt="DARIMATI Hybrid Training Shoe">
+        </div>
+    </section>
+
+    <!-- Hybrid Movements Section - MOVED TO TOP -->
+    <section id="movements" class="hybrid-movements">
+        <div class="container">
+            <div class="hybrid-header animate-on-scroll">
+                <h2>BUILT FOR TWO THINGS</h2>
+                <p>Jump Higher. Lunge Stronger.</p>
+            </div>
+            <div class="movements-grid">
+                <div class="movement-card animate-on-scroll">
+                    <div class="movement-image">
+                        <img src="https://cdn.shopify.com/s/files/1/0775/5956/2452/files/04.png?v=1776313172" alt="Box Jump">
+                        <div class="movement-overlay">
+                            <div>
+                                <div class="movement-tag">EXPLOSIVE POWER</div>
+                                <h3 class="movement-title">JUMP</h3>
+                                <p class="movement-desc">Box Jumps. Burpees. Rebounds.</p>
+                                <div class="movement-specs">
+                                    <div class="spec-item">A-TPU Rebound</div>
+                                    <div class="spec-item">Landing Grip</div>
+                                    <div class="spec-item">Cushion</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="movement-card animate-on-scroll">
+                    <div class="movement-image">
+                        <img src="https://cdn.shopify.com/s/files/1/0775/5956/2452/files/hero.png" alt="Walking Lunge">
+                        <div class="movement-overlay">
+                            <div>
+                                <div class="movement-tag">STABILITY IN MOTION</div>
+                                <h3 class="movement-title">LUNGE</h3>
+                                <p class="movement-desc">Walking Lunges. Stability in Motion.</p>
+                                <div class="movement-specs">
+                                    <div class="spec-item">Wide-Foot</div>
+                                    <div class="spec-item">Knee Alignment</div>
+                                    <div class="spec-item">Lateral Lock</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Bar -->
+    <section class="stats-bar">
+        <div class="container">
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-number" data-target="99">$0</div>
+                    <div class="stat-label">Starting Price</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" data-target="15">0</div>
+                    <div class="stat-label">Prototypes Tested</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" data-target="218">0%</div>
+                    <div class="stat-label">Kickstarter Funded</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" data-target="7">0+</div>
+                    <div class="stat-label">Countries Shipped</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Social Proof Ticker -->
+    <section class="ticker-section">
+        <div class="ticker-wrapper">
+            <div class="ticker-item"><strong>Jake M.</strong> — REXtream Athlete, USA</div>
+            <div class="ticker-item"><strong>Sarah K.</strong> — CrossFit Coach, Canada</div>
+            <div class="ticker-item"><strong>Marcus L.</strong> — HYROX Competitor, UK</div>
+            <div class="ticker-item"><strong>Diana R.</strong> — Functional Trainer, Australia</div>
+            <div class="ticker-item"><strong>Chris P.</strong> — Gym Owner, Singapore</div>
+            <div class="ticker-item"><strong>Emma W.</strong> — Hybrid Athlete, Germany</div>
+            <!-- Duplicate for seamless loop -->
+            <div class="ticker-item"><strong>Jake M.</strong> — REXtream Athlete, USA</div>
+            <div class="ticker-item"><strong>Sarah K.</strong> — CrossFit Coach, Canada</div>
+            <div class="ticker-item"><strong>Marcus L.</strong> — HYROX Competitor, UK</div>
+            <div class="ticker-item"><strong>Diana R.</strong> — Functional Trainer, Australia</div>
+            <div class="ticker-item"><strong>Chris P.</strong> — Gym Owner, Singapore</div>
+            <div class="ticker-item"><strong>Emma W.</strong> — Hybrid Athlete, Germany</div>
+        </div>
+    </section>
+
+    <!-- Pain Points -->
+    <section class="pain-points">
+        <div class="container">
+            <div class="section-header animate-on-scroll">
+                <h2>Sound Familiar?</h2>
+                <p>The problems every hybrid athlete faces</p>
+            </div>
+            <div class="pain-grid">
+                <div class="pain-card animate-on-scroll">
+                    <div class="pain-icon">⚠️</div>
+                    <h3>Unstable Landings</h3>
+                    <p>Your current shoes flex and roll during box jumps, killing your power and confidence.</p>
+                </div>
+                <div class="pain-card animate-on-scroll">
+                    <div class="pain-icon">🦵</div>
+                    <h3>Knee Twisting</h3>
+                    <p>Narrow toe boxes force your knees inward during lunges, risking injury with every rep.</p>
+                </div>
+                <div class="pain-card animate-on-scroll">
+                    <div class="pain-icon">💨</div>
+                    <h3>Slipping Mid-Movement</h3>
+                    <p>Dead rubber outsoles can't handle fast pivots or wet floors. You feel it every session.</p>
+                </div>
+            </div>
+            <div class="solution-arrow animate-on-scroll">
+                DARIMATI was built to solve exactly this
+            </div>
+        </div>
+    </section>
+
+    <!-- Video Section -->
+    <section class="video-section">
+        <div class="container">
+            <div class="section-header animate-on-scroll">
+                <h2>Hear From a DARIMATI Athlete</h2>
+                <p>See why champions choose DARIMATI for competition</p>
+            </div>
+            <div class="video-wrapper animate-on-scroll">
+                <video id="athleteVideo" muted loop>
+                    <source src="https://cdn.shopify.com/videos/c/o/v/YOUR_VIDEO_ID.mp4" type="video/mp4">
+                </video>
+                <div class="video-overlay" id="videoOverlay">
+                    <div class="play-button">▶</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Credentials -->
+    <section class="credentials">
+        <div class="container">
+            <div class="section-header animate-on-scroll">
+                <h2>Trusted Globally</h2>
+                <p>Real validation from real athletes and partners</p>
+            </div>
+            <div class="credentials-grid">
+                <div class="credential-item animate-on-scroll">
+                    <div class="credential-icon">🏆</div>
+                    <div class="credential-text">
+                        <h4>REXtream 2025 Champion</h4>
+                        <p>Worn by the 2025 REXtream Seoul champion during competition</p>
+                    </div>
+                </div>
+                <div class="credential-item animate-on-scroll">
+                    <div class="credential-icon">🏃</div>
+                    <div class="credential-text">
+                        <h4>HYROX Athletes</h4>
+                        <p>Trusted by HYROX competitors across multiple continents</p>
+                    </div>
+                </div>
+                <div class="credential-item animate-on-scroll">
+                    <div class="credential-icon">💪</div>
+                    <div class="credential-text">
+                        <h4>Anytime Fitness Partnership</h4>
+                        <p>Official training shoe partner for select Anytime Fitness locations</p>
+                    </div>
+                </div>
+                <div class="credential-item animate-on-scroll">
+                    <div class="credential-icon">📊</div>
+                    <div class="credential-text">
+                        <h4>RunRepeat Lab Tested</h4>
+                        <p>Independent laboratory verification of all performance claims</p>
+                    </div>
+                </div>
+                <div class="credential-item animate-on-scroll">
+                    <div class="credential-icon">🚀</div>
+                    <div class="credential-text">
+                        <h4>218% Kickstarter</h4>
+                        <p>Exceeded crowdfunding goal by over 2x in first campaign</p>
+                    </div>
+                </div>
+                <div class="credential-item animate-on-scroll">
+                    <div class="credential-icon">🌍</div>
+                    <div class="credential-text">
+                        <h4>7+ Countries</h4>
+                        <p>Shipped to athletes in USA, Canada, UK, Australia, Germany, Singapore, and more</p>
+                    </div>
+                </div>
+                <div class="credential-item animate-on-scroll">
+                    <div class="credential-icon">⭐</div>
+                    <div class="credential-text">
+                        <h4>4.8/5 Average Rating</h4>
+                        <p>Based on 200+ verified customer reviews</p>
+                    </div>
+                </div>
+                <div class="credential-item animate-on-scroll">
+                    <div class="credential-icon">✅</div>
+                    <div class="credential-text">
+                        <h4>15+ Prototypes</h4>
+                        <p>Refined through extensive athlete testing before final production</p>
+                    </div>
+                </div>
+                <div class="credential-item animate-on-scroll">
+                    <div class="credential-icon">🔬</div>
+                    <div class="credential-text">
+                        <h4>Material Science Verified</h4>
+                        <p>A-TPU compound tested for rebound, durability, and temperature resistance</p>
+                    </div>
+                </div>
+                <div class="credential-item animate-on-scroll">
+                    <div class="credential-icon">💯</div>
+                    <div class="credential-text">
+                        <h4>Direct-to-Consumer</h4>
+                        <p>No middlemen = better quality at lower prices</p>
+                    </div>
+                </div>
+                <div class="credential-item animate-on-scroll">
+                    <div class="credential-icon">🎯</div>
+                    <div class="credential-text">
+                        <h4>Purpose-Built Design</h4>
+                        <p>Every feature engineered specifically for hybrid training movements</p>
+                    </div>
+                </div>
+                <div class="credential-item animate-on-scroll">
+                    <div class="credential-icon">🔄</div>
+                    <div class="credential-text">
+                        <h4>30-Day Returns</h4>
+                        <p>Try them in your actual workouts. Full refund if not satisfied.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Product Gallery -->
+    <section class="product-gallery">
+        <div class="container">
+            <div class="section-header animate-on-scroll">
+                <h2>Every Angle. Every Detail.</h2>
+                <p>See the engineering up close</p>
+            </div>
+            <div class="gallery-grid">
+                <div class="gallery-item animate-on-scroll">
+                    <img src="https://cdn.shopify.com/s/files/1/0775/5956/2452/files/dariamti_shoe.jpg?v=1776313172" alt="DARIMATI Shoe">
+                </div>
+                <div class="gallery-item animate-on-scroll">
+                    <img src="https://cdn.shopify.com/s/files/1/0775/5956/2452/files/08.png?v=1776313172" alt="Outsole Grip">
+                </div>
+                <div class="gallery-item animate-on-scroll">
+                    <img src="https://cdn.shopify.com/s/files/1/0775/5956/2452/files/09.png?v=1776313172" alt="Cushioning System">
+                </div>
+                <div class="gallery-item animate-on-scroll">
+                    <img src="https://cdn.shopify.com/s/files/1/0775/5956/2452/files/10.png?v=1776313172" alt="Upper Material">
+                </div>
+                <div class="gallery-item animate-on-scroll">
+                    <img src="https://cdn.shopify.com/s/files/1/0775/5956/2452/files/11.png?v=1776313172" alt="Testing Process">
+                </div>
+                <div class="gallery-item animate-on-scroll">
+                    <img src="https://cdn.shopify.com/s/files/1/0775/5956/2452/files/darimati_shoes.jpg?v=1776313172" alt="Full Collection">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Champion Badge -->
+    <section class="champion-badge">
+        <div class="container">
+            <div class="badge-card animate-on-scroll">
+                <div class="champion-icon">🏆</div>
+                <h3>REXSTREAM 2025 CHAMPION VERIFIED</h3>
+                <p>The 2025 REXtream Seoul champion wore DARIMATI during the entire competition — including the final podium finish. When elite athletes choose DARIMATI for the biggest moments, you know it's built different.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Lab Tested -->
+    <section class="lab-tested">
+        <div class="container">
+            <div class="lab-card animate-on-scroll">
+                <div class="lab-content">
+                    <h3>Independently Lab Tested</h3>
+                    <p>We sent DARIMATI to RunRepeat's independent testing laboratory. They verified every claim we make about grip, rebound, and durability. No marketing fluff. Just data.</p>
+                    <div class="lab-stats">
+                        <div class="lab-stat">
+                            <span class="lab-stat-label">Grip Score</span>
+                            <span class="lab-stat-value">9.2/10</span>
+                        </div>
+                        <div class="lab-stat">
+                            <span class="lab-stat-label">Energy Return</span>
+                            <span class="lab-stat-value">87%</span>
+                        </div>
+                        <div class="lab-stat">
+                            <span class="lab-stat-label">Durability Rating</span>
+                            <span class="lab-stat-value">8.8/10</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="lab-image">
+                    <img src="https://cdn.shopify.com/s/files/1/0775/5956/2452/files/11.png?v=1776313172" alt="Lab Testing" style="width: 100%; border-radius: 12px;">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Price Comparison -->
+    <section class="price-comparison">
+        <div class="container">
+            <div class="section-header animate-on-scroll">
+                <h2>Why Pay More?</h2>
+                <p>Same performance. Fraction of the price.</p>
+            </div>
+            <div class="comparison-bars">
+                <div class="price-bar animate-on-scroll" style="--bar-width: 100%">
+                    <div class="price-bar-label">
+                        <span class="brand-name">Adidas AdiPower</span>
+                        <span class="price-value">$275</span>
+                    </div>
+                    <div class="price-bar-bg">
+                        <div class="price-bar-fill">$275</div>
+                    </div>
+                </div>
+                <div class="price-bar animate-on-scroll" style="--bar-width: 95%">
+                    <div class="price-bar-label">
+                        <span class="brand-name">Puma Fuse</span>
+                        <span class="price-value">$260</span>
+                    </div>
+                    <div class="price-bar-bg">
+                        <div class="price-bar-fill">$260</div>
+                    </div>
+                </div>
+                <div class="price-bar animate-on-scroll" style="--bar-width: 36%">
+                    <div class="price-bar-label">
+                        <span class="brand-name">DARIMATI</span>
+                        <span class="price-value">$99</span>
+                    </div>
+                    <div class="price-bar-bg">
+                        <div class="price-bar-fill" style="background: linear-gradient(90deg, var(--green), #4ade80);">$99</div>
+                    </div>
+                </div>
+            </div>
+            <div class="savings-badge animate-on-scroll">
+                SAVE $176 VS. COMPETITORS
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Grid -->
+    <section class="features-grid">
+        <div class="container">
+            <div class="section-header animate-on-scroll">
+                <h2>Built Different</h2>
+                <p>Every feature serves a purpose</p>
+            </div>
+            <div class="features-cards">
+                <div class="feature-card animate-on-scroll" data-modal="wide-foot">
+                    <div class="feature-card-icon">👣</div>
+                    <h3>Wide-Foot Design</h3>
+                    <p>Anatomical toe box lets your toes splay naturally. Better balance, stronger push, zero squeeze.</p>
+                    <span class="learn-more">Learn More →</span>
+                </div>
+                <div class="feature-card animate-on-scroll" data-modal="grip">
+                    <div class="feature-card-icon">🔒</div>
+                    <h3>Competition Grip</h3>
+                    <p>A-TPU rubber compound with multi-directional tread. Works on wood, rubber, even wet floors.</p>
+                    <span class="learn-more">Learn More →</span>
+                </div>
+                <div class="feature-card animate-on-scroll" data-modal="rebound">
+                    <div class="feature-card-icon">⚡</div>
+                    <h3>A-TPU Rebound</h3>
+                    <p>87% energy return tested in independent labs. Every jump comes back to you.</p>
+                    <span class="learn-more">Learn More →</span>
+                </div>
+                <div class="feature-card animate-on-scroll" data-modal="versatility">
+                    <div class="feature-card-icon">🎯</div>
+                    <h3>Hybrid Versatility</h3>
+                    <p>Jump, lunge, lift, run — one shoe handles it all without compromise.</p>
+                    <span class="learn-more">Learn More →</span>
+                </div>
+                <div class="feature-card animate-on-scroll" data-modal="price">
+                    <div class="feature-card-icon">💰</div>
+                    <h3>Direct Price</h3>
+                    <p>No middlemen, no retail markup. Factory to you at $99.</p>
+                    <span class="learn-more">Learn More →</span>
+                </div>
+                <div class="feature-card animate-on-scroll" data-modal="testing">
+                    <div class="feature-card-icon">🔬</div>
+                    <h3>15+ Prototypes</h3>
+                    <p>Every detail refined through real athlete feedback and lab testing.</p>
+                    <span class="learn-more">Learn More →</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Reviews -->
+    <section class="reviews">
+        <div class="container">
+            <div class="section-header animate-on-scroll">
+                <h2>What Athletes Say</h2>
+                <p>Real reviews from real training sessions</p>
+            </div>
+            <div class="reviews-grid">
+                <div class="review-card featured animate-on-scroll">
+                    <div class="review-header">
+                        <div class="review-avatar">JM</div>
+                        <div class="review-info">
+                            <h4>Jake M.</h4>
+                            <p>REXtream 2025 Champion</p>
+                        </div>
+                    </div>
+                    <div class="review-stars">★★★★★</div>
+                    <p class="review-text">"I wore DARIMATI during the entire REXtream Seoul 2025 competition — including my championship finish. The grip on box jumps is unreal, and my knees finally felt aligned during walking lunges. I'm never switching back."</p>
+                </div>
+                <div class="review-card animate-on-scroll">
+                    <div class="review-header">
+                        <div class="review-avatar">SK</div>
+                        <div class="review-info">
+                            <h4>Sarah K.</h4>
+                            <p>CrossFit Coach, Canada</p>
+                        </div>
+                    </div>
+                    <div class="review-stars">★★★★★</div>
+                    <p class="review-text">"Finally, a shoe that doesn't force me to choose between lifting stability and cardio comfort. My athletes love them too."</p>
+                </div>
+                <div class="review-card animate-on-scroll">
+                    <div class="review-header">
+                        <div class="review-avatar">ML</div>
+                        <div class="review-info">
+                            <h4>Marcus L.</h4>
+                            <p>HYROX Competitor, UK</p>
+                        </div>
+                    </div>
+                    <div class="review-stars">★★★★★</div>
+                    <p class="review-text">"Best $99 I've spent on training gear. Period. These feel like $250 shoes."</p>
+                </div>
+                <div class="review-card animate-on-scroll">
+                    <div class="review-header">
+                        <div class="review-avatar">DR</div>
+                        <div class="review-info">
+                            <h4>Diana R.</h4>
+                            <p>Functional Trainer, Australia</p>
+                        </div>
+                    </div>
+                    <div class="review-stars">★★★★★</div>
+                    <p class="review-text">"The wide toe box is a game changer. My feet feel locked in but never cramped. Highly recommend for anyone with wider feet."</p>
+                </div>
+                <div class="review-card animate-on-scroll">
+                    <div class="review-header">
+                        <div class="review-avatar">CP</div>
+                        <div class="review-info">
+                            <h4>Chris P.</h4>
+                            <p>Gym Owner, Singapore</p>
+                        </div>
+                    </div>
+                    <div class="review-stars">★★★★★</div>
+                    <p class="review-text">"We stock these at our gym now. Members keep asking where to buy them after trying mine during sessions."</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Final CTA -->
+    <section id="cta" class="final-cta">
+        <div class="container">
+            <div class="cta-card animate-on-scroll">
+                <h2>Don't Miss the Next Drop</h2>
+                <p>Join the waitlist for early access pricing and exclusive launch updates.</p>
+                <form class="email-form" id="emailForm">
+                    <input type="email" placeholder="Enter your email" required>
+                    <button type="submit">Join Waitlist</button>
+                </form>
+                <div class="perks-list">
+                    <div class="perk">Early access pricing</div>
+                    <div class="perk">Free shipping on launch</div>
+                    <div class="perk">Limited batch priority</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Next Model Teaser -->
+    <section class="next-model">
+        <div class="container">
+            <div class="teaser-card animate-on-scroll">
+                <div class="mystery-silhouette">👟</div>
+                <h3>??? MODEL</h3>
+                <div class="mystery-specs">
+                    <div class="mystery-spec">🔒 Ultra-Lightweight Construction</div>
+                    <div class="mystery-spec">🔒 Enhanced Breathability</div>
+                    <div class="mystery-spec">🔒 Next-Gen Cushioning</div>
+                    <div class="mystery-spec">🔒 Coming Q3 2026</div>
+                </div>
+                <p style="color: var(--text-secondary); font-size: 14px;">Subscribe to the waitlist above to be first to know.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>Shop</h4>
+                    <ul>
+                        <li><a href="#">All Shoes</a></li>
+                        <li><a href="#">Men's</a></li>
+                        <li><a href="#">Women's</a></li>
+                        <li><a href="#">Accessories</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Support</h4>
+                    <ul>
+                        <li><a href="#">Size Guide</a></li>
+                        <li><a href="#">Shipping & Returns</a></li>
+                        <li><a href="#">Contact Us</a></li>
+                        <li><a href="#">FAQ</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Company</h4>
+                    <ul>
+                        <li><a href="#">About Us</a></li>
+                        <li><a href="#">Our Story</a></li>
+                        <li><a href="#">Athletes</a></li>
+                        <li><a href="#">Press</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Connect</h4>
+                    <ul>
+                        <li><a href="#">Instagram</a></li>
+                        <li><a href="#">Facebook</a></li>
+                        <li><a href="#">YouTube</a></li>
+                        <li><a href="#">Newsletter</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                &copy; 2026 DARIMATI. Built for athletes who demand more.
+            </div>
+        </div>
+    </footer>
+
+    <!-- Mobile CTA -->
+    <div class="mobile-cta">
+        <a href="#cta">Get Early Access — $99</a>
+    </div>
+
+    <!-- Modals -->
+    <div class="modal" id="modal-wide-foot">
+        <div class="modal-content">
+            <div class="modal-close" onclick="closeModal('wide-foot')">×</div>
+            <h3>Wide-Foot Design</h3>
+            <p>Most training shoes squeeze your toes into a narrow box, forcing your foot into an unnatural position. This throws off your balance and weakens your foundation during lifts and lunges.</p>
+            <p>DARIMATI's anatomical toe box is 15% wider than industry standard, letting your toes splay naturally. Your foot sits flat and stable, just like barefoot — but with protection.</p>
+            <ul>
+                <li>Natural toe splay improves balance during single-leg movements</li>
+                <li>Wider base = better force distribution during landings</li>
+                <li>Zero pressure points even after hour-long sessions</li>
+                <li>Keeps knees aligned over toes during lunges and squats</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="modal" id="modal-grip">
+        <div class="modal-content">
+            <div class="modal-close" onclick="closeModal('grip')">×</div>
+            <h3>Competition Grip</h3>
+            <p>Cheap rubber compounds harden over time and lose traction. DARIMATI uses A-TPU rubber — the same material used in professional athletic shoes — engineered to maintain grip across all surfaces.</p>
+            <p>Multi-directional tread pattern handles forward motion, lateral cuts, and rotational movements without slipping.</p>
+            <ul>
+                <li>9.2/10 grip score from RunRepeat independent lab testing</li>
+                <li>Works on wood, rubber mats, concrete, even wet floors</li>
+                <li>Tread pattern based on competition weightlifting shoe designs</li>
+                <li>Maintains grip even after 6+ months of heavy use</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="modal" id="modal-rebound">
+        <div class="modal-content">
+            <div class="modal-close" onclick="closeModal('rebound')">×</div>
+            <h3>A-TPU Rebound Technology</h3>
+            <p>Most shoe foams absorb your energy and convert it to heat. A-TPU (thermoplastic polyurethane) returns 87% of impact energy back to you — verified in independent lab tests.</p>
+            <p>Every jump, every step, every burpee — you get more back than you put in.</p>
+            <ul>
+                <li>87% energy return (independent lab verified)</li>
+                <li>Temperature-stable: performs the same in heat or cold</li>
+                <li>Doesn't compress or "bottom out" like EVA foam</li>
+                <li>Lasts 2-3x longer than traditional midsole materials</li>
+                <li>Used in premium running and basketball shoes over $200</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="modal" id="modal-versatility">
+        <div class="modal-content">
+            <div class="modal-close" onclick="closeModal('versatility')">×</div>
+            <h3>Hybrid Versatility</h3>
+            <p>Most athletes own 3-4 different shoes: lifters for the gym, runners for cardio, cross-trainers for WODs. DARIMATI consolidates all of that into one engineered platform.</p>
+            <p>The wide base and firm midsole handle heavy lifts. The grip and rebound dominate box jumps and burpees. The responsive cushioning works for runs up to 5K.</p>
+            <ul>
+                <li>Stable enough for 300+ lb squats and deadlifts</li>
+                <li>Responsive enough for box jumps and plyometrics</li>
+                <li>Grippy enough for fast pivots and lateral movements</li>
+                <li>Cushioned enough for 5K runs and conditioning work</li>
+                <li>One shoe. Every movement. Zero compromise.</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="modal" id="modal-price">
+        <div class="modal-content">
+            <div class="modal-close" onclick="closeModal('price')">×</div>
+            <h3>Direct-to-Consumer Pricing</h3>
+            <p>Traditional shoe brands add 3-4x markup by the time they reach retail stores. DARIMATI ships factory-direct to you, cutting out distributors, wholesalers, and retail margins.</p>
+            <p>You get the same quality materials (A-TPU, engineered mesh, competition rubber) for a fraction of what Nike, Adidas, or Puma charge.</p>
+            <ul>
+                <li>$99 starting price vs. $250-300 competitors</li>
+                <li>Same A-TPU material as $200+ running shoes</li>
+                <li>Same quality control as premium athletic brands</li>
+                <li>No retail markup. No middlemen. Just honest pricing.</li>
+                <li>30-day returns if you're not 100% satisfied</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="modal" id="modal-testing">
+        <div class="modal-content">
+            <div class="modal-close" onclick="closeModal('testing')">×</div>
+            <h3>15+ Prototypes Tested</h3>
+            <p>DARIMATI wasn't designed in a boardroom. It was built through 15+ prototype iterations with real athletes — CrossFit coaches, HYROX competitors, functional trainers, and gym owners.</p>
+            <p>Every version was tested in actual training sessions. We refined the toe box width, adjusted the midsole firmness, tuned the outsole grip, and optimized the upper breathability based on direct athlete feedback.</p>
+            <ul>
+                <li>15+ physical prototypes before final production</li>
+                <li>Tested by REXtream champions, HYROX athletes, CrossFit coaches</li>
+                <li>Independent lab verification from RunRepeat</li>
+                <li>Kickstarter backers funded 218% of our goal</li>
+                <li>Continuous improvement based on real-world feedback</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Intersection Observer for animations
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.animate-on-scroll').forEach(el => {
+            observer.observe(el);
+        });
+
+        // Counter animation
+        const counterObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting && !entry.target.classList.contains('counted')) {
+                    entry.target.classList.add('counted');
+                    const target = parseInt(entry.target.dataset.target);
+                    const text = entry.target.textContent;
+                    const prefix = text.includes('$') ? '$' : '';
+                    const suffix = text.includes('%') ? '%' : text.includes('+') ? '+' : '';
+
+                    let current = 0;
+                    const increment = target / 50;
+                    const timer = setInterval(() => {
+                        current += increment;
+                        if (current >= target) {
+                            entry.target.textContent = prefix + target + suffix;
+                            clearInterval(timer);
+                        } else {
+                            entry.target.textContent = prefix + Math.floor(current) + suffix;
+                        }
+                    }, 30);
+                }
+            });
+        }, { threshold: 0.5 });
+
+        document.querySelectorAll('.stat-number').forEach(el => {
+            counterObserver.observe(el);
+        });
+
+        // Price bar animation
+        const priceBarObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting && !entry.target.classList.contains('animate')) {
+                    entry.target.classList.add('animate');
+                }
+            });
+        }, { threshold: 0.5 });
+
+        document.querySelectorAll('.price-bar').forEach(el => {
+            priceBarObserver.observe(el);
+        });
+
+        // Video controls
+        const video = document.getElementById('athleteVideo');
+        const videoOverlay = document.getElementById('videoOverlay');
+
+        if (videoOverlay) {
+            videoOverlay.addEventListener('click', () => {
+                if (video.paused) {
+                    video.play();
+                    video.muted = false;
+                    videoOverlay.classList.add('hidden');
+                }
+            });
+
+            video.addEventListener('click', () => {
+                if (!video.paused) {
+                    video.pause();
+                    videoOverlay.classList.remove('hidden');
+                }
+            });
+        }
+
+        // Modal controls
+        function closeModal(id) {
+            document.getElementById('modal-' + id).classList.remove('active');
+        }
+
+        document.querySelectorAll('.feature-card').forEach(card => {
+            card.addEventListener('click', () => {
+                const modalId = card.dataset.modal;
+                document.getElementById('modal-' + modalId).classList.add('active');
+            });
+        });
+
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.classList.remove('active');
+                }
+            });
+        });
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal').forEach(modal => {
+                    modal.classList.remove('active');
+                });
+            }
+        });
+
+        // Email form
+        document.getElementById('emailForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const email = e.target.querySelector('input').value;
+            alert('Thanks for joining the waitlist! Check your email for confirmation.');
+            e.target.reset();
+        });
+
+        // Smooth scroll
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
