@@ -2046,13 +2046,12 @@ function handleSubmit(e) {
   btn.textContent = 'Submitting...';
   btn.disabled = true;
 
-  // WEBHOOK_URL will be set once Google Sheet integration is ready
-  const WEBHOOK_URL = '';
+  const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbxsaoailMNmin1QFzQ9UoK8IxLRX0S2qDgpW1oSLT2_Y6YL6d9ybbEoO1nGxUkV-viK/exec';
 
   if (WEBHOOK_URL) {
     fetch(WEBHOOK_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      mode: 'no-cors',
       body: JSON.stringify({ email: email, source: 's1-launch', page: 'S1 Landing' })
     }).then(() => showSuccess()).catch(() => showSuccess());
   } else {
