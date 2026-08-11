@@ -549,49 +549,79 @@
             font-size: 32px;
         }
 
-        /* Story Section */
+        /* Story Timeline Section */
         .story {
             padding: 100px 0;
             background: var(--gray-50);
         }
 
-        .story-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 64px;
-            align-items: center;
+        .story-timeline {
+            max-width: 900px;
+            margin: 0 auto;
+            position: relative;
         }
 
-        .story-text-content {
-            font-size: 16px;
+        .story-timeline::before {
+            content: '';
+            position: absolute;
+            left: 40px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--gray-300);
+        }
+
+        .timeline-step {
+            display: flex;
+            gap: 32px;
+            margin-bottom: 48px;
+            position: relative;
+        }
+
+        .timeline-step:last-child {
+            margin-bottom: 0;
+        }
+
+        .timeline-icon {
+            width: 80px;
+            height: 80px;
+            background: var(--white);
+            border: 2px solid var(--gray-200);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            flex-shrink: 0;
+            position: relative;
+            z-index: 1;
+        }
+
+        .timeline-content {
+            flex: 1;
+            padding-top: 8px;
+        }
+
+        .timeline-label {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--gray-400);
+            margin-bottom: 8px;
+        }
+
+        .timeline-heading {
+            font-size: 24px;
+            font-weight: 800;
+            margin-bottom: 12px;
+            letter-spacing: -0.5px;
+        }
+
+        .timeline-text {
+            font-size: 15px;
             color: var(--gray-600);
-            line-height: 1.8;
-            margin-bottom: 24px;
-        }
-
-        .story-stat {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--green);
-            background: #f0fdf4;
-            padding: 8px 16px;
-            border-radius: 100px;
-        }
-
-        .story-img {
-            border-radius: 16px;
-            overflow: hidden;
-            aspect-ratio: 4/3;
-            background: var(--gray-100);
-        }
-
-        .story-img img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
+            line-height: 1.7;
         }
 
         /* Credentials */
@@ -609,9 +639,9 @@
             background: var(--white);
             border: 1px solid var(--gray-200);
             border-radius: 12px;
-            padding: 20px 24px;
+            padding: 24px 28px;
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             gap: 16px;
             transition: all 0.2s;
         }
@@ -629,29 +659,29 @@
         .credential-text h4 {
             font-size: 15px;
             font-weight: 700;
-            margin-bottom: 4px;
+            margin-bottom: 6px;
         }
 
         .credential-text p {
             font-size: 13px;
             color: var(--gray-500);
-            line-height: 1.5;
+            line-height: 1.6;
         }
 
-        /* Product Gallery */
+        /* Lifestyle Action Gallery */
         .product-gallery {
             padding: 100px 0;
             background: var(--gray-50);
         }
 
-        .gallery-grid {
+        .gallery-masonry {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 24px;
+            grid-template-columns: repeat(4, 1fr);
+            grid-auto-rows: 200px;
+            gap: 16px;
         }
 
         .gallery-item {
-            aspect-ratio: 1;
             border-radius: 12px;
             overflow: hidden;
             border: 1px solid var(--gray-200);
@@ -662,12 +692,26 @@
         .gallery-item:hover {
             transform: scale(1.02);
             box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+            z-index: 1;
         }
 
         .gallery-item img {
             width: 100%;
             height: 100%;
             object-fit: cover;
+        }
+
+        .gallery-item--tall {
+            grid-row: span 2;
+        }
+
+        .gallery-item--wide {
+            grid-column: span 2;
+        }
+
+        .gallery-item--large {
+            grid-column: span 2;
+            grid-row: span 2;
         }
 
         /* Champion Badge */
@@ -680,9 +724,23 @@
             border: 2px solid var(--black);
             border-radius: 16px;
             padding: 60px 40px;
-            max-width: 800px;
+            max-width: 900px;
             margin: 0 auto;
             text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .badge-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 300px;
+            height: 300px;
+            background: url('https://cdn.shopify.com/s/files/1/0775/5956/2452/files/darimati_shoes.jpg?v=1776313172') center/cover;
+            opacity: 0.05;
+            pointer-events: none;
         }
 
         .champion-icon {
@@ -700,6 +758,8 @@
             font-size: 16px;
             color: var(--gray-600);
             line-height: 1.8;
+            max-width: 700px;
+            margin: 0 auto;
         }
 
         .champion-stats {
@@ -727,51 +787,155 @@
             color: var(--gray-500);
         }
 
-        /* Lab Tested */
+        /* Lab Tested Video Grid */
         .lab-tested {
             padding: 100px 0;
+            background: var(--white);
+        }
+
+        .lab-video-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+
+        .lab-video-card {
+            background: var(--gray-50);
+            border: 1px solid var(--gray-200);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .lab-video-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
+        }
+
+        .lab-video-wrapper {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16/9;
+            background: var(--black);
+            overflow: hidden;
+        }
+
+        .lab-video-wrapper video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .lab-video-label {
+            position: absolute;
+            bottom: 12px;
+            left: 12px;
+            right: 12px;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px);
+            color: var(--white);
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .lab-attribution {
+            text-align: center;
+            margin-top: 32px;
+            font-size: 14px;
+            color: var(--gray-500);
+        }
+
+        .lab-attribution a {
+            color: var(--black);
+            text-decoration: underline;
+            font-weight: 600;
+        }
+
+        /* Technology Deep Dive Sections */
+        .tech-split {
+            padding: 100px 0;
+        }
+
+        .tech-split:nth-of-type(even) {
             background: var(--gray-50);
         }
 
-        .lab-card {
-            background: var(--white);
-            border: 1px solid var(--gray-200);
+        .split-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 64px;
+            align-items: center;
+        }
+
+        .split-grid--reverse {
+            direction: rtl;
+        }
+
+        .split-grid--reverse > * {
+            direction: ltr;
+        }
+
+        .split-image {
             border-radius: 16px;
-            padding: 48px;
+            overflow: hidden;
+            border: 1px solid var(--gray-200);
+            background: var(--white);
         }
 
-        .lab-content h3 {
+        .split-image img {
+            width: 100%;
+            height: auto;
+        }
+
+        .split-content-overline {
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--gray-400);
+            margin-bottom: 12px;
+        }
+
+        .split-content-heading {
             font-size: 36px;
-            font-weight: 900;
+            font-weight: 800;
+            letter-spacing: -0.5px;
             margin-bottom: 20px;
+            line-height: 1.2;
         }
 
-        .lab-content p {
+        .split-content-text {
             font-size: 16px;
             color: var(--gray-600);
             line-height: 1.8;
             margin-bottom: 24px;
         }
 
-        .lab-badges {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
+        .split-specs-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
         }
 
-        .lab-badge {
-            background: var(--gray-100);
-            color: var(--gray-700);
-            padding: 8px 16px;
-            border-radius: 6px;
-            font-size: 13px;
-            font-weight: 600;
+        .split-specs-list li {
+            font-size: 14px;
+            color: var(--gray-600);
+            margin-bottom: 12px;
+            padding-left: 28px;
+            position: relative;
         }
 
-        .lab-link {
-            color: var(--black);
-            text-decoration: underline;
-            font-weight: 600;
+        .split-specs-list li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: var(--green);
+            font-weight: 700;
         }
 
         /* Price Comparison */
@@ -1107,21 +1271,47 @@
                 grid-template-columns: 1fr;
             }
 
-            .story-grid {
-                grid-template-columns: 1fr;
-                gap: 40px;
+            .story-timeline::before {
+                left: 20px;
+            }
+
+            .timeline-icon {
+                width: 60px;
+                height: 60px;
+                font-size: 24px;
+            }
+
+            .timeline-heading {
+                font-size: 20px;
             }
 
             .credentials-grid {
                 grid-template-columns: 1fr;
             }
 
-            .gallery-grid {
+            .gallery-masonry {
                 grid-template-columns: repeat(2, 1fr);
+                grid-auto-rows: 150px;
+            }
+
+            .gallery-item--large {
+                grid-column: span 1;
+                grid-row: span 1;
             }
 
             .champion-stats {
                 grid-template-columns: 1fr;
+            }
+
+            .lab-video-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .split-grid,
+            .split-grid--reverse {
+                grid-template-columns: 1fr;
+                gap: 40px;
+                direction: ltr;
             }
 
             .features-grid {
@@ -1165,8 +1355,8 @@
                 text-align: center;
             }
 
-            .lab-card {
-                padding: 32px 24px;
+            .badge-card {
+                padding: 40px 24px;
             }
         }
     </style>
@@ -1370,26 +1560,45 @@
         </div>
     </section>
 
-    <!-- Story Section -->
+    <!-- Story Timeline Section -->
     <section class="story">
         <div class="container">
-            <div class="story-grid">
-                <div>
-                    <p class="section-tag">WHY WE BUILT DARIMATI</p>
-                    <h2 class="section-heading" style="text-align: left;">Your Training Shoe Wasn't Built for This</h2>
-                    <p class="story-text-content">
-                        Box jumps in running shoes? Unstable landings. Lunges in lifters? Zero cushion. 5K in CrossFit shoes? Your knees pay the price. Hybrid athletes have been forcing single-purpose shoes into multi-purpose workouts.
-                    </p>
-                    <p class="story-text-content">
-                        We built the BR-001 from scratch — not adapted from a running shoe, not modified from a lifter. 15 prototypes, 200+ athlete testers, one goal: the first true hybrid training shoe.
-                    </p>
-                    <span class="story-stat">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12l5 5L20 7"/></svg>
-                        218% Kickstarter funded in 30 days
-                    </span>
+            <div class="animate-on-scroll">
+                <p class="section-tag">WHY WE BUILT DARIMATI</p>
+                <h2 class="section-heading">The Journey to BR-001</h2>
+            </div>
+            <div class="story-timeline">
+                <div class="timeline-step animate-on-scroll">
+                    <div class="timeline-icon">❌</div>
+                    <div class="timeline-content">
+                        <div class="timeline-label">STEP 1: THE PROBLEM</div>
+                        <h3 class="timeline-heading">Every Training Shoe Costs $150+</h3>
+                        <p class="timeline-text">Premium hybrid shoes were locked behind $190-$275 price tags. Same materials, same factories, but 200% markups for brand names and sponsored athlete deals. We knew athletes deserved better.</p>
+                    </div>
                 </div>
-                <div class="story-img">
-                    <img src="https://cdn.shopify.com/s/files/1/0775/5956/2452/files/darimati_shoes.jpg?v=1776313172" alt="BR-001 Collection">
+                <div class="timeline-step animate-on-scroll">
+                    <div class="timeline-icon">💭</div>
+                    <div class="timeline-content">
+                        <div class="timeline-label">STEP 2: WE FELT THE SAME WAY</div>
+                        <h3 class="timeline-heading">Our Founder is a HYROX Competitor</h3>
+                        <p class="timeline-text">After switching shoes 3 times mid-workout — running shoes for runs, lifters for squats, CrossFit shoes for box jumps — our founder knew there had to be a better way. Real athletes don't have time for multiple shoe changes.</p>
+                    </div>
+                </div>
+                <div class="timeline-step animate-on-scroll">
+                    <div class="timeline-icon">🔨</div>
+                    <div class="timeline-content">
+                        <div class="timeline-label">STEP 3: 15+ PROTOTYPES. 2 YEARS OF TESTING.</div>
+                        <h3 class="timeline-heading">The First 5 Failed Grip Tests</h3>
+                        <p class="timeline-text">We burned through 15 prototypes and 2 years of athlete testing. The first 5 versions failed grip tests. Prototype 8 had great grip but zero cushion. Version 12 was close, but the toe box was too narrow. Every failure taught us what athletes really needed.</p>
+                    </div>
+                </div>
+                <div class="timeline-step animate-on-scroll">
+                    <div class="timeline-icon">✅</div>
+                    <div class="timeline-content">
+                        <div class="timeline-label">STEP 4: THE RESULT — BR-001</div>
+                        <h3 class="timeline-heading">Nitrogen-Infused A-TPU Foam</h3>
+                        <p class="timeline-text">The BR-001 brings premium A-TPU foam (same compound as $250+ shoes), competition-grade rubber grip, and wide-foot stability — at $99. No middleman. No markup. Just direct-to-athlete pricing. 218% Kickstarter funded in 30 days proved we got it right.</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1406,110 +1615,128 @@
                 <div class="credential-item animate-on-scroll">
                     <div class="credential-icon">🏆</div>
                     <div class="credential-text">
-                        <h4>REXtream 2025 Champion</h4>
-                        <p>Worn by the 2025 REXtream Seoul champion during competition</p>
+                        <h4>REXtream Official Champion Shoe</h4>
+                        <p>Winning athletes compete in DARIMATI — worn during podium finishes and championship moments</p>
                     </div>
                 </div>
                 <div class="credential-item animate-on-scroll">
                     <div class="credential-icon">🏃</div>
                     <div class="credential-text">
-                        <h4>HYROX Athletes</h4>
-                        <p>Trusted by HYROX competitors across multiple continents</p>
+                        <h4>HYROX Official Sponsor & Partner</h4>
+                        <p>On-site experience at global events — trusted by HYROX competitors across 7+ countries</p>
                     </div>
                 </div>
                 <div class="credential-item animate-on-scroll">
                     <div class="credential-icon">💪</div>
                     <div class="credential-text">
-                        <h4>Anytime Fitness Partnership</h4>
-                        <p>Official training shoe partner for select Anytime Fitness locations</p>
+                        <h4>Anytime Fitness Korea</h4>
+                        <p>Official coach training shoe — all locations. Trusted by professional trainers and members.</p>
                     </div>
                 </div>
                 <div class="credential-item animate-on-scroll">
-                    <div class="credential-icon">🚀</div>
+                    <div class="credential-icon">⚡</div>
                     <div class="credential-text">
-                        <h4>218% Kickstarter Funded</h4>
-                        <p>Exceeded crowdfunding goal by over 2x in first campaign</p>
-                    </div>
-                </div>
-                <div class="credential-item animate-on-scroll">
-                    <div class="credential-icon">📊</div>
-                    <div class="credential-text">
-                        <h4>RunRepeat Lab Tested</h4>
-                        <p>Independent laboratory verification of all performance claims</p>
+                        <h4>AF Strength Trial — Official Adopted Shoe</h4>
+                        <p>Selected as the official shoe for Anytime Fitness strength competition trials</p>
                     </div>
                 </div>
                 <div class="credential-item animate-on-scroll">
                     <div class="credential-icon">🥇</div>
                     <div class="credential-text">
-                        <h4>Bangkok Crucible Gold</h4>
-                        <p>Gold medal winner in functional fitness competition</p>
+                        <h4>HYROX Korea 2025 — Top 3 Athletes</h4>
+                        <p>Chose DARIMATI for competition day — when performance matters most</p>
+                    </div>
+                </div>
+                <div class="credential-item animate-on-scroll">
+                    <div class="credential-icon">🏋️</div>
+                    <div class="credential-text">
+                        <h4>Korea's Only Hybrid Training Facility</h4>
+                        <p>Official shoe of the dedicated hybrid training gym — where elite athletes train daily</p>
+                    </div>
+                </div>
+                <div class="credential-item animate-on-scroll">
+                    <div class="credential-icon">🚀</div>
+                    <div class="credential-text">
+                        <h4>US Kickstarter — 218% Funded</h4>
+                        <p>2x oversubscribed by backers — exceeded crowdfunding goal in first campaign</p>
+                    </div>
+                </div>
+                <div class="credential-item animate-on-scroll">
+                    <div class="credential-icon">📊</div>
+                    <div class="credential-text">
+                        <h4>RunRepeat — Top 14% Performance</h4>
+                        <p>Global running shoe review platform — independent lab verification of all claims</p>
+                    </div>
+                </div>
+                <div class="credential-item animate-on-scroll">
+                    <div class="credential-icon">🥇</div>
+                    <div class="credential-text">
+                        <h4>Bangkok Crucible Women's Gold</h4>
+                        <p>1st place winner wore DARIMATI — functional fitness competition victory</p>
                     </div>
                 </div>
                 <div class="credential-item animate-on-scroll">
                     <div class="credential-icon">🇸🇬</div>
                     <div class="credential-text">
-                        <h4>HYROX Singapore</h4>
-                        <p>Official shoe of top Singapore HYROX athletes</p>
+                        <h4>HYROX Singapore Men's Pro Singles</h4>
+                        <p>Champion wore DARIMATI — elite level competition performance verified</p>
                     </div>
                 </div>
                 <div class="credential-item animate-on-scroll">
                     <div class="credential-icon">🇫🇷</div>
                     <div class="credential-text">
-                        <h4>Paris Louvre CrossFit</h4>
-                        <p>Trusted by elite CrossFit athletes in Europe</p>
+                        <h4>Paris Louvre CrossFit Coaches</h4>
+                        <p>Training shoe of choice — trusted by elite European CrossFit coaching staff</p>
                     </div>
                 </div>
                 <div class="credential-item animate-on-scroll">
                     <div class="credential-icon">🌍</div>
                     <div class="credential-text">
-                        <h4>7+ Countries</h4>
-                        <p>Shipped to athletes in USA, Canada, UK, Australia, Germany, Singapore, and more</p>
-                    </div>
-                </div>
-                <div class="credential-item animate-on-scroll">
-                    <div class="credential-icon">⭐</div>
-                    <div class="credential-text">
-                        <h4>4.8/5 Average Rating</h4>
-                        <p>Based on 200+ verified customer reviews</p>
-                    </div>
-                </div>
-                <div class="credential-item animate-on-scroll">
-                    <div class="credential-icon">✅</div>
-                    <div class="credential-text">
-                        <h4>15+ Prototypes</h4>
-                        <p>Refined through extensive athlete testing before final production</p>
-                    </div>
-                </div>
-                <div class="credential-item animate-on-scroll">
-                    <div class="credential-icon">🔄</div>
-                    <div class="credential-text">
-                        <h4>30-Day Returns</h4>
-                        <p>Try them in your actual workouts. Full refund if not satisfied.</p>
+                        <h4>7+ Countries Competing</h4>
+                        <p>From Seoul to San Diego — global athletes choose DARIMATI for competition day</p>
                     </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Product Gallery -->
+    <!-- Lifestyle Action Gallery -->
     <section class="product-gallery">
         <div class="container">
             <div class="animate-on-scroll">
                 <p class="section-tag">IN ACTION</p>
                 <h2 class="section-heading">The BR-001 Up Close</h2>
             </div>
-            <div class="gallery-grid">
-                <div class="gallery-item animate-on-scroll">
-                    <img src="https://cdn.shopify.com/s/files/1/0775/5956/2452/files/dariamti_shoe.jpg?v=1776313172" alt="DARIMATI Shoe">
+            <div class="gallery-masonry">
+                <div class="gallery-item gallery-item--large animate-on-scroll">
+                    <img src="https://www.darimati.us/cdn/shop/t/15/assets/br001-b1.jpg" alt="Training Action">
+                </div>
+                <div class="gallery-item gallery-item--tall animate-on-scroll">
+                    <img src="https://www.darimati.us/cdn/shop/t/15/assets/br001-b2.jpg" alt="Box Jump">
                 </div>
                 <div class="gallery-item animate-on-scroll">
-                    <img src="https://cdn.shopify.com/s/files/1/0775/5956/2452/files/04.png?v=1776313172" alt="Box Jump Action">
+                    <img src="https://cdn.shopify.com/s/files/1/0775/5956/2452/files/dariamti_shoe.jpg?v=1776313172" alt="Product Detail">
                 </div>
                 <div class="gallery-item animate-on-scroll">
-                    <img src="https://cdn.shopify.com/s/files/1/0775/5956/2452/files/08.png?v=1776313172" alt="Outsole Grip">
+                    <img src="https://www.darimati.us/cdn/shop/t/15/assets/br001-b3.jpg" alt="Athlete Training">
+                </div>
+                <div class="gallery-item gallery-item--wide animate-on-scroll">
+                    <img src="https://www.darimati.us/cdn/shop/t/15/assets/br001-run.jpg" alt="Outdoor Run">
                 </div>
                 <div class="gallery-item animate-on-scroll">
-                    <img src="https://cdn.shopify.com/s/files/1/0775/5956/2452/files/09.png?v=1776313172" alt="Cushioning System">
+                    <img src="https://cdn.shopify.com/s/files/1/0775/5956/2452/files/08.png?v=1776313172" alt="Grip Detail">
+                </div>
+                <div class="gallery-item animate-on-scroll">
+                    <img src="https://www.darimati.us/cdn/shop/t/15/assets/br001-b4.jpg" alt="Product Close-up">
+                </div>
+                <div class="gallery-item gallery-item--tall animate-on-scroll">
+                    <img src="https://www.darimati.us/cdn/shop/t/15/assets/br001-ath1.jpg" alt="Athlete Portrait">
+                </div>
+                <div class="gallery-item animate-on-scroll">
+                    <img src="https://cdn.shopify.com/s/files/1/0775/5956/2452/files/09.png?v=1776313172" alt="Cushioning">
+                </div>
+                <div class="gallery-item animate-on-scroll">
+                    <img src="https://www.darimati.us/cdn/shop/t/15/assets/br001-b5.jpg" alt="Running Action">
                 </div>
                 <div class="gallery-item animate-on-scroll">
                     <img src="https://cdn.shopify.com/s/files/1/0775/5956/2452/files/10.png?v=1776313172" alt="Upper Material">
@@ -1546,23 +1773,74 @@
         </div>
     </section>
 
-    <!-- Lab Tested -->
+    <!-- Lab Tested Video Grid -->
     <section class="lab-tested">
         <div class="container">
-            <div class="lab-card animate-on-scroll">
-                <div class="lab-content">
-                    <p class="section-tag" style="text-align: left;">LAB TESTED</p>
-                    <h3>Cut It Open. Test Every Layer.</h3>
-                    <p>We sent DARIMATI to RunRepeat's independent testing laboratory. They verified every claim we make about grip, rebound, and durability. No marketing fluff. Just data.</p>
-                    <div class="lab-badges">
-                        <span class="lab-badge">✓ Independent Lab Verified</span>
-                        <span class="lab-badge">✓ RunRepeat Certified</span>
-                        <span class="lab-badge">✓ Full Report Available</span>
+            <div class="animate-on-scroll">
+                <p class="section-tag">LAB TESTED</p>
+                <h2 class="section-heading">Cut It Open. Test Every Layer.</h2>
+                <p style="text-align: center; max-width: 700px; margin: 0 auto 48px; font-size: 16px; color: var(--gray-600); line-height: 1.8;">
+                    We sent DARIMATI to RunRepeat's independent testing laboratory. They verified every claim we make about grip, rebound, and durability. No marketing fluff. Just data.
+                </p>
+            </div>
+            <div class="lab-video-grid">
+                <div class="lab-video-card animate-on-scroll">
+                    <div class="lab-video-wrapper">
+                        <video autoplay muted loop playsinline>
+                            <source src="https://cdn.runrepeat.com/storage/gallery/product_content/41215/darimati-br-001-cut.webm" type="video/webm">
+                            <source src="https://cdn.runrepeat.com/storage/gallery/product_content/41215/darimati-br-001-cut.mp4" type="video/mp4">
+                        </video>
+                        <div class="lab-video-label">Cross-Section Cut</div>
                     </div>
-                    <p style="margin-top: 16px;">
-                        <a href="https://runrepeat.com/darimati-br-001" class="lab-link">View Full Lab Report →</a>
-                    </p>
                 </div>
+                <div class="lab-video-card animate-on-scroll">
+                    <div class="lab-video-wrapper">
+                        <video autoplay muted loop playsinline>
+                            <source src="https://cdn.runrepeat.com/storage/gallery/product_content/41215/darimati-br-001-energy-return-heel.webm" type="video/webm">
+                            <source src="https://cdn.runrepeat.com/storage/gallery/product_content/41215/darimati-br-001-energy-return-heel.mp4" type="video/mp4">
+                        </video>
+                        <div class="lab-video-label">Energy Return</div>
+                    </div>
+                </div>
+                <div class="lab-video-card animate-on-scroll">
+                    <div class="lab-video-wrapper">
+                        <video autoplay muted loop playsinline>
+                            <source src="https://cdn.runrepeat.com/storage/gallery/product_content/41215/darimati-br-001-forefoot-traction.webm" type="video/webm">
+                            <source src="https://cdn.runrepeat.com/storage/gallery/product_content/41215/darimati-br-001-forefoot-traction.mp4" type="video/mp4">
+                        </video>
+                        <div class="lab-video-label">Forefoot Traction</div>
+                    </div>
+                </div>
+                <div class="lab-video-card animate-on-scroll">
+                    <div class="lab-video-wrapper">
+                        <video autoplay muted loop playsinline>
+                            <source src="https://cdn.runrepeat.com/storage/gallery/product_content/41215/darimati-br-001-lateral-stability-test.webm" type="video/webm">
+                            <source src="https://cdn.runrepeat.com/storage/gallery/product_content/41215/darimati-br-001-lateral-stability-test.mp4" type="video/mp4">
+                        </video>
+                        <div class="lab-video-label">Lateral Stability</div>
+                    </div>
+                </div>
+                <div class="lab-video-card animate-on-scroll">
+                    <div class="lab-video-wrapper">
+                        <video autoplay muted loop playsinline>
+                            <source src="https://cdn.runrepeat.com/storage/gallery/product_content/41215/darimati-br-001-foam.webm" type="video/webm">
+                            <source src="https://cdn.runrepeat.com/storage/gallery/product_content/41215/darimati-br-001-foam.mp4" type="video/mp4">
+                        </video>
+                        <div class="lab-video-label">A-TPU Foam</div>
+                    </div>
+                </div>
+                <div class="lab-video-card animate-on-scroll">
+                    <div class="lab-video-wrapper">
+                        <video autoplay muted loop playsinline>
+                            <source src="https://cdn.runrepeat.com/storage/gallery/product_content/41215/darimati-br-001-toes-movement.webm" type="video/webm">
+                            <source src="https://cdn.runrepeat.com/storage/gallery/product_content/41215/darimati-br-001-toes-movement.mp4" type="video/mp4">
+                        </video>
+                        <div class="lab-video-label">Toe Flexibility</div>
+                    </div>
+                </div>
+            </div>
+            <div class="lab-attribution">
+                Lab testing provided by <a href="https://runrepeat.com/darimati-br-001" target="_blank" rel="noopener">RunRepeat →</a>
             </div>
         </div>
     </section>
@@ -1667,6 +1945,50 @@
                         <div class="feature-card-title">15+ Prototypes</div>
                         <p class="feature-card-text">15+ prototypes tested by HYROX, REXtream, and CrossFit competitors. Every change driven by real athlete feedback, not marketing focus groups.</p>
                     </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Technology Deep-Dive Split 1: Bridge Mechanics -->
+    <section class="tech-split">
+        <div class="container">
+            <div class="split-grid">
+                <div class="split-image animate-on-scroll">
+                    <img src="https://cdn.shopify.com/s/files/1/0775/5956/2452/files/10.png?v=1776313172" alt="Bridge Mechanics Technology">
+                </div>
+                <div class="split-content animate-on-scroll">
+                    <div class="split-content-overline">CORE TECHNOLOGY</div>
+                    <h2 class="split-content-heading">Stability That Doesn't Sacrifice Speed</h2>
+                    <p class="split-content-text">Most stability shoes make you slower. Most running shoes make you unstable. Bridge Mechanics solves both — a hinged midsole structure that flexes with your foot's natural motion while locking down during heavy loads.</p>
+                    <ul class="split-specs-list">
+                        <li>Distributes load across full midsole</li>
+                        <li>Natural foot articulation maintained</li>
+                        <li>Tested across 500km+ per prototype</li>
+                        <li>Full marathon validated</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Technology Deep-Dive Split 2: Wide-Foot Design (Reversed) -->
+    <section class="tech-split">
+        <div class="container">
+            <div class="split-grid split-grid--reverse">
+                <div class="split-image animate-on-scroll">
+                    <img src="https://cdn.shopify.com/s/files/1/0775/5956/2452/files/11.png?v=1776313172" alt="Wide-Foot Design">
+                </div>
+                <div class="split-content animate-on-scroll">
+                    <div class="split-content-overline">FIT ENGINEERING</div>
+                    <h2 class="split-content-heading">Wide-Foot-First Design</h2>
+                    <p class="split-content-text">20+ last iterations. Not a wide version of a narrow shoe — built wide from the start. Your toes splay naturally during explosive movements. Foot-to-knee alignment stays locked in during loaded lunges.</p>
+                    <ul class="split-specs-list">
+                        <li>Wider forefoot, standard heel cup</li>
+                        <li>Dual-path lacing for fit adjustment</li>
+                        <li>True-to-size (recommend half-up for thick socks)</li>
+                        <li>Tested on 200+ different foot shapes</li>
+                    </ul>
                 </div>
             </div>
         </div>
