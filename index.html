@@ -7,6 +7,116 @@
 <meta name="description" content="The hybrid training shoe built by HYROX athletes. Same premium materials as $200+ shoes. Starting at $99. No retail markup.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<!-- ── Meta Pixel ───────────────────────────────────────────────────────────
+     다리마티 픽셀(821311187492862). 페이지를 다시 만들더라도 이 블록은 남길 것.
+
+     보내는 이벤트
+       PageView          페이지 열람
+       ViewContent       BR-001 상세 열람
+       DeepView          절반 이상 스크롤 = 관심 높은 사람 (맞춤타겟 모수용)
+       Lead              이메일 제출 (얼리액세스 신청)
+       InitiateCheckout  darimati.us 구매/장바구니로 넘어가는 클릭
+
+     쇼피파이 연결
+       이 페이지(github.io)와 쇼피파이(darimati.us)는 주소가 달라서 추적이 끊긴다.
+       그래서 구매 링크로 넘어갈 때 광고 클릭ID(fbclid)와 utm 값을 주소에 붙여 보낸다.
+       → 쇼피파이 쪽 픽셀이 "이 광고 보고 온 사람"이라고 이어서 인식한다.
+     ───────────────────────────────────────────────────────────────────── -->
+<script>
+!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}
+(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
+
+fbq('init','821311187492862');
+
+(function(){
+  var q = new URLSearchParams(location.search);
+  var P = window.DMTRK = {
+    page : 'S1_EN',
+    value: 99,
+    src  : q.get('utm_source')   || '',
+    cmp  : q.get('utm_campaign') || '',
+    cnt  : q.get('utm_content')  || '',
+    fbc  : q.get('fbclid')       || ''
+  };
+  function base(extra){
+    var o = {page:P.page, src:P.src, cmp:P.cmp, cnt:P.cnt};
+    for (var k in (extra||{})) o[k] = extra[k];
+    return o;
+  }
+
+  fbq('track','PageView', base());
+  fbq('track','ViewContent', base({
+    content_name:'BR-001', content_ids:['BR-001'], content_type:'product',
+    value:P.value, currency:'USD'
+  }));
+
+  /* ── 쇼피파이로 넘어가는 주소에 추적값 이어붙이기 ── */
+  function handoff(url){
+    try {
+      var u = new URL(url, location.href);
+      if (!/(^|\.)darimati\.us$/.test(u.hostname)) return url;   /* 자사몰 아니면 그대로 */
+      if (P.fbc) u.searchParams.set('fbclid', P.fbc);
+      if (P.src) u.searchParams.set('utm_source', P.src);
+      if (P.cmp) u.searchParams.set('utm_campaign', P.cmp);
+      if (P.cnt) u.searchParams.set('utm_content', P.cnt);
+      u.searchParams.set('utm_medium', 'lp-' + P.page);
+      return u.href;
+    } catch (e) { return url; }
+  }
+  function checkout(where){
+    if (typeof fbq !== 'function') return;
+    fbq('track','InitiateCheckout', base({
+      content_name:'BR-001', content_ids:['BR-001'], content_type:'product',
+      value:P.value, currency:'USD', placement:where
+    }));
+  }
+
+  /* 사이즈 담기 버튼처럼 새 창으로 여는 경우 */
+  var openOrig = window.open;
+  window.open = function(url){
+    var args = Array.prototype.slice.call(arguments);
+    if (typeof url === 'string' && /darimati\.us/.test(url)) {
+      checkout('cart-button');
+      args[0] = handoff(url);
+    }
+    return openOrig.apply(window, args);
+  };
+
+  document.addEventListener('DOMContentLoaded', function(){
+    /* 일반 링크 클릭 */
+    document.addEventListener('click', function(e){
+      var a = e.target.closest && e.target.closest('a[href]');
+      if (!a || !/darimati\.us\/(cart|products|collections|checkout)/.test(a.href)) return;
+      checkout('link');
+      a.href = handoff(a.href);
+    }, true);
+
+    /* 이메일 제출 = Lead (폼이 저장까지 되는지와 무관하게 픽셀은 찍힌다) */
+    ['signupForm','emailForm'].forEach(function(id){
+      var form = document.getElementById(id);
+      if (form) form.addEventListener('submit', function(){
+        fbq('track','Lead', base({content_name:'BR-001 Early Access', currency:'USD', value:0}));
+      });
+    });
+
+    /* 절반 이상 읽은 사람 */
+    var deep = false;
+    window.addEventListener('scroll', function(){
+      if (deep) return;
+      var h = document.documentElement;
+      if ((h.scrollTop + window.innerHeight) / h.scrollHeight < 0.5) return;
+      deep = true;
+      fbq('trackCustom','DeepView', base());
+    }, {passive:true});
+  });
+})();
+</script>
+<noscript><img height="1" width="1" style="display:none"
+  src="https://www.facebook.com/tr?id=821311187492862&ev=PageView&noscript=1"/></noscript>
+<!-- ── /Meta Pixel ──────────────────────────────────────────────────────── -->
 <style>
 :root {
   --bg: #0a0a0a;
