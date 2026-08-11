@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html><head>
+<meta charset="UTF-8">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{width:1080px;height:1080px;font-family:'Inter','Helvetica Neue',sans-serif;
+  background:#fff;overflow:hidden;position:relative}
+.pair-img{width:100%;height:540px;object-fit:cover;display:block}
+.content{padding:48px 64px;display:flex;flex-direction:column;justify-content:center;height:540px}
+h1{font-size:48px;font-weight:700;letter-spacing:-1px;line-height:1.1;color:#0a0a0a;margin-bottom:20px}
+.compare{display:flex;flex-direction:column;gap:12px;margin-bottom:28px}
+.bar-row{display:flex;align-items:center;gap:16px}
+.bar-label{width:180px;font-size:16px;font-weight:500;text-align:right;color:#737373}
+.bar-label.ours{color:#0a0a0a;font-weight:700}
+.bar-track{flex:1;height:32px;background:#f5f5f5;overflow:hidden}
+.bar-fill{height:100%;display:flex;align-items:center;padding:0 14px;
+  font-size:14px;font-weight:700;color:#fff}
+.bar-fill.black{background:#0a0a0a}
+.bar-fill.gray{background:#a3a3a3}
+.bottom-row{display:flex;justify-content:space-between;align-items:center}
+.free-ship{font-size:18px;color:#2d8a4e;font-weight:600}
+.logo{height:22px;opacity:.3}
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+<img class="pair-img" src="https://cdn.shopify.com/s/files/1/0775/5956/2452/files/darimati_shoes.jpg?v=1776313172" alt="">
+<div class="content">
+  <h1>More Performance.<br>Less Cost.</h1>
+  <div class="compare">
+    <div class="bar-row">
+      <div class="bar-label ours">DARIMATI BR-001</div>
+      <div class="bar-track"><div class="bar-fill black" style="width:55%">$129</div></div>
+    </div>
+    <div class="bar-row">
+      <div class="bar-label">Nike Metcon 9</div>
+      <div class="bar-track"><div class="bar-fill gray" style="width:64%">$150</div></div>
+    </div>
+    <div class="bar-row">
+      <div class="bar-label">NOBULL Trainer+</div>
+      <div class="bar-track"><div class="bar-fill gray" style="width:72%">$169</div></div>
+    </div>
+    <div class="bar-row">
+      <div class="bar-label">On Cloudultra 2</div>
+      <div class="bar-track"><div class="bar-fill gray" style="width:81%">$190</div></div>
+    </div>
+  </div>
+  <div class="bottom-row">
+    <span class="free-ship">+ Free US Shipping &bull; No Import Duties</span>
+  </div>
+</div>
+</body></html>
