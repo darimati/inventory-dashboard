@@ -502,13 +502,7 @@ function initScrollAnim() {
   document.querySelectorAll('.fade-in').forEach(el => obs.observe(el));
 }
 
-// Check saved language preference
-(function() {
-  try {
-    const saved = localStorage.getItem('darimati-lang');
-    if (saved) setLang(saved);
-  } catch(e) {}
-})();
+// Always show language selection first (no auto-skip)
 </script>
 
 </body>
