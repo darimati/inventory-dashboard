@@ -24,21 +24,35 @@ button{cursor:pointer;font-family:var(--font)}
 
 /* ── Language Selector ── */
 .lang-gate{position:fixed;inset:0;z-index:1000;background:var(--bg);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  padding:32px;transition:opacity .5s,visibility .5s}
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-end;
+  padding:0;transition:opacity .5s,visibility .5s;overflow:hidden}
 .lang-gate.hidden{opacity:0;visibility:hidden;pointer-events:none}
-.lang-logo{height:24px;margin-bottom:48px;opacity:.7}
+.lang-hero{position:absolute;inset:0;z-index:0}
+.lang-hero img{width:100%;height:100%;object-fit:cover}
+.lang-hero::after{content:'';position:absolute;inset:0;
+  background:linear-gradient(180deg,
+    rgba(247,244,240,0) 0%,
+    rgba(247,244,240,0.15) 30%,
+    rgba(247,244,240,0.7) 55%,
+    rgba(247,244,240,0.95) 70%,
+    var(--bg) 85%)}
+.lang-bottom{position:relative;z-index:1;width:100%;display:flex;flex-direction:column;
+  align-items:center;padding:0 32px 48px}
+.lang-logo{height:22px;margin-bottom:8px;opacity:.8}
+.lang-tagline{font-size:12px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;
+  color:var(--text-sub);margin-bottom:32px}
 .lang-title{font-size:13px;font-weight:500;letter-spacing:2px;text-transform:uppercase;
-  color:var(--text-light);margin-bottom:32px}
-.lang-buttons{display:flex;flex-direction:column;gap:12px;width:100%;max-width:280px}
+  color:var(--text-light);margin-bottom:20px}
+.lang-buttons{display:flex;flex-direction:column;gap:10px;width:100%;max-width:280px}
 .lang-btn{display:flex;align-items:center;justify-content:space-between;
-  padding:18px 24px;border:1px solid var(--border);border-radius:12px;
-  background:var(--bg-white);font-size:16px;font-weight:500;color:var(--text);
-  transition:all .2s}
+  padding:16px 24px;border:1px solid var(--border);border-radius:12px;
+  background:rgba(255,255,255,0.85);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  font-size:16px;font-weight:500;color:var(--text);
+  transition:all .2s;min-height:52px}
 .lang-btn:hover,.lang-btn:active{border-color:var(--text);background:var(--text);color:#fff}
 .lang-btn span{font-size:13px;color:var(--text-light);font-weight:400}
 .lang-btn:hover span,.lang-btn:active span{color:rgba(255,255,255,.6)}
-.lang-collab{margin-top:56px;display:flex;align-items:center;gap:12px;opacity:.4}
+.lang-collab{margin-top:28px;display:flex;align-items:center;gap:12px;opacity:.4}
 .lang-collab img{height:20px}
 .lang-collab span{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--text-sub)}
 
@@ -163,16 +177,22 @@ button{cursor:pointer;font-family:var(--font)}
 
 <!-- ═══ LANGUAGE GATE ═══ -->
 <div class="lang-gate" id="langGate">
-  <img src="https://www.darimati.us/cdn/shop/t/15/assets/darimati-wordmark.png" alt="DARIMATI" class="lang-logo">
-  <p class="lang-title">Select Language</p>
-  <div class="lang-buttons">
-    <button class="lang-btn" onclick="setLang('ko')">한국어 <span>Korean</span></button>
-    <button class="lang-btn" onclick="setLang('ja')">日本語 <span>Japanese</span></button>
-    <button class="lang-btn" onclick="setLang('en')">English <span>English</span></button>
+  <div class="lang-hero">
+    <img src="https://www.darimati.us/cdn/shop/t/15/assets/br001-b1.jpg" alt="DARIMATI BR-001">
   </div>
-  <div class="lang-collab">
-    <span>×</span>
-    <span>MANGROVE</span>
+  <div class="lang-bottom">
+    <img src="https://www.darimati.us/cdn/shop/t/15/assets/darimati-wordmark.png" alt="DARIMATI" class="lang-logo">
+    <p class="lang-tagline">Born in Seoul</p>
+    <p class="lang-title">Select Language</p>
+    <div class="lang-buttons">
+      <button class="lang-btn" onclick="setLang('ko')">한국어 <span>Korean</span></button>
+      <button class="lang-btn" onclick="setLang('ja')">日本語 <span>Japanese</span></button>
+      <button class="lang-btn" onclick="setLang('en')">English <span>English</span></button>
+    </div>
+    <div class="lang-collab">
+      <span>×</span>
+      <span>MANGROVE</span>
+    </div>
   </div>
 </div>
 
