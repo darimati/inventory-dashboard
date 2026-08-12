@@ -96,6 +96,30 @@ button{cursor:pointer;font-family:var(--font)}
   animation:scroll-pulse 2s infinite}
 @keyframes scroll-pulse{0%,100%{opacity:.2;height:24px}50%{opacity:.5;height:32px}}
 
+/* ── Trial Slide (Magazine tone) ── */
+.trial-slide{min-height:100svh;display:flex;flex-direction:column;
+  justify-content:center;padding:56px 32px;
+  background:var(--bg);position:relative}
+.trial-eyebrow{font-size:11px;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;
+  color:var(--text-light);margin-bottom:20px}
+.trial-heading{font-size:clamp(26px,6vw,38px);font-weight:700;letter-spacing:-.5px;
+  line-height:1.2;margin-bottom:32px}
+.trial-heading em{font-style:italic;font-weight:400}
+.trial-steps{display:flex;flex-direction:column;gap:28px;margin-bottom:40px}
+.trial-step{display:flex;gap:16px;align-items:flex-start}
+.trial-num{flex-shrink:0;width:32px;height:32px;border-radius:50%;
+  border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:600;color:var(--text-sub)}
+.trial-step-body h4{font-size:16px;font-weight:600;margin-bottom:3px;letter-spacing:-.2px}
+.trial-step-body p{font-size:14px;color:var(--text-sub);line-height:1.6}
+.trial-footer{font-size:13px;color:var(--text-light);line-height:1.7;
+  border-top:1px solid var(--border);padding-top:24px;font-style:italic}
+.trial-scroll-hint{position:absolute;bottom:28px;left:50%;transform:translateX(-50%);
+  font-size:11px;color:var(--text-light);letter-spacing:1px;opacity:.4;
+  display:flex;flex-direction:column;align-items:center;gap:6px}
+.trial-scroll-hint::after{content:'';width:1px;height:24px;background:var(--border);
+  animation:scroll-pulse 2s infinite}
+
 /* ── Main Content ── */
 .page{opacity:0;transition:opacity .6s;pointer-events:none}
 .page.visible{opacity:1;pointer-events:auto}
@@ -266,6 +290,59 @@ button{cursor:pointer;font-family:var(--font)}
   <div class="benefit-scroll-hint" data-lang="ko">SCROLL</div>
   <div class="benefit-scroll-hint" data-lang="ja">SCROLL</div>
   <div class="benefit-scroll-hint" data-lang="en">SCROLL</div>
+</section>
+
+<!-- ── Trial Slide (3rd — Magazine editorial) ── -->
+<section class="trial-slide">
+  <p class="trial-eyebrow">JUST TRY & ASK</p>
+
+  <h2 class="trial-heading" data-lang="ko">신어보고,<br>걸어보고,<br><em>그다음에 결정하세요.</em></h2>
+  <h2 class="trial-heading" data-lang="ja">履いてみて、<br>歩いてみて、<br><em>それから決めてください。</em></h2>
+  <h2 class="trial-heading" data-lang="en">Try them on,<br>take a walk,<br><em>then decide.</em></h2>
+
+  <div class="trial-steps">
+    <div class="trial-step">
+      <span class="trial-num">1</span>
+      <div class="trial-step-body">
+        <h4 data-lang="ko">사이즈 체크</h4>
+        <h4 data-lang="ja">サイズチェック</h4>
+        <h4 data-lang="en">Check Your Size</h4>
+        <p data-lang="ko">편하게 신어보세요. 트라이얼은 부담 없이.</p>
+        <p data-lang="ja">気軽に履いてみてください。トライアルはお気軽に。</p>
+        <p data-lang="en">Slip them on, no pressure. The trial is on us.</p>
+      </div>
+    </div>
+    <div class="trial-step">
+      <span class="trial-num">2</span>
+      <div class="trial-step-body">
+        <h4 data-lang="ko">호텔 주변 산책</h4>
+        <h4 data-lang="ja">ホテル周辺を散歩</h4>
+        <h4 data-lang="en">Walk the Neighborhood</h4>
+        <p data-lang="ko">맹그로브 주변을 가볍게 걸어보세요.<br>도시의 노면 위에서 BR-001을 느껴보는 시간.</p>
+        <p data-lang="ja">MANGROVEの周辺を軽く歩いてみてください。<br>都市の路面でBR-001を感じる時間。</p>
+        <p data-lang="en">Take a light stroll around MANGROVE.<br>Feel the BR-001 on real city surfaces.</p>
+      </div>
+    </div>
+    <div class="trial-step">
+      <span class="trial-num">3</span>
+      <div class="trial-step-body">
+        <h4 data-lang="ko">카페에서 결제</h4>
+        <h4 data-lang="ja">カフェでお支払い</h4>
+        <h4 data-lang="en">Pay at the Café</h4>
+        <p data-lang="ko">마음에 드셨다면 카페로 오세요.<br>그 자리에서 결제하고, 신고 나가시면 됩니다.</p>
+        <p data-lang="ja">気に入ったらカフェへ。<br>その場でお支払い、履いたままお出かけ。</p>
+        <p data-lang="en">If you love them, head to the café.<br>Pay right there and walk out wearing them.</p>
+      </div>
+    </div>
+  </div>
+
+  <p class="trial-footer" data-lang="ko">서울의 거리 위에서, 직접 느껴본 다음에.<br>그게 우리가 생각하는 가장 좋은 쇼핑입니다.</p>
+  <p class="trial-footer" data-lang="ja">ソウルの街で、自分の足で感じてから。<br>それが私たちが考える最高のショッピングです。</p>
+  <p class="trial-footer" data-lang="en">Feel it on the streets of Seoul, with your own feet.<br>That's our idea of the best shopping experience.</p>
+
+  <div class="trial-scroll-hint" data-lang="ko">SCROLL</div>
+  <div class="trial-scroll-hint" data-lang="ja">SCROLL</div>
+  <div class="trial-scroll-hint" data-lang="en">SCROLL</div>
 </section>
 
 <!-- ── Hero ── -->
