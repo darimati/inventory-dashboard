@@ -1364,31 +1364,131 @@ h3 { font-size: clamp(18px, 2.5vw, 24px); font-weight: 600; line-height: 1.3; }
   .accordion-body { transition-duration: 0.3s !important; }
   .floating-cta { transition-duration: 0.4s !important; }
 
-  .topbar { animation: none !important; background: var(--accent) !important; }
+  /* ── TOP BAR: compact single line ── */
+  .topbar {
+    animation: none !important;
+    background: var(--accent) !important;
+    padding: 8px 16px;
+    font-size: 12px;
+  }
   .urgency-dot { animation: none !important; }
-  .nav { backdrop-filter: none; -webkit-backdrop-filter: none; background: rgba(10,10,10,0.97); }
 
-  /* Hero: no float, no video */
-  .hero .container { grid-template-columns: 1fr; gap: 24px; text-align: center; }
-  .hero-content { max-width: 100%; }
-  .hero-actions { justify-content: center; }
-  .hero-image img { animation: none !important; max-width: 75%; margin: 0 auto; display: block; }
+  /* ── NAV: bigger touch targets ── */
+  .nav {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: rgba(10,10,10,0.97);
+    padding: 12px 0;
+    top: 33px;
+  }
+  .nav-logo img { height: 24px !important; }
+  .nav-cta {
+    padding: 12px 20px;
+    font-size: 15px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  /* ── HERO: mobile-first layout ── */
+  .hero { min-height: auto; padding: 32px 0 40px; }
+  .hero .container {
+    grid-template-columns: 1fr;
+    gap: 24px;
+    text-align: center;
+  }
+  .hero-content { max-width: 100%; order: 1; }
+  .hero-content .badge { font-size: 11px; padding: 6px 12px; margin-bottom: 14px; }
+  .hero-content h1 { font-size: 28px; margin-bottom: 14px; }
+  .hero-content p { font-size: 16px; margin-bottom: 24px; }
+  .hero-actions {
+    justify-content: center;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  .hero-image { order: 2; }
+  .hero-image img {
+    animation: none !important;
+    max-width: 70%;
+    margin: 0 auto;
+    display: block;
+  }
   .hero-bg-video { display: none !important; }
 
-  /* Stats: no counter pulse */
-  .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 24px; }
-  .stat-item .stat-number { animation: none !important; }
-  .stat-item .stat-number.counted { animation: none !important; }
+  /* ── BUTTONS: 44px+ touch targets ── */
+  .btn-primary {
+    animation: none !important;
+    padding: 16px 32px;
+    font-size: 17px;
+    min-height: 52px;
+    justify-content: center;
+    border-radius: 12px;
+    width: 100%;
+  }
+  .btn-secondary {
+    padding: 14px 28px;
+    font-size: 15px;
+    min-height: 48px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    width: 100%;
+  }
 
-  /* Ticker: stop scroll */
+  /* Hero feature tags */
+  .hero-content > div:last-child {
+    justify-content: center;
+    font-size: 13px !important;
+    opacity: 0.8 !important;
+    gap: 12px !important;
+  }
+
+  /* ── PAIN SECTION ── */
+  .pain-section { padding: 48px 0; }
+  .pain-card { padding: 24px 20px; }
+  .pain-card h3 { font-size: 16px; }
+  .pain-card p { font-size: 15px; line-height: 1.5; }
+  .pain-icon { font-size: 32px; margin-bottom: 12px; }
+  .pain-arrow span { font-size: 14px; padding: 12px 20px; min-height: 44px; display: inline-flex; align-items: center; }
+
+  /* ── STATS ── */
+  .stats-bar { padding: 32px 0; }
+  .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 20px; }
+  .stat-item .stat-number { animation: none !important; font-size: 28px; }
+  .stat-item .stat-number.counted { animation: none !important; }
+  .stat-item .stat-label { font-size: 12px; }
+
+  /* ── TICKER: stop scroll ── */
+  .ticker-bar { padding: 10px 0; }
   .ticker-track { animation: none !important; }
 
-  /* Floating CTA: proper spacing */
-  .floating-cta { display: block; }
-  .floating-cta .cta-btn { animation: none !important; }
-  body { padding-bottom: 64px; }
+  /* ── MOVEMENTS ── */
+  .movement-content { padding: 24px 16px; }
+  .movement-content h3 { font-size: 20px; }
+  .movement-content p { font-size: 15px; line-height: 1.5; }
+  .movement-specs { gap: 8px; }
+  .movement-spec { font-size: 12px; padding: 6px 10px; }
 
-  /* Grids → single column */
+  /* ── FLOATING CTA: prominent ── */
+  .floating-cta {
+    display: block;
+    padding: 14px 20px;
+    padding-bottom: calc(14px + env(safe-area-inset-bottom));
+  }
+  .floating-cta .cta-btn {
+    animation: none !important;
+    padding: 14px 28px;
+    font-size: 16px;
+    font-weight: 800;
+    min-height: 48px;
+    border-radius: 10px;
+  }
+  .floating-cta .price-info .new { font-size: 22px; }
+  body { padding-bottom: 72px; }
+
+  /* ── GRIDS → single column ── */
   .credentials-list { grid-template-columns: 1fr; }
   .gallery-grid { grid-template-columns: 1fr 1fr; }
   .gallery-grid .wide { grid-column: span 1; }
@@ -1398,22 +1498,65 @@ h3 { font-size: clamp(18px, 2.5vw, 24px); font-weight: 600; line-height: 1.3; }
   .story-step { grid-template-columns: 56px 1fr; gap: 16px; }
   .movements-grid { grid-template-columns: 1fr; }
 
-  /* Form & layout */
-  .email-form { flex-direction: column; }
+  /* ── FEATURES / REVIEWS: readability ── */
+  .feature-card { padding: 24px 20px; }
+  .feature-card h3 { font-size: 17px; }
+  .feature-card p { font-size: 15px; }
+  .review-card { padding: 24px 20px; }
+  .review-text { font-size: 15px; line-height: 1.6; }
+  .reviewer-name { font-size: 14px; }
+
+  /* ── STORY STEPS ── */
+  .story-step p { font-size: 15px; }
+  .story-step h3 { font-size: 17px; }
+
+  /* ── CREDENTIALS ── */
+  .credential-text { font-size: 15px; }
+
+  /* ── CTA SECTION ── */
+  .cta-section h2 { font-size: 24px; }
+  .cta-section p { font-size: 16px; }
+  .email-form { flex-direction: column; gap: 10px; }
+  .email-form input { min-height: 48px; font-size: 16px; border-radius: 10px; }
+  .email-form button { min-height: 48px; font-size: 16px; border-radius: 10px; }
   .cta-perks { flex-direction: column; align-items: center; }
-  .section { padding: 60px 0; }
+
+  /* ── GENERAL SPACING ── */
+  .section { padding: 48px 0; }
+  .container { padding: 0 20px; }
   #champion > .container > div { grid-template-columns: 1fr !important; }
 
-  /* Video player */
-  .play-btn-circle { width: 60px; height: 60px; }
+  /* ── VIDEO PLAYER ── */
+  .play-btn-circle { width: 56px; height: 56px; }
   .play-btn-circle svg { width: 24px; height: 24px; }
 
-  /* Shimmer, glow, gradient — all off */
+  /* ── PRICE BARS ── */
+  .price-bar-label .brand { font-size: 12px; }
+
+  /* ── NEXT MODEL ── */
+  .next-model .section { padding: 40px 0; }
+
+  /* ── SHIMMER / GLOW / GRADIENT — all off ── */
   .hybrid-banner { animation: none !important; background: var(--accent) !important; }
   .hybrid-banner::before { display: none !important; }
-  .btn-primary { animation: none !important; }
   .price-bar-fill.winner { animation: none !important; }
   .cta-section::before { display: none !important; }
+
+  /* ── MODALS: full-screen on mobile ── */
+  .feature-modal {
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: 100vh;
+    border-radius: 0;
+  }
+  .feature-modal-close {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
 }
 </style>
 </head>
