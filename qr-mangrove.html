@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>DARIMATI BR-001 × MANGROVE</title>
+<meta name="description" content="Born in Seoul. Designed for the Hybrid Moment. DARIMATI BR-001 at MANGROVE Hotel.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#f7f4f0;--bg-warm:#ece8e2;--bg-white:#fff;
+  --text:#1a1a1a;--text-sub:#6b6560;--text-light:#9c9590;
+  --border:#e0dbd5;--accent:#1a1a1a;
+  --font:'Inter',system-ui,-apple-system,'Helvetica Neue',sans-serif;
+}
+html{scroll-behavior:smooth;font-size:16px}
+body{font-family:var(--font);color:var(--text);background:var(--bg);
+  -webkit-font-smoothing:antialiased;overflow-x:hidden;line-height:1.6}
+img{max-width:100%;height:auto;display:block}
+a{color:inherit;text-decoration:none}
+button{cursor:pointer;font-family:var(--font)}
+
+/* ── Language Selector ── */
+.lang-gate{position:fixed;inset:0;z-index:1000;background:var(--bg);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:32px;transition:opacity .5s,visibility .5s}
+.lang-gate.hidden{opacity:0;visibility:hidden;pointer-events:none}
+.lang-logo{height:24px;margin-bottom:48px;opacity:.7}
+.lang-title{font-size:13px;font-weight:500;letter-spacing:2px;text-transform:uppercase;
+  color:var(--text-light);margin-bottom:32px}
+.lang-buttons{display:flex;flex-direction:column;gap:12px;width:100%;max-width:280px}
+.lang-btn{display:flex;align-items:center;justify-content:space-between;
+  padding:18px 24px;border:1px solid var(--border);border-radius:12px;
+  background:var(--bg-white);font-size:16px;font-weight:500;color:var(--text);
+  transition:all .2s}
+.lang-btn:hover,.lang-btn:active{border-color:var(--text);background:var(--text);color:#fff}
+.lang-btn span{font-size:13px;color:var(--text-light);font-weight:400}
+.lang-btn:hover span,.lang-btn:active span{color:rgba(255,255,255,.6)}
+.lang-collab{margin-top:56px;display:flex;align-items:center;gap:12px;opacity:.4}
+.lang-collab img{height:20px}
+.lang-collab span{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--text-sub)}
+
+/* ── Main Content ── */
+.page{opacity:0;transition:opacity .6s;pointer-events:none}
+.page.visible{opacity:1;pointer-events:auto}
+
+/* ── Hero ── */
+.hero{position:relative;min-height:100svh;display:flex;flex-direction:column;
+  justify-content:flex-end;padding:32px 24px 48px;overflow:hidden}
+.hero-img{position:absolute;inset:0;z-index:0}
+.hero-img img{width:100%;height:100%;object-fit:cover}
+.hero-img::after{content:'';position:absolute;inset:0;
+  background:linear-gradient(180deg,rgba(247,244,240,0) 30%,rgba(247,244,240,.3) 60%,rgba(247,244,240,.95) 90%)}
+.hero-content{position:relative;z-index:1}
+.hero-tag{font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;
+  color:var(--text-light);margin-bottom:8px}
+.hero-heading{font-size:clamp(28px,7vw,42px);font-weight:700;letter-spacing:-.5px;
+  line-height:1.15;margin-bottom:12px}
+.hero-sub{font-size:15px;color:var(--text-sub);line-height:1.6;max-width:360px}
+
+/* ── Section Utility ── */
+.section{padding:64px 24px}
+.section--warm{background:var(--bg-warm)}
+.section--white{background:var(--bg-white)}
+.section--dark{background:var(--text);color:#fff}
+.section--dark .s-tag{color:rgba(255,255,255,.4)}
+.section--dark .s-sub{color:rgba(255,255,255,.6)}
+.s-tag{font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;
+  color:var(--text-light);margin-bottom:8px}
+.s-heading{font-size:clamp(22px,5vw,32px);font-weight:700;letter-spacing:-.3px;
+  line-height:1.2;margin-bottom:16px}
+.s-sub{font-size:15px;color:var(--text-sub);line-height:1.7}
+
+/* ── Product Intro ── */
+.product-intro{text-align:center;display:flex;flex-direction:column;align-items:center}
+.product-intro .shoe-img{width:85%;max-width:400px;margin:32px auto;
+  filter:drop-shadow(0 20px 40px rgba(0,0,0,.1))}
+.product-name{font-size:28px;font-weight:700;letter-spacing:-1px;margin-bottom:4px}
+.product-cat{font-size:13px;color:var(--text-light);letter-spacing:1px;text-transform:uppercase;
+  font-weight:500;margin-bottom:20px}
+.product-desc{font-size:15px;color:var(--text-sub);line-height:1.8;max-width:380px;
+  text-align:center}
+
+/* ── Lifestyle Gallery ── */
+.life-gallery{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:32px}
+.life-gallery img{width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:12px}
+.life-gallery .lg-wide{grid-column:span 2;aspect-ratio:16/9}
+
+/* ── Philosophy ── */
+.phil-grid{display:flex;flex-direction:column;gap:24px;margin-top:24px}
+.phil-item{display:flex;gap:16px;align-items:flex-start}
+.phil-icon{width:40px;height:40px;border-radius:10px;background:var(--bg-warm);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  font-size:18px}
+.section--dark .phil-icon{background:rgba(255,255,255,.1)}
+.phil-item h4{font-size:15px;font-weight:600;margin-bottom:2px}
+.phil-item p{font-size:13px;color:var(--text-sub);line-height:1.6}
+.section--dark .phil-item p{color:rgba(255,255,255,.6)}
+
+/* ── Tech Specs (20% sports) ── */
+.tech-strip{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:24px}
+.tech-card{background:var(--bg-white);border-radius:12px;overflow:hidden;
+  border:1px solid var(--border)}
+.tech-card img{width:100%;aspect-ratio:1;object-fit:cover}
+.tech-card-body{padding:16px}
+.tech-card-body h4{font-size:14px;font-weight:600;margin-bottom:4px}
+.tech-card-body p{font-size:12px;color:var(--text-sub);line-height:1.5}
+
+/* ── Magazine ── */
+.mag-block{margin-top:24px;background:var(--bg-white);border-radius:16px;
+  padding:24px;border:1px solid var(--border)}
+.mag-block h4{font-size:15px;font-weight:600;margin-bottom:8px}
+.mag-block p{font-size:13px;color:var(--text-sub);line-height:1.6}
+.mag-tags{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.mag-tag{font-size:11px;font-weight:600;letter-spacing:.5px;padding:5px 12px;
+  border-radius:100px;background:var(--bg-warm);color:var(--text-sub)}
+
+/* ── Mangrove CTA ── */
+.mgv-box{background:var(--bg-white);border-radius:16px;padding:32px 24px;
+  text-align:center;border:1px solid var(--border);margin-top:24px}
+.mgv-badge{display:inline-flex;align-items:center;gap:6px;font-size:11px;
+  font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--text-sub);
+  margin-bottom:16px}
+.mgv-badge img{height:16px;opacity:.6}
+.mgv-heading{font-size:24px;font-weight:700;margin-bottom:8px;letter-spacing:-.3px}
+.mgv-sub{font-size:14px;color:var(--text-sub);margin-bottom:24px;line-height:1.6}
+.mgv-cta{display:inline-block;background:var(--text);color:#fff;padding:14px 36px;
+  border-radius:8px;font-size:14px;font-weight:600;letter-spacing:.3px;
+  transition:opacity .2s}
+.mgv-cta:active{opacity:.8}
+.mgv-ig{display:inline-flex;align-items:center;gap:6px;margin-top:16px;
+  font-size:13px;color:var(--text-light);font-weight:500}
+
+/* ── Full Width Image ── */
+.fw-image{padding:0;overflow:hidden}
+.fw-image img{width:100%;aspect-ratio:4/3;object-fit:cover}
+
+/* ── Footer ── */
+.footer{padding:32px 24px;text-align:center;background:var(--bg-warm)}
+.footer-logo{height:18px;margin:0 auto 12px;opacity:.5}
+.footer p{font-size:12px;color:var(--text-light);line-height:1.6}
+.footer a{text-decoration:underline}
+
+/* ── Lang-based content toggle ── */
+[data-lang]{display:none}
+[data-lang].active{display:block}
+
+/* ── Scroll Animation ── */
+.fade-in{opacity:0;transform:translateY(20px);transition:opacity .6s ease,transform .6s ease}
+.fade-in.visible{opacity:1;transform:translateY(0)}
+
+/* ── Desktop: keep mobile-width centered ── */
+@media(min-width:600px){
+  .page{max-width:480px;margin:0 auto}
+  .hero{border-radius:0 0 20px 20px}
+  .footer{border-radius:0}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══ LANGUAGE GATE ═══ -->
+<div class="lang-gate" id="langGate">
+  <img src="https://www.darimati.us/cdn/shop/t/15/assets/darimati-wordmark.png" alt="DARIMATI" class="lang-logo">
+  <p class="lang-title">Select Language</p>
+  <div class="lang-buttons">
+    <button class="lang-btn" onclick="setLang('ko')">한국어 <span>Korean</span></button>
+    <button class="lang-btn" onclick="setLang('ja')">日本語 <span>Japanese</span></button>
+    <button class="lang-btn" onclick="setLang('en')">English <span>English</span></button>
+  </div>
+  <div class="lang-collab">
+    <span>×</span>
+    <span>MANGROVE</span>
+  </div>
+</div>
+
+<!-- ═══ MAIN PAGE ═══ -->
+<div class="page" id="mainPage">
+
+<!-- ── Hero ── -->
+<section class="hero">
+  <div class="hero-img">
+    <img src="https://www.darimati.us/cdn/shop/t/15/assets/br001-b1.jpg" alt="DARIMATI BR-001 lifestyle">
+  </div>
+  <div class="hero-content">
+    <p class="hero-tag" data-lang="ko" data-key="hero-tag">DARIMATI × MANGROVE</p>
+    <p class="hero-tag" data-lang="ja" data-key="hero-tag">DARIMATI × MANGROVE</p>
+    <p class="hero-tag" data-lang="en" data-key="hero-tag">DARIMATI × MANGROVE</p>
+    <h1 class="hero-heading" data-lang="ko">서울에서 태어난<br>도시형 하이브리드 슈즈</h1>
+    <h1 class="hero-heading" data-lang="ja">ソウルから生まれた<br>都市型ハイブリッドシューズ</h1>
+    <h1 class="hero-heading" data-lang="en">Born in Seoul.<br>Designed for the<br>Hybrid Moment.</h1>
+    <p class="hero-sub" data-lang="ko">도시에서의 러닝부터 워크아웃, 일상까지.<br>quiet performance™</p>
+    <p class="hero-sub" data-lang="ja">都市でのランニングからワークアウト、日常まで。<br>quiet performance™</p>
+    <p class="hero-sub" data-lang="en">From city runs to workouts to everyday life.<br>quiet performance™</p>
+  </div>
+</section>
+
+<!-- ── Product Intro ── -->
+<section class="section section--white product-intro fade-in">
+  <p class="s-tag">BR-001</p>
+
+  <h2 class="product-name">Bridge-001</h2>
+  <p class="product-cat" data-lang="ko">City Running Shoe</p>
+  <p class="product-cat" data-lang="ja">シティランニングシューズ</p>
+  <p class="product-cat" data-lang="en">City Running Shoe</p>
+
+  <img src="https://cdn.shopify.com/s/files/1/0775/5956/2452/files/dariamti_shoe.jpg?v=1776313172" alt="BR-001" class="shoe-img">
+
+  <p class="product-desc" data-lang="ko">
+    다리(Bridge)의 하중 분산 원리에서 영감받은 구조.<br>
+    도시의 불규칙한 노면 위에서 안정적으로,<br>
+    하나의 신발로 일상과 러닝을 연결합니다.
+  </p>
+  <p class="product-desc" data-lang="ja">
+    橋(Bridge)の荷重分散原理からインスピレーションを得た構造。<br>
+    都市の不規則な路面でも安定した歩行を実現し、<br>
+    一足で日常とランニングをつなぎます。
+  </p>
+  <p class="product-desc" data-lang="en">
+    Engineered from the load-distribution principles of a bridge.<br>
+    Stable on uneven city surfaces.<br>
+    One shoe connecting your everyday and your run.
+  </p>
+</section>
+
+<!-- ── Lifestyle Gallery ── -->
+<section class="section fade-in" style="padding-top:0">
+  <div class="life-gallery">
+    <img src="https://www.darimati.us/cdn/shop/t/15/assets/br001-b2.jpg" alt="Lifestyle 1" loading="lazy">
+    <img src="https://www.darimati.us/cdn/shop/t/15/assets/br001-b3.jpg" alt="Lifestyle 2" loading="lazy">
+    <img src="https://www.darimati.us/cdn/shop/t/15/assets/br001-station.jpg" alt="Urban life" class="lg-wide" loading="lazy">
+    <img src="https://www.darimati.us/cdn/shop/t/15/assets/br001-b4.jpg" alt="Lifestyle 3" loading="lazy">
+    <img src="https://www.darimati.us/cdn/shop/t/15/assets/br001-b5.jpg" alt="Lifestyle 4" loading="lazy">
+  </div>
+</section>
+
+<!-- ── Design Philosophy (Lifestyle 80%) ── -->
+<section class="section section--white fade-in">
+  <p class="s-tag" data-lang="ko">디자인 철학</p>
+  <p class="s-tag" data-lang="ja">デザイン哲学</p>
+  <p class="s-tag" data-lang="en">Design Philosophy</p>
+
+  <h2 class="s-heading" data-lang="ko">City ≠ Track<br>도시는 트랙이 아닙니다</h2>
+  <h2 class="s-heading" data-lang="ja">City ≠ Track<br>都市はトラックではない</h2>
+  <h2 class="s-heading" data-lang="en">City ≠ Track<br>The city is not a track.</h2>
+
+  <p class="s-sub" data-lang="ko">
+    보도블럭, 다리, 경사, 콘크리트 — 도시의 노면은 불규칙합니다. BR-001은 이 환경을 위해 처음부터 설계되었습니다. 주목받지 않으면서 움직임을 지지하는 신발, quiet performance™.
+  </p>
+  <p class="s-sub" data-lang="ja">
+    歩道ブロック、橋、坂道、コンクリート — 都市の路面は不規則です。BR-001はこの環境のためにゼロから設計されました。注目を集めず、動きを支える靴、quiet performance™。
+  </p>
+  <p class="s-sub" data-lang="en">
+    Sidewalks, bridges, slopes, concrete — the city surface is irregular. BR-001 was designed from scratch for this environment. A shoe that supports your movement without drawing attention. quiet performance™.
+  </p>
+
+  <div class="phil-grid">
+    <div class="phil-item">
+      <div class="phil-icon">🌉</div>
+      <div>
+        <h4 data-lang="ko">Bridge Mechanics™</h4>
+        <h4 data-lang="ja">Bridge Mechanics™</h4>
+        <h4 data-lang="en">Bridge Mechanics™</h4>
+        <p data-lang="ko">다리 구조 영감의 하중 분산. 충격을 반발하지 않고 구조 전체에 분산합니다.</p>
+        <p data-lang="ja">橋の構造から着想した荷重分散。衝撃を跳ね返すのではなく、構造全体に分散します。</p>
+        <p data-lang="en">Load distribution inspired by bridge engineering. Impact is distributed across the entire structure, not bounced back.</p>
+      </div>
+    </div>
+    <div class="phil-item">
+      <div class="phil-icon">◯</div>
+      <div>
+        <h4 data-lang="ko">Stable Core™</h4>
+        <h4 data-lang="ja">Stable Core™</h4>
+        <h4 data-lang="en">Stable Core™</h4>
+        <p data-lang="ko">A-TPU 폼 미드솔. 지면 정렬 기하학으로 도시 노면 위에서 안정적인 균형을 유지합니다.</p>
+        <p data-lang="ja">A-TPUフォームミッドソール。地面整列ジオメトリにより、都市路面で安定したバランスを保ちます。</p>
+        <p data-lang="en">A-TPU foam midsole. Ground-aligned geometry maintains stable balance on uneven city surfaces.</p>
+      </div>
+    </div>
+    <div class="phil-item">
+      <div class="phil-icon">⟲</div>
+      <div>
+        <h4 data-lang="ko">Fit in Motion</h4>
+        <h4 data-lang="ja">Fit in Motion</h4>
+        <h4 data-lang="en">Fit in Motion</h4>
+        <p data-lang="ko">이중 레이스 잠금 시스템. 일상에선 느슨하게, 러닝 시엔 타이트하게. 하나의 신발, 두 가지 핏.</p>
+        <p data-lang="ja">デュアルレースロックシステム。日常はゆったりと、ランニング時はタイトに。一足で二つのフィット感。</p>
+        <p data-lang="en">Dual lace-lock system. Loose for everyday, tight for running. One shoe, two fits.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Full Width Lifestyle Image ── -->
+<section class="fw-image fade-in">
+  <img src="https://www.darimati.us/cdn/shop/t/15/assets/br001-hero.jpg" alt="BR-001 lifestyle" loading="lazy">
+</section>
+
+<!-- ── Performance DNA (Sports 20%) ── -->
+<section class="section section--dark fade-in">
+  <p class="s-tag" data-lang="ko">퍼포먼스 DNA</p>
+  <p class="s-tag" data-lang="ja">パフォーマンス DNA</p>
+  <p class="s-tag" data-lang="en">Performance DNA</p>
+
+  <h2 class="s-heading" data-lang="ko" style="color:#fff">도시 러닝을 위한 기술</h2>
+  <h2 class="s-heading" data-lang="ja" style="color:#fff">都市ランニングのためのテクノロジー</h2>
+  <h2 class="s-heading" data-lang="en" style="color:#fff">Technology for City Running</h2>
+
+  <div class="tech-strip">
+    <div class="tech-card" style="border-color:rgba(255,255,255,.1)">
+      <img src="https://cdn.shopify.com/s/files/1/0775/5956/2452/files/08.png?v=1776313172" alt="Outsole grip">
+      <div class="tech-card-body" style="background:var(--text)">
+        <h4 style="color:#fff" data-lang="ko">컴피티션 그립</h4>
+        <h4 style="color:#fff" data-lang="ja">コンペティショングリップ</h4>
+        <h4 style="color:#fff" data-lang="en">Competition Grip</h4>
+        <p style="color:rgba(255,255,255,.5)" data-lang="ko">다방향 러버 패턴. 젖은 노면에서도 안정적인 접지력.</p>
+        <p style="color:rgba(255,255,255,.5)" data-lang="ja">多方向ラバーパターン。濡れた路面でも安定したグリップ。</p>
+        <p style="color:rgba(255,255,255,.5)" data-lang="en">Multi-directional rubber pattern. Stable grip on wet or dry surfaces.</p>
+      </div>
+    </div>
+    <div class="tech-card" style="border-color:rgba(255,255,255,.1)">
+      <img src="https://cdn.shopify.com/s/files/1/0775/5956/2452/files/09.png?v=1776313172" alt="A-TPU cushioning">
+      <div class="tech-card-body" style="background:var(--text)">
+        <h4 style="color:#fff" data-lang="ko">A-TPU 미드솔</h4>
+        <h4 style="color:#fff" data-lang="ja">A-TPUミッドソール</h4>
+        <h4 style="color:#fff" data-lang="en">A-TPU Midsole</h4>
+        <p style="color:rgba(255,255,255,.5)" data-lang="ko">질소 주입 폼. 가볍고, 반응성 높고, 오래 갑니다.</p>
+        <p style="color:rgba(255,255,255,.5)" data-lang="ja">窒素注入フォーム。軽く、レスポンスが高く、長持ち。</p>
+        <p style="color:rgba(255,255,255,.5)" data-lang="en">Nitrogen-infused foam. Light, responsive, long-lasting.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Athlete Image (Sports 20%) ── -->
+<section class="fw-image fade-in">
+  <img src="https://www.darimati.us/cdn/shop/t/15/assets/br001-ath1.jpg" alt="Athlete training" loading="lazy">
+</section>
+
+<!-- ── Brand Story / DARI Magazine ── -->
+<section class="section section--white fade-in">
+  <p class="s-tag" data-lang="ko">브랜드 스토리</p>
+  <p class="s-tag" data-lang="ja">ブランドストーリー</p>
+  <p class="s-tag" data-lang="en">Brand Story</p>
+
+  <h2 class="s-heading" data-lang="ko">한강 위에서 만들어진 브랜드</h2>
+  <h2 class="s-heading" data-lang="ja">漢江のほとりで生まれたブランド</h2>
+  <h2 class="s-heading" data-lang="en">Made on the Han River</h2>
+
+  <p class="s-sub" data-lang="ko">
+    DARIMATI는 서울의 러너, 디자이너, 풋웨어 엔지니어로 구성된 팀입니다. 도시에서 오래 신을 수 있는 기능적 소비재를 만듭니다. 킥스타터에서 214% 달성, 5개국 수출, 미국 러닝 미디어의 호평을 받고 있습니다.
+  </p>
+  <p class="s-sub" data-lang="ja">
+    DARIMATIは、ソウルのランナー、デザイナー、フットウェアエンジニアで構成されたチームです。都市で長く履ける機能的な消費財を作っています。Kickstarterで214%達成、5カ国に輸出、アメリカのランニングメディアから高い評価を得ています。
+  </p>
+  <p class="s-sub" data-lang="en">
+    DARIMATI is a Seoul-based team of runners, designers, and footwear engineers. We make functional goods built to last in the city. 214% funded on Kickstarter, exported to 5 countries, acclaimed by US running media.
+  </p>
+
+  <div class="mag-block">
+    <h4>DARI Magazine</h4>
+    <p data-lang="ko">한강의 다리를 기준으로 서울의 동네별 라이프스타일을 기록하는 아카이브형 매거진. 5개국 수출, 교보문고 10개 지점 판매 중.</p>
+    <p data-lang="ja">漢江の橋を基準にソウルの街ごとのライフスタイルを記録するアーカイブ型マガジン。5カ国に輸出、教保文庫10店舗で販売中。</p>
+    <p data-lang="en">An archive-style magazine documenting Seoul's neighborhoods through the lens of the Han River's bridges. Exported to 5 countries, sold at 10 Kyobo Bookstore locations.</p>
+    <div class="mag-tags">
+      <span class="mag-tag" data-lang="ko">서울</span>
+      <span class="mag-tag" data-lang="ko">라이프스타일</span>
+      <span class="mag-tag" data-lang="ko">5개국 수출</span>
+      <span class="mag-tag" data-lang="ja">ソウル</span>
+      <span class="mag-tag" data-lang="ja">ライフスタイル</span>
+      <span class="mag-tag" data-lang="ja">5カ国輸出</span>
+      <span class="mag-tag" data-lang="en">Seoul</span>
+      <span class="mag-tag" data-lang="en">Lifestyle</span>
+      <span class="mag-tag" data-lang="en">5 Countries</span>
+    </div>
+  </div>
+</section>
+
+<!-- ── Credentials Strip ── -->
+<section class="section section--warm fade-in" style="padding:32px 24px">
+  <div style="display:flex;flex-direction:column;gap:16px;text-align:center">
+    <p style="font-size:13px;font-weight:600;color:var(--text-sub)" data-lang="ko">214% 킥스타터 달성 &middot; 5개국 수출 &middot; 미국 러닝 미디어 호평</p>
+    <p style="font-size:13px;font-weight:600;color:var(--text-sub)" data-lang="ja">Kickstarter 214%達成 &middot; 5カ国輸出 &middot; 米国ランニングメディア好評</p>
+    <p style="font-size:13px;font-weight:600;color:var(--text-sub)" data-lang="en">214% Kickstarter Funded &middot; 5 Countries &middot; US Running Media Acclaimed</p>
+  </div>
+</section>
+
+<!-- ── Final Product Shot ── -->
+<section class="fw-image fade-in">
+  <img src="https://www.darimati.us/cdn/shop/t/15/assets/br001-final.jpg" alt="BR-001 final" loading="lazy">
+</section>
+
+<!-- ── Mangrove Exclusive CTA ── -->
+<section class="section fade-in">
+  <div class="mgv-box">
+    <div class="mgv-badge">
+      <span>MANGROVE × DARIMATI</span>
+    </div>
+
+    <h3 class="mgv-heading" data-lang="ko">Just Try & Ask</h3>
+    <h3 class="mgv-heading" data-lang="ja">Just Try & Ask</h3>
+    <h3 class="mgv-heading" data-lang="en">Just Try & Ask</h3>
+
+    <p class="mgv-sub" data-lang="ko">MANGROVE를 이용하시는 분들만을 위한 특별한 혜택.<br>프론트에 문의해 주세요.</p>
+    <p class="mgv-sub" data-lang="ja">MANGROVEをご利用の皆さまだけの特別な特典。<br>フロントにお問い合わせください。</p>
+    <p class="mgv-sub" data-lang="en">An exclusive benefit for MANGROVE guests.<br>Ask at the front desk.</p>
+
+    <a href="https://www.darimati.us/products/bridge-001" class="mgv-cta" data-lang="ko">온라인 스토어 방문 →</a>
+    <a href="https://www.darimati.us/products/bridge-001" class="mgv-cta" data-lang="ja">オンラインストアへ →</a>
+    <a href="https://www.darimati.us/products/bridge-001" class="mgv-cta" data-lang="en">Visit Online Store →</a>
+
+    <br>
+    <a href="https://www.instagram.com/darimati_official/" class="mgv-ig" target="_blank" rel="noopener">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="5"/><circle cx="17.5" cy="6.5" r="1.5" fill="currentColor" stroke="none"/></svg>
+      @darimati_official
+    </a>
+  </div>
+</section>
+
+<!-- ── Footer ── -->
+<footer class="footer">
+  <img src="https://www.darimati.us/cdn/shop/t/15/assets/darimati-wordmark.png" alt="DARIMATI" class="footer-logo">
+  <p data-lang="ko">&copy; 2026 DARIMATI. 서울에서 만든 도시형 러닝화.<br><a href="https://www.darimati.us">darimati.us</a></p>
+  <p data-lang="ja">&copy; 2026 DARIMATI. ソウル発の都市型ランニングシューズ。<br><a href="https://www.darimati.us">darimati.us</a></p>
+  <p data-lang="en">&copy; 2026 DARIMATI. City running shoes, born in Seoul.<br><a href="https://www.darimati.us">darimati.us</a></p>
+</footer>
+
+</div><!-- /page -->
+
+<script>
+function setLang(lang) {
+  // Hide gate
+  document.getElementById('langGate').classList.add('hidden');
+  // Show page
+  document.getElementById('mainPage').classList.add('visible');
+  // Toggle language content
+  document.querySelectorAll('[data-lang]').forEach(el => {
+    el.classList.toggle('active', el.dataset.lang === lang);
+  });
+  // Set html lang
+  document.documentElement.lang = lang;
+  // Save preference
+  try { localStorage.setItem('darimati-lang', lang); } catch(e) {}
+  // Trigger scroll animations
+  requestAnimationFrame(initScrollAnim);
+}
+
+function initScrollAnim() {
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        obs.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.15 });
+  document.querySelectorAll('.fade-in').forEach(el => obs.observe(el));
+}
+
+// Check saved language preference
+(function() {
+  try {
+    const saved = localStorage.getItem('darimati-lang');
+    if (saved) setLang(saved);
+  } catch(e) {}
+})();
+</script>
+
+</body>
+</html>
