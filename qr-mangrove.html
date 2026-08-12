@@ -39,8 +39,10 @@ button{cursor:pointer;font-family:var(--font)}
 .lang-bottom{position:relative;z-index:1;width:100%;display:flex;flex-direction:column;
   align-items:center;padding:0 32px 48px}
 .lang-logo{height:22px;margin-bottom:8px;opacity:.8}
-.lang-tagline{font-size:12px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;
-  color:var(--text-sub);margin-bottom:32px}
+.lang-tagline{font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;
+  color:var(--text-sub);margin-bottom:12px}
+.lang-benefit{font-size:20px;font-weight:700;color:var(--text);letter-spacing:-.3px;
+  margin-bottom:28px;line-height:1.3}
 .lang-title{font-size:13px;font-weight:500;letter-spacing:2px;text-transform:uppercase;
   color:var(--text-light);margin-bottom:20px}
 .lang-buttons{display:flex;flex-direction:column;gap:10px;width:100%;max-width:280px}
@@ -55,6 +57,15 @@ button{cursor:pointer;font-family:var(--font)}
 .lang-collab{margin-top:28px;display:flex;align-items:center;gap:12px;opacity:.4}
 .lang-collab img{height:20px}
 .lang-collab span{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--text-sub)}
+
+/* ── Mangrove Exclusive Top Banner ── */
+.mgv-top-banner{background:var(--text);color:#fff;padding:20px 24px;text-align:center}
+.mgv-top-banner .mgv-top-tag{font-size:10px;font-weight:600;letter-spacing:2px;
+  text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:6px}
+.mgv-top-banner .mgv-top-heading{font-size:17px;font-weight:700;line-height:1.4;
+  letter-spacing:-.2px}
+.mgv-top-banner .mgv-top-sub{font-size:13px;color:rgba(255,255,255,.6);margin-top:6px;
+  line-height:1.5}
 
 /* ── Main Content ── */
 .page{opacity:0;transition:opacity .6s;pointer-events:none}
@@ -182,7 +193,8 @@ button{cursor:pointer;font-family:var(--font)}
   </div>
   <div class="lang-bottom">
     <img src="https://www.darimati.us/cdn/shop/t/15/assets/darimati-wordmark.png" alt="DARIMATI" class="lang-logo">
-    <p class="lang-tagline">Born in Seoul</p>
+    <p class="lang-tagline">MANGROVE EXCLUSIVE</p>
+    <p class="lang-benefit">특별한 혜택을 만나보세요</p>
     <p class="lang-title">Select Language</p>
     <div class="lang-buttons">
       <button class="lang-btn" onclick="setLang('ko')">한국어 <span>Korean</span></button>
@@ -198,6 +210,17 @@ button{cursor:pointer;font-family:var(--font)}
 
 <!-- ═══ MAIN PAGE ═══ -->
 <div class="page" id="mainPage">
+
+<!-- ── Mangrove Exclusive Top Banner ── -->
+<div class="mgv-top-banner">
+  <p class="mgv-top-tag">MANGROVE EXCLUSIVE</p>
+  <p class="mgv-top-heading" data-lang="ko">지금 매장에서 결제하면<br>특별한 혜택을 드립니다</p>
+  <p class="mgv-top-heading" data-lang="ja">今、店頭でお支払いいただくと<br>特別な特典をご用意しています</p>
+  <p class="mgv-top-heading" data-lang="en">Pay in-store now and<br>receive an exclusive benefit</p>
+  <p class="mgv-top-sub" data-lang="ko">프론트 데스크에 문의해 주세요</p>
+  <p class="mgv-top-sub" data-lang="ja">フロントデスクにお尋ねください</p>
+  <p class="mgv-top-sub" data-lang="en">Ask at the front desk</p>
+</div>
 
 <!-- ── Hero ── -->
 <section class="hero">
