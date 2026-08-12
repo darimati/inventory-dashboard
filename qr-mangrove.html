@@ -67,6 +67,35 @@ button{cursor:pointer;font-family:var(--font)}
 .mgv-top-banner .mgv-top-sub{font-size:13px;color:rgba(255,255,255,.6);margin-top:6px;
   line-height:1.5}
 
+/* ── Benefit Slide (Full-screen highlight) ── */
+.benefit-slide{min-height:100svh;display:flex;flex-direction:column;
+  justify-content:center;align-items:center;padding:48px 28px;
+  background:var(--text);color:#fff;text-align:center;position:relative;overflow:hidden}
+.benefit-slide::before{content:'';position:absolute;top:-60%;right:-40%;
+  width:120%;height:120%;border-radius:50%;
+  background:radial-gradient(circle,rgba(255,255,255,.03) 0%,transparent 70%)}
+.benefit-badge{display:inline-flex;align-items:center;gap:6px;
+  padding:6px 16px;border:1px solid rgba(255,255,255,.2);border-radius:100px;
+  font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;
+  color:rgba(255,255,255,.6);margin-bottom:32px}
+.benefit-main{font-size:clamp(24px,6.5vw,36px);font-weight:800;line-height:1.25;
+  letter-spacing:-.5px;margin-bottom:16px;max-width:360px}
+.benefit-main em{font-style:normal;color:#ffd700}
+.benefit-sub{font-size:15px;color:rgba(255,255,255,.55);line-height:1.7;
+  max-width:320px;margin-bottom:40px}
+.benefit-divider{width:40px;height:1px;background:rgba(255,255,255,.2);margin:0 auto 40px}
+.benefit-origin-tag{font-size:10px;font-weight:600;letter-spacing:2px;
+  text-transform:uppercase;color:rgba(255,255,255,.35);margin-bottom:12px}
+.benefit-origin{font-size:clamp(18px,4.5vw,24px);font-weight:700;line-height:1.35;
+  letter-spacing:-.3px;max-width:320px;margin-bottom:12px}
+.benefit-origin-sub{font-size:13px;color:rgba(255,255,255,.4);line-height:1.6;max-width:300px}
+.benefit-scroll-hint{position:absolute;bottom:28px;left:50%;transform:translateX(-50%);
+  font-size:11px;color:rgba(255,255,255,.3);letter-spacing:1px;
+  display:flex;flex-direction:column;align-items:center;gap:6px}
+.benefit-scroll-hint::after{content:'';width:1px;height:24px;background:rgba(255,255,255,.2);
+  animation:scroll-pulse 2s infinite}
+@keyframes scroll-pulse{0%,100%{opacity:.2;height:24px}50%{opacity:.5;height:32px}}
+
 /* ── Main Content ── */
 .page{opacity:0;transition:opacity .6s;pointer-events:none}
 .page.visible{opacity:1;pointer-events:auto}
@@ -211,16 +240,33 @@ button{cursor:pointer;font-family:var(--font)}
 <!-- ═══ MAIN PAGE ═══ -->
 <div class="page" id="mainPage">
 
-<!-- ── Mangrove Exclusive Top Banner ── -->
-<div class="mgv-top-banner">
-  <p class="mgv-top-tag">MANGROVE EXCLUSIVE</p>
-  <p class="mgv-top-heading" data-lang="ko">지금 결제하면 특별 모자 구성 세트 혜택</p>
-  <p class="mgv-top-heading" data-lang="ja">今お支払いで特別キャップセット特典</p>
-  <p class="mgv-top-heading" data-lang="en">Pay now — Special cap bundle included</p>
-  <p class="mgv-top-sub" data-lang="ko">카페에서 바로 결제하고 신고 나가세요</p>
-  <p class="mgv-top-sub" data-lang="ja">カフェでお支払い、そのまま履いてお出かけ</p>
-  <p class="mgv-top-sub" data-lang="en">Pay at the café, walk out wearing them</p>
-</div>
+<!-- ── Benefit Slide (Full-screen highlight) ── -->
+<section class="benefit-slide">
+  <p class="benefit-badge">MANGROVE EXCLUSIVE</p>
+
+  <h2 class="benefit-main" data-lang="ko">지금 구매하면<br><em>러닝 모자 세트</em>까지<br>최저가로 증정</h2>
+  <h2 class="benefit-main" data-lang="ja">今すぐ購入で<br><em>ランニングキャップセット</em>を<br>最安値でプレゼント</h2>
+  <h2 class="benefit-main" data-lang="en">Buy now &mdash;<br><em>Running Cap Set</em><br>included at the best price</h2>
+
+  <p class="benefit-sub" data-lang="ko">맹그로브 고객님만을 위한 단독 구성입니다.<br>카페에서 바로 결제하고 신고 나가세요.</p>
+  <p class="benefit-sub" data-lang="ja">MANGROVEのお客様だけの限定構成です。<br>カフェでお支払い、そのまま履いてお出かけ。</p>
+  <p class="benefit-sub" data-lang="en">An exclusive bundle only for MANGROVE guests.<br>Pay at the café, walk out wearing them.</p>
+
+  <div class="benefit-divider"></div>
+
+  <p class="benefit-origin-tag">ONLY IN SEOUL</p>
+  <p class="benefit-origin" data-lang="ko">서울에서만 만나볼 수 있는<br>스타트업이 만든 신발</p>
+  <p class="benefit-origin" data-lang="ja">ソウルでしか出会えない<br>スタートアップが生んだシューズ</p>
+  <p class="benefit-origin" data-lang="en">Shoes crafted by a Seoul startup<br>— available only here</p>
+
+  <p class="benefit-origin-sub" data-lang="ko">킥스타터 214% 달성 · 5개국 수출 · 미국 러닝 미디어 호평</p>
+  <p class="benefit-origin-sub" data-lang="ja">Kickstarter 214%達成 · 5カ国輸出 · 米国ランニングメディア好評</p>
+  <p class="benefit-origin-sub" data-lang="en">214% Kickstarter funded · Exported to 5 countries · US running media acclaimed</p>
+
+  <div class="benefit-scroll-hint" data-lang="ko">SCROLL</div>
+  <div class="benefit-scroll-hint" data-lang="ja">SCROLL</div>
+  <div class="benefit-scroll-hint" data-lang="en">SCROLL</div>
+</section>
 
 <!-- ── Hero ── -->
 <section class="hero">
