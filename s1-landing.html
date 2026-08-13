@@ -607,46 +607,46 @@ h3 { font-size: clamp(18px, 2.5vw, 24px); font-weight: 600; line-height: 1.3; }
 .credentials-section {
   position: relative;
   overflow: hidden;
-  background: linear-gradient(180deg, #0d0d0d 0%, #151515 100%);
+  background: #0a0c14;
 }
-.credentials-section::before {
-  content: '';
+.credentials-section .map-bg {
   position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: url('https://cdn.shopify.com/s/files/1/0775/5956/2452/files/darimati_shoes.jpg?v=1776313172') center/cover;
-  opacity: 0.08;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 110%;
+  max-width: 1400px;
+  opacity: 0.15;
   pointer-events: none;
 }
-.credentials-header { text-align: center; margin-bottom: 48px; position: relative; }
-.credentials-header h2 { margin-bottom: 8px; }
+.credentials-header { position: relative; margin-bottom: 40px; }
+.credentials-header h2 {
+  font-size: clamp(28px, 4vw, 44px);
+  font-weight: 900;
+  margin-bottom: 12px;
+  line-height: 1.15;
+}
+.credentials-header p { color: var(--text-secondary); font-size: 16px; line-height: 1.6; }
 .credentials-list {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
   position: relative;
-  max-width: 900px;
-  margin: 0 auto;
+  max-width: 640px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 .credential-item {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 16px 20px;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.06);
-  border-radius: 12px;
-  transition: background 0.3s;
+  color: rgba(255,255,255,0.7);
+  font-size: 15px;
+  line-height: 1.6;
+  padding-left: 16px;
+  position: relative;
 }
-.credential-item:hover { background: rgba(255,255,255,0.08); transform: translateX(4px); }
-.credential-item { transition: background 0.3s, transform 0.3s; }
-.credential-icon {
-  font-size: 20px;
-  flex-shrink: 0;
-  width: 36px;
-  text-align: center;
+.credential-item::before {
+  content: '·';
+  position: absolute;
+  left: 0;
+  color: rgba(255,255,255,0.4);
+  font-weight: 700;
 }
-.credential-text { font-size: 14px; font-weight: 500; }
-.credential-text .sub { color: var(--text-secondary); font-weight: 400; font-size: 13px; }
 
 /* ── GALLERY ──────────────────────────── */
 .gallery-grid {
@@ -1547,7 +1547,7 @@ video.movement-img {
   body { padding-bottom: 72px; }
 
   /* ── GRIDS → single column ── */
-  .credentials-list { grid-template-columns: 1fr; }
+  .credentials-list { gap: 10px; }
   .gallery-grid { grid-template-columns: 1fr 1fr; }
   .gallery-grid .wide { grid-column: span 1; }
   .features-grid { grid-template-columns: 1fr; }
@@ -1572,8 +1572,8 @@ video.movement-img {
   .story-step h3 { font-size: 17px; margin-bottom: 6px; }
 
   /* ── CREDENTIALS ── */
-  .credentials-list { gap: 16px; }
-  .credential-text { font-size: 15px; line-height: 1.6; }
+  .credentials-list { gap: 10px; }
+  .credential-item { font-size: 14px; }
 
   /* ── CTA SECTION ── */
   .cta-section h2 { font-size: 24px; margin-bottom: 16px; }
@@ -1880,62 +1880,23 @@ video.movement-img {
 
 <!-- CREDENTIALS -->
 <section class="credentials-section section" id="credentials">
+  <img class="map-bg" src="https://www.darimati.us/cdn/shop/t/15/assets/world-map.svg?v=71467348033538393911785312801" alt="" loading="lazy">
   <div class="container">
     <div class="credentials-header">
-      <span class="badge">Proven Globally</span>
-      <h2>🏆 Global Athletes Trust DARIMATI</h2>
-      <p class="text-secondary" style="margin-top:8px;">Korea · France · USA · Thailand · Singapore and more</p>
+      <h2>Global Athletes<br>Trust DARIMATI</h2>
+      <p>Athletes, coaches, and data from Korea, France, USA,<br>Thailand, Singapore and more.</p>
     </div>
 
     <div class="credentials-list">
-      <div class="credential-item">
-        <span class="credential-icon">🏅</span>
-        <div class="credential-text">REXtream Official Champion Shoe <div class="sub">Winning athletes compete in DARIMATI</div></div>
-      </div>
-      <div class="credential-item">
-        <span class="credential-icon">🤝</span>
-        <div class="credential-text">HYROX Official Sponsor & Partner <div class="sub">On-site experience at global events</div></div>
-      </div>
-      <div class="credential-item">
-        <span class="credential-icon">🏋️</span>
-        <div class="credential-text">Anytime Fitness Korea <div class="sub">Official coach training shoe — all locations</div></div>
-      </div>
-      <div class="credential-item">
-        <span class="credential-icon">🏟️</span>
-        <div class="credential-text">AF Strength Trial <div class="sub">Official adopted shoe for competition</div></div>
-      </div>
-      <div class="credential-item">
-        <span class="credential-icon">📊</span>
-        <div class="credential-text">HYROX Korea 2025 — Top 3 Athletes <div class="sub">Chose DARIMATI for competition day</div></div>
-      </div>
-      <div class="credential-item">
-        <span class="credential-icon">🏢</span>
-        <div class="credential-text">Korea's Only Hybrid Training Facility <div class="sub">Official shoe of the dedicated gym</div></div>
-      </div>
-      <div class="credential-item">
-        <span class="credential-icon">🇺🇸</span>
-        <div class="credential-text">US Kickstarter — 218% Funded <div class="sub">2x oversubscribed by backers</div></div>
-      </div>
-      <div class="credential-item">
-        <span class="credential-icon">⭐</span>
-        <div class="credential-text">RunRepeat — Top 14% Performance <div class="sub">Global running shoe review platform</div></div>
-      </div>
-      <div class="credential-item">
-        <span class="credential-icon">🥇</span>
-        <div class="credential-text">Bangkok Crucible Women's Gold <div class="sub">1st place winner wore DARIMATI</div></div>
-      </div>
-      <div class="credential-item">
-        <span class="credential-icon">🏆</span>
-        <div class="credential-text">HYROX Singapore Men's Pro Singles <div class="sub">Champion wore DARIMATI</div></div>
-      </div>
-      <div class="credential-item">
-        <span class="credential-icon">🇫🇷</span>
-        <div class="credential-text">Paris Louvre CrossFit Coaches <div class="sub">Training shoe of choice</div></div>
-      </div>
-      <div class="credential-item">
-        <span class="credential-icon">🌍</span>
-        <div class="credential-text">7+ Countries Competing <div class="sub">From Seoul to San Diego</div></div>
-      </div>
+      <div class="credential-item">Bangkok Crucible Women's Gold — 1st place winner wore DARIMATI</div>
+      <div class="credential-item">HYROX Singapore Men's Pro Singles — champion wore DARIMATI</div>
+      <div class="credential-item">HYROX Korea 2025 Top 3 athletes chose DARIMATI for competition day</div>
+      <div class="credential-item">Paris Louvre CrossFit coaches — training shoe of choice</div>
+      <div class="credential-item">REXtream official champion shoe &amp; on-site experience partner</div>
+      <div class="credential-item">Anytime Fitness Korea — official coach training shoe, all locations</div>
+      <div class="credential-item">RunRepeat — Top 14% performance on global review platform</div>
+      <div class="credential-item">US Kickstarter — 218% funded, 2x oversubscribed</div>
+      <div class="credential-item">7+ countries competing — from Seoul to San Diego</div>
     </div>
   </div>
 </section>
