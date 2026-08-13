@@ -1398,9 +1398,9 @@ h3 { font-size: clamp(18px, 2.5vw, 24px); font-weight: 600; line-height: 1.3; }
     text-align: center;
   }
   .hero-content { max-width: 100%; order: 1; }
-  .hero-content .badge { font-size: 11px; padding: 6px 12px; margin-bottom: 14px; }
-  .hero-content h1 { font-size: 28px; margin-bottom: 14px; }
-  .hero-content p { font-size: 16px; margin-bottom: 24px; }
+  .hero-content .badge { font-size: 11px; padding: 6px 12px; margin-bottom: 16px; }
+  .hero-content h1 { font-size: 28px; margin-bottom: 18px; line-height: 1.25; }
+  .hero-content p { font-size: 16px; margin-bottom: 28px; line-height: 1.65; }
   .hero-actions {
     justify-content: center;
     flex-direction: column;
@@ -1446,28 +1446,33 @@ h3 { font-size: clamp(18px, 2.5vw, 24px); font-weight: 600; line-height: 1.3; }
   }
 
   /* ── PAIN SECTION ── */
-  .pain-section { padding: 48px 0; }
-  .pain-card { padding: 24px 20px; }
-  .pain-card h3 { font-size: 16px; }
-  .pain-card p { font-size: 15px; line-height: 1.5; }
-  .pain-icon { font-size: 32px; margin-bottom: 12px; }
+  .pain-section { padding: 56px 0; }
+  .pain-section .text-center { margin-bottom: 32px !important; }
+  .pain-section .text-center h2 { margin-bottom: 12px; }
+  .pain-grid { gap: 20px; }
+  .pain-card { padding: 28px 22px; }
+  .pain-card h3 { font-size: 16px; margin-bottom: 10px; }
+  .pain-card p { font-size: 15px; line-height: 1.65; }
+  .pain-icon { font-size: 32px; margin-bottom: 14px; }
+  .pain-arrow { margin-top: 28px; }
   .pain-arrow span { font-size: 14px; padding: 12px 20px; min-height: 44px; display: inline-flex; align-items: center; }
 
   /* ── STATS ── */
-  .stats-bar { padding: 32px 0; }
-  .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 20px; }
+  .stats-bar { padding: 36px 0; }
+  .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 24px; }
   .stat-item .stat-number { animation: none !important; font-size: 28px; }
   .stat-item .stat-number.counted { animation: none !important; }
-  .stat-item .stat-label { font-size: 12px; }
+  .stat-item .stat-label { font-size: 12px; margin-top: 4px; }
 
   /* ── TICKER: stop scroll ── */
-  .ticker-bar { padding: 10px 0; }
+  .ticker-bar { padding: 12px 0; }
   .ticker-track { animation: none !important; }
 
   /* ── MOVEMENTS ── */
-  .movement-content { padding: 24px 16px; }
-  .movement-content h3 { font-size: 20px; }
-  .movement-content p { font-size: 15px; line-height: 1.5; }
+  .movements-grid { gap: 20px; }
+  .movement-content { padding: 28px 20px; }
+  .movement-content h3 { font-size: 20px; margin-bottom: 12px; }
+  .movement-content p { font-size: 15px; line-height: 1.65; margin-bottom: 16px; }
   .movement-specs { gap: 8px; }
   .movement-spec { font-size: 12px; padding: 6px 10px; }
 
@@ -1499,31 +1504,38 @@ h3 { font-size: clamp(18px, 2.5vw, 24px); font-weight: 600; line-height: 1.3; }
   .movements-grid { grid-template-columns: 1fr; }
 
   /* ── FEATURES / REVIEWS: readability ── */
-  .feature-card { padding: 24px 20px; }
-  .feature-card h3 { font-size: 17px; }
-  .feature-card p { font-size: 15px; }
-  .review-card { padding: 24px 20px; }
-  .review-text { font-size: 15px; line-height: 1.6; }
+  .features-grid { gap: 16px; }
+  .feature-card { padding: 28px 22px; }
+  .feature-card h3 { font-size: 17px; margin-bottom: 10px; }
+  .feature-card p { font-size: 15px; line-height: 1.65; }
+  .reviews-grid { gap: 20px; }
+  .review-card { padding: 28px 22px; }
+  .review-text { font-size: 15px; line-height: 1.7; margin-bottom: 16px; }
   .reviewer-name { font-size: 14px; }
 
   /* ── STORY STEPS ── */
-  .story-step p { font-size: 15px; }
-  .story-step h3 { font-size: 17px; }
+  .story-step { margin-bottom: 8px; }
+  .story-step p { font-size: 15px; line-height: 1.65; }
+  .story-step h3 { font-size: 17px; margin-bottom: 6px; }
 
   /* ── CREDENTIALS ── */
-  .credential-text { font-size: 15px; }
+  .credentials-list { gap: 16px; }
+  .credential-text { font-size: 15px; line-height: 1.6; }
 
   /* ── CTA SECTION ── */
-  .cta-section h2 { font-size: 24px; }
-  .cta-section p { font-size: 16px; }
+  .cta-section h2 { font-size: 24px; margin-bottom: 16px; }
+  .cta-section p { font-size: 16px; line-height: 1.65; margin-bottom: 20px; }
+  .cta-perks { gap: 12px; margin-bottom: 24px; }
   .email-form { flex-direction: column; gap: 10px; }
   .email-form input { min-height: 48px; font-size: 16px; border-radius: 10px; }
   .email-form button { min-height: 48px; font-size: 16px; border-radius: 10px; }
   .cta-perks { flex-direction: column; align-items: center; }
 
   /* ── GENERAL SPACING ── */
-  .section { padding: 48px 0; }
+  .section { padding: 56px 0; }
   .container { padding: 0 20px; }
+  h2 { margin-bottom: 16px; }
+  .text-center p { margin-top: 10px; }
   #champion > .container > div { grid-template-columns: 1fr !important; }
 
   /* ── VIDEO PLAYER ── */
