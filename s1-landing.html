@@ -1401,7 +1401,7 @@ h3 { font-size: clamp(18px, 2.5vw, 24px); font-weight: 600; line-height: 1.3; }
   }
 
   /* ── HERO: mobile-first layout ── */
-  /* video hidden → show poster as hero background instead */
+  /* keep poster as fallback while video loads */
   .hero { min-height: auto; padding: 32px 0 40px; background: #0a0a0a url('assets/hero-action.jpg') center/cover no-repeat; }
   .hero .container {
     grid-template-columns: 1fr;
@@ -1425,8 +1425,8 @@ h3 { font-size: clamp(18px, 2.5vw, 24px); font-weight: 600; line-height: 1.3; }
     margin: 0 auto;
     display: block;
   }
-  .hero-bg-video { display: none !important; }
-  .hero-poster-mobile { display: block; }
+  /* video stays visible — GPU-heavy CSS removed to prevent mobile lag */
+  .hero-bg-video { will-change: auto; -webkit-transform: none; transform: none; -webkit-backface-visibility: visible; backface-visibility: visible; }
 
   /* ── BUTTONS: 44px+ touch targets ── */
   .btn-primary {
@@ -2426,7 +2426,7 @@ const fadeObs = new IntersectionObserver((entries) => {
   });
 }, { threshold: 0.1 });
 
-document.querySelectorAll('.story-step, .credential-item, .feature-card, .review-card, .vs-item, .gallery-grid img').forEach((el, i) => {
+document.querySelectorAll('.story-step, .credential-item, .feature-card, .review-card, .vs-item, .gallery-grid img, .movement-card').forEach((el, i) => {
   if (isMobile) {
     // On mobile: show everything immediately — no fade-in jitter
     el.style.opacity = '1';
