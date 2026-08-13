@@ -615,8 +615,9 @@ h3 { font-size: clamp(18px, 2.5vw, 24px); font-weight: 600; line-height: 1.3; }
   transform: translate(-50%, -50%);
   width: 110%;
   max-width: 1400px;
-  opacity: 0.12;
+  opacity: 0.25;
   pointer-events: none;
+  filter: brightness(1.3);
 }
 /* ── Country glow dots ── */
 .map-dots {
@@ -675,7 +676,7 @@ h3 { font-size: clamp(18px, 2.5vw, 24px); font-weight: 600; line-height: 1.3; }
   display: flex;
   flex-direction: column;
   gap: 14px;
-  animation: credScroll 18s linear infinite;
+  animation: credScroll 10s linear infinite;
 }
 @keyframes credScroll {
   0%   { transform: translateY(0); }
