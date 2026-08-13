@@ -628,40 +628,30 @@ h3 { font-size: clamp(18px, 2.5vw, 24px); font-weight: 600; line-height: 1.3; }
 }
 .map-dot {
   position: absolute;
-  width: 8px; height: 8px;
+  width: 6px; height: 6px;
   border-radius: 50%;
-  background: var(--accent);
+  background: #fff;
+  box-shadow: 0 0 6px 2px rgba(255,255,255,0.6);
 }
 .map-dot::before {
   content: '';
   position: absolute;
   top: 50%; left: 50%;
   transform: translate(-50%, -50%);
-  width: 24px; height: 24px;
+  width: 18px; height: 18px;
   border-radius: 50%;
-  background: var(--accent);
+  background: rgba(255,255,255,0.3);
   opacity: 0;
-  animation: dotPulse 2.4s ease-out infinite;
+  animation: dotPulse 3s ease-out infinite;
 }
-.map-dot:nth-child(2)::before { animation-delay: 0.4s; }
-.map-dot:nth-child(3)::before { animation-delay: 0.8s; }
-.map-dot:nth-child(4)::before { animation-delay: 1.2s; }
-.map-dot:nth-child(5)::before { animation-delay: 1.6s; }
-.map-dot:nth-child(6)::before { animation-delay: 2.0s; }
+.map-dot:nth-child(2)::before { animation-delay: 0.5s; }
+.map-dot:nth-child(3)::before { animation-delay: 1.0s; }
+.map-dot:nth-child(4)::before { animation-delay: 1.5s; }
+.map-dot:nth-child(5)::before { animation-delay: 2.0s; }
+.map-dot:nth-child(6)::before { animation-delay: 2.5s; }
 @keyframes dotPulse {
-  0%   { opacity: 0.6; transform: translate(-50%,-50%) scale(1); }
-  100% { opacity: 0;   transform: translate(-50%,-50%) scale(3); }
-}
-.map-dot-label {
-  position: absolute;
-  top: -22px; left: 50%;
-  transform: translateX(-50%);
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--accent);
-  white-space: nowrap;
-  letter-spacing: 0.5px;
-  text-shadow: 0 0 8px rgba(255,65,54,0.5);
+  0%   { opacity: 0.5; transform: translate(-50%,-50%) scale(1); }
+  100% { opacity: 0;   transform: translate(-50%,-50%) scale(2.5); }
 }
 .credentials-header { position: relative; margin-bottom: 40px; z-index: 2; }
 .credentials-header h2 {
@@ -1637,8 +1627,7 @@ video.movement-img {
   .credentials-scroll-wrap { height: 170px; }
   .credentials-list { gap: 10px; }
   .credential-item { font-size: 14px; }
-  .map-dot-label { font-size: 8px; top: -18px; }
-  .map-dot { width: 6px; height: 6px; }
+  .map-dot { width: 5px; height: 5px; }
 
   /* ── CTA SECTION ── */
   .cta-section h2 { font-size: 24px; margin-bottom: 16px; }
@@ -1949,12 +1938,12 @@ video.movement-img {
 
   <!-- Country glow markers -->
   <div class="map-dots">
-    <div class="map-dot" style="top:38%;left:76%"><span class="map-dot-label">KOREA</span></div>
-    <div class="map-dot" style="top:55%;left:73%"><span class="map-dot-label">SINGAPORE</span></div>
-    <div class="map-dot" style="top:50%;left:70%"><span class="map-dot-label">THAILAND</span></div>
-    <div class="map-dot" style="top:35%;left:48%"><span class="map-dot-label">FRANCE</span></div>
-    <div class="map-dot" style="top:40%;left:22%"><span class="map-dot-label">USA</span></div>
-    <div class="map-dot" style="top:48%;left:55%"><span class="map-dot-label">UAE</span></div>
+    <div class="map-dot" style="top:38%;left:76%"></div>
+    <div class="map-dot" style="top:55%;left:73%"></div>
+    <div class="map-dot" style="top:50%;left:70%"></div>
+    <div class="map-dot" style="top:35%;left:48%"></div>
+    <div class="map-dot" style="top:40%;left:22%"></div>
+    <div class="map-dot" style="top:48%;left:55%"></div>
   </div>
 
   <div class="container">
@@ -2516,7 +2505,7 @@ const fadeObs = new IntersectionObserver((entries) => {
   });
 }, { threshold: 0.1 });
 
-document.querySelectorAll('.story-step, .credential-item, .feature-card, .review-card, .vs-item, .gallery-grid img, .movement-card').forEach((el, i) => {
+document.querySelectorAll('.story-step, .feature-card, .review-card, .vs-item, .gallery-grid img, .movement-card').forEach((el, i) => {
   if (isMobile) {
     // On mobile: show everything immediately — no fade-in jitter
     el.style.opacity = '1';
