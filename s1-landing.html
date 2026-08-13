@@ -304,6 +304,16 @@ h3 { font-size: clamp(18px, 2.5vw, 24px); font-weight: 600; line-height: 1.3; }
   -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
 }
+.hero-poster-mobile {
+  display: none;
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  opacity: 0.35;
+  pointer-events: none;
+  z-index: 0;
+}
 .hero::before {
   content: '';
   position: absolute;
@@ -1415,6 +1425,7 @@ h3 { font-size: clamp(18px, 2.5vw, 24px); font-weight: 600; line-height: 1.3; }
     display: block;
   }
   .hero-bg-video { display: none !important; }
+  .hero-poster-mobile { display: block; }
 
   /* ── BUTTONS: 44px+ touch targets ── */
   .btn-primary {
@@ -1464,9 +1475,11 @@ h3 { font-size: clamp(18px, 2.5vw, 24px); font-weight: 600; line-height: 1.3; }
   .stat-item .stat-number.counted { animation: none !important; }
   .stat-item .stat-label { font-size: 12px; margin-top: 4px; }
 
-  /* ── TICKER: stop scroll ── */
-  .ticker-bar { padding: 12px 0; }
-  .ticker-track { animation: none !important; }
+  /* ── TICKER: static wrap on mobile ── */
+  .ticker-bar { padding: 12px 0; overflow: visible; white-space: normal; }
+  .ticker-track { animation: none !important; flex-wrap: wrap; gap: 8px; justify-content: center; }
+  .ticker-item { white-space: nowrap; }
+  .ticker-dup { display: none; }
 
   /* ── MOVEMENTS ── */
   .movements-grid { gap: 20px; }
@@ -1592,6 +1605,7 @@ h3 { font-size: clamp(18px, 2.5vw, 24px); font-weight: 600; line-height: 1.3; }
   <video class="hero-bg-video" autoplay muted loop playsinline poster="assets/hero-action.jpg">
     <source src="assets/hero-loop.mp4" type="video/mp4">
   </video>
+  <img class="hero-poster-mobile" src="assets/hero-action.jpg" alt="" loading="eager">
   <div class="container">
     <div class="hero-content">
       <span class="badge">Built For Jumps & Lunges</span>
@@ -1725,15 +1739,15 @@ h3 { font-size: clamp(18px, 2.5vw, 24px); font-weight: 600; line-height: 1.3; }
     <div class="ticker-item"><span class="dot"></span> <strong>Diana R.</strong> from Miami signed up</div>
     <div class="ticker-item"><span class="dot"></span> <strong>REXtream</strong> Official Champion Shoe</div>
     <div class="ticker-item"><span class="dot"></span> <strong>Chris P.</strong> from San Diego signed up</div>
-    <!-- Duplicate for seamless scroll -->
-    <div class="ticker-item"><span class="dot"></span> <strong>Jake M.</strong> from Denver signed up</div>
-    <div class="ticker-item"><span class="dot"></span> <strong>Sarah K.</strong> from Austin signed up</div>
-    <div class="ticker-item"><span class="dot"></span> <strong>218%</strong> funded on Kickstarter</div>
-    <div class="ticker-item"><span class="dot"></span> <strong>Marcus L.</strong> from Portland signed up</div>
-    <div class="ticker-item"><span class="dot"></span> <strong>#1 Rated</strong> by RoadTrailRun</div>
-    <div class="ticker-item"><span class="dot"></span> <strong>Diana R.</strong> from Miami signed up</div>
-    <div class="ticker-item"><span class="dot"></span> <strong>REXtream</strong> Official Champion Shoe</div>
-    <div class="ticker-item"><span class="dot"></span> <strong>Chris P.</strong> from San Diego signed up</div>
+    <!-- Duplicate for seamless scroll (hidden on mobile) -->
+    <div class="ticker-item ticker-dup"><span class="dot"></span> <strong>Jake M.</strong> from Denver signed up</div>
+    <div class="ticker-item ticker-dup"><span class="dot"></span> <strong>Sarah K.</strong> from Austin signed up</div>
+    <div class="ticker-item ticker-dup"><span class="dot"></span> <strong>218%</strong> funded on Kickstarter</div>
+    <div class="ticker-item ticker-dup"><span class="dot"></span> <strong>Marcus L.</strong> from Portland signed up</div>
+    <div class="ticker-item ticker-dup"><span class="dot"></span> <strong>#1 Rated</strong> by RoadTrailRun</div>
+    <div class="ticker-item ticker-dup"><span class="dot"></span> <strong>Diana R.</strong> from Miami signed up</div>
+    <div class="ticker-item ticker-dup"><span class="dot"></span> <strong>REXtream</strong> Official Champion Shoe</div>
+    <div class="ticker-item ticker-dup"><span class="dot"></span> <strong>Chris P.</strong> from San Diego signed up</div>
   </div>
 </div>
 
