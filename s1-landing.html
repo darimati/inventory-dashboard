@@ -1034,7 +1034,13 @@ h3 { font-size: clamp(18px, 2.5vw, 24px); font-weight: 600; line-height: 1.3; }
 
 @media (max-width: 768px) {
   .movements-grid { grid-template-columns: 1fr; }
-  .movement-content { padding: 20px; }
+  /* mobile: switch from overlay to stacked layout — overlay clips text on narrow screens */
+  .movement-card { display: flex; flex-direction: column; }
+  .movement-img { aspect-ratio: 16/9; }
+  .movement-overlay { display: none; }
+  .movement-content { position: static; padding: 24px 20px; background: var(--surface2); }
+  .movement-content h3, .movement-content p, .movement-tag { color: var(--text); }
+  .movement-content p { color: var(--text-secondary); }
 }
 
 /* ── INTERVIEW VIDEO ──────────────────── */
