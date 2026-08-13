@@ -607,7 +607,7 @@ h3 { font-size: clamp(18px, 2.5vw, 24px); font-weight: 600; line-height: 1.3; }
 .credentials-section {
   position: relative;
   overflow: hidden;
-  background: #0a0c14;
+  background: var(--surface);
 }
 .credentials-section .map-bg {
   position: absolute;
@@ -615,10 +615,55 @@ h3 { font-size: clamp(18px, 2.5vw, 24px); font-weight: 600; line-height: 1.3; }
   transform: translate(-50%, -50%);
   width: 110%;
   max-width: 1400px;
-  opacity: 0.15;
+  opacity: 0.12;
   pointer-events: none;
 }
-.credentials-header { position: relative; margin-bottom: 40px; }
+/* ── Country glow dots ── */
+.map-dots {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+.map-dot {
+  position: absolute;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.map-dot::before {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  background: var(--accent);
+  opacity: 0;
+  animation: dotPulse 2.4s ease-out infinite;
+}
+.map-dot:nth-child(2)::before { animation-delay: 0.4s; }
+.map-dot:nth-child(3)::before { animation-delay: 0.8s; }
+.map-dot:nth-child(4)::before { animation-delay: 1.2s; }
+.map-dot:nth-child(5)::before { animation-delay: 1.6s; }
+.map-dot:nth-child(6)::before { animation-delay: 2.0s; }
+@keyframes dotPulse {
+  0%   { opacity: 0.6; transform: translate(-50%,-50%) scale(1); }
+  100% { opacity: 0;   transform: translate(-50%,-50%) scale(3); }
+}
+.map-dot-label {
+  position: absolute;
+  top: -22px; left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--accent);
+  white-space: nowrap;
+  letter-spacing: 0.5px;
+  text-shadow: 0 0 8px rgba(255,65,54,0.5);
+}
+.credentials-header { position: relative; margin-bottom: 40px; z-index: 2; }
 .credentials-header h2 {
   font-size: clamp(28px, 4vw, 44px);
   font-weight: 900;
@@ -626,25 +671,42 @@ h3 { font-size: clamp(18px, 2.5vw, 24px); font-weight: 600; line-height: 1.3; }
   line-height: 1.15;
 }
 .credentials-header p { color: var(--text-secondary); font-size: 16px; line-height: 1.6; }
-.credentials-list {
+/* ── Credentials vertical scroll loop ── */
+.credentials-scroll-wrap {
   position: relative;
   max-width: 640px;
+  height: 200px;
+  overflow: hidden;
+  mask-image: linear-gradient(to bottom, transparent 0%, #000 15%, #000 85%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 15%, #000 85%, transparent 100%);
+  z-index: 2;
+}
+.credentials-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
+  animation: credScroll 18s linear infinite;
+}
+@keyframes credScroll {
+  0%   { transform: translateY(0); }
+  100% { transform: translateY(-50%); }
+}
+.credentials-scroll-wrap:hover .credentials-list {
+  animation-play-state: paused;
 }
 .credential-item {
-  color: rgba(255,255,255,0.7);
+  color: rgba(255,255,255,0.75);
   font-size: 15px;
   line-height: 1.6;
   padding-left: 16px;
   position: relative;
+  flex-shrink: 0;
 }
 .credential-item::before {
   content: '·';
   position: absolute;
   left: 0;
-  color: rgba(255,255,255,0.4);
+  color: var(--accent);
   font-weight: 700;
 }
 
@@ -1572,8 +1634,11 @@ video.movement-img {
   .story-step h3 { font-size: 17px; margin-bottom: 6px; }
 
   /* ── CREDENTIALS ── */
+  .credentials-scroll-wrap { height: 170px; }
   .credentials-list { gap: 10px; }
   .credential-item { font-size: 14px; }
+  .map-dot-label { font-size: 8px; top: -18px; }
+  .map-dot { width: 6px; height: 6px; }
 
   /* ── CTA SECTION ── */
   .cta-section h2 { font-size: 24px; margin-bottom: 16px; }
@@ -1881,22 +1946,35 @@ video.movement-img {
 <!-- CREDENTIALS -->
 <section class="credentials-section section" id="credentials">
   <img class="map-bg" src="https://www.darimati.us/cdn/shop/t/15/assets/world-map.svg?v=71467348033538393911785312801" alt="" loading="lazy">
+
+  <!-- Country glow markers -->
+  <div class="map-dots">
+    <div class="map-dot" style="top:38%;left:76%"><span class="map-dot-label">KOREA</span></div>
+    <div class="map-dot" style="top:55%;left:73%"><span class="map-dot-label">SINGAPORE</span></div>
+    <div class="map-dot" style="top:50%;left:70%"><span class="map-dot-label">THAILAND</span></div>
+    <div class="map-dot" style="top:35%;left:48%"><span class="map-dot-label">FRANCE</span></div>
+    <div class="map-dot" style="top:40%;left:22%"><span class="map-dot-label">USA</span></div>
+    <div class="map-dot" style="top:48%;left:55%"><span class="map-dot-label">UAE</span></div>
+  </div>
+
   <div class="container">
     <div class="credentials-header">
       <h2>Global Athletes<br>Trust DARIMATI</h2>
       <p>Athletes, coaches, and data from Korea, France, USA,<br>Thailand, Singapore and more.</p>
     </div>
 
-    <div class="credentials-list">
-      <div class="credential-item">Bangkok Crucible Women's Gold — 1st place winner wore DARIMATI</div>
-      <div class="credential-item">HYROX Singapore Men's Pro Singles — champion wore DARIMATI</div>
-      <div class="credential-item">HYROX Korea 2025 Top 3 athletes chose DARIMATI for competition day</div>
-      <div class="credential-item">Paris Louvre CrossFit coaches — training shoe of choice</div>
-      <div class="credential-item">REXtream official champion shoe &amp; on-site experience partner</div>
-      <div class="credential-item">Anytime Fitness Korea — official coach training shoe, all locations</div>
-      <div class="credential-item">RunRepeat — Top 14% performance on global review platform</div>
-      <div class="credential-item">US Kickstarter — 218% funded, 2x oversubscribed</div>
-      <div class="credential-item">7+ countries competing — from Seoul to San Diego</div>
+    <div class="credentials-scroll-wrap">
+      <div class="credentials-list" id="credList">
+        <div class="credential-item">Bangkok Crucible Women's Gold — 1st place winner wore DARIMATI</div>
+        <div class="credential-item">HYROX Singapore Men's Pro Singles — champion wore DARIMATI</div>
+        <div class="credential-item">HYROX Korea 2025 Top 3 athletes chose DARIMATI for competition day</div>
+        <div class="credential-item">Paris Louvre CrossFit coaches — training shoe of choice</div>
+        <div class="credential-item">REXtream official champion shoe &amp; on-site experience partner</div>
+        <div class="credential-item">Anytime Fitness Korea — official coach training shoe, all locations</div>
+        <div class="credential-item">RunRepeat — Top 14% performance on global review platform</div>
+        <div class="credential-item">US Kickstarter — 218% funded, 2x oversubscribed</div>
+        <div class="credential-item">7+ countries competing — from Seoul to San Diego</div>
+      </div>
     </div>
   </div>
 </section>
@@ -2485,10 +2563,16 @@ if (credSection) {
     const visible = rect.top < window.innerHeight && rect.bottom > 0;
     if (visible) {
       const progress = (window.innerHeight - rect.top) / (window.innerHeight + rect.height);
-      const before = credSection.querySelector(':scope');
       credSection.style.setProperty('--parallax-y', `${(progress - 0.5) * 30}px`);
     }
   }, { passive: true });
+}
+
+// ── Credentials infinite vertical scroll ──
+const credList = document.getElementById('credList');
+if (credList) {
+  const items = credList.innerHTML;
+  credList.innerHTML = items + items;
 }
 </script>
 
