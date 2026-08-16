@@ -36,9 +36,9 @@ fbq('init','821311187492862');
   var P = window.DMTRK = {
     page : 'S1_EN',
     value: 99,
-    src  : q.get('utm_source')   || '',
-    cmp  : q.get('utm_campaign') || '',
-    cnt  : q.get('utm_content')  || '',
+    src  : q.get('utm_source')   || q.get('nt_source')  || '',
+    cmp  : q.get('utm_campaign') || q.get('nt_medium')  || '',
+    cnt  : q.get('utm_content')  || q.get('nt_keyword') || '',
     fbc  : q.get('fbclid')       || ''
   };
   function base(extra){
