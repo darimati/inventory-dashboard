@@ -2169,7 +2169,19 @@ function handleSubmit(e) {
     fetch(WEBHOOK_URL, {
       method: 'POST',
       mode: 'no-cors',
-      body: JSON.stringify({ email: email, source: 's1-launch', page: 'S1 Landing' })
+      /* ── 어느 광고 소재로 들어온 사람인지 함께 저장 ──────────────────
+         왜: 메타가 전환을 광고에 연결하지 못하는 문제가 있어(2026-08-13 확인)
+         광고 리포트만 믿으면 "어느 소재가 이메일을 만들었나"를 못 본다.
+         우리 시트에 소재를 같이 적어두면 메타와 무관하게 직접 셀 수 있다.
+         ⚠️ mode:'no-cors' 와 Content-Type 은 절대 건드리지 말 것(건드리면 폼이 깨진다). */
+      body: JSON.stringify({
+        email: email,
+        source: 's1-launch',
+        page: 'S1 Landing',
+        creative: (window.DMTRK && DMTRK.cnt) || new URLSearchParams(location.search).get('utm_content') || '',
+        src:      (window.DMTRK && DMTRK.src) || new URLSearchParams(location.search).get('utm_source')  || '',
+        cmp:      (window.DMTRK && DMTRK.cmp) || new URLSearchParams(location.search).get('utm_campaign') || ''
+      })
     }).then(() => showSuccess()).catch(() => showSuccess());
   } else {
     showSuccess();
