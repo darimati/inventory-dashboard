@@ -237,6 +237,230 @@ button{cursor:pointer;font-family:var(--font)}
   .footer{border-radius:0}
 }
 </style>
+<!-- ── 측정 (픽셀 + 행동 수집기) ─────────────────────────────────────────────
+     이 페이지는 신촌 맹그로브 호텔 QR 전용이다. 측정이 없으면 호텔에 몇 명이
+     찍었는지조차 알 수 없고, 지나간 방문은 소급되지 않는다.
+
+     보내는 이벤트 — 이름은 전 페이지 공통 표준을 그대로 쓴다(기억 measurement-standard).
+       PageView          페이지 열람
+       ViewContent       BR-001 상세 열람
+       DeepView          50% 이상 스크롤 = 진짜 읽은 사람 (⭐리마케팅 모수의 핵심)
+       InitiateCheckout  자사몰 상품 페이지로 넘어가는 클릭 (실결제 경로)
+     ⚠️ 이름을 이 페이지만 다르게 지으면 모수가 쪼개져 리마케팅이 안 된다.
+
+     F45 지점과 다른 점 — 여기는 CTA가 **우리 자사몰(darimati.us)** 로 간다.
+     네이버(남의 도메인)가 아니라서 세션이 안 끊긴다. 주소에 utm·fbclid 를
+     이어붙여 보내면 자사몰 픽셀이 "맹그로브에서 온 사람"으로 이어 받는다.
+
+     ⚠️ 못 잡는 것: 호텔 카페 현장 결제. 우리 픽셀 밖에서 일어난다.
+     ───────────────────────────────────────────────────────────────────── -->
+<script>
+!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}
+(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
+
+fbq('init','821311187492862');
+
+(function(){
+  var q = new URLSearchParams(location.search);
+
+  /* QR로 들어오면 주소에 utm 이 없다. 그래도 "맹그로브에서 왔다"를 잃으면 안 되므로
+     페이지가 스스로 기본값을 붙인다(F45 는 쇼피파이 설정표가 해주던 역할). */
+  var P = window.DMTRK = {
+    page : 'MANGROVE',
+    value: 99,
+    src  : q.get('utm_source')   || q.get('nt_source')  || 'mangrove',
+    cmp  : q.get('utm_campaign') || q.get('nt_medium')  || 'hotel',
+    cnt  : q.get('utm_content')  || q.get('nt_keyword') || '',
+    fbc  : q.get('fbclid')       || '',
+    lang : ''                                   /* 언어 선택 후 채워진다 */
+  };
+  function base(extra){
+    var o = {page:P.page, src:P.src, cmp:P.cmp, cnt:P.cnt, lang:P.lang};
+    for (var k in (extra||{})) o[k] = extra[k];
+    return o;
+  }
+
+  fbq('track','PageView', base());
+  fbq('track','ViewContent', base({
+    content_name:'BR-001', content_ids:['BR-001'], content_type:'product',
+    value:P.value, currency:'USD'
+  }));
+
+  /* 언어 선택 = 투숙객 국적 신호. 이벤트를 새로 만들지 않고 파라미터로 싣는다
+     (이벤트 이름이 늘어나면 모수가 쪼개진다).
+     ⚠️ setLang 함수를 감싸면 안 된다 — 이 블록은 <head> 라 아직 정의 전이고,
+        나중에 페이지 아래에서 원본이 우리 래퍼를 덮어쓴다. 버튼을 직접 듣는다. */
+  document.addEventListener('click', function(e){
+    var b = e.target.closest && e.target.closest('.lang-btn');
+    if (!b) return;
+    var m = (b.getAttribute('onclick') || '').match(/setLang\(['"](\w+)['"]\)/);
+    if (m) { P.lang = m[1]; S.lang = m[1]; }
+  }, true);
+
+  /* ── 자사몰로 넘어가는 주소에 추적값 이어붙이기 ──
+     주소가 달라 끊기는 구간을 잇는다. 자사몰이 아니면 건드리지 않는다. */
+  function handoff(url){
+    try {
+      var u = new URL(url, location.href);
+      if (!/(^|\.)darimati\.us$/.test(u.hostname)) return url;
+      if (P.fbc) u.searchParams.set('fbclid', P.fbc);
+      u.searchParams.set('utm_source', P.src);
+      u.searchParams.set('utm_campaign', P.cmp);
+      if (P.cnt) u.searchParams.set('utm_content', P.cnt);
+      u.searchParams.set('utm_medium', 'lp-' + P.page);
+      return u.href;
+    } catch (e) { return url; }
+  }
+
+  document.addEventListener('click', function(e){
+    var a = e.target.closest && e.target.closest('a[href]');
+    if (!a || !/darimati\.us\/(cart|products|collections|checkout)/.test(a.href)) return;
+    fbq('track','InitiateCheckout', base({
+      content_name:'BR-001', content_ids:['BR-001'], content_type:'product',
+      value:P.value, currency:'USD', placement:'mgv-cta'
+    }));
+    a.href = handoff(a.href);
+  }, true);
+
+  /* ══ 행동 수집기 ══════════════════════════════════════════════════════
+     체류·스크롤·CTA를 우리 시트에 쌓는다. 브릿지(br001)와 **같은 형식**이라
+     지점 성적표(/br001/#branch)가 그대로 읽는다.
+     ⚠️ 형식을 바꾸면 성적표에서 이 페이지만 빈칸이 된다.               */
+  var ENDPOINT = 'https://script.google.com/macros/s/AKfycbw8zD2Zlbvq-s3A_sc2HzraZLW5u-S7tnexgZNH8az1TQyqU-FJ1Bv5f13tCVn2D4hW5Q/exec';
+  var sid;
+  try {
+    sid = sessionStorage.getItem('br001sid');
+    if (!sid) { sid = Date.now().toString(36) + Math.random().toString(36).slice(2,8);
+                sessionStorage.setItem('br001sid', sid); }
+  } catch (e) { sid = Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
+
+  var ref = document.referrer || '';
+  var S = { start:Date.now(), active:0, tick:Date.now(), scroll:0,
+            secs:[], last:'', clicks:[], first:0, clickout:0, lang:'' };
+
+  function beat(){
+    var now = Date.now();
+    if (document.visibilityState === 'visible') S.active += now - S.tick;
+    S.tick = now;
+  }
+  setInterval(beat, 1000);
+  document.addEventListener('visibilitychange', function(){
+    beat();
+    if (document.visibilityState === 'hidden') send();
+  });
+
+  /* 유입원 — 인쇄물 QR은 우리 리다이렉트를 거치므로 리퍼러로 잡힌다 */
+  function source(){
+    if (/darimati-dash\/q\//.test(ref)) return 'qr';
+    var s = q.get('utm_source') || q.get('nt_source');
+    if (s) return s;
+    if (/instagram\.com/.test(ref)) return 'instagram';
+    if (/facebook\.com/.test(ref)) return 'facebook';
+    return ref ? 'other' : 'direct';
+  }
+
+  var deepSent = false;
+  addEventListener('scroll', function(){
+    var h = document.documentElement.scrollHeight - innerHeight;
+    if (h <= 0) return;
+    var pct = Math.min(100, Math.round((scrollY / h) * 100));
+    if (pct <= S.scroll) return;
+    S.scroll = pct;
+    if (!deepSent && S.scroll >= 50) {
+      deepSent = true;
+      try { fbq('trackCustom','DeepView', base({depth:S.scroll,
+              sec: Math.round((Date.now()-S.start)/1000)})); } catch(e) {}
+    }
+  }, {passive:true});
+
+  /* 섹션 도달 — 어디까지 보고 나갔는지(이탈 지점) */
+  var secEls = [].slice.call(document.querySelectorAll('section'));
+  if (window.IntersectionObserver && secEls.length) {
+    var io = new IntersectionObserver(function(ents){
+      ents.forEach(function(en){
+        if (!en.isIntersecting) return;
+        var nm = en.target.__nm;
+        if (S.secs.indexOf(nm) < 0) S.secs.push(nm);
+        S.last = nm;
+      });
+    }, {threshold:0.5});
+    secEls.forEach(function(el,i){
+      el.__nm = (el.className||'').toString().trim().split(/\s+/)[0] || ('sec'+i);
+      io.observe(el);
+    });
+  }
+
+  /* CTA 클릭 — 브릿지는 네이버 링크를 세지만 여기는 자사몰 링크를 센다.
+     둘 다 "우리 페이지를 떠나 구매 경로로 갔다"는 같은 뜻이라 co=1 로 통일. */
+  document.addEventListener('click', function(e){
+    var a = e.target.closest && e.target.closest('a[href]');
+    if (!a || !/darimati\.us\/(cart|products|collections|checkout)/.test(a.href)) return;
+    var sec = Math.round((Date.now()-S.start)/1000);
+    if (!S.first) S.first = sec;
+    S.clicks.push('mgv-cta');
+    S.clickout = 1;
+    send();
+  }, true);
+
+  function cookie_(k){
+    var m = document.cookie.match('(^|;)\\s*' + k + '\\s*=\\s*([^;]+)');
+    return m ? m.pop() : '';
+  }
+  function fbc_(){
+    var c = cookie_('_fbc');
+    if (c) return c;
+    return P.fbc ? ('fb.1.' + Date.now() + '.' + P.fbc) : '';
+  }
+
+  var lastSent = '';
+  function send(){
+    beat();
+    var d = {
+      vid: sid,                      /* ⚠️ 이름을 sid 로 바꾸지 말 것 — 구글이 막는다 */
+      pg : 'mangrove',               /* 성적표가 이 값으로 페이지를 구분한다 */
+      pt : 'MANGROVE 호텔',
+      dv : matchMedia('(max-width:820px)').matches ? 'mobile' : 'desktop',
+      src: source(),
+      cmp: P.cmp,
+      ct : P.cnt || S.lang,          /* 소재가 없으면 선택 언어를 남긴다 */
+      t  : Math.round((Date.now()-S.start)/1000),
+      at : Math.round(S.active/1000),
+      sc : S.scroll,
+      last: S.last,
+      secs: S.secs.join('>'),
+      n  : S.clicks.length,
+      cta: S.clicks.join(','),
+      ft : S.first,
+      co : S.clickout,
+      rf : ref.slice(0,200),
+      fbp: cookie_('_fbp'),
+      fbc: fbc_(),
+      ua : (navigator.userAgent||'').slice(0,300)
+    };
+    var qs = Object.keys(d).map(function(k){
+      return encodeURIComponent(k) + '=' + encodeURIComponent(d[k]);
+    }).join('&');
+    if (qs === lastSent) return;     /* 바뀐 게 없으면 다시 안 보낸다 */
+    lastSent = qs;
+    var url = ENDPOINT + '?' + qs;   /* 액션 파라미터 없음 = 수집 (Code.gs 기본 경로) */
+    /* 세 갈래로 쏜다 — 서버가 vid 로 덮어쓰므로 중복은 무해하다.
+       ⚠️ sendBeacon 단독은 안 된다(실측): 앱스스크립트가 거는 302 를
+          교차출처에서 못 따라가 조용히 버려지고, 실패를 알 방법도 없다. */
+    try { new Image().src = url; } catch(e) {}
+    try { fetch(url, {mode:'no-cors', keepalive:true}); } catch(e) {}
+    try { navigator.sendBeacon && navigator.sendBeacon(url); } catch(e) {}
+  }
+
+  addEventListener('pagehide', send);
+  setTimeout(send, 8000);            /* 이탈 신호가 유실될 때를 대비해 중간에도 한 번 */
+})();
+</script>
+<noscript><img height="1" width="1" style="display:none"
+  src="https://www.facebook.com/tr?id=821311187492862&ev=PageView&noscript=1"/></noscript>
+<!-- ── /측정 ──────────────────────────────────────────────────────────── -->
 </head>
 <body>
 
