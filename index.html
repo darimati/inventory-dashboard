@@ -1891,7 +1891,7 @@ IF(OR(C2="킥스타터",
     <div class="kpi">
       <div class="kpi-label">N배송 입고</div>
       <div class="kpi-value" id="nship-kpi-total">109</div>
-      <div class="kpi-sub">6/9 입고 · KR 재고에서 이동</div>
+      <div class="kpi-sub">8/28 기준 · 재고 API 스냅샷</div>
     </div>
     <div class="kpi">
       <div class="kpi-label">그레이 (단품+풀패키지)</div>
@@ -2820,11 +2820,11 @@ new Chart(document.getElementById('giftDailyChart'), {
 });
 
 // ── 재고 현황 계산 ──
-// 신발 재고 — 5/13 실사 + Grey 240 입고 250개 반영 (Matt 5/13) + 6/19 그레이 240-270 반환 +1 + 6/24 베이지 240 재고 +1
-const GREY_REM  = { 240: 88, 250: 0, 260: 0, 270: 0, 280: 0 };
-const BEIGE_REM = { 240: 0, 250: 0, 260: 7, 270: 0, 280: 2 };
-const STOCK_AUDIT_DATE = '2026-09-03';  // 6/24 베이지 240 재고 +1 반영
-const SIZES = ['240','250','260','270','280'];
+// 향동 창고 재고 — 재고 API 기준 (stocktakeBaseDate: 2026-08-28)
+const GREY_REM  = { 230: 16, 240: 74, 250: 22, 260: 58, 270: 2, 280: 0 };
+const BEIGE_REM = { 230: 58, 240: 55, 250: 37, 260: 43, 270: 4, 280: 33 };
+const STOCK_AUDIT_DATE = '2026-08-28';  // 재고 API stocktakeBaseDate
+const SIZES = ['230','240','250','260','270','280'];
 
 const TOTAL_GREY  = Object.values(GREY_REM).reduce((a,b)=>a+b,0);   // 586
 const TOTAL_BEIGE = Object.values(BEIGE_REM).reduce((a,b)=>a+b,0);  // 145
@@ -2851,8 +2851,8 @@ const TOTAL_REM   = TOTAL_GREY + TOTAL_BEIGE;                         // 731
 }
 
 // 초기 재고 (잔여 + 출고)
-const GREY_SOLD  = [179,139,159,126,77].reduce((a,b)=>a+b,0);   // 680
-const BEIGE_SOLD = [63,53,33,54,44].reduce((a,b)=>a+b,0);       // 247
+const GREY_SOLD  = [0,179,139,159,126,77].reduce((a,b)=>a+b,0);   // 680
+const BEIGE_SOLD = [0,63,53,33,54,44].reduce((a,b)=>a+b,0);       // 247
 const INITIAL = TOTAL_REM + GREY_SOLD + BEIGE_SOLD;          // 671
 
 const DAILY_SALE  = 11.4;  // 실판매 기준 (증정·B2B 제외)
@@ -2878,8 +2878,8 @@ const today = (() => {
 
 // === 사이즈×컬러별 출고/소진 분석 (모든 알림·KPI·체크리스트의 기준) ===
 const SALE_BY_SIZE = {
-  GREY:  { 240:79, 250:72, 260:65, 270:67, 280:40 },
-  BEIGE: { 240:26, 250:15, 260:11, 270:5, 280:8 },
+  GREY:  { 230:0, 240:79, 250:72, 260:65, 270:67, 280:40 },
+  BEIGE: { 230:0, 240:26, 250:15, 260:11, 270:5, 280:8 },
 };
 const BIZ_DAYS = 88;
 
@@ -3149,13 +3149,13 @@ new Chart(document.getElementById('hkSizeRatioChart'), {
   }
 });
 
-// ── N배송 재고 (누적: 1차 109EA 6/9 + 2차 15EA 7/6 + 3차 67EA 7/10 = 191EA) ──
+// ── N배송 재고 (재고 API 기준 2026-08-28 현재 잔여) ──
 const NSHIP_SIZES = ['230','240','250','260','270','280'];
-const NSHIP_GREY_SINGLE  = { 230:10, 240:24, 250:16, 260:15, 270:15, 280:15 };
-const NSHIP_GREY_PKG     = { 230:4,  240:12, 250:5,  260:5,  270:5,  280:5 };
-const NSHIP_BEIGE_SINGLE = { 230:8,  240:7,  250:9,  260:5,  270:5,  280:7 };
-const NSHIP_BEIGE_PKG    = { 230:4,  240:3,  250:3,  260:3,  270:3,  280:3 };
-const NSHIP_SOLD         = { 240:52, 250:35, 260:33, 270:21, 280:22 };
+const NSHIP_GREY_SINGLE  = { 230:8,  240:9,  250:8,  260:8,  270:3, 280:3 };
+const NSHIP_GREY_PKG     = { 230:3,  240:6,  250:3,  260:7,  270:6, 280:0 };
+const NSHIP_BEIGE_SINGLE = { 230:9,  240:6,  250:11, 260:9,  270:7, 280:10 };
+const NSHIP_BEIGE_PKG    = { 230:2,  240:1,  250:3,  260:3,  270:3, 280:1 };
+const NSHIP_SOLD         = { 230:0, 240:0, 250:0, 260:0, 270:0, 280:0 };
 
 // N배송 합산
 const NSHIP_TOTAL_BY_SIZE = {};
@@ -3873,7 +3873,7 @@ new Chart(document.getElementById('burndownChart'), {
   // ── 상수 ───────────────────────────────────
   const STORAGE_PREFIX = 'dari_console_orders_';
   const SHIP_DEADLINE_HOUR = 15;  // 15:00 KST
-  const SIZES = ['240','250','260','270','280'];
+  const SIZES = ['230','240','250','260','270','280'];
   const COLORS = [
     {value:'그레이', label:'그레이'},
     {value:'베이지', label:'베이지'},

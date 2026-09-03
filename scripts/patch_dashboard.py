@@ -60,10 +60,10 @@ size_color_sale = defaultdict(lambda: defaultdict(int))
 
 # ── 재고 자동차감: 기준점 실사 − 이후 출고 ──
 INV_BASE = {
-    'G': {'240': 188, '250': 27, '260': 89, '270': 19, '280': 6},
-    'B': {'240': 11,  '250': 26, '260': 29, '270': 34, '280': 38}
+    'G': {'230': 16, '240': 74, '250': 22, '260': 58, '270': 2, '280': 0},
+    'B': {'230': 58, '240': 55, '250': 37, '260': 43, '270': 4, '280': 33}
 }
-INV_BASE_DATE = (2026, 6, 10)  # 6/10 Jiun 실사 기준
+INV_BASE_DATE = (2026, 8, 28)  # 8/28 재고 API 기준 (향동)
 inv_deduct = {'G': defaultdict(int), 'B': defaultdict(int)}
 
 # ── N배송 판매 차감: 6/9 이후 네이버 대표상품(13462747167) 판매분 ──
@@ -459,7 +459,7 @@ patches.append((r'(id="ch-makers-mo">)\d+', lambda m, v=mo_km: m.group(1) + str(
 patches.append((r'(id="ch-b2b-mo">)\d+',    lambda m, v=mo_mc: m.group(1) + str(v)))
 
 # ── 재고 자동차감 (기준점 실사 − 이후 출고 = 잔여) ──
-_sizes = ['240', '250', '260', '270', '280']
+_sizes = ['230', '240', '250', '260', '270', '280']
 gr = [max(0, INV_BASE['G'].get(s, 0) - inv_deduct['G'].get(s, 0)) for s in _sizes]
 br = [max(0, INV_BASE['B'].get(s, 0) - inv_deduct['B'].get(s, 0)) for s in _sizes]
 grey_rem_js = '{ ' + ', '.join(f'{s}: {v}' for s, v in zip(_sizes, gr)) + ' }'
