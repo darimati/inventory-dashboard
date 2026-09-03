@@ -33,8 +33,9 @@ rows = data['table']['rows']
 
 REAL = {'킥스타터','카카오메이커스','네이버','카카오톡스토어'}
 
-# 부자재 컬럼 (시트 인덱스): M=12 슈레이스, O=14 스티커, P=15 모자, S=18 타월, T=19 벨트, U=20 플라스크, V=21 슈백
-ACC_COLS = [12, 14, 15, 18, 19, 20, 21]
+# 부자재 컬럼 (시트 gviz 인덱스 — 2026-09 기준, 날짜 1열 체제):
+# [11] 슈레이스, [13] 스티커, [14] 모자, [17] 타월, [18] 벨트, [19] 슈백, [20] 플라스크
+ACC_COLS = [11, 13, 14, 17, 18, 19, 20]
 PKG_THRESHOLD = 5  # 부자재 5개 이상 → 풀세트로 자동 인식
 
 def parse_date(d):
@@ -73,7 +74,7 @@ for r in rows:
     c = r['c']
     def g(i):
         return c[i]['v'] if i < len(c) and c[i] else None
-    od = g(1) or g(0)
+    od = g(0)
     if not od: continue
     pd = parse_date(od)
     if not pd: continue
@@ -83,15 +84,15 @@ for r in rows:
     if y == 2026 and mo < 4: continue
     if y == 2026 and mo == 4 and dy < 17: continue
 
-    ch = (g(2) or '').strip()
-    recipient = (g(6) or '')
-    memo = (g(7) or '')
-    color = (g(8) or '')
-    size_raw = (g(9) or '').strip()
+    ch = str(g(1) or '').strip()
+    recipient = str(g(5) or '')
+    memo = str(g(6) or '')
+    color = str(g(7) or '')
+    size_raw = str(g(8) or '').strip()
     size = re.sub(r'mm$|\s+', '', size_raw)[:3] if size_raw else ''
 
-    # K열 (신발 수량) — 비어있거나 0이면 신발 미출고 (악세서리만 추가 발송 등) → SKIP
-    qty_raw = g(10)
+    # 신발 수량 (gviz [9]) — 비어있거나 0이면 신발 미출고 → SKIP
+    qty_raw = g(9)
     if qty_raw is None or qty_raw == '' or int(qty_raw or 0) == 0:
         continue
     qty = int(qty_raw)
