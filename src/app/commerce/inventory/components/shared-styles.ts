@@ -1,0 +1,18 @@
+import React from 'react';
+
+export const modalOverlayStyle: React.CSSProperties = {
+  position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 9000,
+  display: 'flex', alignItems: 'center', justifyContent: 'center',
+};
+export const modalStyle: React.CSSProperties = {
+  background: '#fff', borderRadius: 12, padding: 24, width: 520,
+  maxHeight: '85vh', overflowY: 'auto', boxShadow: '0 8px 30px rgba(0,0,0,0.12)',
+};
+export const poLabelStyle: React.CSSProperties = { display: 'block', fontSize: 12, fontWeight: 500, color: '#61686F', marginBottom: 4 };
+export const poInputStyle: React.CSSProperties = {
+  width: '100%', padding: '7px 10px', fontSize: 13,
+  border: '1px solid var(--border-light)', borderRadius: 6, background: '#fff', outline: 'none', boxSizing: 'border-box',
+};
+export const poCancelBtnStyle: React.CSSProperties = { padding: '6px 14px', fontSize: 13, background: '#F2F4F7', color: '#61686F', border: 'none', borderRadius: 6, cursor: 'pointer' };
+export const poSaveBtnStyle: React.CSSProperties = { padding: '6px 14px', fontSize: 13, fontWeight: 500, background: '#1F2328', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer' };
+export const poActionBtnStyle: React.CSSProperties = { padding: '3px 8px', fontSize: 11, background: 'none', color: '#61686F', border: '1px solid var(--border-light)', borderRadius: 4, cursor: 'pointer' };
