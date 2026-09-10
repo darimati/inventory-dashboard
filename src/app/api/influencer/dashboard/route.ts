@@ -249,6 +249,44 @@ export async function GET() {
 
   if (overdueInfoCount > 0) todayChecklist.push({ type: 'settlement_info_overdue', label: '정산 정보 미회수 (3일 경과)', count: overdueInfoCount });
 
+  // ─── Submission asset alerts ───
+  const [
+    { count: proposalUnreviewed },
+    { count: roughCutUnreviewed },
+    { count: revisionWaiting },
+  ] = await Promise.all([
+    supabaseAdmin
+      .from('campaign_submission_assets')
+      .select('*', { count: 'exact', head: true })
+      .eq('stage', 'proposal')
+      .eq('status', 'received'),
+    supabaseAdmin
+      .from('campaign_submission_assets')
+      .select('*', { count: 'exact', head: true })
+      .eq('stage', 'rough_cut')
+      .eq('status', 'received'),
+    supabaseAdmin
+      .from('campaign_submission_assets')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', 'revision_requested'),
+  ]);
+
+  // Upload overdue: participants with publish_deadline passed and no final_upload submission
+  const { data: finalUploads } = await supabaseAdmin
+    .from('campaign_submission_assets')
+    .select('participant_id')
+    .eq('stage', 'final_upload');
+  const finalUploadPids = new Set((finalUploads ?? []).map(a => a.participant_id));
+  const uploadOverdueSubmission = allActiveParts.filter(p => {
+    const deadline = (p.publish_deadline as string | null) || effectiveDate(p, 'confirmed_upload_date', 'planned_upload_date');
+    return deadline && deadline < todayStr && !finalUploadPids.has(p.id as string);
+  }).length;
+
+  if ((proposalUnreviewed ?? 0) > 0) todayChecklist.push({ type: 'proposal_unreviewed', label: '기획안 확인 필요', count: proposalUnreviewed ?? 0 });
+  if ((roughCutUnreviewed ?? 0) > 0) todayChecklist.push({ type: 'rough_cut_unreviewed', label: '가편집본 확인 필요', count: roughCutUnreviewed ?? 0 });
+  if ((revisionWaiting ?? 0) > 0) todayChecklist.push({ type: 'revision_waiting', label: '수정본 대기', count: revisionWaiting ?? 0 });
+  if (uploadOverdueSubmission > 0) todayChecklist.push({ type: 'upload_overdue_submission', label: '업로드 예정일 경과', count: uploadOverdueSubmission });
+
   // ─── Weekly Tasks — 1 participant = 1 row ───
 
   // Fetch all deliverable records for revision_requested detection

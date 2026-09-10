@@ -11,8 +11,16 @@ import {
   CHANNEL_LABELS,
   CONTENT_FORMAT_LABELS,
   SETTLEMENT_STAGE_LABELS,
+  REVIEW_CATEGORIES,
+  FINAL_CONTENT_TYPES,
+  DELIVERABLE_STATUS_LABELS,
+  SUBMISSION_STATUS_LABELS,
+  SUBMISSION_STATUS_COLORS,
+  SUBMISSION_STAGE_LABELS,
   isPaidCollab,
   getSettlementStatus,
+  getSubmissionDisplayStatus,
+  getNextSubmissionAction,
   formatContentFormats,
   type CollabType,
   type CampaignStatus,
@@ -23,7 +31,12 @@ import {
   type InfluencerProduct,
   type ProductSet,
   type SettlementStage,
+  type SubmissionAsset,
+  type SubmissionStage,
 } from '@/lib/types/influencer';
+import { formatFileSize } from '@/lib/helpers';
+import SubmissionsTab from './SubmissionsTab';
+import ParticipantSubmissions from './ParticipantSubmissions';
 
 /* ── Types ─────────────────────────────────────────────── */
 
@@ -89,7 +102,7 @@ interface Participant {
   delivery_address_base: string | null;
   delivery_address_detail: string | null;
   memo: string | null;
-  _deliverables?: Record<string, { link_url?: string; memo?: string; status?: string; received_at?: string; version?: number }>;
+  _deliverables?: Record<string, { link_url?: string; memo?: string; status?: string; received_at?: string; revision_note?: string; review_category?: string; version?: number; file_url?: string; original_filename?: string; mime_type?: string; file_size?: number; asset_type?: string; content_type?: string; history?: Array<Record<string, unknown>> }>;
 }
 
 interface Campaign {
@@ -166,6 +179,11 @@ export default function ManageClient() {
     memo: '',
   });
 
+  // Campaign tab
+  const [campaignTab, setCampaignTab] = useState<Record<string, 'participants' | 'submissions'>>({});
+  // Submission assets (keyed by campaign id)
+  const [submissionAssets, setSubmissionAssets] = useState<Record<string, SubmissionAsset[]>>({});
+
   // Detail modal
   const [detailPart, setDetailPart] = useState<Participant | null>(null);
   const [detailCampaign, setDetailCampaign] = useState<Campaign | null>(null);
@@ -224,10 +242,20 @@ export default function ManageClient() {
     memo: string;
     processType: 'approved' | 'revision_requested';
     revisionNote: string;
+    reviewCategory: string;
     noLink: boolean;
+    // File upload fields
+    fileUrl: string;
+    originalFilename: string;
+    mimeType: string;
+    fileSize: number;
+    // Upload step fields
+    contentType: string;
   } | null>(null);
   const [editStepSaving, setEditStepSaving] = useState(false);
   const [editStepError, setEditStepError] = useState('');
+  const [editStepUploading, setEditStepUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Reset modal (participant or campaign)
   const [resetModal, setResetModal] = useState<{
@@ -260,12 +288,25 @@ export default function ManageClient() {
       .catch(() => {});
   }, []);
 
+  // Fetch submission assets for a campaign
+  const fetchSubmissionAssets = async (campaignId: string) => {
+    try {
+      const res = await fetch(`/api/influencer/submissions?campaign_id=${campaignId}`);
+      const data = await res.json();
+      if (data.data) {
+        setSubmissionAssets(prev => ({ ...prev, [campaignId]: data.data }));
+      }
+    } catch { /* ignore */ }
+  };
+
   const fetchCampaigns = async () => {
     try {
       const url = filter === 'all' ? '/api/influencer/campaigns' : `/api/influencer/campaigns?status=${filter}`;
       const res = await fetch(url);
       const data = await res.json();
       setCampaigns(Array.isArray(data) ? data : []);
+      // Refresh submission assets for expanded campaigns
+      expanded.forEach(campaignId => fetchSubmissionAssets(campaignId));
     } catch {
       setCampaigns([]);
     } finally {
@@ -273,7 +314,14 @@ export default function ManageClient() {
     }
   };
 
-  useEffect(() => { fetchCampaigns(); }, [filter]);
+  // Fetch submissions when campaigns expand
+  useEffect(() => {
+    expanded.forEach(campaignId => {
+      if (!submissionAssets[campaignId]) {
+        fetchSubmissionAssets(campaignId);
+      }
+    });
+  }, [expanded]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Close menus on outside click
   useEffect(() => {
@@ -565,8 +613,13 @@ export default function ManageClient() {
       }
       fetchCampaigns();
       if (detailPart?.id === undoConfirmModal.participantId) {
-        const key = undoConfirmModal.step === 'draft' ? 'draft_received_at' : 'edit_received_at';
+        const stepColMap: Record<string, string> = { draft: 'draft_received_at', edit: 'edit_received_at', upload: 'uploaded_at' };
+        const key = stepColMap[undoConfirmModal.step] || 'draft_received_at';
         const updated = { ...detailPart, [key]: null };
+        if (undoConfirmModal.step === 'upload') {
+          updated.published_url = null;
+          updated.status = 'content_submitted';
+        }
         const newDlv = { ...(detailPart._deliverables || {}) };
         delete newDlv[undoConfirmModal.step];
         updated._deliverables = newDlv;
@@ -579,32 +632,79 @@ export default function ManageClient() {
     }
   };
 
+  // Handle file upload for edit step
+  const handleEditStepFileUpload = async (file: File) => {
+    if (!editStepModal) return;
+    setEditStepUploading(true);
+    setEditStepError('');
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch('/api/influencer/files/upload', { method: 'POST', body: formData });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: '업로드 실패' }));
+        setEditStepError(err.error || '파일 업로드에 실패했습니다');
+        return;
+      }
+      const data = await res.json();
+      setEditStepModal({
+        ...editStepModal,
+        fileUrl: data.url,
+        originalFilename: data.original_filename,
+        mimeType: data.mime_type,
+        fileSize: data.file_size,
+        noLink: true,
+      });
+    } finally {
+      setEditStepUploading(false);
+    }
+  };
+
   // Handle edit step save
   const handleEditStepSave = async () => {
     if (!editStepModal) return;
-    if (!editStepModal.noLink && !editStepModal.link.trim()) {
-      setEditStepError('링크를 입력하세요');
+    const isFileStep = editStepModal.step === 'edit' && editStepModal.fileUrl;
+    const isUploadStep = editStepModal.step === 'upload';
+    if (!isFileStep && !editStepModal.noLink && !editStepModal.link.trim()) {
+      setEditStepError(isUploadStep ? '콘텐츠 URL을 입력하세요' : '링크를 입력하세요');
       return;
     }
     if (editStepModal.processType === 'revision_requested' && !editStepModal.revisionNote.trim()) {
       setEditStepError('수정 요청 사유를 입력하세요');
       return;
     }
+    if (isUploadStep && !editStepModal.contentType) {
+      setEditStepError('콘텐츠 유형을 선택하세요');
+      return;
+    }
     setEditStepSaving(true);
     setEditStepError('');
     try {
+      const payload: Record<string, unknown> = {
+        participant_id: editStepModal.participantId,
+        step: editStepModal.step,
+        link: editStepModal.noLink && !isFileStep ? '' : editStepModal.link.trim(),
+        memo: editStepModal.memo.trim(),
+        received_at: editStepModal.receivedDate ? new Date(editStepModal.receivedDate + 'T00:00:00+09:00').toISOString() : undefined,
+        status: editStepModal.processType,
+        revision_note: editStepModal.processType === 'revision_requested' ? editStepModal.revisionNote.trim() : undefined,
+        review_category: editStepModal.processType === 'revision_requested' ? editStepModal.reviewCategory : undefined,
+      };
+      // File fields
+      if (editStepModal.fileUrl) {
+        payload.file_url = editStepModal.fileUrl;
+        payload.original_filename = editStepModal.originalFilename;
+        payload.mime_type = editStepModal.mimeType;
+        payload.file_size = editStepModal.fileSize;
+      }
+      // Content type for upload step
+      if (editStepModal.contentType) {
+        payload.content_type = editStepModal.contentType;
+      }
       const res = await fetch('/api/influencer/participants/check-step', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          participant_id: editStepModal.participantId,
-          step: editStepModal.step,
-          link: editStepModal.noLink ? '' : editStepModal.link.trim(),
-          memo: editStepModal.memo.trim(),
-          received_at: editStepModal.receivedDate ? new Date(editStepModal.receivedDate + 'T00:00:00+09:00').toISOString() : undefined,
-          status: editStepModal.processType,
-          revision_note: editStepModal.processType === 'revision_requested' ? editStepModal.revisionNote.trim() : undefined,
-        }),
+        body: JSON.stringify(payload),
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({ error: '알 수 없는 오류' }));
@@ -614,10 +714,15 @@ export default function ManageClient() {
       const result = await res.json();
       fetchCampaigns();
       if (detailPart?.id === editStepModal.participantId) {
-        const key = editStepModal.step === 'draft' ? 'draft_received_at' : 'edit_received_at';
+        const stepColMap: Record<string, string> = { draft: 'draft_received_at', edit: 'edit_received_at', upload: 'uploaded_at' };
+        const key = stepColMap[editStepModal.step];
         const updated = { ...detailPart };
         if (editStepModal.processType !== 'revision_requested') {
           (updated as Record<string, unknown>)[key] = result.value;
+          if (editStepModal.step === 'upload' && editStepModal.link) {
+            updated.published_url = editStepModal.link.trim();
+            updated.status = 'published';
+          }
         }
         const newDlv = { ...(detailPart._deliverables || {}) };
         if (result.deliverable) {
@@ -631,7 +736,7 @@ export default function ManageClient() {
       showManageToast(
         editStepModal.processType === 'revision_requested'
           ? '수정 요청으로 기록했습니다'
-          : `${editStepModal.stepLabel} 수정 완료`,
+          : `${editStepModal.stepLabel} ${editStepModal.step === 'upload' ? '확인' : '수정'} 완료`,
         isUndo ? () => {
           // Undo the save
           fetch('/api/influencer/participants/check-step', {
@@ -975,10 +1080,12 @@ export default function ManageClient() {
     </button>
   );
 
-  /* ── Column widths (7 columns) ────────────────────────── */
+  /* ── Column widths ────────────────────────── */
   const colW = {
-    name: '22%', product: '16%', fee: '12%',
-    status: '14%', progress: '20%', nextAction: '12%', menu: '4%',
+    name: '18%', product: '12%', fee: '10%',
+    status: '12%', progress: '16%',
+    subProposal: '8%', subRoughCut: '8%', subUpload: '8%',
+    nextAction: '10%', menu: '4%',
   };
 
   /* ── Render ──────────────────────────────────────────── */
@@ -1097,6 +1204,42 @@ export default function ManageClient() {
                       </div>
                     </div>
                   )}
+
+                  {/* Campaign tabs */}
+                  <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid var(--border)', marginBottom: 12 }}>
+                    {(['participants', 'submissions'] as const).map(tab => {
+                      const active = (campaignTab[c.id] || 'participants') === tab;
+                      const label = tab === 'participants' ? '참여자' : '제출 자료';
+                      return (
+                        <button
+                          key={tab}
+                          onClick={() => setCampaignTab(prev => ({ ...prev, [c.id]: tab }))}
+                          style={{
+                            padding: '8px 16px',
+                            fontSize: 13,
+                            fontWeight: active ? 600 : 400,
+                            color: active ? 'var(--text)' : 'var(--text-muted)',
+                            background: 'none',
+                            border: 'none',
+                            borderBottom: active ? '2px solid var(--text)' : '2px solid transparent',
+                            cursor: 'pointer',
+                            marginBottom: -1,
+                          }}
+                        >
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {(campaignTab[c.id] || 'participants') === 'submissions' ? (
+                    <SubmissionsTab
+                      campaignId={c.id}
+                      participants={parts.map(p => ({ id: p.id, name: p.name, display_name: p.display_name, channel: p.channel, handle: p.handle }))}
+                      onRefresh={fetchCampaigns}
+                    />
+                  ) : (
+                  <>
                   <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
                     <button style={btnGhost} onClick={() => openAddParticipant(c.id)}>+ 참여자 추가</button>
                   </div>
@@ -1111,6 +1254,9 @@ export default function ManageClient() {
                           {!allUnpaid && <col style={{ width: colW.fee }} />}
                           <col style={{ width: colW.status }} />
                           <col style={{ width: colW.progress }} />
+                          <col style={{ width: colW.subProposal }} />
+                          <col style={{ width: colW.subRoughCut }} />
+                          <col style={{ width: colW.subUpload }} />
                           <col style={{ width: colW.nextAction }} />
                           <col style={{ width: colW.menu }} />
                         </colgroup>
@@ -1121,6 +1267,9 @@ export default function ManageClient() {
                             {!allUnpaid && <th style={{ textAlign: 'right' }}>고료</th>}
                             <th style={{ textAlign: 'left' }}>상태</th>
                             <th style={{ textAlign: 'center' }}>진행</th>
+                            <th style={{ textAlign: 'center' }}>기획안</th>
+                            <th style={{ textAlign: 'center' }}>가편집본</th>
+                            <th style={{ textAlign: 'center' }}>업로드</th>
                             <th style={{ textAlign: 'left' }}>다음 작업</th>
                             <th style={{ width: colW.menu }}></th>
                           </tr>
@@ -1165,18 +1314,53 @@ export default function ManageClient() {
                                 <td style={{ textAlign: 'center' }}>
                                   <ProgressDots p={p} />
                                 </td>
+                                {/* 제출 자료 상태 (기획안, 가편집본, 업로드) */}
+                                {(() => {
+                                  const pAssets = (submissionAssets[c.id] || []).filter(a => a.participant_id === p.id);
+                                  const stages: SubmissionStage[] = ['proposal', 'rough_cut', 'final_upload'];
+                                  return stages.map(stage => {
+                                    const ds = getSubmissionDisplayStatus(pAssets, stage);
+                                    const isOverdue = ds.status === 'revision_requested' && (ds.daysSinceRevision ?? 0) >= 3;
+                                    const statusKey = isOverdue ? 'revision_overdue' : ds.status;
+                                    const color = SUBMISSION_STATUS_COLORS[statusKey] || '#8A9199';
+                                    const bg = ds.status === 'received' ? '#FDF4E7' : isOverdue ? '#FBE9E8' : '#F2F4F7';
+                                    const label = ds.status === 'not_received' ? '-' : SUBMISSION_STATUS_LABELS[ds.status] || ds.status;
+                                    return (
+                                      <td key={stage} style={{ textAlign: 'center' }}>
+                                        {ds.status === 'not_received' ? (
+                                          <span style={{ fontSize: 11, color: '#C4CAD1' }}>-</span>
+                                        ) : (
+                                          <span style={{
+                                            display: 'inline-block', padding: '2px 6px', borderRadius: 4,
+                                            fontSize: 11, fontWeight: 500, color, background: bg,
+                                          }}>
+                                            {label}
+                                          </span>
+                                        )}
+                                      </td>
+                                    );
+                                  });
+                                })()}
                                 {/* 다음 작업 */}
                                 <td style={{ textAlign: 'left' }}>
-                                  {nextAction ? (
-                                    <button
-                                      style={btnSmall}
-                                      onClick={(e) => { e.stopPropagation(); nextAction.onClick(); }}
-                                    >
-                                      {nextAction.label}
-                                    </button>
-                                  ) : (
-                                    <span style={{ fontSize: 12, color: '#C4CAD1' }}>-</span>
-                                  )}
+                                  {(() => {
+                                    const pAssets = (submissionAssets[c.id] || []).filter(a => a.participant_id === p.id);
+                                    const subAction = getNextSubmissionAction(pAssets);
+                                    if (subAction) {
+                                      return <span style={{ fontSize: 12, color: '#A8712A', fontWeight: 500 }}>{subAction}</span>;
+                                    }
+                                    if (nextAction) {
+                                      return (
+                                        <button
+                                          style={btnSmall}
+                                          onClick={(e) => { e.stopPropagation(); nextAction.onClick(); }}
+                                        >
+                                          {nextAction.label}
+                                        </button>
+                                      );
+                                    }
+                                    return <span style={{ fontSize: 12, color: '#C4CAD1' }}>-</span>;
+                                  })()}
                                 </td>
                                 {/* ⋯ menu */}
                                 <td style={{ textAlign: 'center', position: 'relative' }}>
@@ -1202,6 +1386,8 @@ export default function ManageClient() {
                         </tbody>
                       </table>
                     </div>
+                  )}
+                  </>
                   )}
                 </div>
               )}
@@ -1486,7 +1672,7 @@ export default function ManageClient() {
                 const paid = isPaidCollab(ct);
                 const dlv = detailPart._deliverables || {};
 
-                type Dlv = { link_url?: string; memo?: string; status?: string; received_at?: string; revision_note?: string; version?: number };
+                type Dlv = { link_url?: string; memo?: string; status?: string; received_at?: string; revision_note?: string; review_category?: string; version?: number; file_url?: string; original_filename?: string; mime_type?: string; file_size?: number; asset_type?: string; content_type?: string; history?: Array<Record<string, unknown>> };
                 type StepDef = { key: string; step: string; label: string; value: string | null; deliverable?: Dlv; disabled?: boolean; editable?: boolean; dateLabel?: string };
                 const steps: StepDef[] = [];
 
@@ -1530,12 +1716,15 @@ export default function ManageClient() {
                   });
                 }
 
-                // Upload
+                // Upload (final)
+                const uploadDlv = dlv.upload;
                 steps.push({
                   key: 'uploaded_at',
                   step: 'upload',
-                  label: '업로드',
+                  label: '최종 업로드',
                   value: detailPart.uploaded_at,
+                  deliverable: uploadDlv,
+                  editable: !!detailPart.uploaded_at,
                   dateLabel: detailPart.uploaded_at
                     ? `확인 ${new Date(detailPart.uploaded_at).toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' })}`
                     : detailPart.planned_upload_date ? `예정 ${detailPart.planned_upload_date}` : undefined,
@@ -1579,13 +1768,12 @@ export default function ManageClient() {
                                       setTimeout(() => setErrorMsg(''), 4000);
                                       return;
                                     }
-                                    setUndoConfirmModal({ participantId: detailPart.id, step: 'upload', stepLabel: '업로드' });
+                                    setUndoConfirmModal({ participantId: detailPart.id, step: 'upload', stepLabel: '최종 업로드' });
                                     setUndoConfirmError('');
                                   }
                                 } else {
-                                  // Check: for draft/edit, this would normally open the receive modal from dashboard
-                                  // Here we just do a simple check via check-step API
-                                  if (s.step === 'draft' || s.step === 'edit') {
+                                  // Open receive modal for draft/edit/upload
+                                  if (s.step === 'draft' || s.step === 'edit' || s.step === 'upload') {
                                     const kst = new Date(Date.now() + 9 * 3600000);
                                     const today = kst.toISOString().slice(0, 10);
                                     setEditStepModal({
@@ -1597,13 +1785,15 @@ export default function ManageClient() {
                                       memo: '',
                                       processType: 'approved',
                                       revisionNote: '',
+                                      reviewCategory: '',
                                       noLink: false,
+                                      fileUrl: '',
+                                      originalFilename: '',
+                                      mimeType: '',
+                                      fileSize: 0,
+                                      contentType: '',
                                     });
                                     setEditStepError('');
-                                  } else if (s.step === 'upload') {
-                                    handleUpdateParticipant(detailPart.id, {
-                                      uploaded_at: new Date().toISOString(),
-                                    });
                                   }
                                 }
                               }}
@@ -1615,7 +1805,7 @@ export default function ManageClient() {
                                 <span style={{ fontSize: 11, color: 'var(--text-info)', marginLeft: 6 }}>{s.dateLabel}</span>
                               )}
                             </span>
-                            {s.editable && (s.step === 'draft' || s.step === 'edit') && (
+                            {s.editable && (s.step === 'draft' || s.step === 'edit' || s.step === 'upload') && (
                               <button
                                 onClick={() => {
                                   const d = s.deliverable;
@@ -1630,7 +1820,13 @@ export default function ManageClient() {
                                     memo: d?.memo || '',
                                     processType: (d?.status === 'revision_requested' ? 'revision_requested' : 'approved'),
                                     revisionNote: d?.revision_note || '',
-                                    noLink: !d?.link_url,
+                                    reviewCategory: d?.review_category || '',
+                                    noLink: !d?.link_url && !d?.file_url,
+                                    fileUrl: d?.file_url || '',
+                                    originalFilename: d?.original_filename || '',
+                                    mimeType: d?.mime_type || '',
+                                    fileSize: d?.file_size || 0,
+                                    contentType: d?.content_type || '',
                                   });
                                   setEditStepError('');
                                 }}
@@ -1663,10 +1859,87 @@ export default function ManageClient() {
                               >열기</a>
                             </div>
                           )}
+                          {/* Deliverable file */}
+                          {s.deliverable?.file_url && (
+                            <div style={{ marginLeft: 20, marginTop: 2, display: 'flex', alignItems: 'center', gap: 6 }}>
+                              <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+                                {s.deliverable.original_filename || '파일'}
+                              </span>
+                              {s.deliverable.file_size && (
+                                <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                                  ({formatFileSize(s.deliverable.file_size)})
+                                </span>
+                              )}
+                              <button
+                                onClick={async () => {
+                                  const res = await fetch(`/api/influencer/files/signed-url?path=${encodeURIComponent(s.deliverable!.file_url!)}`);
+                                  const data = await res.json();
+                                  if (data.url) window.open(data.url, '_blank');
+                                }}
+                                style={{ fontSize: 11, padding: '1px 6px', border: '1px solid var(--border)', borderRadius: 4, background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer', fontFamily: 'var(--font)', textDecoration: 'none', flexShrink: 0 }}
+                              >열기</button>
+                              <button
+                                onClick={async () => {
+                                  const res = await fetch(`/api/influencer/files/signed-url?path=${encodeURIComponent(s.deliverable!.file_url!)}`);
+                                  const data = await res.json();
+                                  if (data.url) {
+                                    const a = document.createElement('a');
+                                    a.href = data.url;
+                                    a.download = s.deliverable!.original_filename || 'download';
+                                    a.click();
+                                  }
+                                }}
+                                style={{ fontSize: 11, padding: '1px 6px', border: '1px solid var(--border)', borderRadius: 4, background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer', fontFamily: 'var(--font)', textDecoration: 'none', flexShrink: 0 }}
+                              >다운로드</button>
+                            </div>
+                          )}
+                          {/* Deliverable status + content type */}
+                          {s.deliverable?.status && s.deliverable.status !== 'approved' && (
+                            <div style={{ marginLeft: 20, marginTop: 2, fontSize: 12, color: s.deliverable.status === 'revision_requested' ? '#B03F3B' : 'var(--text-muted)' }}>
+                              {DELIVERABLE_STATUS_LABELS[s.deliverable.status] || s.deliverable.status}
+                              {s.deliverable.review_category && ` · ${s.deliverable.review_category}`}
+                            </div>
+                          )}
+                          {s.deliverable?.content_type && (
+                            <div style={{ marginLeft: 20, marginTop: 2, fontSize: 12, color: 'var(--text-muted)' }}>
+                              유형: {FINAL_CONTENT_TYPES[s.deliverable.content_type] || s.deliverable.content_type}
+                            </div>
+                          )}
                           {/* Deliverable memo */}
                           {s.deliverable?.memo && (
                             <div style={{ marginLeft: 20, marginTop: 2, fontSize: 12, color: 'var(--text-muted)' }}>
                               메모: {s.deliverable.memo}
+                            </div>
+                          )}
+                          {/* Revision note */}
+                          {s.deliverable?.revision_note && (
+                            <div style={{ marginLeft: 20, marginTop: 2, fontSize: 12, color: '#B03F3B' }}>
+                              수정 사유: {s.deliverable.revision_note}
+                            </div>
+                          )}
+                          {/* Version history */}
+                          {s.deliverable?.history && (s.deliverable.history as Array<Record<string, unknown>>).length > 0 && (
+                            <div style={{ marginLeft: 20, marginTop: 4 }}>
+                              <details>
+                                <summary style={{ fontSize: 11, color: 'var(--text-muted)', cursor: 'pointer' }}>
+                                  이전 버전 ({(s.deliverable.history as Array<Record<string, unknown>>).length}건)
+                                </summary>
+                                {(s.deliverable.history as Array<Record<string, unknown>>).slice().reverse().map((h, i) => {
+                                  const hStatus = h.status as string | undefined;
+                                  const hCat = h.review_category as string | undefined;
+                                  const hFile = h.original_filename as string | undefined;
+                                  const hLink = h.link_url as string | undefined;
+                                  return (
+                                    <div key={i} style={{ marginTop: 4, padding: '4px 8px', background: '#F2F4F7', borderRadius: 4, fontSize: 11 }}>
+                                      <span style={{ color: 'var(--text-muted)' }}>v{(h.version as number) || i + 1}</span>
+                                      {hStatus && <span style={{ marginLeft: 6, color: hStatus === 'revision_requested' ? '#B03F3B' : 'var(--text-secondary)' }}>{DELIVERABLE_STATUS_LABELS[hStatus] || hStatus}</span>}
+                                      {hCat && <span style={{ marginLeft: 4, color: '#B03F3B' }}>{'\u00B7'} {hCat}</span>}
+                                      {hFile && <span style={{ marginLeft: 6, color: 'var(--text-muted)' }}>{hFile}</span>}
+                                      {hLink && <span style={{ marginLeft: 6, color: 'var(--text-muted)' }}>{hLink.slice(0, 40)}...</span>}
+                                    </div>
+                                  );
+                                })}
+                              </details>
                             </div>
                           )}
                         </div>
@@ -1675,6 +1948,14 @@ export default function ManageClient() {
                   </div>
                 );
               })()}
+              {/* ── 제출 자료 ── */}
+              <div style={{ borderTop: '1px solid var(--border)', paddingTop: 16, marginBottom: 16 }}>
+                <ParticipantSubmissions
+                  participantId={detailPart.id}
+                  participantName={detailPart.name || detailPart.display_name || '(이름 없음)'}
+                  onRefresh={fetchCampaigns}
+                />
+              </div>
               <div style={{ marginBottom: 16 }}>
                 <label style={labelStyle}>상태 변경</label>
                 <CustomSelect
@@ -1977,29 +2258,98 @@ export default function ManageClient() {
         {/* Edit step modal (receive modal for edit/create) */}
         {editStepModal && (
           <div style={modalOverlay} onMouseDown={(e) => { mouseDownRef.current = e.target; }} onClick={(e) => { if (e.target === e.currentTarget && mouseDownRef.current === e.currentTarget) { setEditStepModal(null); } }}>
-            <div style={{ ...modalContent, width: 440 }}>
+            <div style={{ ...modalContent, width: 480 }}>
               <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 16 }}>
-                {editStepModal.stepLabel} {editStepModal.link || editStepModal.noLink ? '수정' : '수령'}
+                {editStepModal.stepLabel} {editStepModal.link || editStepModal.fileUrl || editStepModal.noLink ? '수정' : '수령'}
               </h2>
 
-              {/* Link URL */}
-              <div style={{ marginBottom: 12 }}>
-                <label style={{ fontSize: 13, fontWeight: 500, marginBottom: 4, display: 'block', color: 'var(--text-secondary)' }}>
-                  링크 URL {!editStepModal.noLink && <span style={{ color: '#B03F3B' }}>*</span>}
-                </label>
-                <input
-                  type="url"
-                  placeholder="https://"
-                  value={editStepModal.link}
-                  onChange={(e) => setEditStepModal({ ...editStepModal, link: e.target.value })}
-                  disabled={editStepModal.noLink}
-                  style={{ width: '100%', padding: '8px 10px', border: '1px solid var(--border)', borderRadius: 8, fontSize: 13, fontFamily: 'var(--font)', boxSizing: 'border-box', background: editStepModal.noLink ? '#F2F4F7' : '#fff' }}
-                />
-              </div>
+              {/* File upload for edit (가편집본) step */}
+              {editStepModal.step === 'edit' && (
+                <div style={{ marginBottom: 12 }}>
+                  <label style={{ fontSize: 13, fontWeight: 500, marginBottom: 4, display: 'block', color: 'var(--text-secondary)' }}>
+                    파일 업로드 (MOV/MP4)
+                  </label>
+                  {editStepModal.fileUrl ? (
+                    <div style={{ padding: '10px 12px', background: '#F2F4F7', borderRadius: 8, fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <span>{editStepModal.originalFilename} ({formatFileSize(editStepModal.fileSize)})</span>
+                      <button
+                        onClick={() => setEditStepModal({ ...editStepModal, fileUrl: '', originalFilename: '', mimeType: '', fileSize: 0, noLink: false })}
+                        style={{ fontSize: 11, padding: '2px 8px', border: '1px solid var(--border)', borderRadius: 4, background: '#fff', color: 'var(--text-muted)', cursor: 'pointer', fontFamily: 'var(--font)' }}
+                      >삭제</button>
+                    </div>
+                  ) : (
+                    <div
+                      onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const file = e.dataTransfer.files[0];
+                        if (file) handleEditStepFileUpload(file);
+                      }}
+                      onClick={() => fileInputRef.current?.click()}
+                      style={{ padding: '20px 16px', border: '2px dashed var(--border)', borderRadius: 8, textAlign: 'center', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 13 }}
+                    >
+                      {editStepUploading ? '업로드 중...' : '파일을 드래그하거나 클릭해서 업로드 (최대 100MB)'}
+                    </div>
+                  )}
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".mov,.mp4,video/*"
+                    style={{ display: 'none' }}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleEditStepFileUpload(file);
+                      e.target.value = '';
+                    }}
+                  />
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
+                    또는 링크로 제출할 수 있습니다
+                  </div>
+                </div>
+              )}
+
+              {/* Link URL - shown for draft/upload, or edit when no file */}
+              {(editStepModal.step !== 'edit' || !editStepModal.fileUrl) && (
+                <div style={{ marginBottom: 12 }}>
+                  <label style={{ fontSize: 13, fontWeight: 500, marginBottom: 4, display: 'block', color: 'var(--text-secondary)' }}>
+                    {editStepModal.step === 'upload' ? '콘텐츠 URL' : '링크 URL'} {!editStepModal.noLink && !editStepModal.fileUrl && <span style={{ color: '#B03F3B' }}>*</span>}
+                  </label>
+                  <input
+                    type="url"
+                    placeholder="https://"
+                    value={editStepModal.link}
+                    onChange={(e) => setEditStepModal({ ...editStepModal, link: e.target.value })}
+                    disabled={editStepModal.noLink && !editStepModal.fileUrl}
+                    style={{ width: '100%', padding: '8px 10px', border: '1px solid var(--border)', borderRadius: 8, fontSize: 13, fontFamily: 'var(--font)', boxSizing: 'border-box', background: editStepModal.noLink && !editStepModal.fileUrl ? '#F2F4F7' : '#fff' }}
+                  />
+                </div>
+              )}
+
+              {/* Content type for upload (최종 업로드) step */}
+              {editStepModal.step === 'upload' && (
+                <div style={{ marginBottom: 12 }}>
+                  <label style={{ fontSize: 13, fontWeight: 500, marginBottom: 4, display: 'block', color: 'var(--text-secondary)' }}>
+                    콘텐츠 유형 <span style={{ color: '#B03F3B' }}>*</span>
+                  </label>
+                  <select
+                    value={editStepModal.contentType}
+                    onChange={(e) => setEditStepModal({ ...editStepModal, contentType: e.target.value })}
+                    style={{ width: '100%', padding: '8px 10px', border: '1px solid var(--border)', borderRadius: 8, fontSize: 13, fontFamily: 'var(--font)', boxSizing: 'border-box', background: '#fff' }}
+                  >
+                    <option value="">선택하세요</option>
+                    {Object.entries(FINAL_CONTENT_TYPES).map(([k, v]) => (
+                      <option key={k} value={k}>{v}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               {/* Received date */}
               <div style={{ marginBottom: 12 }}>
-                <label style={{ fontSize: 13, fontWeight: 500, marginBottom: 4, display: 'block', color: 'var(--text-secondary)' }}>수령일</label>
+                <label style={{ fontSize: 13, fontWeight: 500, marginBottom: 4, display: 'block', color: 'var(--text-secondary)' }}>
+                  {editStepModal.step === 'upload' ? '확인일' : '수령일'}
+                </label>
                 <input
                   type="date"
                   value={editStepModal.receivedDate}
@@ -2020,20 +2370,44 @@ export default function ManageClient() {
                 />
               </div>
 
-              {/* Process type */}
-              <div style={{ marginBottom: 12 }}>
-                <label style={{ fontSize: 13, fontWeight: 500, marginBottom: 6, display: 'block', color: 'var(--text-secondary)' }}>처리</label>
-                <div style={{ display: 'flex', gap: 12 }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer', fontSize: 13 }}>
-                    <input type="radio" name="editStepProcessType" checked={editStepModal.processType === 'approved'} onChange={() => setEditStepModal({ ...editStepModal, processType: 'approved' })} />
-                    컨펌 완료
-                  </label>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer', fontSize: 13 }}>
-                    <input type="radio" name="editStepProcessType" checked={editStepModal.processType === 'revision_requested'} onChange={() => setEditStepModal({ ...editStepModal, processType: 'revision_requested' })} />
-                    수정 요청
-                  </label>
+              {/* Process type (not shown for upload step) */}
+              {editStepModal.step !== 'upload' && (
+                <div style={{ marginBottom: 12 }}>
+                  <label style={{ fontSize: 13, fontWeight: 500, marginBottom: 6, display: 'block', color: 'var(--text-secondary)' }}>처리</label>
+                  <div style={{ display: 'flex', gap: 12 }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer', fontSize: 13 }}>
+                      <input type="radio" name="editStepProcessType" checked={editStepModal.processType === 'approved'} onChange={() => setEditStepModal({ ...editStepModal, processType: 'approved' })} />
+                      컨펌 완료
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer', fontSize: 13 }}>
+                      <input type="radio" name="editStepProcessType" checked={editStepModal.processType === 'revision_requested'} onChange={() => setEditStepModal({ ...editStepModal, processType: 'revision_requested' })} />
+                      수정 요청
+                    </label>
+                  </div>
                 </div>
-              </div>
+              )}
+
+              {/* Revision category */}
+              {editStepModal.processType === 'revision_requested' && (
+                <div style={{ marginBottom: 12 }}>
+                  <label style={{ fontSize: 13, fontWeight: 500, marginBottom: 6, display: 'block', color: 'var(--text-secondary)' }}>
+                    수정 카테고리
+                  </label>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    {REVIEW_CATEGORIES.map((cat) => (
+                      <label key={cat} style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 13 }}>
+                        <input
+                          type="radio"
+                          name="reviewCategory"
+                          checked={editStepModal.reviewCategory === cat}
+                          onChange={() => setEditStepModal({ ...editStepModal, reviewCategory: cat })}
+                        />
+                        {cat}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Revision note */}
               {editStepModal.processType === 'revision_requested' && (
@@ -2051,16 +2425,18 @@ export default function ManageClient() {
                 </div>
               )}
 
-              {/* No-link checkbox */}
-              <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 12.5, color: 'var(--text-muted)', marginBottom: 16 }}>
-                <input
-                  type="checkbox"
-                  checked={editStepModal.noLink}
-                  onChange={(e) => setEditStepModal({ ...editStepModal, noLink: e.target.checked, link: e.target.checked ? '' : editStepModal.link })}
-                  style={{ width: 14, height: 14 }}
-                />
-                링크 없이 확인함
-              </label>
+              {/* No-link checkbox (only for draft/edit, not upload) */}
+              {editStepModal.step !== 'upload' && !editStepModal.fileUrl && (
+                <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 12.5, color: 'var(--text-muted)', marginBottom: 16 }}>
+                  <input
+                    type="checkbox"
+                    checked={editStepModal.noLink}
+                    onChange={(e) => setEditStepModal({ ...editStepModal, noLink: e.target.checked, link: e.target.checked ? '' : editStepModal.link })}
+                    style={{ width: 14, height: 14 }}
+                  />
+                  링크 없이 확인함
+                </label>
+              )}
 
               {/* Error */}
               {editStepError && (
@@ -2070,8 +2446,8 @@ export default function ManageClient() {
               )}
 
               <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-                <button style={btnGhost} onClick={() => setEditStepModal(null)} disabled={editStepSaving}>취소</button>
-                <button style={btnPrimary} onClick={handleEditStepSave} disabled={editStepSaving}>
+                <button style={btnGhost} onClick={() => setEditStepModal(null)} disabled={editStepSaving || editStepUploading}>취소</button>
+                <button style={btnPrimary} onClick={handleEditStepSave} disabled={editStepSaving || editStepUploading}>
                   {editStepSaving ? '저장 중...' : '저장'}
                 </button>
               </div>

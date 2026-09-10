@@ -349,6 +349,31 @@ export default function InfluencerDashboardClient() {
           </div>
         </div>
 
+        {/* Submission alerts */}
+        {d.todayChecklist.length > 0 && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 14 }}>
+            {d.todayChecklist.map((item) => {
+              const isRed = item.type.includes('overdue') || item.type === 'payment_overdue';
+              const isAmber = item.type.includes('unreviewed') || item.type === 'revision_waiting' || item.type.includes('due_today') || item.type.includes('due_soon') || item.type.includes('expiring');
+              const bg = isRed ? '#FBE9E8' : isAmber ? '#FDF4E7' : '#F2F4F7';
+              const color = isRed ? '#B03F3B' : isAmber ? '#A8712A' : '#5A6169';
+              return (
+                <div
+                  key={item.type}
+                  style={{
+                    padding: '6px 12px', borderRadius: 8, fontSize: 13,
+                    background: bg, color, fontWeight: 500,
+                    display: 'flex', alignItems: 'center', gap: 6,
+                  }}
+                >
+                  <span style={{ fontWeight: 700, fontSize: 14 }}>{item.count}</span>
+                  {item.label}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
         {/* Weekly Tasks — "할 일" (P0-C: renamed from "이번 주 할 일") */}
         <div style={{ ...sectionStyle, marginBottom: 14 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 14 }}>

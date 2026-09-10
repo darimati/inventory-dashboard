@@ -199,6 +199,142 @@ export const KOREAN_BANKS = [
   '새마을금고', '신협', '우체국', 'KDB산업은행',
 ] as const;
 
+/* ---- Submission / Deliverable constants ---- */
+
+export const REVIEW_CATEGORIES = [
+  '광고 표기 추가 필요',
+  '제품명 오기재',
+  '자막 수정 필요',
+  '썸네일 변경 필요',
+  '컷 편집 수정 필요',
+  '기타',
+] as const;
+
+export const FINAL_CONTENT_TYPES: Record<string, string> = {
+  instagram_reels: '인스타그램 릴스',
+  instagram_feed: '인스타그램 피드',
+  instagram_story: '인스타그램 스토리',
+  youtube_shorts: '유튜브 숏츠',
+  youtube_video: '유튜브 영상',
+  tiktok: '틱톡',
+  blog: '블로그',
+  other: '기타',
+};
+
+export const DELIVERABLE_STATUS_LABELS: Record<string, string> = {
+  approved: '컨펌 완료',
+  revision_requested: '수정 요청',
+};
+
+/* ---- Submission Assets (v4) ---- */
+
+export type SubmissionStage = 'proposal' | 'rough_cut' | 'final_upload';
+export type SubmissionStatus = 'received' | 'approved' | 'revision_requested';
+export type ReviewAction = 'received' | 'approved' | 'revision_requested' | 'link_updated';
+
+export const SUBMISSION_STAGE_LABELS: Record<SubmissionStage, string> = {
+  proposal: '기획안',
+  rough_cut: '가편집본',
+  final_upload: '업로드',
+};
+
+export const SUBMISSION_STATUS_LABELS: Record<string, string> = {
+  not_received: '미수령',
+  received: '확인 필요',
+  approved: '확인 완료',
+  revision_requested: '수정본 대기',
+};
+
+export const SUBMISSION_STATUS_COLORS: Record<string, string> = {
+  not_received: '#8A9199',
+  received: '#A8712A',
+  approved: '#2F7355',
+  revision_requested: '#A8712A',
+  revision_overdue: '#B03F3B',
+};
+
+export const SUBMISSION_BG_COLORS: Record<string, string> = {
+  received: '#FDF4E7',
+  revision_overdue: '#FBE9E8',
+};
+
+export interface SubmissionAsset {
+  id: string;
+  participant_id: string;
+  stage: SubmissionStage;
+  version: number;
+  external_url: string | null;
+  file_path: string | null;
+  original_filename: string | null;
+  mime_type: string | null;
+  file_size: number | null;
+  content_type: string | null;
+  status: SubmissionStatus;
+  received_at: string;
+  created_at: string;
+  updated_at: string;
+  reviews?: SubmissionReview[];
+}
+
+export interface SubmissionReview {
+  id: string;
+  asset_id: string;
+  action: ReviewAction;
+  reason: string | null;
+  memo: string | null;
+  created_at: string;
+}
+
+/** Compute display status for a submission stage */
+export function getSubmissionDisplayStatus(
+  assets: SubmissionAsset[] | undefined,
+  stage: SubmissionStage,
+): { status: string; latestAsset?: SubmissionAsset; daysSinceRevision?: number } {
+  if (!assets || assets.length === 0) return { status: 'not_received' };
+  const stageAssets = assets.filter(a => a.stage === stage);
+  if (stageAssets.length === 0) return { status: 'not_received' };
+
+  // For proposal/final_upload: single record (latest)
+  // For rough_cut: latest version
+  const sorted = [...stageAssets].sort((a, b) => b.version - a.version);
+  const latest = sorted[0];
+
+  if (latest.status === 'approved') return { status: 'approved', latestAsset: latest };
+  if (latest.status === 'revision_requested') {
+    // Calculate days since revision was requested
+    const lastRevision = latest.reviews
+      ?.filter(r => r.action === 'revision_requested')
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
+    const daysSince = lastRevision
+      ? Math.floor((Date.now() - new Date(lastRevision.created_at).getTime()) / 86400000)
+      : 0;
+    return { status: 'revision_requested', latestAsset: latest, daysSinceRevision: daysSince };
+  }
+
+  return { status: 'received', latestAsset: latest };
+}
+
+/** Compute "다음 액션" label for a participant */
+export function getNextSubmissionAction(
+  assets: SubmissionAsset[] | undefined,
+): string | null {
+  const proposal = getSubmissionDisplayStatus(assets, 'proposal');
+  if (proposal.status === 'not_received') return '기획안 요청';
+  if (proposal.status === 'received') return '기획안 확인';
+  if (proposal.status === 'revision_requested') return '수정본 대기';
+
+  const roughCut = getSubmissionDisplayStatus(assets, 'rough_cut');
+  if (roughCut.status === 'not_received') return '가편집본 요청';
+  if (roughCut.status === 'received') return '가편집본 확인';
+  if (roughCut.status === 'revision_requested') return '수정본 대기';
+
+  const finalUpload = getSubmissionDisplayStatus(assets, 'final_upload');
+  if (finalUpload.status === 'not_received') return '업로드 확인';
+  if (finalUpload.status === 'received') return '업로드 확인';
+
+  return null; // all done
+}
+
 /* ---- Dashboard (v3) ---- */
 
 export interface DashboardCampaignSummary {
