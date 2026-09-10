@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-server';
 import type { DashboardData, DashboardCampaignSummary, CampaignStatus, WeeklyTaskItem, WeeklyTaskSummary, WeeklyStep } from '@/lib/types/influencer';
-import { isUnpaidCollab, getScheduleDate, getCurrentStep } from '@/lib/types/influencer';
+import { getScheduleDate } from '@/lib/types/influencer';
 import { daysBetween } from '@/lib/dday';
+import { getSkipConfig, getParticipantStep, isParticipantCompletedSimple, calcProductExecution, getMonthlyBudget } from '@/lib/influencer/metrics';
 
 export async function GET() {
   const now = new Date();
@@ -10,15 +11,8 @@ export async function GET() {
   const monthStart = `${year}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
   const yearStart = `${year}-01-01`;
 
-  const threeDaysAgo = new Date(now.getTime() - 3 * 86400000).toISOString();
-
   const [
     { count: activeCampaigns },
-    { count: totalParticipants },
-    { count: pendingConsent },
-    { count: pendingSettlement },
-    { data: monthlyParts },
-    { data: annualParts },
     { data: budgetSetting },
     { data: annualBudgetSetting },
     { data: campaignsRaw },
@@ -31,28 +25,6 @@ export async function GET() {
       .from('inf_campaigns')
       .select('*', { count: 'exact', head: true })
       .eq('status', 'active'),
-    supabaseAdmin
-      .from('inf_participants')
-      .select('*', { count: 'exact', head: true })
-      .neq('status', 'cancelled'),
-    supabaseAdmin
-      .from('inf_participants')
-      .select('*', { count: 'exact', head: true })
-      .in('consent_status', ['not_sent', 'sent']),
-    supabaseAdmin
-      .from('inf_settlements')
-      .select('*', { count: 'exact', head: true })
-      .in('payment_status', ['waiting', 'requested']),
-    supabaseAdmin
-      .from('inf_participants')
-      .select('*')
-      .gte('created_at', monthStart)
-      .neq('status', 'cancelled'),
-    supabaseAdmin
-      .from('inf_participants')
-      .select('*')
-      .gte('created_at', yearStart)
-      .neq('status', 'cancelled'),
     supabaseAdmin
       .from('inf_settings')
       .select('value')
@@ -94,50 +66,83 @@ export async function GET() {
       .lt('settlement_token_expires_at', new Date(now.getTime() + 11 * 86400000).toISOString()),
   ]);
 
-  // 계약 총액 (모든 참여 확정, 세전) — created_at 기준 월/연
-  const monthlyContractProductCost = (monthlyParts ?? []).reduce(
+  // ─── [FIX] totalParticipants / pendingConsent: active 캠페인 참여자만 ───
+  const allActiveParts = (campaignsRaw ?? []).flatMap(
+    (c: Record<string, unknown>) => {
+      const parts = (c.inf_participants as Record<string, unknown>[]) ?? [];
+      return parts.filter((p) => p.status !== 'cancelled');
+    },
+  );
+
+  const totalParticipants = allActiveParts.length;
+  const pendingConsent = allActiveParts.filter(
+    (p) => p.consent_status === 'not_sent' || p.consent_status === 'sent',
+  ).length;
+
+  // pendingSettlement: inf_settlements 기반 (source of truth)
+  const pendingSettlement = (waitingSettlements ?? []).length;
+
+  // 계약 총액 (세전) — active/preparing 캠페인 참여자 기준
+  const monthlyParts = allActiveParts.filter(
+    (p) => (p.created_at as string) >= monthStart,
+  );
+  const annualParts = allActiveParts.filter(
+    (p) => (p.created_at as string) >= yearStart,
+  );
+
+  const monthlyContractProductCost = monthlyParts.reduce(
     (sum, r) => sum + (Number(r.product_cost) || 0), 0,
   );
-  const monthlyContractFee = (monthlyParts ?? []).reduce(
+  const monthlyContractFee = monthlyParts.reduce(
     (sum, r) => sum + (Number(r.fee) || 0), 0,
   );
   const monthlyContractTotal = monthlyContractProductCost + monthlyContractFee;
-  const monthlyBudget = (budgetSetting?.value as Record<string, number>)?.monthly ?? 0;
 
-  const annualContractProductCost = (annualParts ?? []).reduce(
+  const annualContractProductCost = annualParts.reduce(
     (sum, r) => sum + (Number(r.product_cost) || 0), 0,
   );
-  const annualContractFee = (annualParts ?? []).reduce(
+  const annualContractFee = annualParts.reduce(
     (sum, r) => sum + (Number(r.fee) || 0), 0,
   );
   const annualContractTotal = annualContractProductCost + annualContractFee;
+
+  // ─── [FIX] 예산: E-5 로직 (monthly budget fallback) ───
+  const settingsMonthlyBudget = (budgetSetting?.value as Record<string, number>)?.monthly ?? 0;
+  const campaignBudgetSum = (campaignsRaw ?? [])
+    .filter((c: Record<string, unknown>) => c.status === 'active')
+    .reduce((sum: number, c: Record<string, unknown>) => sum + (Number(c.budget) || 0), 0);
+  const { amount: monthlyBudget, isFallback: isBudgetFallback } = getMonthlyBudget(settingsMonthlyBudget, campaignBudgetSum);
+
   const annualBudget = (annualBudgetSetting?.value as Record<string, number>)?.amount ?? 0;
 
-  // 집행 예정 (업로드 확인 완료 · 미지급, 세전)
-  const monthlyConfirmedFee = (monthlyParts ?? []).reduce(
+  // 집행 예정 (업로드 확인 완료 + 미지급, 세전)
+  const monthlyConfirmedFee = monthlyParts.reduce(
     (sum, r) => (r.published_url && r.settlement_status !== 'paid')
       ? sum + (Number(r.fee) || 0) : sum, 0,
   );
-  const annualConfirmedFee = (annualParts ?? []).reduce(
+  const annualConfirmedFee = annualParts.reduce(
     (sum, r) => (r.published_url && r.settlement_status !== 'paid')
       ? sum + (Number(r.fee) || 0) : sum, 0,
   );
 
-  // Product-level execution breakdown (using product column)
-  const productExecution: Record<string, { count: number; fee: number }> = {};
-  for (const p of annualParts ?? []) {
-    const key = (p.product as string) || '기타';
-    if (!productExecution[key]) {
-      productExecution[key] = { count: 0, fee: 0 };
-    }
-    productExecution[key].count += 1;
-    productExecution[key].fee += Number(p.fee) || 0;
-  }
+  // ─── [FIX] Product execution: fee=0 제외 (metrics.ts) ───
+  const productExecution = calcProductExecution(
+    annualParts.map(p => ({ product: p.product, fee: Number(p.fee) || 0 })),
+  );
 
-  // Campaign summaries
+  // ─── Campaign summaries ───
   const campaigns: DashboardCampaignSummary[] = (campaignsRaw ?? []).map((c: Record<string, unknown>) => {
     const parts = (c.inf_participants as Record<string, unknown>[]) ?? [];
     const activeParts = parts.filter((p) => p.status !== 'cancelled');
+    // [FIX] completedCount: 실제 완료 정의 사용
+    const completedCount = activeParts.filter((p) =>
+      isParticipantCompletedSimple({
+        fee: Number(p.fee) || 0,
+        uploaded_at: p.uploaded_at,
+        settlement_status: p.settlement_status as string,
+      }),
+    ).length;
+
     return {
       id: c.id as string,
       name: c.name as string,
@@ -146,7 +151,7 @@ export async function GET() {
       budget: Number(c.budget) || 0,
       participantCount: activeParts.length,
       consentAgreed: activeParts.filter((p) => p.consent_status === 'agreed').length,
-      uploadDone: activeParts.filter((p) => !!p.published_url).length,
+      uploadDone: completedCount,
       totalFee: activeParts.reduce((s, p) => s + (Number(p.fee) || 0), 0),
       totalProductCost: activeParts.reduce((s, p) => s + (Number(p.product_cost) || 0), 0),
     };
@@ -164,28 +169,17 @@ export async function GET() {
   const totalWaitingAmount = (waitingSettlements ?? []).reduce(
     (sum, r) => sum + (Number(r.net_amount) || Number(r.gross_amount) || 0), 0,
   );
-  const totalWaitingCount = (pendingSettlement ?? 0) + (pendingDocsParticipants ?? []).length;
+  const totalWaitingCount = pendingSettlement + (pendingDocsParticipants ?? []).length;
 
-  // ─── Today's Checklist (expanded) ───
-  // KST (UTC+9) 기준 오늘 날짜
+  // ─── Today's Checklist ───
   const kstNow = new Date(now.getTime() + 9 * 60 * 60 * 1000);
   const todayStr = kstNow.toISOString().slice(0, 10);
   const kstThreshold = new Date(kstNow.getTime() + 3 * 86400000);
   const dueThreshold = kstThreshold.toISOString().slice(0, 10);
 
-  // Extract all active participants for content schedule checks
-  const allActiveParts = (campaignsRaw ?? []).flatMap(
-    (c: Record<string, unknown>) => {
-      const parts = (c.inf_participants as Record<string, unknown>[]) ?? [];
-      return parts.filter((p) => p.status !== 'cancelled');
-    },
-  );
-
-  // Helper: effective date (confirmed ?? planned)
   const effectiveDate = (p: Record<string, unknown>, confirmed: string, planned: string) =>
     (p[confirmed] as string | null) || (p[planned] as string | null);
 
-  // Content schedule checks
   const uploadOverdue = allActiveParts.filter(p => {
     const d = effectiveDate(p, 'confirmed_upload_date', 'planned_upload_date');
     return d && d < todayStr && !p.uploaded_at;
@@ -218,7 +212,6 @@ export async function GET() {
     return expDate >= todayStr && expDate <= dueThreshold;
   }).length;
 
-  // Settlement checks (existing)
   const overdueInfoCount = (pendingDocsParticipants ?? []).filter(p => {
     if (!p.settlement_token_expires_at) return false;
     const sentAt = new Date(p.settlement_token_expires_at).getTime() - 14 * 86400000;
@@ -233,7 +226,6 @@ export async function GET() {
     return s.planned_date < todayStr;
   }).length;
 
-  // Build checklist: RED (overdue) → AMBER (due today / soon) → GRAY (info)
   const todayChecklist: { type: string; label: string; count: number }[] = [];
 
   if (uploadOverdue > 0) todayChecklist.push({ type: 'upload_overdue', label: '업로드 지연 (마감일 경과)', count: uploadOverdue });
@@ -271,7 +263,6 @@ export async function GET() {
       .eq('status', 'revision_requested'),
   ]);
 
-  // Upload overdue: participants with publish_deadline passed and no final_upload submission
   const { data: finalUploads } = await supabaseAdmin
     .from('campaign_submission_assets')
     .select('participant_id')
@@ -288,8 +279,8 @@ export async function GET() {
   if (uploadOverdueSubmission > 0) todayChecklist.push({ type: 'upload_overdue_submission', label: '업로드 예정일 경과', count: uploadOverdueSubmission });
 
   // ─── Weekly Tasks — 1 participant = 1 row ───
+  // [FIX] metrics.ts의 getParticipantStep 사용, skip 설정 기반
 
-  // Fetch all deliverable records for revision_requested detection
   const { data: allDeliverables } = await supabaseAdmin
     .from('inf_settings')
     .select('key, value')
@@ -311,16 +302,25 @@ export async function GET() {
   for (const c of campaignsRaw ?? []) {
     const campName = c.name as string;
     const campId = c.id as string;
-    const collabType = c.collab_type as string | null;
-    const isFree = isUnpaidCollab(collabType);
+    // [FIX] skip 설정 사용
+    const skip = getSkipConfig(c as Record<string, unknown>);
     const parts = (c.inf_participants as Record<string, unknown>[]) ?? [];
 
     for (const p of parts) {
       if (p.status === 'cancelled') continue;
 
-      const step = getCurrentStep(p, isFree);
-      // Skip if all done (payment + paid)
-      if (step === 'payment' && p.settlement_status === 'paid') continue;
+      const step = getParticipantStep(p, skip);
+
+      // Skip completed participants
+      if (isParticipantCompletedSimple({
+        fee: Number(p.fee) || 0,
+        uploaded_at: p.uploaded_at,
+        settlement_status: p.settlement_status as string,
+      })) continue;
+
+      // 무가 참여자: upload 완료 후 payment 단계 스킵
+      const hasFee = (Number(p.fee) || 0) > 0;
+      if (step === 'payment' && !hasFee) continue;
 
       // Determine date for the current step
       let scheduledDate: string | null = null;
@@ -334,16 +334,15 @@ export async function GET() {
       const diff = scheduledDate ? daysBetween(new Date(), scheduledDate) : null;
       const isOverdue = diff !== null && diff < 0;
       const overdueDays = isOverdue ? Math.abs(diff!) : 0;
-      const daysUntil = diff; // raw diff: positive=future, 0=today, negative=past; null=no date
+      const daysUntil = diff;
 
-      // Deliverable status for this step
       const dlvKey = `${p.id}:${step}`;
       const dlv = dlvMap[dlvKey] || null;
 
       weeklyTasks.push({
         participant_id: p.id as string,
         campaign_id: campId,
-        display_name: ((p.display_name || p.name || '') as string),
+        display_name: ((p.name || p.display_name || '') as string),
         channel: (p.channel || null) as string | null,
         campaign_name: campName,
         step,
@@ -354,6 +353,9 @@ export async function GET() {
         days_until: daysUntil,
         deliverable_status: dlv ? (dlv.status as string) : null,
         deliverable_version: dlv ? (dlv.version as number) : undefined,
+        fee: Number(p.fee) || 0,
+        settlement_token: (p.settlement_token as string) || null,
+        settlement_status: (p.settlement_status as string) || null,
       });
     }
   }
@@ -367,11 +369,10 @@ export async function GET() {
     return a.display_name.localeCompare(b.display_name, 'ko');
   });
 
-  // Summary cards (5 steps)
-  const stepOrder: WeeklyStep[] = ['draft', 'edit', 'upload', 'performance', 'payment'];
+  // Summary cards (4 steps)
+  const stepOrder: WeeklyStep[] = ['draft', 'edit', 'upload', 'payment'];
   const weeklyTaskSummary: WeeklyTaskSummary[] = stepOrder.map(step => {
     const items = weeklyTasks.filter(t => t.step === step);
-    // Build subtitle: "이름 MM/DD · 이름 MM/DD" (up to 2, with dates)
     const subtitleParts = items.slice(0, 2).map(t => {
       if (t.scheduled_date) {
         const d = new Date(t.scheduled_date + 'T00:00:00');
@@ -389,8 +390,8 @@ export async function GET() {
 
   const data: DashboardData = {
     activeCampaigns: activeCampaigns ?? 0,
-    totalParticipants: totalParticipants ?? 0,
-    pendingConsent: pendingConsent ?? 0,
+    totalParticipants,
+    pendingConsent,
     pendingSettlement: pendingSettlement ?? 0,
     // 계약 총액 (세전)
     monthlyContractTotal,
@@ -404,10 +405,11 @@ export async function GET() {
     annualConfirmedFee,
     // 예산
     monthlyBudget,
+    isBudgetFallback,
     annualBudget,
     productExecution,
     campaigns,
-    // 정산 지표 (실제 지급 레코드 기반)
+    // 정산 지표
     settlementWaitingCount: totalWaitingCount,
     settlementWaitingAmount: totalWaitingAmount,
     monthlyPaidAmount: monthlyPaid,

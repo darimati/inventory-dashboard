@@ -13,7 +13,6 @@ import {
   SETTLEMENT_STAGE_LABELS,
   REVIEW_CATEGORIES,
   FINAL_CONTENT_TYPES,
-  DELIVERABLE_STATUS_LABELS,
   SUBMISSION_STATUS_LABELS,
   SUBMISSION_STATUS_COLORS,
   SUBMISSION_STAGE_LABELS,
@@ -34,9 +33,8 @@ import {
   type SubmissionAsset,
   type SubmissionStage,
 } from '@/lib/types/influencer';
-import { formatFileSize } from '@/lib/helpers';
-import SubmissionsTab from './SubmissionsTab';
-import ParticipantSubmissions from './ParticipantSubmissions';
+import { formatFileSize, formatKRW } from '@/lib/helpers';
+import { isParticipantCompletedSimple } from '@/lib/influencer/metrics';
 
 /* ── Types ─────────────────────────────────────────────── */
 
@@ -102,6 +100,9 @@ interface Participant {
   delivery_address_base: string | null;
   delivery_address_detail: string | null;
   memo: string | null;
+  bank_name: string | null;
+  bank_holder: string | null;
+  business_name: string | null;
   _deliverables?: Record<string, { link_url?: string; memo?: string; status?: string; received_at?: string; revision_note?: string; review_category?: string; version?: number; file_url?: string; original_filename?: string; mime_type?: string; file_size?: number; asset_type?: string; content_type?: string; history?: Array<Record<string, unknown>> }>;
 }
 
@@ -179,8 +180,6 @@ export default function ManageClient() {
     memo: '',
   });
 
-  // Campaign tab
-  const [campaignTab, setCampaignTab] = useState<Record<string, 'participants' | 'submissions'>>({});
   // Submission assets (keyed by campaign id)
   const [submissionAssets, setSubmissionAssets] = useState<Record<string, SubmissionAsset[]>>({});
 
@@ -275,6 +274,20 @@ export default function ManageClient() {
   } | null>(null);
   const manageToastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Submit asset modal (register new submission from table)
+  const [submitModal, setSubmitModal] = useState<{
+    participantId: string;
+    participantName: string;
+    campaignId: string;
+    stage: SubmissionStage;
+    stageLabel: string;
+  } | null>(null);
+  const [submitLink, setSubmitLink] = useState('');
+  const [submitSaving, setSubmitSaving] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+
+  // Drag-and-drop file upload state
+
   // Fetch settings on mount
   useEffect(() => {
     fetch('/api/influencer/settings')
@@ -293,8 +306,8 @@ export default function ManageClient() {
     try {
       const res = await fetch(`/api/influencer/submissions?campaign_id=${campaignId}`);
       const data = await res.json();
-      if (data.data) {
-        setSubmissionAssets(prev => ({ ...prev, [campaignId]: data.data }));
+      if (data.assets) {
+        setSubmissionAssets(prev => ({ ...prev, [campaignId]: data.assets }));
       }
     } catch { /* ignore */ }
   };
@@ -303,16 +316,20 @@ export default function ManageClient() {
     try {
       const url = filter === 'all' ? '/api/influencer/campaigns' : `/api/influencer/campaigns?status=${filter}`;
       const res = await fetch(url);
+      if (!res.ok) { console.error('[fetchCampaigns] HTTP', res.status); }
       const data = await res.json();
       setCampaigns(Array.isArray(data) ? data : []);
       // Refresh submission assets for expanded campaigns
       expanded.forEach(campaignId => fetchSubmissionAssets(campaignId));
-    } catch {
+    } catch (e) {
+      console.error('[fetchCampaigns] error:', e);
       setCampaigns([]);
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => { fetchCampaigns(); }, [filter]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Fetch submissions when campaigns expand
   useEffect(() => {
@@ -802,6 +819,59 @@ export default function ManageClient() {
     }
   };
 
+  // Inline approve asset (no modal)
+  const handleApproveAsset = async (assetId: string) => {
+    try {
+      const res = await fetch('/api/influencer/submissions/review', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ asset_id: assetId, action: 'approved' }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: '알 수 없는 오류' }));
+        alert(err.error || '확인 완료 처리에 실패했습니다');
+        return;
+      }
+      // Refresh submission assets for all expanded campaigns
+      expanded.forEach(cid => fetchSubmissionAssets(cid));
+      showManageToast('확인 완료 처리했습니다');
+    } catch {
+      alert('네트워크 오류입니다. 다시 시도해주세요.');
+    }
+  };
+
+  // Submit new asset (from table [등록] button)
+  const handleSubmitAsset = async () => {
+    if (!submitModal || !submitLink.trim()) return;
+    setSubmitSaving(true);
+    setSubmitError('');
+    try {
+      const res = await fetch('/api/influencer/submissions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          participant_id: submitModal.participantId,
+          stage: submitModal.stage,
+          external_url: submitLink.trim(),
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: '알 수 없는 오류' }));
+        setSubmitError(err.error || '등록에 실패했습니다');
+        return;
+      }
+      fetchSubmissionAssets(submitModal.campaignId);
+      setSubmitModal(null);
+      setSubmitLink('');
+      showManageToast(`${submitModal.stageLabel} 등록 완료`);
+    } catch {
+      setSubmitError('네트워크 오류입니다. 다시 시도해주세요.');
+    } finally {
+      setSubmitSaving(false);
+    }
+  };
+
+
   const openUploadModal = (p: Participant) => {
     setUploadPartId(p.id);
     setUploadForm({
@@ -861,7 +931,7 @@ export default function ManageClient() {
 
   /* ── Helpers ──────────────────────────────────────────── */
 
-  const fmtKRW = (n: number) => n > 0 ? `₩${n.toLocaleString()}` : '-';
+  const fmtKRW = (n: number) => n > 0 ? formatKRW(n) : '-';
 
   /* ── Memo helpers ─────────────────────────────────────── */
 
@@ -893,9 +963,9 @@ export default function ManageClient() {
 
   const ProgressDots = ({ p }: { p: Participant }) => {
     const consentDone = p.consent_status === 'agreed';
-    const uploadDone = !!p.published_url;
+    const uploadDone = !!p.uploaded_at;
     const stage = getSettlementStatus(p);
-    const paidDone = stage === 'paid';
+    const paidDone = p.settlement_status === 'paid';
     const paymentWaiting = stage === 'payment_waiting';
     const hasFee = (p.fee || 0) > 0;
 
@@ -1114,6 +1184,9 @@ export default function ManageClient() {
           </div>
         </div>
         {loading && <p style={{ color: 'var(--text-muted)' }}>로딩 중...</p>}
+        {!loading && campaigns.length === 0 && filter === 'all' && (
+          <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>데이터를 불러올 수 없습니다. 새로고침을 시도하세요.</p>
+        )}
 
         {campaigns.map((c) => {
           const isOpen = expanded.has(c.id);
@@ -1121,7 +1194,13 @@ export default function ManageClient() {
           const totalFee = parts.reduce((s, p) => s + (p.fee || 0), 0);
           const allUnpaid = parts.length > 0 && parts.every((p) => !isPaidCollab(p.collab_type) && (p.fee || 0) === 0);
           const consentAgreed = parts.filter((p) => p.consent_status === 'agreed').length;
-          const uploadDone = parts.filter((p) => !!p.published_url).length;
+          const completedCount = parts.filter((p) =>
+            isParticipantCompletedSimple({
+              fee: Number(p.fee) || 0,
+              uploaded_at: p.uploaded_at,
+              settlement_status: p.settlement_status,
+            }),
+          ).length;
           const budgetPct = c.budget > 0 ? Math.round((totalFee / c.budget) * 100) : 0;
 
           return (
@@ -1148,8 +1227,15 @@ export default function ManageClient() {
                     </div>
                     <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>
                       {c.month || ''}{c.month ? ' · ' : ''}참여자 {parts.length}명
-                      {` · 동의서 ${consentAgreed}/${parts.length}`}
-                      {` · 업로드 ${uploadDone}/${parts.length}`}
+                      {completedCount > 0 && ` · ${completedCount}명 완료`}
+                      {(() => {
+                        const pAssets = submissionAssets[c.id] || [];
+                        const needsReview = parts.filter(p => {
+                          const pa = pAssets.filter(a => a.participant_id === p.id);
+                          return (['proposal', 'rough_cut', 'final_upload'] as SubmissionStage[]).some(s => getSubmissionDisplayStatus(pa, s).status === 'received');
+                        }).length;
+                        return needsReview > 0 ? ` · 확인 필요 ${needsReview}건` : '';
+                      })()}
                       {!allUnpaid && totalFee > 0 && ` · 집행 ${totalFee.toLocaleString()}원`}
                       {!allUnpaid && c.budget > 0 && ` · 예산 ${c.budget.toLocaleString()}원`}
                       {!allUnpaid && c.budget > 0 && (
@@ -1205,190 +1291,289 @@ export default function ManageClient() {
                     </div>
                   )}
 
-                  {/* Campaign tabs */}
-                  <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid var(--border)', marginBottom: 12 }}>
-                    {(['participants', 'submissions'] as const).map(tab => {
-                      const active = (campaignTab[c.id] || 'participants') === tab;
-                      const label = tab === 'participants' ? '참여자' : '제출 자료';
-                      return (
-                        <button
-                          key={tab}
-                          onClick={() => setCampaignTab(prev => ({ ...prev, [c.id]: tab }))}
-                          style={{
-                            padding: '8px 16px',
-                            fontSize: 13,
-                            fontWeight: active ? 600 : 400,
-                            color: active ? 'var(--text)' : 'var(--text-muted)',
-                            background: 'none',
-                            border: 'none',
-                            borderBottom: active ? '2px solid var(--text)' : '2px solid transparent',
-                            cursor: 'pointer',
-                            marginBottom: -1,
-                          }}
-                        >
-                          {label}
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  {(campaignTab[c.id] || 'participants') === 'submissions' ? (
-                    <SubmissionsTab
-                      campaignId={c.id}
-                      participants={parts.map(p => ({ id: p.id, name: p.name, display_name: p.display_name, channel: p.channel, handle: p.handle }))}
-                      onRefresh={fetchCampaigns}
-                    />
-                  ) : (
                   <>
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
-                    <button style={btnGhost} onClick={() => openAddParticipant(c.id)}>+ 참여자 추가</button>
-                  </div>
-                  {parts.length === 0 ? (
-                    <p style={{ color: 'var(--text-muted)', fontSize: 13, padding: '20px 0', textAlign: 'center' }}>참여자가 없습니다</p>
-                  ) : (
-                    <div style={{ overflowX: 'auto' }}>
-                      <table className="data-table" style={{ width: '100%', fontSize: 13, tableLayout: 'fixed' }}>
-                        <colgroup>
-                          <col style={{ width: colW.name }} />
-                          <col style={{ width: colW.product }} />
-                          {!allUnpaid && <col style={{ width: colW.fee }} />}
-                          <col style={{ width: colW.status }} />
-                          <col style={{ width: colW.progress }} />
-                          <col style={{ width: colW.subProposal }} />
-                          <col style={{ width: colW.subRoughCut }} />
-                          <col style={{ width: colW.subUpload }} />
-                          <col style={{ width: colW.nextAction }} />
-                          <col style={{ width: colW.menu }} />
-                        </colgroup>
-                        <thead>
-                          <tr>
-                            <th style={{ textAlign: 'left' }}>인플루언서</th>
-                            <th style={{ textAlign: 'left' }}>제공제품</th>
-                            {!allUnpaid && <th style={{ textAlign: 'right' }}>고료</th>}
-                            <th style={{ textAlign: 'left' }}>상태</th>
-                            <th style={{ textAlign: 'center' }}>진행</th>
-                            <th style={{ textAlign: 'center' }}>기획안</th>
-                            <th style={{ textAlign: 'center' }}>가편집본</th>
-                            <th style={{ textAlign: 'center' }}>업로드</th>
-                            <th style={{ textAlign: 'left' }}>다음 작업</th>
-                            <th style={{ width: colW.menu }}></th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {parts.map((p) => {
-                            const nextAction = getNextAction(p, c);
-                            return (
-                              <tr key={p.id}>
-                                {/* 인플루언서: 2-line (name + channel/content) */}
-                                <td style={{ textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                  <div style={{ fontWeight: 500, color: (p.name || p.display_name) ? '#1A1D21' : '#9AA2AA', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
-                                    onClick={() => { setDetailPart(p); setDetailCampaign(c); }}>
-                                    {p.name || p.display_name || '(채널명 미입력)'}
-                                    {p.memo && <MemoIcon hasMemo size={10} />}
-                                  </div>
-                                  <div style={{ fontSize: 11, color: '#9AA2AA', marginTop: 1 }}>
-                                    {[p.handle ? `@${p.handle}` : null, p.channel ? CHANNEL_LABELS[p.channel] : null].filter(Boolean).join(' · ')}
-                                  </div>
-                                </td>
-                                {/* 제공제품 */}
-                                <td style={{ textAlign: 'left', fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                  {p.product_set_name || p.product || '-'}
-                                </td>
-                                {/* 고료 */}
-                                {!allUnpaid && (
-                                  <td style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
-                                    {isPaidCollab(p.collab_type) || (p.fee || 0) > 0
-                                      ? fmtKRW(p.fee)
-                                      : <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>-</span>}
-                                  </td>
-                                )}
-                                {/* 상태 (custom dropdown) */}
-                                <td style={{ textAlign: 'left' }} onClick={(e) => e.stopPropagation()}>
-                                  <CustomSelect
-                                    value={p.status}
-                                    onChange={(v) => handleUpdateParticipant(p.id, { status: v })}
-                                    options={Object.entries(PARTICIPANT_STATUS_LABELS).map(([k, v]) => ({ value: k, label: v }))}
-                                  />
-                                </td>
-                                {/* 진행 (3-stage dots) */}
-                                <td style={{ textAlign: 'center' }}>
-                                  <ProgressDots p={p} />
-                                </td>
-                                {/* 제출 자료 상태 (기획안, 가편집본, 업로드) */}
+                  {/* Hover action CSS */}
+                  <style>{`.uc:hover .ua{display:flex!important}`}</style>
+
+                  {(() => {
+                    const campCollab = c.collab_type || 'fixed_fee';
+                    const showProposal = campCollab !== 'free_seeding';
+                    const showRoughCut = campCollab !== 'free_seeding';
+                    const showSettlement = isPaidCollab(campCollab);
+                    const isFreeSeed = campCollab === 'free_seeding';
+                    const campAssets = submissionAssets[c.id] || [];
+
+                    // Sort participants: 1) has 확인필요 2) revision ≥3d 3) in-progress 4) completed
+                    const sorted = [...parts].sort((a, b) => {
+                      const aAssets = campAssets.filter(x => x.participant_id === a.id);
+                      const bAssets = campAssets.filter(x => x.participant_id === b.id);
+                      const stages: SubmissionStage[] = ['proposal', 'rough_cut', 'final_upload'];
+                      const hasReceived = (assets: SubmissionAsset[]) => stages.some(s => getSubmissionDisplayStatus(assets, s).status === 'received');
+                      const hasOverdue = (assets: SubmissionAsset[]) => stages.some(s => { const d = getSubmissionDisplayStatus(assets, s); return d.status === 'revision_requested' && (d.daysSinceRevision ?? 0) >= 3; });
+                      const allDone = (assets: SubmissionAsset[], part: Participant) => {
+                        const allApproved = stages.every(s => getSubmissionDisplayStatus(assets, s).status === 'approved' || getSubmissionDisplayStatus(assets, s).status === 'not_received');
+                        return allApproved && !!part.published_url;
+                      };
+
+                      const aR = hasReceived(aAssets) ? 0 : 1;
+                      const bR = hasReceived(bAssets) ? 0 : 1;
+                      if (aR !== bR) return aR - bR;
+
+                      const aO = hasOverdue(aAssets) ? 0 : 1;
+                      const bO = hasOverdue(bAssets) ? 0 : 1;
+                      if (aO !== bO) return aO - bO;
+
+                      const aD = allDone(aAssets, a) ? 1 : 0;
+                      const bD = allDone(bAssets, b) ? 1 : 0;
+                      return aD - bD;
+                    });
+
+                    // Submission cell renderer
+                    const STAGE_LABELS_MAP: Record<string, string> = { proposal: '기획안', rough_cut: '가편집본', final_upload: '최종 업로드' };
+
+                    const renderSubCell = (pId: string, stage: SubmissionStage, pName?: string) => {
+                      const pAssets = campAssets.filter(a => a.participant_id === pId);
+                      const ds = getSubmissionDisplayStatus(pAssets, stage);
+                      const latest = pAssets.filter(a => a.stage === stage).sort((a, b) => b.version - a.version)[0];
+                      const isOverdue = ds.status === 'revision_requested' && (ds.daysSinceRevision ?? 0) >= 3;
+
+                      // Color rules per spec: only 확인 필요 = orange, 수정본 대기 3일+ = red, others = no bg
+                      const bg = ds.status === 'received' ? '#FDF4E7'
+                        : isOverdue ? '#FBE9E8'
+                        : undefined;
+                      const statusKey = isOverdue ? 'revision_overdue' : ds.status;
+                      const color = SUBMISSION_STATUS_COLORS[statusKey] || '#8A9199';
+
+                      if (ds.status === 'not_received') {
+                        const openRegister = () => {
+                          setSubmitModal({ participantId: pId, participantName: pName || '', campaignId: c.id, stage, stageLabel: STAGE_LABELS_MAP[stage] || stage });
+                          setSubmitLink('');
+                          setSubmitError('');
+                        };
+                        return (
+                          <td style={{ verticalAlign: 'middle', padding: '8px 6px', textAlign: 'center' }}>
+                            <span
+                              style={{ fontSize: 11, color: '#9AA2AA', cursor: 'pointer', textDecoration: 'none' }}
+                              onClick={(e) => { e.stopPropagation(); openRegister(); }}
+                              onMouseEnter={(e) => { (e.target as HTMLElement).style.color = '#2563EB'; }}
+                              onMouseLeave={(e) => { (e.target as HTMLElement).style.color = '#9AA2AA'; }}
+                            >등록</span>
+                          </td>
+                        );
+                      }
+
+                      const fmtDate = (iso: string) => { const d = new Date(iso); return `${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`; };
+
+                      return (
+                        <td className="uc" style={{ verticalAlign: 'middle', padding: '8px 6px', position: 'relative', textAlign: 'center', background: bg }}>
+                          {/* Row 1: Asset link */}
+                          <div style={{ fontSize: 12, marginBottom: 1 }}>
+                            {latest?.external_url ? (
+                              <a href={latest.external_url} target="_blank" rel="noopener noreferrer" style={{ color: '#2563EB', textDecoration: 'none' }}>
+                                🔗 {stage === 'rough_cut' ? `v${latest.version}` : '링크'}
+                              </a>
+                            ) : latest?.file_path ? (
+                              <span style={{ color: '#2563EB', cursor: 'pointer' }}>🎥 v{latest.version}{latest.file_size ? ` · ${formatFileSize(latest.file_size)}` : ''}</span>
+                            ) : null}
+                          </div>
+                          {/* Row 2: Status */}
+                          <div style={{ color, fontSize: 11, fontWeight: 500 }}>
+                            {ds.status === 'approved' && '✓ '}{ds.status === 'revision_requested' && '⚠ '}
+                            {SUBMISSION_STATUS_LABELS[ds.status]}
+                          </div>
+                          {/* Row 3: Date / revision info */}
+                          <div style={{ fontSize: 10, color: '#9AA2AA', marginTop: 1 }}>
+                            {ds.status === 'received' && latest?.received_at && `${fmtDate(latest.received_at)} 수령`}
+                            {ds.status === 'approved' && latest?.reviews?.[0]?.created_at && `${fmtDate(latest.reviews[0].created_at)}`}
+                            {ds.status === 'revision_requested' && (isOverdue ? `${ds.daysSinceRevision}일 경과` : `요청 ${ds.daysSinceRevision ?? 0}일`)}
+                          </div>
+                          {/* Hover inline actions */}
+                          <div className="ua" style={{ display: 'none', position: 'absolute', top: 2, right: 2, gap: 3, zIndex: 5 }}>
+                            {ds.status === 'received' && (
+                              <>
+                                <button style={{ padding: '2px 6px', fontSize: 10, borderRadius: 4, border: 'none', background: '#1A1D21', color: '#fff', cursor: 'pointer' }}
+                                  onClick={(e) => { e.stopPropagation(); handleApproveAsset(latest!.id); }}>확인 완료</button>
+                              </>
+                            )}
+                            {latest?.external_url && (
+                              <button style={{ padding: '2px 6px', fontSize: 10, borderRadius: 4, border: '1px solid var(--border)', background: '#fff', cursor: 'pointer' }}
+                                onClick={(e) => { e.stopPropagation(); window.open(latest.external_url!, '_blank'); }}>열기</button>
+                            )}
+                          </div>
+                        </td>
+                      );
+                    };
+
+                    // Needs review count for the notice bar
+                    const needsReviewCount = parts.filter(p => {
+                      const pa = campAssets.filter(a => a.participant_id === p.id);
+                      return (['proposal', 'rough_cut', 'final_upload'] as SubmissionStage[]).some(s => getSubmissionDisplayStatus(pa, s).status === 'received');
+                    }).length;
+
+                    return (
+                      <>
+                        {needsReviewCount > 0 && (
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                            <span style={{ fontSize: 13, color: '#A8712A', fontWeight: 500 }}>확인 필요 {needsReviewCount}건</span>
+                            <button style={btnGhost} onClick={() => openAddParticipant(c.id)}>+ 참여자 추가</button>
+                          </div>
+                        )}
+                        {needsReviewCount === 0 && (
+                          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
+                            <button style={btnGhost} onClick={() => openAddParticipant(c.id)}>+ 참여자 추가</button>
+                          </div>
+                        )}
+
+                        {parts.length === 0 ? (
+                          <p style={{ color: 'var(--text-muted)', fontSize: 13, padding: '20px 0', textAlign: 'center' }}>참여자가 없습니다</p>
+                        ) : (
+                          <div style={{ overflowX: 'auto' }}>
+                            <table className="data-table" style={{ width: '100%', fontSize: 13, tableLayout: 'fixed' }}>
+                              <colgroup>
                                 {(() => {
-                                  const pAssets = (submissionAssets[c.id] || []).filter(a => a.participant_id === p.id);
-                                  const stages: SubmissionStage[] = ['proposal', 'rough_cut', 'final_upload'];
-                                  return stages.map(stage => {
-                                    const ds = getSubmissionDisplayStatus(pAssets, stage);
-                                    const isOverdue = ds.status === 'revision_requested' && (ds.daysSinceRevision ?? 0) >= 3;
-                                    const statusKey = isOverdue ? 'revision_overdue' : ds.status;
-                                    const color = SUBMISSION_STATUS_COLORS[statusKey] || '#8A9199';
-                                    const bg = ds.status === 'received' ? '#FDF4E7' : isOverdue ? '#FBE9E8' : '#F2F4F7';
-                                    const label = ds.status === 'not_received' ? '-' : SUBMISSION_STATUS_LABELS[ds.status] || ds.status;
-                                    return (
-                                      <td key={stage} style={{ textAlign: 'center' }}>
-                                        {ds.status === 'not_received' ? (
-                                          <span style={{ fontSize: 11, color: '#C4CAD1' }}>-</span>
-                                        ) : (
-                                          <span style={{
-                                            display: 'inline-block', padding: '2px 6px', borderRadius: 4,
-                                            fontSize: 11, fontWeight: 500, color, background: bg,
-                                          }}>
-                                            {label}
-                                          </span>
-                                        )}
-                                      </td>
-                                    );
-                                  });
+                                  // Calculate column count and widths dynamically
+                                  const cols = 2 + (showProposal ? 1 : 0) + (showRoughCut ? 1 : 0) + 1 + (showSettlement ? 1 : 0); // name + consent + proposal? + roughcut? + upload + settlement?
+                                  const menuW = 36; // px for ⋯ column
+                                  // Distribute remaining width proportionally
+                                  const nameW = '18%';
+                                  const consentW = '8%';
+                                  const stageW = showSettlement ? '16%' : '20%';
+                                  const settlW = '10%';
+                                  return (
+                                    <>
+                                      <col style={{ width: nameW }} />
+                                      <col style={{ width: consentW }} />
+                                      {showProposal && <col style={{ width: stageW }} />}
+                                      {showRoughCut && <col style={{ width: stageW }} />}
+                                      <col style={{ width: stageW }} />
+                                      {showSettlement && <col style={{ width: settlW }} />}
+                                      <col style={{ width: menuW }} />
+                                    </>
+                                  );
                                 })()}
-                                {/* 다음 작업 */}
-                                <td style={{ textAlign: 'left' }}>
-                                  {(() => {
-                                    const pAssets = (submissionAssets[c.id] || []).filter(a => a.participant_id === p.id);
-                                    const subAction = getNextSubmissionAction(pAssets);
-                                    if (subAction) {
-                                      return <span style={{ fontSize: 12, color: '#A8712A', fontWeight: 500 }}>{subAction}</span>;
-                                    }
-                                    if (nextAction) {
-                                      return (
-                                        <button
-                                          style={btnSmall}
-                                          onClick={(e) => { e.stopPropagation(); nextAction.onClick(); }}
-                                        >
-                                          {nextAction.label}
-                                        </button>
-                                      );
-                                    }
-                                    return <span style={{ fontSize: 12, color: '#C4CAD1' }}>-</span>;
-                                  })()}
-                                </td>
-                                {/* ⋯ menu */}
-                                <td style={{ textAlign: 'center', position: 'relative' }}>
-                                  <div style={{ position: 'relative', display: 'inline-block' }}>
-                                    <EllipsisBtn onClick={(e) => { e.stopPropagation(); setPartMenuId(partMenuId === p.id ? null : p.id); }} />
-                                    {partMenuId === p.id && (
-                                      <EllipsisMenu
-                                        menuRef={partMenuRef}
-                                        items={[
-                                          { label: '참여자 수정', onClick: () => openEditParticipant(p) },
-                                          { label: '업로드 정보 수정', onClick: () => openUploadModal(p) },
-                                          ...(p.consent_token ? [{ label: '동의서 열기', onClick: () => { window.open(getLinkUrl(p.consent_token!, 'consent'), '_blank'); setPartMenuId(null); } }] : []),
-                                          { label: '모든 진행 기록 초기화', onClick: () => { setResetModal({ type: 'participant', id: p.id, name: (p.display_name || p.name || p.channel || ''), confirmName: (p.channel || p.display_name || p.name || '') }); setResetConfirmInput(''); setResetError(''); setPartMenuId(null); } },
-                                          { label: '삭제', onClick: () => openDeleteParticipant(p), danger: true },
-                                        ]}
-                                      />
-                                    )}
-                                  </div>
-                                </td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
+                              </colgroup>
+                              <thead>
+                                <tr>
+                                  <th style={{ textAlign: 'left', paddingLeft: 6 }}>인플루언서</th>
+                                  <th style={{ textAlign: 'center' }}>동의서</th>
+                                  {showProposal && <th style={{ textAlign: 'center' }}>기획안</th>}
+                                  {showRoughCut && <th style={{ textAlign: 'center' }}>가편집본</th>}
+                                  <th style={{ textAlign: 'center' }}>{isFreeSeed ? '업로드 (선택)' : '업로드'}</th>
+                                  {showSettlement && <th style={{ textAlign: 'center' }}>정산</th>}
+                                  <th></th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {sorted.map((p) => {
+                                  const pName = p.name || p.display_name || '(채널명 미입력)';
+                                  const hasFee = isPaidCollab(p.collab_type) || (p.fee || 0) > 0;
+
+                                  // Consent cell content
+                                  const consentLabel = p.consent_status === 'agreed'
+                                    ? <span style={{ color: '#22C55E', fontWeight: 500 }}>✓</span>
+                                    : p.consent_status === 'sent'
+                                    ? <span style={{ fontSize: 11, color: '#A8712A' }}>발송</span>
+                                    : p.consent_status === 'expired'
+                                    ? <span style={{ fontSize: 11, color: '#B03F3B' }}>만료</span>
+                                    : <span style={{ fontSize: 11, color: '#C4CAD1' }}>—</span>;
+                                  const consentCell = (
+                                    <>
+                                      {consentLabel}
+                                      <div className="ua" style={{ display: 'none', position: 'absolute', top: 2, right: 2, gap: 3, zIndex: 5 }}>
+                                        {p.consent_token ? (
+                                          <>
+                                            <button style={{ padding: '2px 6px', fontSize: 10, borderRadius: 4, border: 'none', background: '#1A1D21', color: '#fff', cursor: 'pointer' }}
+                                              onClick={(e) => { e.stopPropagation(); copyToClipboard(getLinkUrl(p.consent_token!, 'consent')); }}>복사</button>
+                                            <button style={{ padding: '2px 6px', fontSize: 10, borderRadius: 4, border: '1px solid var(--border)', background: '#fff', cursor: 'pointer' }}
+                                              onClick={(e) => { e.stopPropagation(); window.open(getLinkUrl(p.consent_token!, 'consent'), '_blank'); }}>열기</button>
+                                          </>
+                                        ) : p.consent_status !== 'agreed' ? (
+                                          <button style={{ padding: '2px 6px', fontSize: 10, borderRadius: 4, border: 'none', background: '#1A1D21', color: '#fff', cursor: 'pointer' }}
+                                            onClick={(e) => { e.stopPropagation(); handleUpdateParticipant(p.id, { generate_consent_token: true }); }}>발송</button>
+                                        ) : null}
+                                      </div>
+                                    </>
+                                  );
+
+                                  // Settlement cell
+                                  const settlementLabel = (() => {
+                                    if (!showSettlement) return null;
+                                    if (p.settlement_status === 'paid') return <span style={{ color: '#22C55E', fontWeight: 500, fontSize: 12 }}>✓ 완료</span>;
+                                    if (p.settlement_status === 'docs_submitted' || p.settlement_status === 'payment_requested') return <span style={{ fontSize: 11, color: '#A8712A' }}>지급 대기</span>;
+                                    if (p.settlement_status === 'docs_requested') return <span style={{ fontSize: 11, color: '#9AA2AA' }}>정보 대기</span>;
+                                    if (!p.published_url) return <span style={{ fontSize: 11, color: '#C4CAD1' }}>—</span>;
+                                    return <span style={{ fontSize: 11, color: '#9AA2AA' }}>대기</span>;
+                                  })();
+                                  const settlementCell = showSettlement ? (
+                                    <>
+                                      {settlementLabel}
+                                      <div className="ua" style={{ display: 'none', position: 'absolute', top: 2, right: 2, gap: 3, zIndex: 5 }}>
+                                        {p.settlement_token ? (
+                                          <>
+                                            <button style={{ padding: '2px 6px', fontSize: 10, borderRadius: 4, border: 'none', background: '#1A1D21', color: '#fff', cursor: 'pointer' }}
+                                              onClick={(e) => { e.stopPropagation(); copyToClipboard(getLinkUrl(p.settlement_token!, 'settlement')); }}>복사</button>
+                                            <button style={{ padding: '2px 6px', fontSize: 10, borderRadius: 4, border: '1px solid var(--border)', background: '#fff', cursor: 'pointer' }}
+                                              onClick={(e) => { e.stopPropagation(); window.open(getLinkUrl(p.settlement_token!, 'settlement'), '_blank'); }}>열기</button>
+                                          </>
+                                        ) : p.published_url && p.settlement_status !== 'paid' && p.settlement_status !== 'docs_submitted' && p.settlement_status !== 'payment_requested' ? (
+                                          <button style={{ padding: '2px 6px', fontSize: 10, borderRadius: 4, border: 'none', background: '#1A1D21', color: '#fff', cursor: 'pointer' }}
+                                            onClick={(e) => { e.stopPropagation(); handleUpdateParticipant(p.id, { generate_settlement_token: true }); }}>발급</button>
+                                        ) : null}
+                                      </div>
+                                    </>
+                                  ) : null;
+
+                                  return (
+                                    <tr key={p.id}>
+                                      {/* 인플루언서 + 고료 */}
+                                      <td style={{ verticalAlign: 'middle', padding: '8px 6px' }}>
+                                        <div style={{ fontWeight: 500, color: pName !== '(채널명 미입력)' ? '#1A1D21' : '#9AA2AA', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
+                                          onClick={() => { setDetailPart(p); setDetailCampaign(c); }}>
+                                          {pName}
+                                          {p.memo && <MemoIcon hasMemo size={10} />}
+                                        </div>
+                                        {hasFee && <div style={{ fontSize: 11, color: '#9AA2AA', marginTop: 1 }}>{fmtKRW(p.fee)}</div>}
+                                        {!hasFee && p.handle && <div style={{ fontSize: 11, color: '#9AA2AA', marginTop: 1 }}>@{p.handle}</div>}
+                                      </td>
+                                      {/* 동의서 */}
+                                      <td className="uc" style={{ textAlign: 'center', verticalAlign: 'middle', padding: '8px 6px', position: 'relative' }}>{consentCell}</td>
+                                      {/* 기획안 */}
+                                      {showProposal && renderSubCell(p.id, 'proposal', pName)}
+                                      {/* 가편집본 */}
+                                      {showRoughCut && renderSubCell(p.id, 'rough_cut', pName)}
+                                      {/* 업로드 */}
+                                      {renderSubCell(p.id, 'final_upload', pName)}
+                                      {/* 정산 */}
+                                      {showSettlement && <td className="uc" style={{ textAlign: 'center', verticalAlign: 'middle', padding: '8px 6px', position: 'relative' }}>{settlementCell}</td>}
+                                      {/* ⋯ menu */}
+                                      <td style={{ textAlign: 'center', position: 'relative', verticalAlign: 'middle', padding: '8px 2px' }}>
+                                        <div style={{ position: 'relative', display: 'inline-block' }}>
+                                          <EllipsisBtn onClick={(e) => { e.stopPropagation(); setPartMenuId(partMenuId === p.id ? null : p.id); }} />
+                                          {partMenuId === p.id && (
+                                            <EllipsisMenu
+                                              menuRef={partMenuRef}
+                                              items={[
+                                                { label: '참여자 수정', onClick: () => openEditParticipant(p) },
+                                                { label: '업로드 정보 수정', onClick: () => openUploadModal(p) },
+                                                ...(p.consent_token ? [{ label: '동의서 열기', onClick: () => { window.open(getLinkUrl(p.consent_token!, 'consent'), '_blank'); setPartMenuId(null); } }] : []),
+                                                { label: '모든 진행 기록 초기화', onClick: () => { setResetModal({ type: 'participant', id: p.id, name: (p.display_name || p.name || p.channel || ''), confirmName: (p.channel || p.display_name || p.name || '') }); setResetConfirmInput(''); setResetError(''); setPartMenuId(null); } },
+                                                { label: '삭제', onClick: () => openDeleteParticipant(p), danger: true },
+                                              ]}
+                                            />
+                                          )}
+                                        </div>
+                                      </td>
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
                   </>
-                  )}
                 </div>
               )}
             </div>
@@ -1670,75 +1855,60 @@ export default function ManageClient() {
               {(() => {
                 const ct = detailPart.collab_type || detailCampaign?.collab_type || ((detailPart.fee || 0) > 0 ? 'fixed_fee' : 'free_seeding');
                 const paid = isPaidCollab(ct);
-                const dlv = detailPart._deliverables || {};
+                const pAssets = detailCampaign ? (submissionAssets[detailCampaign.id] || []).filter(a => a.participant_id === detailPart.id) : [];
 
-                type Dlv = { link_url?: string; memo?: string; status?: string; received_at?: string; revision_note?: string; review_category?: string; version?: number; file_url?: string; original_filename?: string; mime_type?: string; file_size?: number; asset_type?: string; content_type?: string; history?: Array<Record<string, unknown>> };
-                type StepDef = { key: string; step: string; label: string; value: string | null; deliverable?: Dlv; disabled?: boolean; editable?: boolean; dateLabel?: string };
+                type StepDef = {
+                  key: string; stage: SubmissionStage | 'consent' | 'payment'; label: string;
+                  isApproved: boolean; hasData: boolean; disabled?: boolean; dateLabel?: string;
+                  asset?: SubmissionAsset; allVersions?: SubmissionAsset[];
+                };
                 const steps: StepDef[] = [];
 
-                // Consent (non-uncheckable)
-                if (detailPart.consent_agreed_at) {
-                  steps.push({
-                    key: 'consent',
-                    step: 'consent',
-                    label: '동의서',
-                    value: detailPart.consent_agreed_at,
-                    disabled: true,
-                    dateLabel: `회수 ${new Date(detailPart.consent_agreed_at).toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' })}`,
-                  });
-                }
-
-                // Draft / Edit
-                if (paid) {
-                  const draftDlv = dlv.draft;
-                  steps.push({
-                    key: 'draft_received_at',
-                    step: 'draft',
-                    label: '기획안',
-                    value: detailPart.draft_received_at,
-                    deliverable: draftDlv,
-                    editable: !!detailPart.draft_received_at,
-                    dateLabel: detailPart.draft_received_at
-                      ? `수령 ${new Date(detailPart.draft_received_at).toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' })}`
-                      : detailPart.planned_draft_date ? `예정 ${detailPart.planned_draft_date}` : undefined,
-                  });
-                  const editDlv = dlv.edit;
-                  steps.push({
-                    key: 'edit_received_at',
-                    step: 'edit',
-                    label: '가편집본',
-                    value: detailPart.edit_received_at,
-                    deliverable: editDlv,
-                    editable: !!detailPart.edit_received_at,
-                    dateLabel: detailPart.edit_received_at
-                      ? `수령 ${new Date(detailPart.edit_received_at).toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' })}`
-                      : detailPart.planned_edit_date ? `예정 ${detailPart.planned_edit_date}` : undefined,
-                  });
-                }
-
-                // Upload (final)
-                const uploadDlv = dlv.upload;
+                // Consent
                 steps.push({
-                  key: 'uploaded_at',
-                  step: 'upload',
-                  label: '최종 업로드',
-                  value: detailPart.uploaded_at,
-                  deliverable: uploadDlv,
-                  editable: !!detailPart.uploaded_at,
-                  dateLabel: detailPart.uploaded_at
-                    ? `확인 ${new Date(detailPart.uploaded_at).toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' })}`
-                    : detailPart.planned_upload_date ? `예정 ${detailPart.planned_upload_date}` : undefined,
+                  key: 'consent', stage: 'consent', label: '동의서',
+                  isApproved: !!detailPart.consent_agreed_at,
+                  hasData: !!detailPart.consent_agreed_at,
+                  disabled: true,
+                  dateLabel: detailPart.consent_agreed_at
+                    ? `회수 ${new Date(detailPart.consent_agreed_at).toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' })}`
+                    : undefined,
                 });
+
+                // Proposal / Rough cut (only for paid collabs, i.e. not free_seeding)
+                const stageMap: { stage: SubmissionStage; label: string; paidOnly: boolean }[] = [
+                  { stage: 'proposal', label: '기획안', paidOnly: true },
+                  { stage: 'rough_cut', label: '가편집본', paidOnly: true },
+                  { stage: 'final_upload', label: '최종 업로드', paidOnly: false },
+                ];
+
+                for (const sm of stageMap) {
+                  if (sm.paidOnly && ct === 'free_seeding') continue;
+                  const stageAssets = pAssets.filter(a => a.stage === sm.stage).sort((a, b) => b.version - a.version);
+                  const latest = stageAssets[0];
+                  const ds = getSubmissionDisplayStatus(pAssets, sm.stage);
+                  steps.push({
+                    key: sm.stage, stage: sm.stage, label: sm.label,
+                    isApproved: ds.status === 'approved',
+                    hasData: !!latest,
+                    asset: latest,
+                    allVersions: stageAssets,
+                    dateLabel: ds.status === 'approved' && latest?.reviews?.[0]?.created_at
+                      ? `확인 ${new Date(latest.reviews[0].created_at).toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' })}`
+                      : ds.status === 'received' && latest?.received_at
+                        ? `수령 ${new Date(latest.received_at).toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' })}`
+                        : ds.status === 'revision_requested'
+                          ? `수정 요청 ${ds.daysSinceRevision ?? 0}일`
+                          : undefined,
+                  });
+                }
 
                 // Payment
                 if (paid) {
                   const isPaid = detailPart.settlement_status === 'paid';
                   steps.push({
-                    key: 'payment',
-                    step: 'payment',
-                    label: '지급',
-                    value: isPaid ? 'paid' : null,
-                    disabled: true,
+                    key: 'payment', stage: 'payment', label: '지급',
+                    isApproved: isPaid, hasData: isPaid, disabled: true,
                     dateLabel: isPaid ? '완료' : undefined,
                   });
                 }
@@ -1747,38 +1917,39 @@ export default function ManageClient() {
                   <div style={{ marginBottom: 16, fontSize: 13 }}>
                     <div style={{ fontWeight: 600, marginBottom: 8, color: 'var(--text-secondary)' }}>진행</div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                      {steps.map((s) => (
-                        <div key={s.key}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, minHeight: 26 }}>
-                            <input
-                              type="checkbox"
-                              checked={!!s.value}
-                              disabled={s.disabled}
-                              onChange={() => {
-                                if (s.disabled) return;
-                                if (s.value) {
-                                  // Uncheck: show confirmation modal (for draft/edit only via check-step, upload via direct update)
-                                  if (s.step === 'draft' || s.step === 'edit') {
-                                    setUndoConfirmModal({ participantId: detailPart.id, step: s.step, stepLabel: s.label });
-                                    setUndoConfirmError('');
-                                  } else if (s.step === 'upload') {
-                                    // Check cascade: block if payment is done
-                                    if (detailPart.settlement_status === 'paid') {
-                                      setErrorMsg('지급 완료 상태에서는 업로드를 취소할 수 없습니다');
-                                      setTimeout(() => setErrorMsg(''), 4000);
-                                      return;
+                      {steps.map((s) => {
+                        const isSubmissionStage = s.stage === 'proposal' || s.stage === 'rough_cut' || s.stage === 'final_upload';
+                        const ds = isSubmissionStage ? getSubmissionDisplayStatus(pAssets, s.stage as SubmissionStage) : null;
+                        const oldStepMap: Record<string, string> = { proposal: 'draft', rough_cut: 'edit', final_upload: 'upload' };
+                        const oldStep = oldStepMap[s.stage] || s.stage;
+                        return (
+                          <div key={s.key}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, minHeight: 26 }}>
+                              <input
+                                type="checkbox"
+                                checked={s.isApproved}
+                                disabled={s.disabled}
+                                onChange={() => {
+                                  if (s.disabled) return;
+                                  if (!isSubmissionStage) return;
+                                  if (s.isApproved && s.asset) {
+                                    // Undo approved: use old check-step undo
+                                    if (oldStep === 'upload') {
+                                      if (detailPart.settlement_status === 'paid') {
+                                        setErrorMsg('지급 완료 상태에서는 업로드를 취소할 수 없습니다');
+                                        setTimeout(() => setErrorMsg(''), 4000);
+                                        return;
+                                      }
                                     }
-                                    setUndoConfirmModal({ participantId: detailPart.id, step: 'upload', stepLabel: '최종 업로드' });
+                                    setUndoConfirmModal({ participantId: detailPart.id, step: oldStep, stepLabel: s.label });
                                     setUndoConfirmError('');
-                                  }
-                                } else {
-                                  // Open receive modal for draft/edit/upload
-                                  if (s.step === 'draft' || s.step === 'edit' || s.step === 'upload') {
+                                  } else if (!s.hasData) {
+                                    // Open receive modal
                                     const kst = new Date(Date.now() + 9 * 3600000);
                                     const today = kst.toISOString().slice(0, 10);
                                     setEditStepModal({
                                       participantId: detailPart.id,
-                                      step: s.step,
+                                      step: oldStep,
                                       stepLabel: s.label,
                                       link: '',
                                       receivedDate: today,
@@ -1794,168 +1965,108 @@ export default function ManageClient() {
                                       contentType: '',
                                     });
                                     setEditStepError('');
+                                  } else if (s.hasData && !s.isApproved && s.asset) {
+                                    // Has data but not approved → approve inline
+                                    handleApproveAsset(s.asset.id);
                                   }
-                                }
-                              }}
-                              style={{ accentColor: 'var(--accent)', width: 14, height: 14, cursor: s.disabled ? 'default' : 'pointer' }}
-                            />
-                            <span style={{ color: s.value ? 'var(--text-secondary)' : 'var(--text-muted)', flex: 1 }}>
-                              {s.label}
-                              {s.dateLabel && (
-                                <span style={{ fontSize: 11, color: 'var(--text-info)', marginLeft: 6 }}>{s.dateLabel}</span>
-                              )}
-                            </span>
-                            {s.editable && (s.step === 'draft' || s.step === 'edit' || s.step === 'upload') && (
-                              <button
-                                onClick={() => {
-                                  const d = s.deliverable;
-                                  const kst = new Date(Date.now() + 9 * 3600000);
-                                  const today = kst.toISOString().slice(0, 10);
-                                  setEditStepModal({
-                                    participantId: detailPart.id,
-                                    step: s.step,
-                                    stepLabel: s.label,
-                                    link: d?.link_url || '',
-                                    receivedDate: d?.received_at ? new Date(d.received_at).toISOString().slice(0, 10) : today,
-                                    memo: d?.memo || '',
-                                    processType: (d?.status === 'revision_requested' ? 'revision_requested' : 'approved'),
-                                    revisionNote: d?.revision_note || '',
-                                    reviewCategory: d?.review_category || '',
-                                    noLink: !d?.link_url && !d?.file_url,
-                                    fileUrl: d?.file_url || '',
-                                    originalFilename: d?.original_filename || '',
-                                    mimeType: d?.mime_type || '',
-                                    fileSize: d?.file_size || 0,
-                                    contentType: d?.content_type || '',
-                                  });
-                                  setEditStepError('');
                                 }}
-                                style={{ fontSize: 11, padding: '1px 8px', border: '1px solid var(--border)', borderRadius: 4, background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer', fontFamily: 'var(--font)', flexShrink: 0 }}
-                              >
-                                수정
-                              </button>
-                            )}
-                          </div>
-                          {/* Deliverable link */}
-                          {s.deliverable?.link_url && (
-                            <div style={{ marginLeft: 20, marginTop: 2, display: 'flex', alignItems: 'center', gap: 6 }}>
-                              <a
-                                href={s.deliverable.link_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                style={{ fontSize: 12, color: '#4A7DB5', textDecoration: 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 240 }}
-                              >
-                                {s.deliverable.link_url}
-                              </a>
-                              <button
-                                onClick={() => copyToClipboard(s.deliverable!.link_url!)}
-                                style={{ fontSize: 11, padding: '1px 6px', border: '1px solid var(--border)', borderRadius: 4, background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer', fontFamily: 'var(--font)', flexShrink: 0 }}
-                              >복사</button>
-                              <a
-                                href={s.deliverable.link_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                style={{ fontSize: 11, padding: '1px 6px', border: '1px solid var(--border)', borderRadius: 4, background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer', fontFamily: 'var(--font)', textDecoration: 'none', flexShrink: 0 }}
-                              >열기</a>
-                            </div>
-                          )}
-                          {/* Deliverable file */}
-                          {s.deliverable?.file_url && (
-                            <div style={{ marginLeft: 20, marginTop: 2, display: 'flex', alignItems: 'center', gap: 6 }}>
-                              <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
-                                {s.deliverable.original_filename || '파일'}
+                                style={{ accentColor: 'var(--accent)', width: 14, height: 14, cursor: s.disabled ? 'default' : 'pointer' }}
+                              />
+                              <span style={{ color: s.isApproved ? 'var(--text-secondary)' : s.hasData ? 'var(--text-secondary)' : 'var(--text-muted)', flex: 1 }}>
+                                {s.label}
+                                {s.dateLabel && (
+                                  <span style={{ fontSize: 11, color: ds?.status === 'revision_requested' ? '#B03F3B' : 'var(--text-info)', marginLeft: 6 }}>{s.dateLabel}</span>
+                                )}
                               </span>
-                              {s.deliverable.file_size && (
-                                <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
-                                  ({formatFileSize(s.deliverable.file_size)})
-                                </span>
+                              {isSubmissionStage && s.hasData && ds?.status === 'received' && s.asset && (
+                                <button
+                                  onClick={() => handleApproveAsset(s.asset!.id)}
+                                  style={{ fontSize: 11, padding: '1px 8px', border: 'none', borderRadius: 4, background: '#1A1D21', color: '#fff', cursor: 'pointer', fontFamily: 'var(--font)', flexShrink: 0 }}
+                                >확인 완료</button>
                               )}
-                              <button
-                                onClick={async () => {
-                                  const res = await fetch(`/api/influencer/files/signed-url?path=${encodeURIComponent(s.deliverable!.file_url!)}`);
+                            </div>
+                            {/* Asset link */}
+                            {s.asset?.external_url && (
+                              <div style={{ marginLeft: 20, marginTop: 2, display: 'flex', alignItems: 'center', gap: 6 }}>
+                                <a href={s.asset.external_url} target="_blank" rel="noopener noreferrer"
+                                  style={{ fontSize: 12, color: '#4A7DB5', textDecoration: 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 240 }}>
+                                  {s.asset.external_url}
+                                </a>
+                                <button onClick={() => copyToClipboard(s.asset!.external_url!)}
+                                  style={{ fontSize: 11, padding: '1px 6px', border: '1px solid var(--border)', borderRadius: 4, background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer', fontFamily: 'var(--font)', flexShrink: 0 }}>복사</button>
+                                <a href={s.asset.external_url} target="_blank" rel="noopener noreferrer"
+                                  style={{ fontSize: 11, padding: '1px 6px', border: '1px solid var(--border)', borderRadius: 4, background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer', fontFamily: 'var(--font)', textDecoration: 'none', flexShrink: 0 }}>열기</a>
+                              </div>
+                            )}
+                            {/* Asset file */}
+                            {s.asset?.file_path && (
+                              <div style={{ marginLeft: 20, marginTop: 2, display: 'flex', alignItems: 'center', gap: 6 }}>
+                                <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+                                  {s.asset.original_filename || '파일'}
+                                </span>
+                                {s.asset.file_size && (
+                                  <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>({formatFileSize(s.asset.file_size)})</span>
+                                )}
+                                <button onClick={async () => {
+                                  const res = await fetch(`/api/influencer/files/signed-url?path=${encodeURIComponent(s.asset!.file_path!)}`);
                                   const data = await res.json();
                                   if (data.url) window.open(data.url, '_blank');
-                                }}
-                                style={{ fontSize: 11, padding: '1px 6px', border: '1px solid var(--border)', borderRadius: 4, background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer', fontFamily: 'var(--font)', textDecoration: 'none', flexShrink: 0 }}
-                              >열기</button>
-                              <button
-                                onClick={async () => {
-                                  const res = await fetch(`/api/influencer/files/signed-url?path=${encodeURIComponent(s.deliverable!.file_url!)}`);
+                                }} style={{ fontSize: 11, padding: '1px 6px', border: '1px solid var(--border)', borderRadius: 4, background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer', fontFamily: 'var(--font)', flexShrink: 0 }}>열기</button>
+                                <button onClick={async () => {
+                                  const res = await fetch(`/api/influencer/files/signed-url?path=${encodeURIComponent(s.asset!.file_path!)}`);
                                   const data = await res.json();
-                                  if (data.url) {
-                                    const a = document.createElement('a');
-                                    a.href = data.url;
-                                    a.download = s.deliverable!.original_filename || 'download';
-                                    a.click();
-                                  }
-                                }}
-                                style={{ fontSize: 11, padding: '1px 6px', border: '1px solid var(--border)', borderRadius: 4, background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer', fontFamily: 'var(--font)', textDecoration: 'none', flexShrink: 0 }}
-                              >다운로드</button>
-                            </div>
-                          )}
-                          {/* Deliverable status + content type */}
-                          {s.deliverable?.status && s.deliverable.status !== 'approved' && (
-                            <div style={{ marginLeft: 20, marginTop: 2, fontSize: 12, color: s.deliverable.status === 'revision_requested' ? '#B03F3B' : 'var(--text-muted)' }}>
-                              {DELIVERABLE_STATUS_LABELS[s.deliverable.status] || s.deliverable.status}
-                              {s.deliverable.review_category && ` · ${s.deliverable.review_category}`}
-                            </div>
-                          )}
-                          {s.deliverable?.content_type && (
-                            <div style={{ marginLeft: 20, marginTop: 2, fontSize: 12, color: 'var(--text-muted)' }}>
-                              유형: {FINAL_CONTENT_TYPES[s.deliverable.content_type] || s.deliverable.content_type}
-                            </div>
-                          )}
-                          {/* Deliverable memo */}
-                          {s.deliverable?.memo && (
-                            <div style={{ marginLeft: 20, marginTop: 2, fontSize: 12, color: 'var(--text-muted)' }}>
-                              메모: {s.deliverable.memo}
-                            </div>
-                          )}
-                          {/* Revision note */}
-                          {s.deliverable?.revision_note && (
-                            <div style={{ marginLeft: 20, marginTop: 2, fontSize: 12, color: '#B03F3B' }}>
-                              수정 사유: {s.deliverable.revision_note}
-                            </div>
-                          )}
-                          {/* Version history */}
-                          {s.deliverable?.history && (s.deliverable.history as Array<Record<string, unknown>>).length > 0 && (
-                            <div style={{ marginLeft: 20, marginTop: 4 }}>
-                              <details>
-                                <summary style={{ fontSize: 11, color: 'var(--text-muted)', cursor: 'pointer' }}>
-                                  이전 버전 ({(s.deliverable.history as Array<Record<string, unknown>>).length}건)
-                                </summary>
-                                {(s.deliverable.history as Array<Record<string, unknown>>).slice().reverse().map((h, i) => {
-                                  const hStatus = h.status as string | undefined;
-                                  const hCat = h.review_category as string | undefined;
-                                  const hFile = h.original_filename as string | undefined;
-                                  const hLink = h.link_url as string | undefined;
-                                  return (
-                                    <div key={i} style={{ marginTop: 4, padding: '4px 8px', background: '#F2F4F7', borderRadius: 4, fontSize: 11 }}>
-                                      <span style={{ color: 'var(--text-muted)' }}>v{(h.version as number) || i + 1}</span>
-                                      {hStatus && <span style={{ marginLeft: 6, color: hStatus === 'revision_requested' ? '#B03F3B' : 'var(--text-secondary)' }}>{DELIVERABLE_STATUS_LABELS[hStatus] || hStatus}</span>}
-                                      {hCat && <span style={{ marginLeft: 4, color: '#B03F3B' }}>{'\u00B7'} {hCat}</span>}
-                                      {hFile && <span style={{ marginLeft: 6, color: 'var(--text-muted)' }}>{hFile}</span>}
-                                      {hLink && <span style={{ marginLeft: 6, color: 'var(--text-muted)' }}>{hLink.slice(0, 40)}...</span>}
+                                  if (data.url) { const a = document.createElement('a'); a.href = data.url; a.download = s.asset!.original_filename || 'download'; a.click(); }
+                                }} style={{ fontSize: 11, padding: '1px 6px', border: '1px solid var(--border)', borderRadius: 4, background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer', fontFamily: 'var(--font)', flexShrink: 0 }}>다운로드</button>
+                              </div>
+                            )}
+                            {/* Status label */}
+                            {ds && ds.status !== 'approved' && ds.status !== 'not_received' && (
+                              <div style={{ marginLeft: 20, marginTop: 2, fontSize: 12, color: ds.status === 'revision_requested' ? '#B03F3B' : 'var(--text-muted)' }}>
+                                {SUBMISSION_STATUS_LABELS[ds.status]}
+                                {s.asset?.reviews?.[0]?.reason && ` · ${s.asset.reviews[0].reason}`}
+                              </div>
+                            )}
+                            {/* Content type */}
+                            {s.asset?.content_type && (
+                              <div style={{ marginLeft: 20, marginTop: 2, fontSize: 12, color: 'var(--text-muted)' }}>
+                                유형: {FINAL_CONTENT_TYPES[s.asset.content_type] || s.asset.content_type}
+                              </div>
+                            )}
+                            {/* Review memo */}
+                            {s.asset?.reviews?.[0]?.memo && (
+                              <div style={{ marginLeft: 20, marginTop: 2, fontSize: 12, color: 'var(--text-muted)' }}>
+                                메모: {s.asset.reviews[0].memo}
+                              </div>
+                            )}
+                            {/* Version history */}
+                            {s.allVersions && s.allVersions.length > 1 && (
+                              <div style={{ marginLeft: 20, marginTop: 4 }}>
+                                <details>
+                                  <summary style={{ fontSize: 11, color: 'var(--text-muted)', cursor: 'pointer' }}>
+                                    이전 버전 ({s.allVersions.length - 1}건)
+                                  </summary>
+                                  {s.allVersions.slice(1).map((v) => (
+                                    <div key={v.id} style={{ marginTop: 4, padding: '4px 8px', background: '#F2F4F7', borderRadius: 4, fontSize: 11 }}>
+                                      <span style={{ color: 'var(--text-muted)' }}>v{v.version}</span>
+                                      <span style={{ marginLeft: 6, color: v.status === 'revision_requested' ? '#B03F3B' : 'var(--text-secondary)' }}>
+                                        {SUBMISSION_STATUS_LABELS[v.status] || v.status}
+                                      </span>
+                                      {v.reviews?.[0]?.reason && <span style={{ marginLeft: 4, color: '#B03F3B' }}>{'\u00B7'} {v.reviews[0].reason}</span>}
+                                      {v.original_filename && <span style={{ marginLeft: 6, color: 'var(--text-muted)' }}>{v.original_filename}</span>}
+                                      {v.external_url && <span style={{ marginLeft: 6, color: 'var(--text-muted)' }}>{v.external_url.slice(0, 40)}...</span>}
                                     </div>
-                                  );
-                                })}
-                              </details>
-                            </div>
-                          )}
-                        </div>
-                      ))}
+                                  ))}
+                                </details>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 );
               })()}
-              {/* ── 제출 자료 ── */}
-              <div style={{ borderTop: '1px solid var(--border)', paddingTop: 16, marginBottom: 16 }}>
-                <ParticipantSubmissions
-                  participantId={detailPart.id}
-                  participantName={detailPart.name || detailPart.display_name || '(이름 없음)'}
-                  onRefresh={fetchCampaigns}
-                />
-              </div>
+              <div style={{ borderTop: '1px solid var(--border)', paddingTop: 16, marginBottom: 16 }}></div>
               <div style={{ marginBottom: 16 }}>
                 <label style={labelStyle}>상태 변경</label>
                 <CustomSelect
@@ -2000,14 +2111,41 @@ export default function ManageClient() {
                   <button style={btnGhost} onClick={() => handleUpdateParticipant(detailPart.id, { generate_consent_token: true })}>동의서 링크 생성</button>
                 ) : null}
               </div>
-              <div style={{ borderTop: '1px solid var(--border)', paddingTop: 16 }}>
-                <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 12 }}>정산</h3>
-                <div style={{ display: 'flex', gap: 16, fontSize: 13, marginBottom: 12 }}>
-                  <div><span style={{ color: 'var(--text-info)' }}>상태:</span> {SETTLEMENT_STAGE_LABELS[getSettlementStatus(detailPart)]}</div>
-                </div>
-                {(isPaidCollab(detailPart.collab_type) || isPaidCollab(detailCampaign?.collab_type) || (detailPart.fee || 0) > 0) ? (
+              {(isPaidCollab(detailPart.collab_type) || isPaidCollab(detailCampaign?.collab_type)) && (
+                <div style={{ borderTop: '1px solid var(--border)', paddingTop: 16 }}>
+                  <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 12 }}>정산</h3>
+                  <div style={{ display: 'flex', gap: 16, fontSize: 13, marginBottom: 12 }}>
+                    <div><span style={{ color: 'var(--text-info)' }}>상태:</span> {SETTLEMENT_STAGE_LABELS[getSettlementStatus(detailPart)]}</div>
+                  </div>
+                  {(detailPart.settlement_status === 'docs_submitted' || detailPart.settlement_status === 'payment_requested' || detailPart.settlement_status === 'paid') && (detailPart.bank_name || detailPart.bank_holder) && (
+                    <div style={{ background: '#F2F4F7', borderRadius: 8, padding: '10px 12px', fontSize: 12, marginBottom: 12, lineHeight: 1.8 }}>
+                      {detailPart.bank_name && <div style={{ color: '#555' }}><span style={{ color: '#8E959D' }}>은행:</span> {detailPart.bank_name}</div>}
+                      {detailPart.bank_holder && <div style={{ color: '#555' }}><span style={{ color: '#8E959D' }}>예금주:</span> {detailPart.bank_holder}</div>}
+                      {detailPart.business_name && <div style={{ color: '#555' }}><span style={{ color: '#8E959D' }}>사업자명:</span> {detailPart.business_name}</div>}
+                    </div>
+                  )}
                   <div>
-                    {detailPart.settlement_token ? (
+                    {detailPart.settlement_status === 'paid' ? (
+                      <>
+                        <span style={{ fontSize: 13, color: '#16A34A' }}>지급 완료</span>
+                        {detailPart.settlement_token && (
+                          <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginTop: 8 }}>
+                            <button style={btnSmall} onClick={() => copyToClipboard(getLinkUrl(detailPart.settlement_token!, 'settlement'))}>링크 복사</button>
+                            <button style={{ ...btnSmall, background: 'transparent', border: '1px solid var(--border)', color: 'var(--text-secondary)' }} onClick={() => window.open(getLinkUrl(detailPart.settlement_token!, 'settlement'), '_blank')}>정산서 보기</button>
+                          </div>
+                        )}
+                      </>
+                    ) : detailPart.settlement_status === 'docs_submitted' || detailPart.settlement_status === 'payment_requested' ? (
+                      <>
+                        <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>정산 정보 회수 완료</span>
+                        {detailPart.settlement_token && (
+                          <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginTop: 8 }}>
+                            <button style={btnSmall} onClick={() => copyToClipboard(getLinkUrl(detailPart.settlement_token!, 'settlement'))}>링크 복사</button>
+                            <button style={{ ...btnSmall, background: 'transparent', border: '1px solid var(--border)', color: 'var(--text-secondary)' }} onClick={() => window.open(getLinkUrl(detailPart.settlement_token!, 'settlement'), '_blank')}>정산서 보기</button>
+                          </div>
+                        )}
+                      </>
+                    ) : detailPart.settlement_token ? (
                       <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                         <button style={btnSmall} onClick={() => copyToClipboard(getLinkUrl(detailPart.settlement_token!, 'settlement'))}>복사</button>
                         <button style={{ ...btnSmall, background: 'transparent', border: '1px solid var(--border)', color: 'var(--text-secondary)' }} onClick={() => window.open(getLinkUrl(detailPart.settlement_token!, 'settlement'), '_blank')}>열기</button>
@@ -2021,12 +2159,41 @@ export default function ManageClient() {
                       >정산서 링크 생성</button>
                     )}
                   </div>
-                ) : (
-                  <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>무가 협업 - 정산 해당 없음</p>
-                )}
-              </div>
+                </div>
+              )}
             </div>
           </>
+        )}
+        {/* Submit Asset Modal */}
+        {submitModal && (
+          <div style={modalOverlay} onMouseDown={(e) => { mouseDownRef.current = e.target; }} onClick={(e) => { if (e.target === e.currentTarget && mouseDownRef.current === e.currentTarget) { setSubmitModal(null); } }}>
+            <div style={{ ...modalContent, width: 440 }}>
+              <h2 style={{ fontSize: 18, fontWeight: 600, marginBottom: 4 }}>{submitModal.stageLabel} 등록</h2>
+              <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 16, marginTop: 0 }}>{submitModal.participantName}</p>
+              <div>
+                <label style={labelStyle}>링크 *</label>
+                <input
+                  style={inputStyle}
+                  value={submitLink}
+                  onChange={(e) => setSubmitLink(e.target.value)}
+                  placeholder={submitModal.stage === 'proposal' ? 'https://docs.google.com/...' : submitModal.stage === 'rough_cut' ? 'https://drive.google.com/...' : 'https://instagram.com/reel/...'}
+                  autoFocus
+                  onKeyDown={(e) => { if (e.key === 'Enter' && submitLink.trim()) handleSubmitAsset(); }}
+                />
+              </div>
+              {submitError && (
+                <div style={{ marginTop: 12, padding: '8px 12px', background: '#FBE9E8', borderRadius: 6, fontSize: 13, color: '#8F3A37' }}>
+                  {submitError}
+                </div>
+              )}
+              <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 20 }}>
+                <button style={btnGhost} onClick={() => { setSubmitModal(null); setSubmitLink(''); }} disabled={submitSaving}>취소</button>
+                <button style={btnPrimary} onClick={handleSubmitAsset} disabled={!submitLink.trim() || submitSaving}>
+                  {submitSaving ? '등록 중...' : '등록'}
+                </button>
+              </div>
+            </div>
+          </div>
         )}
         {/* Upload Confirmation Modal */}
         {showUploadModal && (

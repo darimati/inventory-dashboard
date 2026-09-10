@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-server';
-import { isPaidCollab } from '@/lib/types/influencer';
+import { isPaidCollab, COLLAB_TYPE_LABELS, type CollabType } from '@/lib/types/influencer';
 
 export async function GET(
   _req: NextRequest,
@@ -73,9 +73,8 @@ export async function GET(
   const productName = participant.product_set_name || participant.product || null;
   const collabType = participant.collab_type || campaign?.collab_type || null;
   const isPaid = collabType ? isPaidCollab(collabType) : (participant.fee > 0);
-  const collabLabel = collabType
-    ? (isPaid ? '고정고료' : '무가시딩')
-    : (participant.fee > 0 ? '고정고료' : '무가시딩');
+  const effectiveCollabType = collabType || (participant.fee > 0 ? 'fixed_fee' : 'free_seeding');
+  const collabLabel = COLLAB_TYPE_LABELS[effectiveCollabType as CollabType] || effectiveCollabType;
 
   // 7. Build content format display from legacy or v3 columns
   let contentDisplay: string | null = null;

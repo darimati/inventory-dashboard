@@ -91,12 +91,14 @@ export default function InfluencerDashboardClient() {
   }, []);
 
   function handleCheckStep(item: WeeklyTaskItem) {
-    if (item.step === 'draft' || item.step === 'edit') {
-      // KST today as default received date
+    if (item.step === 'draft' || item.step === 'edit' || item.step === 'upload') {
+      // KST now as default date
       const kstNow = new Date(Date.now() + 9 * 3600000);
-      const todayStr = kstNow.toISOString().slice(0, 10);
+      const dateStr = item.step === 'upload'
+        ? kstNow.toISOString().slice(0, 16) // YYYY-MM-DDTHH:MM for datetime-local
+        : kstNow.toISOString().slice(0, 10); // YYYY-MM-DD for date
       setModal({
-        item, link: '', receivedDate: todayStr, memo: '',
+        item, link: '', receivedDate: dateStr, memo: '',
         processType: 'approved', revisionNote: '',
         noLink: false, saving: false, error: null,
       });
@@ -107,10 +109,11 @@ export default function InfluencerDashboardClient() {
     if (!modal) return;
     const { item, link, receivedDate, memo, processType, revisionNote, noLink } = modal;
 
-    // Validate link: required when noLink is unchecked
-    if (!noLink) {
+    // Validate link
+    const linkRequired = item.step === 'upload' || !noLink;
+    if (linkRequired) {
       if (!link.trim()) {
-        setModal({ ...modal, error: '링크를 입력하거나 "링크 없이 확인함"을 체크해주세요' });
+        setModal({ ...modal, error: item.step === 'upload' ? '업로드 링크를 입력해주세요' : '링크를 입력하거나 "링크 없이 확인함"을 체크해주세요' });
         return;
       }
       try { new URL(link.trim()); } catch {
@@ -119,8 +122,8 @@ export default function InfluencerDashboardClient() {
       }
     }
 
-    // Validate revision note when revision_requested
-    if (processType === 'revision_requested' && !revisionNote.trim()) {
+    // Validate revision note when revision_requested (draft/edit only)
+    if (item.step !== 'upload' && processType === 'revision_requested' && !revisionNote.trim()) {
       setModal({ ...modal, error: '수정 요청 사항을 입력해주세요' });
       return;
     }
@@ -134,11 +137,13 @@ export default function InfluencerDashboardClient() {
         body: JSON.stringify({
           participant_id: item.participant_id,
           step: item.step,
-          link: noLink ? undefined : link.trim(),
-          memo: memo.trim() || undefined,
-          received_at: receivedDate ? new Date(receivedDate + 'T00:00:00+09:00').toISOString() : undefined,
-          status: processType,
-          revision_note: processType === 'revision_requested' ? revisionNote.trim() : undefined,
+          link: (item.step === 'upload' || !noLink) ? link.trim() : undefined,
+          memo: item.step !== 'upload' ? (memo.trim() || undefined) : undefined,
+          received_at: receivedDate ? new Date(
+            item.step === 'upload' ? receivedDate + ':00+09:00' : receivedDate + 'T00:00:00+09:00'
+          ).toISOString() : undefined,
+          status: item.step === 'upload' ? 'approved' : processType,
+          revision_note: item.step !== 'upload' && processType === 'revision_requested' ? revisionNote.trim() : undefined,
         }),
       });
 
@@ -191,6 +196,51 @@ export default function InfluencerDashboardClient() {
       }
     } catch {
       setModal({ ...modal, saving: false, error: '네트워크 오류입니다. 다시 시도해주세요' });
+    }
+  }
+
+  async function handlePaymentComplete(item: WeeklyTaskItem) {
+    if (!confirm(`${item.display_name}님의 지급을 완료 처리하시겠습니까?`)) return;
+
+    try {
+      // 1. Find settlement record by participant_id
+      const settlementsRes = await fetch('/api/influencer/settlements');
+      const settlements = await settlementsRes.json();
+      const settlement = Array.isArray(settlements)
+        ? settlements.find((s: any) => s.participant_id === item.participant_id)
+        : null;
+
+      if (settlement) {
+        // 2. Mark settlement as paid (syncs participant settlement_status too)
+        await fetch('/api/influencer/settlements', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: settlement.id, payment_status: 'paid' }),
+        });
+      } else {
+        // No settlement record — update participant directly
+        await fetch('/api/influencer/participants', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: item.participant_id, settlement_status: 'paid' }),
+        });
+      }
+
+      // 3. Remove from task list
+      setData(prev => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          weeklyTasks: prev.weeklyTasks.filter(t =>
+            !(t.participant_id === item.participant_id && t.step === item.step)
+          ),
+          weeklyTaskSummary: prev.weeklyTaskSummary.map(s =>
+            s.step === 'payment' ? { ...s, count: Math.max(0, s.count - 1) } : s
+          ),
+        };
+      });
+    } catch {
+      alert('처리 중 오류가 발생했습니다. 다시 시도해주세요.');
     }
   }
 
@@ -272,6 +322,7 @@ export default function InfluencerDashboardClient() {
     monthlyConfirmedFee: 0,
     annualConfirmedFee: 0,
     monthlyBudget: 0,
+    isBudgetFallback: false,
     annualBudget: 0,
     productExecution: {},
     campaigns: [],
@@ -339,7 +390,9 @@ export default function InfluencerDashboardClient() {
             <div style={{ fontSize: 12, fontWeight: 450, color: 'var(--text-info)' }}>이번 달 계약</div>
             <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{formatKRW(d.monthlyContractTotal)}</div>
             <div style={{ fontSize: 12, color: 'var(--text-info)' }}>
-              {d.monthlyBudget > 0 ? `예산 ${formatKRW(d.monthlyBudget)} · ${budgetPct}%` : '제품 ' + formatKRW(d.monthlyContractProductCost) + ' + 고료 ' + formatKRW(d.monthlyContractFee)}
+              {d.monthlyBudget > 0
+                ? `예산 ${formatKRW(d.monthlyBudget)} · ${budgetPct}%${d.isBudgetFallback ? ' (캠페인 예산 합 기준)' : ''}`
+                : '제품 ' + formatKRW(d.monthlyContractProductCost) + ' + 고료 ' + formatKRW(d.monthlyContractFee)}
             </div>
           </div>
           <div style={{ ...sectionStyle, height: 130, overflow: 'hidden', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
@@ -385,8 +438,8 @@ export default function InfluencerDashboardClient() {
             </h2>
           </div>
 
-          {/* 5-column summary cards */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 10, marginBottom: 14 }}>
+          {/* 4-column summary cards */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginBottom: 14 }}>
             {(d.weeklyTaskSummary ?? []).map((s) => {
               const isActive = weeklyFilter === s.step;
               const isEmpty = s.count === 0;
@@ -484,12 +537,13 @@ export default function InfluencerDashboardClient() {
                   <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
                     <thead>
                       <tr>
-                        <th style={{ ...thStyle, width: '22%' }}>인플루언서</th>
-                        <th style={{ ...thStyle, width: '14%' }}>캠페인</th>
-                        <th style={{ ...thStyle, width: '14%' }}>단계</th>
-                        <th style={{ ...thStyle, width: '20%' }}>예정일</th>
-                        <th style={{ ...thStyle, width: '10%' }}>상태</th>
-                        <th style={{ ...thStyle, width: '20%', textAlign: 'right' }}></th>
+                        <th style={{ ...thStyle, width: '10%' }}>인플루언서</th>
+                        <th style={{ ...thStyle, width: '16%' }}>캠페인</th>
+                        <th style={{ ...thStyle, width: '10%' }}>단계</th>
+                        <th style={{ ...thStyle, width: '16%' }}>예정일</th>
+                        <th style={{ ...thStyle, width: '10%', textAlign: 'center' }}>상태</th>
+                        <th style={{ ...thStyle, width: '10%' }}>정산서</th>
+                        <th style={{ ...thStyle, width: '10%', textAlign: 'right' }}></th>
                       </tr>
                     </thead>
                     <tbody>
@@ -516,7 +570,7 @@ export default function InfluencerDashboardClient() {
                             <td style={tdStyle}>
                               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                                 <span style={{ width: 6, height: 6, borderRadius: '50%', background: STEP_COLORS[t.step], flexShrink: 0 }} />
-                                {STEP_LABELS[t.step].replace(' 대기', '')}
+                                {STEP_LABELS[t.step]}
                               </span>
                             </td>
                             <td style={{ ...tdStyle, color: t.is_overdue ? '#B03F3B' : 'var(--text-primary)' }}>
@@ -524,10 +578,58 @@ export default function InfluencerDashboardClient() {
                                 <span style={{ color: '#8A9199' }}>—</span>
                               )}
                             </td>
-                            <td style={tdStyle}>
-                              <span style={{ color: status.color, fontWeight: status.weight, fontSize: 13 }}>
-                                {status.text}
-                              </span>
+                            <td style={{ ...tdStyle, textAlign: 'center' }}>
+                              {t.step === 'payment' ? (
+                                (() => {
+                                  const isSubmitted = t.settlement_status === 'docs_submitted' || t.settlement_status === 'payment_requested';
+                                  const isRequested = t.settlement_status === 'docs_requested';
+                                  const label = isSubmitted ? '제출 완료' : isRequested ? '정보 대기' : '미발송';
+                                  const bg = isSubmitted ? '#FEF7ED' : isRequested ? '#F2F4F7' : '#F9FAFB';
+                                  const fg = isSubmitted ? '#92640D' : isRequested ? '#565D64' : '#B0B7BF';
+                                  return (
+                                    <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 10, background: bg, color: fg, fontWeight: 500, whiteSpace: 'nowrap' }}>
+                                      {label}
+                                    </span>
+                                  );
+                                })()
+                              ) : (
+                                <span style={{ color: status.color, fontWeight: status.weight, fontSize: 13 }}>
+                                  {status.text}
+                                </span>
+                              )}
+                            </td>
+                            <td style={{ ...tdStyle, fontSize: 12 }}>
+                              {t.settlement_token ? (
+                                (t.settlement_status === 'docs_submitted' || t.settlement_status === 'payment_requested') ? (
+                                  <a
+                                    href={`/influencer/settlement/${t.settlement_token}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    onClick={(e) => e.stopPropagation()}
+                                    style={{ color: '#4A7DB5', fontSize: 11, textDecoration: 'none' }}
+                                  >보기</a>
+                                ) : (
+                                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        const url = `${window.location.origin}/influencer/settlement/${t.settlement_token}`;
+                                        navigator.clipboard.writeText(url);
+                                      }}
+                                      style={{ padding: '2px 6px', fontSize: 11, borderRadius: 4, border: '1px solid #D0D5DD', background: '#fff', cursor: 'pointer', color: '#565D64' }}
+                                    >복사</button>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        window.open(`${window.location.origin}/influencer/settlement/${t.settlement_token}`, '_blank');
+                                      }}
+                                      style={{ padding: '2px 6px', fontSize: 11, borderRadius: 4, border: '1px solid #D0D5DD', background: '#fff', cursor: 'pointer', color: '#565D64' }}
+                                    >열기</button>
+                                  </span>
+                                )
+                              ) : (
+                                <span style={{ color: '#C4CAD1' }}>—</span>
+                              )}
                             </td>
                             <td style={{ ...tdStyle, textAlign: 'right' }}>
                               {(t.step === 'draft' || t.step === 'edit') && (
@@ -544,11 +646,7 @@ export default function InfluencerDashboardClient() {
                               )}
                               {t.step === 'upload' && (
                                 <button
-                                  onClick={() => {
-                                    if (t.participant_id && t.campaign_id) {
-                                      window.location.href = `/influencer/manage?campaign=${t.campaign_id}&open=${t.participant_id}`;
-                                    }
-                                  }}
+                                  onClick={() => handleCheckStep(t)}
                                   style={btnStyle}
                                   onMouseEnter={e => (e.currentTarget.style.background = '#F7F9FB')}
                                   onMouseLeave={e => (e.currentTarget.style.background = '#FFFFFF')}
@@ -558,11 +656,7 @@ export default function InfluencerDashboardClient() {
                               )}
                               {t.step === 'payment' && (
                                 <button
-                                  onClick={() => {
-                                    if (t.participant_id && t.campaign_id) {
-                                      window.location.href = `/influencer/settlements?participant=${t.participant_id}`;
-                                    }
-                                  }}
+                                  onClick={() => handlePaymentComplete(t)}
                                   style={btnStyle}
                                   onMouseEnter={e => (e.currentTarget.style.background = '#F7F9FB')}
                                   onMouseLeave={e => (e.currentTarget.style.background = '#FFFFFF')}
@@ -666,7 +760,7 @@ export default function InfluencerDashboardClient() {
                     const totalSpent = c.totalFee + c.totalProductCost;
                     const pct = c.budget > 0 ? Math.min(100, Math.round((totalSpent / c.budget) * 100)) : 0;
                     const consentPct = c.participantCount > 0 ? Math.round((c.consentAgreed / c.participantCount) * 100) : 0;
-                    const uploadPct = c.participantCount > 0 ? Math.round((c.uploadDone / c.participantCount) * 100) : 0;
+                    const completePct = c.participantCount > 0 ? Math.round((c.uploadDone / c.participantCount) * 100) : 0;
                     return (
                       <div key={c.id}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
@@ -675,7 +769,7 @@ export default function InfluencerDashboardClient() {
                             {c.month && <span style={{ color: 'var(--text-muted)', fontWeight: 400, marginLeft: 6, fontSize: 12 }}>{c.month}</span>}
                           </div>
                           <div style={{ fontSize: 12, color: 'var(--text-info)' }}>
-                            {c.participantCount}명 · 동의 {consentPct}% · 업로드 {uploadPct}%
+                            {c.participantCount}명 · 동의 {consentPct}% · 완료 {completePct}%
                           </div>
                         </div>
                         <div style={{ height: 10, background: 'var(--track)', borderRadius: 5, overflow: 'hidden', display: 'flex' }}>
@@ -780,7 +874,7 @@ export default function InfluencerDashboardClient() {
               }}
             >
               <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 2 }}>
-                {STEP_LABELS[modal.item.step]?.replace(' 대기', '')} 수령
+                {modal.item.step === 'upload' ? '업로드 등록' : `${STEP_LABELS[modal.item.step]?.replace(' 대기', '')} 수령`}
               </div>
               <div style={{ fontSize: 13, color: '#565D64', marginBottom: 20 }}>
                 {modal.item.display_name} · {modal.item.campaign_name}
@@ -789,33 +883,33 @@ export default function InfluencerDashboardClient() {
               {/* Link URL */}
               <div style={{ marginBottom: 14 }}>
                 <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#565D64', marginBottom: 4 }}>
-                  링크 주소{!modal.noLink && <span style={{ color: '#B03F3B', marginLeft: 2 }}>*</span>}
+                  {modal.item.step === 'upload' ? '업로드 링크' : '링크 주소'}{!(modal.item.step !== 'upload' && modal.noLink) && <span style={{ color: '#B03F3B', marginLeft: 2 }}>*</span>}
                 </label>
                 <input
                   type="url"
-                  placeholder="https://docs.google.com/..."
+                  placeholder={modal.item.step === 'upload' ? 'https://www.instagram.com/...' : 'https://docs.google.com/...'}
                   value={modal.link}
                   onChange={e => setModal({ ...modal, link: e.target.value, error: null })}
-                  disabled={modal.noLink || modal.saving}
+                  disabled={(modal.item.step !== 'upload' && modal.noLink) || modal.saving}
                   autoFocus
                   style={{
                     width: '100%', height: 38, padding: '0 12px',
                     border: '1px solid #D0D5DD', borderRadius: 8,
                     fontSize: 13, fontFamily: 'var(--font)',
                     outline: 'none', boxSizing: 'border-box',
-                    background: modal.noLink ? '#F7F9FB' : '#FFFFFF',
-                    color: modal.noLink ? '#8A9199' : 'var(--text-primary)',
+                    background: (modal.item.step !== 'upload' && modal.noLink) ? '#F7F9FB' : '#FFFFFF',
+                    color: (modal.item.step !== 'upload' && modal.noLink) ? '#8A9199' : 'var(--text-primary)',
                   }}
                 />
               </div>
 
-              {/* Received date */}
+              {/* Date */}
               <div style={{ marginBottom: 14 }}>
                 <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#565D64', marginBottom: 4 }}>
-                  수령일
+                  {modal.item.step === 'upload' ? '업로드 시간' : '수령일'}
                 </label>
                 <input
-                  type="date"
+                  type={modal.item.step === 'upload' ? 'datetime-local' : 'date'}
                   value={modal.receivedDate}
                   onChange={e => setModal({ ...modal, receivedDate: e.target.value })}
                   disabled={modal.saving}
@@ -828,7 +922,8 @@ export default function InfluencerDashboardClient() {
                 />
               </div>
 
-              {/* Memo */}
+              {/* Memo - only for draft/edit */}
+              {modal.item.step !== 'upload' && (
               <div style={{ marginBottom: 14 }}>
                 <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#565D64', marginBottom: 4 }}>
                   메모 <span style={{ fontWeight: 400, color: '#8A9199' }}>(선택)</span>
@@ -848,8 +943,10 @@ export default function InfluencerDashboardClient() {
                   }}
                 />
               </div>
+              )}
 
-              {/* Processing mode */}
+              {/* Processing mode - only for draft/edit */}
+              {modal.item.step !== 'upload' && (
               <div style={{ marginBottom: 14 }}>
                 <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#565D64', marginBottom: 6 }}>
                   처리
@@ -879,9 +976,10 @@ export default function InfluencerDashboardClient() {
                   </label>
                 </div>
               </div>
+              )}
 
-              {/* Revision note (shown only when revision_requested) */}
-              {modal.processType === 'revision_requested' && (
+              {/* Revision note (shown only when revision_requested, draft/edit only) */}
+              {modal.item.step !== 'upload' && modal.processType === 'revision_requested' && (
                 <div style={{ marginBottom: 14 }}>
                   <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#565D64', marginBottom: 4 }}>
                     수정 요청 사항 <span style={{ color: '#B03F3B' }}>*</span>
@@ -903,7 +1001,8 @@ export default function InfluencerDashboardClient() {
                 </div>
               )}
 
-              {/* No-link checkbox */}
+              {/* No-link checkbox - only for draft/edit */}
+              {modal.item.step !== 'upload' && (
               <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 13, color: '#565D64', marginBottom: 16 }}>
                 <input
                   type="checkbox"
@@ -914,6 +1013,7 @@ export default function InfluencerDashboardClient() {
                 />
                 링크 없이 확인함
               </label>
+              )}
 
               {/* Error message */}
               {modal.error && (

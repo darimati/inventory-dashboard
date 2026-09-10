@@ -28,9 +28,38 @@ export async function GET(
     );
   }
 
-  // 3. Already submitted
+  // 3. Already submitted — return settlement details for read-only view
   if (participant.settlement_status === 'docs_submitted') {
-    return NextResponse.json({ status: 'already_submitted' });
+    // Fetch settlement record
+    const { data: settlement } = await supabaseAdmin
+      .from('inf_settlements')
+      .select('tax_type, tax_rate, tax_amount, gross_amount, net_amount')
+      .eq('participant_id', participant.id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+
+    // Fetch bank info from participant
+    const { data: bankInfo } = await supabaseAdmin
+      .from('inf_participants')
+      .select('bank_name, bank_holder')
+      .eq('id', participant.id)
+      .single();
+
+    return NextResponse.json({
+      status: 'already_submitted',
+      participant_name: participant.display_name || participant.name,
+      fee: participant.fee,
+      bank_name: bankInfo?.bank_name ?? '',
+      bank_holder: bankInfo?.bank_holder ?? '',
+      settlement: settlement ? {
+        tax_type: settlement.tax_type,
+        tax_rate: settlement.tax_rate,
+        tax_amount: settlement.tax_amount,
+        gross_amount: settlement.gross_amount,
+        net_amount: settlement.net_amount,
+      } : null,
+    });
   }
 
   // 4. Check expiry
@@ -185,8 +214,6 @@ export async function POST(
     bank_holder: body.bank_holder || null,
     bank_account_enc: bankAccount ? encrypt(bankAccount) : null,
     settlement_status: 'docs_submitted',
-    settlement_token: null,
-    settlement_token_expires_at: null,
   };
 
   if (taxType === 'business_income') {
@@ -197,13 +224,27 @@ export async function POST(
     updates.business_reg_enc = businessReg ? encrypt(businessReg) : null;
   }
 
-  const { error: updateError } = await supabaseAdmin
+  let updateResult = await supabaseAdmin
     .from('inf_participants')
     .update(updates)
     .eq('id', participant.id);
 
-  if (updateError) {
-    return NextResponse.json({ error: updateError.message }, { status: 500 });
+  // Fallback: if encrypted columns don't exist, retry with core fields only
+  if (updateResult.error?.message?.includes('column')) {
+    const coreUpdates: Record<string, unknown> = {
+      bank_name: updates.bank_name,
+      bank_holder: updates.bank_holder,
+      settlement_status: 'docs_submitted',
+    };
+    if (updates.business_name !== undefined) coreUpdates.business_name = updates.business_name;
+    updateResult = await supabaseAdmin
+      .from('inf_participants')
+      .update(coreUpdates)
+      .eq('id', participant.id);
+  }
+
+  if (updateResult.error) {
+    return NextResponse.json({ error: updateResult.error.message }, { status: 500 });
   }
 
   // 7. Create settlement record in inf_settlements

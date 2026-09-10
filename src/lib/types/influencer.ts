@@ -391,23 +391,22 @@ export function getScheduleDate(
 /**
  * Determine the current step for a participant (sequential progression).
  * Returns the first incomplete step.
- * 일정 유무와 무관하게 첫 미완료 단계를 반환합니다.
- * 무가 participants skip draft/edit/payment.
+ *
+ * @deprecated getParticipantStep() in lib/influencer/metrics.ts 사용 권장.
+ *             skip_* 캠페인 컬럼 기반으로 동작합니다.
  */
 export function getCurrentStep(
   p: { [k: string]: unknown },
   isFree: boolean,
 ): WeeklyStep {
-  // Sequential step progression — no "unscheduled" gate
   if (!isFree) {
     if (!p.draft_received_at) return 'draft';
     if (!p.edit_received_at) return 'edit';
   }
   if (!p.uploaded_at) return 'upload';
-  // Performance: only for paid participants, after upload
   if (!isFree && p.settlement_status !== 'paid') return 'payment';
 
-  return 'payment'; // all done
+  return 'payment';
 }
 
 export interface WeeklyTaskItem {
@@ -424,6 +423,9 @@ export interface WeeklyTaskItem {
   days_until: number | null; // D-N
   deliverable_status?: string | null; // 'approved' | 'revision_requested'
   deliverable_version?: number;
+  fee?: number;
+  settlement_token?: string | null;
+  settlement_status?: string | null;
 }
 
 export interface WeeklyTaskSummary {
@@ -450,6 +452,7 @@ export interface DashboardData {
   annualConfirmedFee: number;
   // 예산
   monthlyBudget: number;
+  isBudgetFallback: boolean; // true = 캠페인 예산 합 기준
   annualBudget: number;
   // 제품별 집행
   productExecution: Record<string, { count: number; fee: number }>;

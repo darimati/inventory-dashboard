@@ -34,6 +34,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ assets: [] });
   }
 
+  // Check for existing new-system records
   const { data: assets, error } = await supabaseAdmin
     .from('campaign_submission_assets')
     .select('*, campaign_submission_reviews(*)')
@@ -41,6 +42,136 @@ export async function GET(req: NextRequest) {
     .order('version', { ascending: false });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  // Auto-migrate old deliverable data from inf_settings if no new records exist
+  // Old system stores deliverables as inf_settings keys: dlv:{pid}:{step}
+  // stage mapping: draft→proposal, edit→rough_cut, upload→final_upload
+  const pidsWithAssets = new Set((assets || []).map(a => a.participant_id));
+  const pidsToMigrate = participantIds.filter(pid => !pidsWithAssets.has(pid));
+
+  if (pidsToMigrate.length > 0) {
+    const oldStageMap: Record<string, string> = {
+      draft: 'proposal',
+      edit: 'rough_cut',
+      upload: 'final_upload',
+    };
+
+    for (const pid of pidsToMigrate) {
+      const { data: oldRecords } = await supabaseAdmin
+        .from('inf_settings')
+        .select('key, value')
+        .like('key', `dlv:${pid}:%`);
+
+      if (!oldRecords || oldRecords.length === 0) continue;
+
+      for (const rec of oldRecords) {
+        const parts = rec.key.split(':');
+        if (parts.length < 3) continue;
+        const oldStep = parts[2]; // draft, edit, upload
+        const newStage = oldStageMap[oldStep];
+        if (!newStage) continue;
+
+        const val = rec.value as Record<string, unknown>;
+        if (!val) continue;
+
+        const insertData: Record<string, unknown> = {
+          participant_id: pid,
+          stage: newStage,
+          version: (val.version as number) || 1,
+          status: mapOldStatus(val.status as string),
+          received_at: (val.received_at as string) || new Date().toISOString(),
+        };
+
+        if (val.file_url) {
+          insertData.file_path = val.file_url;
+          insertData.original_filename = val.original_filename || null;
+          insertData.mime_type = val.mime_type || null;
+          insertData.file_size = val.file_size || null;
+        }
+        if (val.link_url) {
+          insertData.external_url = val.link_url;
+        }
+        if (val.content_type) {
+          insertData.content_type = val.content_type;
+        }
+
+        const { data: created } = await supabaseAdmin
+          .from('campaign_submission_assets')
+          .insert(insertData)
+          .select()
+          .single();
+
+        if (created) {
+          // Create initial review record
+          await supabaseAdmin.from('campaign_submission_reviews').insert({
+            asset_id: created.id,
+            action: mapOldStatus(val.status as string) === 'revision_requested' ? 'revision_requested' : 'received',
+            memo: (val.memo as string) || (val.revision_note as string) || null,
+            reason: (val.revision_note as string) || (val.review_category as string) || null,
+            created_at: (val.received_at as string) || new Date().toISOString(),
+          });
+
+          // Migrate version history if exists
+          const history = val.history as Array<Record<string, unknown>> | undefined;
+          if (history && history.length > 0 && newStage === 'rough_cut') {
+            for (const h of history) {
+              const hInsert: Record<string, unknown> = {
+                participant_id: pid,
+                stage: newStage,
+                version: (h.version as number) || 1,
+                status: mapOldStatus(h.status as string),
+                received_at: (h.received_at as string) || new Date().toISOString(),
+              };
+              if (h.file_url) {
+                hInsert.file_path = h.file_url;
+                hInsert.original_filename = h.original_filename || null;
+                hInsert.mime_type = h.mime_type || null;
+                hInsert.file_size = h.file_size || null;
+              }
+              if (h.link_url) hInsert.external_url = h.link_url;
+
+              const { data: hCreated } = await supabaseAdmin
+                .from('campaign_submission_assets')
+                .insert(hInsert)
+                .select()
+                .single();
+
+              if (hCreated && h.revision_note) {
+                await supabaseAdmin.from('campaign_submission_reviews').insert({
+                  asset_id: hCreated.id,
+                  action: 'revision_requested',
+                  reason: (h.revision_note as string) || null,
+                  created_at: (h.received_at as string) || new Date().toISOString(),
+                });
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // Re-fetch all assets after migration
+    const { data: allAssets, error: reErr } = await supabaseAdmin
+      .from('campaign_submission_assets')
+      .select('*, campaign_submission_reviews(*)')
+      .in('participant_id', participantIds)
+      .order('version', { ascending: false });
+
+    if (reErr) return NextResponse.json({ error: reErr.message }, { status: 500 });
+
+    const mapped = (allAssets || []).map(a => {
+      const { campaign_submission_reviews, ...rest } = a;
+      return {
+        ...rest,
+        reviews: (campaign_submission_reviews || []).sort(
+          (x: { created_at: string }, y: { created_at: string }) =>
+            new Date(y.created_at).getTime() - new Date(x.created_at).getTime()
+        ),
+      };
+    });
+
+    return NextResponse.json({ assets: mapped });
+  }
 
   // Rename nested reviews for cleaner API
   const mapped = (assets || []).map(a => {
@@ -297,6 +428,15 @@ export async function PATCH(req: NextRequest) {
     .single();
 
   return NextResponse.json({ asset: formatAsset(updated) });
+}
+
+function mapOldStatus(status: string | null | undefined): string {
+  if (!status) return 'received';
+  switch (status) {
+    case 'approved': return 'approved';
+    case 'revision_requested': return 'revision_requested';
+    default: return 'received';
+  }
 }
 
 function formatAsset(a: Record<string, unknown> | null) {

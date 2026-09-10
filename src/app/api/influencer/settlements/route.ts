@@ -61,19 +61,35 @@ export async function GET(req: NextRequest) {
   }
 
   // Default: settlement records (Tab 2 + Tab 3)
-  const { data, error } = await supabaseAdmin
+  let settlementQuery = await supabaseAdmin
     .from('inf_settlements')
     .select(`
       *,
       inf_participants(
         id, name, display_name, handle, channel, fee, bank_name, bank_holder, business_name,
         ssn_enc, bank_account_enc, business_reg_enc, real_name_enc,
-        biz_reg_file_path,
         campaign_id, published_url, planned_upload_date, post_type, post_count,
         inf_campaigns(name)
       )
     `)
     .order('created_at', { ascending: false });
+
+  // Fallback if encrypted columns don't exist
+  if (settlementQuery.error?.message?.includes('column')) {
+    settlementQuery = await supabaseAdmin
+      .from('inf_settlements')
+      .select(`
+        *,
+        inf_participants(
+          id, name, display_name, handle, channel, fee, bank_name, bank_holder, business_name,
+          campaign_id, published_url, planned_upload_date, post_type, post_count,
+          inf_campaigns(name)
+        )
+      `)
+      .order('created_at', { ascending: false });
+  }
+
+  const { data, error } = settlementQuery;
 
   if (error) {
     console.error('[settlements GET]', error.message);

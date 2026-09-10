@@ -28,6 +28,16 @@ interface SettlementPageData {
     settlement_notice: string;
   };
   company_info?: CompanyInfo | null;
+  // already_submitted fields
+  bank_name?: string;
+  bank_holder?: string;
+  settlement?: {
+    tax_type: string;
+    tax_rate: number;
+    tax_amount: number;
+    gross_amount: number;
+    net_amount: number;
+  } | null;
 }
 
 function formatFee(fee: number): string {
@@ -176,6 +186,7 @@ export default function SettlementFormClient({ token }: { token: string }) {
           setErrorMsg(d.error || '오류가 발생했습니다.');
           setPageStatus('error');
         } else if (d.status === 'already_submitted') {
+          setData(d);
           setPageStatus('already_submitted');
         } else if (d.status === 'expired') {
           setPageStatus('expired');
@@ -408,7 +419,68 @@ export default function SettlementFormClient({ token }: { token: string }) {
 
   if (pageStatus === 'loading') return screen('로딩 중...');
   if (pageStatus === 'error') return screen(errorMsg);
-  if (pageStatus === 'already_submitted') return screen('이미 제출이 완료되었습니다', '정산 정보가 이미 접수되었습니다.');
+  if (pageStatus === 'already_submitted') {
+    const s = data?.settlement;
+    const TAX_TYPE_LABELS: Record<string, string> = {
+      business_income: '사업소득', tax_invoice: '세금계산서',
+      tax_exempt_invoice: '계산서', simplified_business: '간이과세자',
+    };
+    const maskAccount = ''; // account is encrypted, not available
+    return (
+      <div style={wrapStyle}>
+        <div style={{ textAlign: 'center', paddingTop: 60 }}>
+          <div style={{ fontSize: 18, fontWeight: 700, color: '#1A1D21', marginBottom: 24 }}>HEEDA</div>
+          <div style={cardStyle}>
+            <div style={{ width: 48, height: 48, borderRadius: '50%', background: '#22c55e', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M5 13L9 17L19 7" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            </div>
+            <p style={{ fontSize: 16, fontWeight: 600, color: '#1A1D21', margin: '0 0 16px' }}>정산 정보 제출이 완료되었습니다.</p>
+            <div style={{ textAlign: 'left', fontSize: 13, color: '#61686F', lineHeight: 1.8, borderTop: '1px solid #F2F4F7', paddingTop: 12 }}>
+              {s && <div><span style={{ color: '#9AA2AA' }}>세금 방식:</span> {TAX_TYPE_LABELS[s.tax_type] ?? s.tax_type}</div>}
+              {data?.bank_holder && <div><span style={{ color: '#9AA2AA' }}>예금주:</span> {data.bank_holder}</div>}
+              {data?.bank_name && <div><span style={{ color: '#9AA2AA' }}>계좌:</span> {data.bank_name}</div>}
+              {s && (
+                <div style={{ marginTop: 8, padding: '10px 12px', background: '#FBFCFD', borderRadius: 8, border: '1px solid #EDF0F3', fontVariantNumeric: 'tabular-nums' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#9AA2AA' }}>원고료</span><span>{formatFee(s.gross_amount)}</span></div>
+                  {s.tax_type === 'tax_invoice' ? (
+                    <>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#9AA2AA' }}>부가세 ({s.tax_rate}%)</span><span>+{formatFee(s.tax_amount)}</span></div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600, color: '#1A1D21', borderTop: '1px solid #EDF0F3', paddingTop: 6, marginTop: 4 }}>
+                        <span>세금계산서 발행액</span><span>{formatFee(s.net_amount)}</span>
+                      </div>
+                    </>
+                  ) : s.tax_type === 'tax_exempt_invoice' ? (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600, color: '#1A1D21', borderTop: '1px solid #EDF0F3', paddingTop: 6, marginTop: 4 }}>
+                      <span>계산서 발행액</span><span>{formatFee(s.net_amount)}</span>
+                    </div>
+                  ) : s.tax_rate > 0 ? (
+                    <>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#9AA2AA' }}>원천징수 ({s.tax_rate}%)</span><span style={{ color: '#D9534F' }}>-{formatFee(s.tax_amount)}</span></div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600, color: '#1A1D21', borderTop: '1px solid #EDF0F3', paddingTop: 6, marginTop: 4 }}>
+                        <span>실지급액</span><span>{formatFee(s.net_amount)}</span>
+                      </div>
+                    </>
+                  ) : (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600, color: '#1A1D21', borderTop: '1px solid #EDF0F3', paddingTop: 6, marginTop: 4 }}>
+                      <span>실지급액</span><span>{formatFee(s.net_amount)}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+              {s?.tax_type === 'business_income' && (
+                <div style={{ marginTop: 12, padding: '10px 12px', background: '#F7FAFD', borderRadius: 8, border: '1px solid #D6E4F0', fontSize: 12.5, color: '#61686F', lineHeight: 1.6 }}>
+                  원천징수 후 입금되며, 지급명세서는 (주) 마야크루에서 국세청에 제출합니다.
+                </div>
+              )}
+            </div>
+            <p style={{ fontSize: 13, color: '#9AA2AA', margin: '16px 0 0', lineHeight: 1.6 }}>
+              제출 후 수정이 필요한 경우 담당자에게 연락해주세요.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
   if (pageStatus === 'expired') return screen('링크가 만료되었습니다', '담당자에게 새 링크를 요청해주세요.');
 
   if (pageStatus === 'submitted') {
@@ -489,7 +561,7 @@ export default function SettlementFormClient({ token }: { token: string }) {
               })()}
               {taxType === 'business_income' && (
                 <div style={{ marginTop: 12, padding: '10px 12px', background: '#F7FAFD', borderRadius: 8, border: '1px solid #D6E4F0', fontSize: 12.5, color: '#61686F', lineHeight: 1.6 }}>
-                  원천징수 후 입금되며, 지급명세서는 희다에서 국세청에 제출합니다.
+                  원천징수 후 입금되며, 지급명세서는 (주) 마야크루에서 국세청에 제출합니다.
                 </div>
               )}
               {taxType === 'simplified_business' && (
@@ -694,7 +766,7 @@ export default function SettlementFormClient({ token }: { token: string }) {
             {/* Type-specific guidance — P0-2 */}
             {taxType === 'business_income' && (
               <div style={{ marginBottom: 16, padding: '10px 12px', background: '#FBFCFD', borderRadius: 8, border: '1px solid #EDF0F3', fontSize: 12.5, color: '#61686F', lineHeight: 1.6 }}>
-                원천징수 후 입금되며, 지급명세서는 희다에서 국세청에 제출합니다.
+                원천징수 후 입금되며, 지급명세서는 (주) 마야크루에서 국세청에 제출합니다.
               </div>
             )}
             {taxType === 'simplified_business' && (

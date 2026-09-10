@@ -133,6 +133,15 @@ export function periodLabel(preset: PeriodPreset): string {
   }
 }
 
+/** 파일 크기 포맷 */
+export function formatFileSize(bytes: number): string {
+  if (bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+}
+
 /** 비교 기간 데이터 커버리지 확인 */
 export function isComparisonValid(compFrom: string, compTo: string, dataStartDate: string | null): boolean {
   if (!dataStartDate) return false;
