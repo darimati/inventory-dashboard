@@ -348,6 +348,12 @@ export interface DashboardCampaignSummary {
   uploadDone: number;
   totalFee: number;
   totalProductCost: number;
+  /** per-step participant counts (for stack bar) */
+  stepCounts: Partial<Record<WeeklyStep, number>>;
+  /** completed participants (유가: paid, 무가: uploaded) */
+  completedCount: number;
+  /** participants with overdue schedule */
+  delayedCount: number;
 }
 
 export interface DashboardChecklist {
@@ -358,7 +364,7 @@ export interface DashboardChecklist {
 
 /* ---- Schedule Date (shared between calendar + dashboard) ---- */
 
-export type WeeklyStep = 'draft' | 'edit' | 'upload' | 'performance' | 'payment';
+export type WeeklyStep = 'consent' | 'draft' | 'edit' | 'upload' | 'performance' | 'payment';
 
 export interface ScheduleDate {
   date: string | null;  // YYYY-MM-DD

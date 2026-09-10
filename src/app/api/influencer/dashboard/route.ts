@@ -130,11 +130,19 @@ export async function GET() {
     annualParts.map(p => ({ product: p.product, fee: Number(p.fee) || 0 })),
   );
 
+  // ─── KST dates (used by campaign summaries + checklist) ───
+  const kstNow = new Date(now.getTime() + 9 * 60 * 60 * 1000);
+  const todayStr = kstNow.toISOString().slice(0, 10);
+  const kstThreshold = new Date(kstNow.getTime() + 3 * 86400000);
+  const dueThreshold = kstThreshold.toISOString().slice(0, 10);
+
   // ─── Campaign summaries ───
   const campaigns: DashboardCampaignSummary[] = (campaignsRaw ?? []).map((c: Record<string, unknown>) => {
     const parts = (c.inf_participants as Record<string, unknown>[]) ?? [];
     const activeParts = parts.filter((p) => p.status !== 'cancelled');
-    // [FIX] completedCount: 실제 완료 정의 사용
+    const skip = getSkipConfig(c as Record<string, unknown>);
+
+    // completedCount: 실제 완료 정의 사용
     const completedCount = activeParts.filter((p) =>
       isParticipantCompletedSimple({
         fee: Number(p.fee) || 0,
@@ -142,6 +150,26 @@ export async function GET() {
         settlement_status: p.settlement_status as string,
       }),
     ).length;
+
+    // per-step counts (for stack bar)
+    const stepCounts: Partial<Record<WeeklyStep, number>> = {};
+    let delayedCount = 0;
+    for (const p of activeParts) {
+      if (isParticipantCompletedSimple({
+        fee: Number(p.fee) || 0,
+        uploaded_at: p.uploaded_at,
+        settlement_status: p.settlement_status as string,
+      })) continue;
+      const step = getParticipantStep(p, skip);
+      // 무가 upload 완료 → skip
+      if (step === 'payment' && !((Number(p.fee) || 0) > 0)) continue;
+      stepCounts[step] = (stepCounts[step] || 0) + 1;
+      // Check if delayed (overdue)
+      if (step === 'draft' || step === 'edit' || step === 'upload') {
+        const sd = getScheduleDate(p, step);
+        if (sd.date && sd.date < todayStr) delayedCount++;
+      }
+    }
 
     return {
       id: c.id as string,
@@ -154,6 +182,9 @@ export async function GET() {
       uploadDone: completedCount,
       totalFee: activeParts.reduce((s, p) => s + (Number(p.fee) || 0), 0),
       totalProductCost: activeParts.reduce((s, p) => s + (Number(p.product_cost) || 0), 0),
+      stepCounts,
+      completedCount,
+      delayedCount,
     };
   });
 
@@ -172,11 +203,6 @@ export async function GET() {
   const totalWaitingCount = pendingSettlement + (pendingDocsParticipants ?? []).length;
 
   // ─── Today's Checklist ───
-  const kstNow = new Date(now.getTime() + 9 * 60 * 60 * 1000);
-  const todayStr = kstNow.toISOString().slice(0, 10);
-  const kstThreshold = new Date(kstNow.getTime() + 3 * 86400000);
-  const dueThreshold = kstThreshold.toISOString().slice(0, 10);
-
   const effectiveDate = (p: Record<string, unknown>, confirmed: string, planned: string) =>
     (p[confirmed] as string | null) || (p[planned] as string | null);
 
@@ -325,7 +351,14 @@ export async function GET() {
       // Determine date for the current step
       let scheduledDate: string | null = null;
       let isConfirmed = false;
-      if (step === 'draft' || step === 'edit' || step === 'upload') {
+      if (step === 'consent') {
+        // 섭외: 동의서 만료일을 예정일로 사용
+        const exp = p.consent_token_expires_at as string | null;
+        if (exp) {
+          scheduledDate = exp.slice(0, 10);
+          isConfirmed = true;
+        }
+      } else if (step === 'draft' || step === 'edit' || step === 'upload') {
         const sd = getScheduleDate(p, step);
         scheduledDate = sd.date;
         isConfirmed = sd.isConfirmed;
@@ -369,8 +402,8 @@ export async function GET() {
     return a.display_name.localeCompare(b.display_name, 'ko');
   });
 
-  // Summary cards (4 steps)
-  const stepOrder: WeeklyStep[] = ['draft', 'edit', 'upload', 'payment'];
+  // Summary cards (5 steps — consent 추가)
+  const stepOrder: WeeklyStep[] = ['consent', 'draft', 'edit', 'upload', 'payment'];
   const weeklyTaskSummary: WeeklyTaskSummary[] = stepOrder.map(step => {
     const items = weeklyTasks.filter(t => t.step === step);
     const subtitleParts = items.slice(0, 2).map(t => {

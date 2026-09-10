@@ -51,6 +51,8 @@ export function getParticipantStep(
   p: { [k: string]: unknown },
   skip: SkipConfig,
 ): WeeklyStep {
+  // 섭외 단계: 동의서 미수집
+  if (!skip.skipConsent && p.consent_status !== 'agreed') return 'consent';
   if (!skip.skipDraft && !p.draft_received_at) return 'draft';
   if (!skip.skipEdit && !p.edit_received_at) return 'edit';
   if (!p.uploaded_at) return 'upload';
