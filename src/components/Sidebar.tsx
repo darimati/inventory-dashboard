@@ -26,6 +26,7 @@ const INFLUENCER_NAV = [
   { href: '/influencer/calendar', label: '캘린더' },
   { href: '/influencer/consents', label: '동의서' },
   { href: '/influencer/settlements', label: '정산 관리' },
+  { href: '/influencer/history', label: '기록' },
   { href: '/influencer/settings', label: '설정' },
 ];
 
