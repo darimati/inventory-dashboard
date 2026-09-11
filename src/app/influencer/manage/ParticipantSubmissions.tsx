@@ -13,6 +13,7 @@ import {
   type SubmissionReview,
 } from '@/lib/types/influencer';
 import { formatFileSize } from '@/lib/helpers';
+import { colors, radii } from '@/lib/influencer/styles';
 
 interface Props {
   participantId: string;
@@ -187,18 +188,18 @@ export default function ParticipantSubmissions({ participantId, participantName,
 
   /* ── Styles ── */
 
-  const btnSmall: React.CSSProperties = { padding: '3px 10px', fontSize: 12, borderRadius: 6, border: '1px solid var(--border)', background: 'var(--surface)', cursor: 'pointer' };
-  const btnPrimary: React.CSSProperties = { ...btnSmall, background: 'var(--text)', color: 'var(--surface)', border: 'none' };
-  const inputStyle: React.CSSProperties = { width: '100%', padding: '8px 12px', fontSize: 14, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface)' };
+  const btnSmall: React.CSSProperties = { padding: '3px 10px', fontSize: 12, borderRadius: radii.chip, border: `1px solid ${colors.border}`, background: colors.surface, cursor: 'pointer' };
+  const btnPrimary: React.CSSProperties = { ...btnSmall, background: colors.accentDark, color: '#fff', border: 'none' };
+  const inputStyle: React.CSSProperties = { width: '100%', padding: '8px 12px', fontSize: 14, borderRadius: radii.button, border: `1px solid ${colors.border}`, background: colors.surface, boxSizing: 'border-box' };
   const labelStyle: React.CSSProperties = { fontSize: 13, fontWeight: 500, marginBottom: 6, display: 'block' };
 
-  if (loading) return <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>로딩 중...</p>;
+  if (loading) return <p style={{ fontSize: 12, color: colors.textMuted }}>로딩 중...</p>;
 
   const stages: SubmissionStage[] = ['proposal', 'rough_cut', 'final_upload'];
 
   return (
     <div style={{ marginBottom: 16, fontSize: 13 }}>
-      <div style={{ fontWeight: 600, marginBottom: 12, color: 'var(--text-secondary)' }}>제출 자료</div>
+      <div style={{ fontWeight: 600, marginBottom: 12, color: colors.textSecondary }}>제출 자료</div>
 
       {stages.map(stage => {
         const stAssets = getStageAssets(stage);
@@ -220,7 +221,7 @@ export default function ParticipantSubmissions({ participantId, participantName,
 
             {/* Content */}
             {st === 'not_received' ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#C4CAD1' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: colors.textDisabled }}>
                 <span>—</span>
                 {stage === 'proposal' && (
                   <button style={btnSmall} onClick={() => { setProposalModal(true); setProposalUrl(''); setProposalDate(today); setProposalMemo(''); setError(''); }}>링크 등록</button>
@@ -244,7 +245,7 @@ export default function ParticipantSubmissions({ participantId, participantName,
                     <button style={btnSmall} onClick={() => { setProposalModal(true); setProposalUrl(latest.external_url || ''); setProposalDate(today); setProposalMemo(''); setError(''); }}>수정</button>
                   </div>
                 )}
-                {latest?.received_at && <div style={{ fontSize: 11, color: '#9AA2AA' }}>수령 {fmtDate(latest.received_at)}</div>}
+                {latest?.received_at && <div style={{ fontSize: 11, color: colors.textMuted }}>수령 {fmtDate(latest.received_at)}</div>}
 
                 {/* Inline actions */}
                 {st === 'received' && latest && (
@@ -262,11 +263,11 @@ export default function ParticipantSubmissions({ participantId, participantName,
                 {/* Review history */}
                 {latest?.reviews && latest.reviews.length > 0 && (
                   <details style={{ marginTop: 8 }}>
-                    <summary style={{ fontSize: 12, color: 'var(--text-muted)', cursor: 'pointer' }}>이력</summary>
-                    <div style={{ marginTop: 4, paddingLeft: 8, borderLeft: '2px solid var(--border)' }}>
+                    <summary style={{ fontSize: 12, color: colors.textMuted, cursor: 'pointer' }}>이력</summary>
+                    <div style={{ marginTop: 4, paddingLeft: 8, borderLeft: `2px solid ${colors.border}` }}>
                       {latest.reviews.map((r: SubmissionReview) => (
                         <div key={r.id} style={{ fontSize: 11, marginBottom: 4 }}>
-                          <span style={{ color: '#9AA2AA' }}>{fmtDate(r.created_at)}</span>
+                          <span style={{ color: colors.textMuted }}>{fmtDate(r.created_at)}</span>
                           {' '}
                           <span style={{ fontWeight: 500 }}>{reviewLabel(r.action)}</span>
                           {r.reason && <span style={{ color: '#666' }}> · {r.reason}</span>}
@@ -280,14 +281,14 @@ export default function ParticipantSubmissions({ participantId, participantName,
               /* Rough cut: versioned files with per-version history */
               <div>
                 {stAssets.map(asset => (
-                  <div key={asset.id} style={{ marginBottom: 8, padding: '6px 0', borderBottom: '1px solid var(--border)' }}>
+                  <div key={asset.id} style={{ marginBottom: 8, padding: '6px 0', borderBottom: `1px solid ${colors.border}` }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                       <span style={{ fontWeight: 500, fontSize: 12 }}>v{asset.version}</span>
                       {asset.file_path ? (
                         <>
                           <span style={{ fontSize: 12, color: '#666', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 140 }}>{asset.original_filename}</span>
-                          {asset.file_size && <span style={{ fontSize: 11, color: '#9AA2AA' }}>{formatFileSize(asset.file_size)}</span>}
-                          <span style={{ fontSize: 11, color: '#9AA2AA' }}>{fmtDate(asset.received_at)}</span>
+                          {asset.file_size && <span style={{ fontSize: 11, color: colors.textMuted }}>{formatFileSize(asset.file_size)}</span>}
+                          <span style={{ fontSize: 11, color: colors.textMuted }}>{fmtDate(asset.received_at)}</span>
                         </>
                       ) : asset.external_url ? (
                         <a href={asset.external_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: '#2563EB', textDecoration: 'none' }}>링크</a>
@@ -323,11 +324,11 @@ export default function ParticipantSubmissions({ participantId, participantName,
                     {/* Per-version review history */}
                     {asset.reviews && asset.reviews.length > 0 && asset.id === latest?.id && (
                       <details style={{ marginTop: 4 }}>
-                        <summary style={{ fontSize: 11, color: 'var(--text-muted)', cursor: 'pointer' }}>이력</summary>
-                        <div style={{ marginTop: 2, paddingLeft: 8, borderLeft: '2px solid var(--border)' }}>
+                        <summary style={{ fontSize: 11, color: colors.textMuted, cursor: 'pointer' }}>이력</summary>
+                        <div style={{ marginTop: 2, paddingLeft: 8, borderLeft: `2px solid ${colors.border}` }}>
                           {asset.reviews.map((r: SubmissionReview) => (
                             <div key={r.id} style={{ fontSize: 11, marginBottom: 2 }}>
-                              <span style={{ color: '#9AA2AA' }}>{fmtDate(r.created_at)}</span>{' '}
+                              <span style={{ color: colors.textMuted }}>{fmtDate(r.created_at)}</span>{' '}
                               <span style={{ fontWeight: 500 }}>{reviewLabel(r.action)}</span>
                               {r.reason && <span style={{ color: '#666' }}> · {r.reason}</span>}
                             </div>
@@ -354,7 +355,7 @@ export default function ParticipantSubmissions({ participantId, participantName,
                 {latest?.content_type && (
                   <div style={{ fontSize: 11, color: '#666' }}>{FINAL_CONTENT_TYPES[latest.content_type] || latest.content_type}</div>
                 )}
-                {latest?.received_at && <div style={{ fontSize: 11, color: '#9AA2AA' }}>{fmtDate(latest.received_at)}</div>}
+                {latest?.received_at && <div style={{ fontSize: 11, color: colors.textMuted }}>{fmtDate(latest.received_at)}</div>}
 
                 {st === 'received' && latest && (
                   <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
@@ -391,7 +392,7 @@ export default function ParticipantSubmissions({ participantId, participantName,
               )}
             </div>
           )}
-          {error && <p style={{ color: '#D9534F', fontSize: 13, marginTop: 8 }}>{error}</p>}
+          {error && <p style={{ color: colors.coral, fontSize: 13, marginTop: 8 }}>{error}</p>}
           <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 16 }}>
             <button style={btnSmall} onClick={() => setRevisionModal(null)} disabled={saving}>취소</button>
             <button style={btnPrimary} onClick={submitRevision} disabled={saving}>{saving ? '저장 중...' : '저장'}</button>
@@ -405,7 +406,7 @@ export default function ParticipantSubmissions({ participantId, participantName,
           <div style={{ marginBottom: 12 }}><label style={labelStyle}>링크 주소 *</label><input style={inputStyle} value={proposalUrl} onChange={e => setProposalUrl(e.target.value)} placeholder="https://docs.google.com/..." /></div>
           <div style={{ marginBottom: 12 }}><label style={labelStyle}>수령일 *</label><DatePicker value={proposalDate} onChange={setProposalDate} /></div>
           <div style={{ marginBottom: 12 }}><label style={labelStyle}>메모</label><input style={inputStyle} value={proposalMemo} onChange={e => setProposalMemo(e.target.value)} placeholder="선택" /></div>
-          {error && <p style={{ color: '#D9534F', fontSize: 13, marginTop: 8 }}>{error}</p>}
+          {error && <p style={{ color: colors.coral, fontSize: 13, marginTop: 8 }}>{error}</p>}
           <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 16 }}>
             <button style={btnSmall} onClick={() => setProposalModal(false)} disabled={saving}>취소</button>
             <button style={btnPrimary} onClick={submitProposal} disabled={saving}>{saving ? '저장 중...' : '저장'}</button>
@@ -417,17 +418,17 @@ export default function ParticipantSubmissions({ participantId, participantName,
         <Modal onClose={() => !roughCutUploading && setRoughCutModal(false)}>
           <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 12 }}>가편집본 업로드</h3>
           <div
-            style={{ border: '2px dashed var(--border)', borderRadius: 12, padding: 24, textAlign: 'center', cursor: 'pointer', marginBottom: 12, background: roughCutFile ? '#F0FFF4' : undefined }}
+            style={{ border: `2px dashed ${colors.border}`, borderRadius: 12, padding: 24, textAlign: 'center', cursor: 'pointer', marginBottom: 12, background: roughCutFile ? '#F0FFF4' : undefined }}
             onClick={() => fileInputRef.current?.click()}
             onDragOver={e => { e.preventDefault(); }} onDrop={e => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) setRoughCutFile(f); }}
           >
             <input ref={fileInputRef} type="file" accept=".mov,.mp4" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) setRoughCutFile(f); }} />
-            {roughCutFile ? (<><div style={{ fontWeight: 500 }}>{roughCutFile.name}</div><div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>{formatFileSize(roughCutFile.size)}</div></>) : (<><div style={{ color: 'var(--text-muted)' }}>파일을 끌어다 놓거나 클릭하세요</div><div style={{ fontSize: 12, color: '#9AA2AA', marginTop: 4 }}>MOV, MP4 · 최대 500MB</div></>)}
+            {roughCutFile ? (<><div style={{ fontWeight: 500 }}>{roughCutFile.name}</div><div style={{ fontSize: 12, color: colors.textMuted, marginTop: 4 }}>{formatFileSize(roughCutFile.size)}</div></>) : (<><div style={{ color: colors.textMuted }}>파일을 끌어다 놓거나 클릭하세요</div><div style={{ fontSize: 12, color: colors.textMuted, marginTop: 4 }}>MOV, MP4 · 최대 500MB</div></>)}
           </div>
-          {roughCutUploading && <div style={{ marginBottom: 12 }}><div style={{ height: 4, background: '#E5E7EB', borderRadius: 2, overflow: 'hidden' }}><div style={{ height: '100%', width: `${roughCutProgress}%`, background: '#2563EB', transition: 'width 0.3s' }} /></div><div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4, textAlign: 'center' }}>{roughCutProgress}%</div></div>}
+          {roughCutUploading && <div style={{ marginBottom: 12 }}><div style={{ height: 4, background: '#E5E7EB', borderRadius: 2, overflow: 'hidden' }}><div style={{ height: '100%', width: `${roughCutProgress}%`, background: '#2563EB', transition: 'width 0.3s' }} /></div><div style={{ fontSize: 12, color: colors.textMuted, marginTop: 4, textAlign: 'center' }}>{roughCutProgress}%</div></div>}
           <div style={{ marginBottom: 12 }}><label style={labelStyle}>수령일 *</label><DatePicker value={roughCutDate} onChange={setRoughCutDate} /></div>
           <div style={{ marginBottom: 12 }}><label style={labelStyle}>메모</label><input style={inputStyle} value={roughCutMemo} onChange={e => setRoughCutMemo(e.target.value)} placeholder="선택" /></div>
-          {error && <p style={{ color: '#D9534F', fontSize: 13, marginTop: 8 }}>{error}</p>}
+          {error && <p style={{ color: colors.coral, fontSize: 13, marginTop: 8 }}>{error}</p>}
           <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 16 }}>
             <button style={btnSmall} onClick={() => setRoughCutModal(false)} disabled={roughCutUploading}>취소</button>
             <button style={btnPrimary} onClick={submitRoughCut} disabled={roughCutUploading || !roughCutFile}>{roughCutUploading ? '업로드 중...' : '저장'}</button>
@@ -446,7 +447,7 @@ export default function ParticipantSubmissions({ participantId, participantName,
             </select>
           </div>
           <div style={{ marginBottom: 12 }}><label style={labelStyle}>업로드일 *</label><DatePicker value={uploadDate} onChange={setUploadDate} /></div>
-          {error && <p style={{ color: '#D9534F', fontSize: 13, marginTop: 8 }}>{error}</p>}
+          {error && <p style={{ color: colors.coral, fontSize: 13, marginTop: 8 }}>{error}</p>}
           <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 16 }}>
             <button style={btnSmall} onClick={() => setUploadModal(false)} disabled={saving}>취소</button>
             <button style={btnPrimary} onClick={submitUpload} disabled={saving}>{saving ? '저장 중...' : '저장'}</button>
@@ -461,7 +462,7 @@ function Modal({ children, onClose }: { children: React.ReactNode; onClose: () =
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 1100, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={onClose}>
       <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.3)' }} />
-      <div style={{ position: 'relative', background: 'var(--surface)', borderRadius: 12, padding: 24, width: 400, maxWidth: '90vw', maxHeight: '80vh', overflow: 'auto' }} onClick={e => e.stopPropagation()}>
+      <div style={{ position: 'relative', background: colors.surface, borderRadius: 12, padding: 24, width: 400, maxWidth: '90vw', maxHeight: '80vh', overflow: 'auto' }} onClick={e => e.stopPropagation()}>
         {children}
       </div>
     </div>

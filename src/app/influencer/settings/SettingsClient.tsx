@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import AppShell from '@/components/AppShell';
 import type { InfluencerProduct, ProductSet } from '@/lib/types/influencer';
+import { colors, typo, spacing, radii } from '@/lib/influencer/styles';
+import { Btn, Toast } from '@/lib/influencer/ui';
 
 interface ProgressCondition {
   text: string;
@@ -137,12 +139,13 @@ export default function SettingsClient() {
   const inputStyle: React.CSSProperties = {
     width: '100%',
     padding: '8px 12px',
-    border: '1px solid var(--border)',
-    borderRadius: 8,
+    border: `1px solid ${colors.border}`,
+    borderRadius: radii.button,
     fontSize: 14,
     fontFamily: 'var(--font)',
-    background: 'var(--surface)',
-    color: 'var(--text-primary)',
+    background: colors.surface,
+    color: colors.textPrimary,
+    boxSizing: 'border-box',
   };
 
   const textareaStyle: React.CSSProperties = {
@@ -154,27 +157,27 @@ export default function SettingsClient() {
   const labelStyle: React.CSSProperties = {
     fontSize: 13,
     fontWeight: 500,
-    color: 'var(--text-secondary)',
+    color: colors.textSecondary,
     marginBottom: 4,
     display: 'block',
   };
 
   const sectionStyle: React.CSSProperties = {
-    background: 'var(--surface)',
-    border: 'var(--card-border)',
-    borderRadius: 'var(--card-radius)',
+    background: colors.surface,
+    border: `1px solid ${colors.border}`,
+    borderRadius: radii.card,
     padding: '20px 24px',
-    marginBottom: 'var(--card-gap)',
+    marginBottom: spacing.gap,
   };
 
   const btnSmall: React.CSSProperties = {
     padding: '4px 12px',
     background: 'none',
-    border: '1px solid var(--border)',
-    borderRadius: 6,
+    border: `1px solid ${colors.border}`,
+    borderRadius: radii.chip,
     fontSize: 12,
     cursor: 'pointer',
-    color: 'var(--text-secondary)',
+    color: colors.textSecondary,
   };
 
   return (
@@ -193,7 +196,7 @@ export default function SettingsClient() {
               disabled={saving || loading}
               style={{
                 padding: '8px 20px',
-                background: 'var(--text-primary)',
+                background: colors.accentDark,
                 color: '#fff',
                 border: 'none',
                 borderRadius: 8,
@@ -208,13 +211,13 @@ export default function SettingsClient() {
         </div>
 
         {loading ? (
-          <p style={{ color: 'var(--text-muted)' }}>로딩 중...</p>
+          <p style={{ color: colors.textMuted }}>로딩 중...</p>
         ) : (
           <>
             {/* 제품 관리 */}
             <div style={sectionStyle}>
               <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 16 }}>제품 관리</h2>
-              <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 12 }}>
+              <p style={{ fontSize: 12, color: colors.textMuted, marginBottom: 12 }}>
                 인플루언서에게 제공하는 제품을 등록합니다
               </p>
               {products.map((p, i) => (
@@ -230,7 +233,7 @@ export default function SettingsClient() {
                     }}
                   />
                   <button
-                    style={{ ...btnSmall, color: 'var(--red)' }}
+                    style={{ ...btnSmall, color: colors.coral }}
                     onClick={() => setProducts(products.filter((_, j) => j !== i))}
                   >
                     삭제
@@ -248,11 +251,11 @@ export default function SettingsClient() {
             {/* 제품 세트 */}
             <div style={sectionStyle}>
               <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 16 }}>제품 세트</h2>
-              <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 12 }}>
+              <p style={{ fontSize: 12, color: colors.textMuted, marginBottom: 12 }}>
                 자주 사용하는 제품 조합을 세트로 등록합니다
               </p>
               {productSets.map((set, si) => (
-                <div key={si} style={{ border: '1px solid var(--border)', borderRadius: 8, padding: 12, marginBottom: 12 }}>
+                <div key={si} style={{ border: `1px solid ${colors.border}`, borderRadius: 8, padding: 12, marginBottom: 12 }}>
                   <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 8 }}>
                     <input
                       style={{ ...inputStyle, flex: 1, padding: '6px 8px' }}
@@ -265,7 +268,7 @@ export default function SettingsClient() {
                       }}
                     />
                     <button
-                      style={{ ...btnSmall, color: 'var(--red)' }}
+                      style={{ ...btnSmall, color: colors.coral }}
                       onClick={() => setProductSets(productSets.filter((_, j) => j !== si))}
                     >
                       세트 삭제
@@ -303,7 +306,7 @@ export default function SettingsClient() {
                         }}
                       />
                       <button
-                        style={{ ...btnSmall, color: 'var(--red)', padding: '4px 8px' }}
+                        style={{ ...btnSmall, color: colors.coral, padding: '4px 8px' }}
                         onClick={() => {
                           const next = [...productSets];
                           next[si] = { ...next[si], items: next[si].items.filter((_, j) => j !== ii) };
@@ -368,7 +371,7 @@ export default function SettingsClient() {
             {/* 진행 조건 안내 */}
             <div style={sectionStyle}>
               <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 16 }}>진행 조건 안내</h2>
-              <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 12 }}>
+              <p style={{ fontSize: 12, color: colors.textMuted, marginBottom: 12 }}>
                 동의서 페이지에 표시되는 진행 조건 목록입니다
               </p>
               {progressConditions.map((cond, i) => (
@@ -382,7 +385,7 @@ export default function SettingsClient() {
                       setProgressConditions(next);
                     }}
                   />
-                  <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: 'var(--text-muted)', whiteSpace: 'nowrap', cursor: 'pointer' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: colors.textMuted, whiteSpace: 'nowrap', cursor: 'pointer' }}>
                     <input
                       type="checkbox"
                       checked={cond.paid_only}
@@ -395,7 +398,7 @@ export default function SettingsClient() {
                     유가만
                   </label>
                   <button
-                    style={{ ...btnSmall, color: 'var(--red)', padding: '4px 8px' }}
+                    style={{ ...btnSmall, color: colors.coral, padding: '4px 8px' }}
                     onClick={() => setProgressConditions(progressConditions.filter((_, j) => j !== i))}
                   >
                     &#10005;
@@ -413,7 +416,7 @@ export default function SettingsClient() {
             {/* 회사 정보 (세금계산서/계산서 발행용) */}
             <div style={sectionStyle}>
               <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 16 }}>회사 정보</h2>
-              <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 12 }}>
+              <p style={{ fontSize: 12, color: colors.textMuted, marginBottom: 12 }}>
                 세금계산서/계산서 발행 시 인플루언서에게 안내되는 정보입니다
               </p>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
@@ -460,7 +463,7 @@ export default function SettingsClient() {
                   value={taxBusiness}
                   onChange={(e) => setTaxBusiness(parseFloat(e.target.value) || 0)}
                 />
-                <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>
+                <p style={{ fontSize: 12, color: colors.textMuted, marginTop: 4 }}>
                   세금계산서 / 계산서 / 간이과세자는 원천징수 없음 (0%)
                 </p>
               </div>
@@ -473,7 +476,7 @@ export default function SettingsClient() {
                   value={vatRate}
                   onChange={(e) => setVatRate(parseFloat(e.target.value) || 0)}
                 />
-                <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>
+                <p style={{ fontSize: 12, color: colors.textMuted, marginTop: 4 }}>
                   세금계산서 발행 시 적용 (기본 10%)
                 </p>
               </div>
@@ -507,7 +510,7 @@ export default function SettingsClient() {
             {/* 정산 안내문 */}
             <div style={sectionStyle}>
               <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 16 }}>정산 안내문</h2>
-              <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 16 }}>
+              <p style={{ fontSize: 12, color: colors.textMuted, marginBottom: 16 }}>
                 정산 정보 제출 페이지 하단에 표시됩니다
               </p>
               <div style={{ marginBottom: 16 }}>
@@ -529,9 +532,9 @@ export default function SettingsClient() {
             </div>
 
             {/* 접근 관리 */}
-            <div style={{ ...sectionStyle, borderTop: '2px solid var(--border)', marginTop: 32 }}>
+            <div style={{ ...sectionStyle, borderTop: `2px solid ${colors.border}`, marginTop: 32 }}>
               <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 4 }}>접근 관리</h2>
-              <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 16 }}>
+              <p style={{ fontSize: 12, color: colors.textMuted, marginBottom: 16 }}>
                 대시보드 로그인 비밀번호를 변경합니다
               </p>
 
@@ -545,7 +548,7 @@ export default function SettingsClient() {
                     onChange={(e) => setPwCurrent(e.target.value)}
                     placeholder="현재 비밀번호 입력"
                   />
-                  {pwError && <p style={{ color: 'var(--red)', fontSize: 13, marginBottom: 8 }}>{pwError}</p>}
+                  {pwError && <p style={{ color: colors.coral, fontSize: 13, marginBottom: 8 }}>{pwError}</p>}
                   <div>
                     <button
                       disabled={pwLoading || !pwCurrent}
@@ -585,7 +588,7 @@ export default function SettingsClient() {
                       }}
                       style={{
                         padding: '8px 20px',
-                        background: 'var(--text-primary)',
+                        background: colors.accentDark,
                         color: '#fff',
                         border: 'none',
                         borderRadius: 8,
@@ -602,7 +605,7 @@ export default function SettingsClient() {
 
               {pwStep === 'code-sent' && (
                 <div>
-                  <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 16 }}>
+                  <p style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 16 }}>
                     <strong>{pwMaskedEmail}</strong>으로 인증 코드가 발송되었습니다.
                   </p>
                   <label style={labelStyle}>인증 코드</label>
@@ -630,7 +633,7 @@ export default function SettingsClient() {
                     onChange={(e) => setPwConfirm(e.target.value)}
                     placeholder="다시 입력"
                   />
-                  {pwError && <p style={{ color: 'var(--red)', fontSize: 13, marginBottom: 8 }}>{pwError}</p>}
+                  {pwError && <p style={{ color: colors.coral, fontSize: 13, marginBottom: 8 }}>{pwError}</p>}
                   <div style={{ display: 'flex', gap: 8 }}>
                     <button
                       disabled={pwLoading || !pwCode || !pwNew || !pwConfirm}
@@ -671,7 +674,7 @@ export default function SettingsClient() {
                       }}
                       style={{
                         padding: '8px 20px',
-                        background: 'var(--text-primary)',
+                        background: colors.accentDark,
                         color: '#fff',
                         border: 'none',
                         borderRadius: 8,
@@ -693,7 +696,7 @@ export default function SettingsClient() {
               )}
 
               {pwStep === 'done' && pwSuccess && (
-                <p style={{ color: 'var(--green)', fontSize: 14, fontWeight: 500 }}>{pwSuccess}</p>
+                <p style={{ color: colors.mint, fontSize: 14, fontWeight: 500 }}>{pwSuccess}</p>
               )}
             </div>
           </>

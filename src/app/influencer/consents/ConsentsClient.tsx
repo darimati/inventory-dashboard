@@ -4,6 +4,8 @@ import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import AppShell from '@/components/AppShell';
 import { CHANNEL_LABELS, COLLAB_TYPE_LABELS, type Channel, type CollabType } from '@/lib/types/influencer';
+import { colors, typo, spacing, radii } from '@/lib/influencer/styles';
+import { Btn, Card, Drawer, Empty } from '@/lib/influencer/ui';
 
 /* ── Default consent texts (same as ConsentClient) ─────── */
 
@@ -243,41 +245,40 @@ export default function ConsentsClient() {
     padding: '5px 12px',
     fontSize: 13,
     fontWeight: active ? 600 : 400,
-    borderRadius: 6,
-    border: '1px solid',
-    borderColor: active ? 'var(--accent)' : 'var(--border)',
-    background: active ? 'var(--accent-light)' : 'transparent',
-    color: active ? 'var(--accent)' : 'var(--text-secondary)',
+    borderRadius: radii.chip,
+    border: `1px solid ${active ? colors.accent : colors.border}`,
+    background: active ? colors.accentLight : 'transparent',
+    color: active ? colors.accent : colors.textSecondary,
     cursor: 'pointer',
   });
 
   const selectStyle: React.CSSProperties = {
     padding: '6px 12px',
     fontSize: 13,
-    borderRadius: 8,
-    border: '1px solid var(--border)',
-    background: 'var(--surface)',
-    color: 'var(--text-primary)',
+    borderRadius: radii.button,
+    border: `1px solid ${colors.border}`,
+    background: colors.surface,
+    color: colors.textPrimary,
     cursor: 'pointer',
   };
 
   const searchStyle: React.CSSProperties = {
     padding: '6px 12px',
     fontSize: 13,
-    borderRadius: 8,
-    border: '1px solid var(--border)',
-    background: 'var(--surface)',
-    color: 'var(--text-primary)',
+    borderRadius: radii.button,
+    border: `1px solid ${colors.border}`,
+    background: colors.surface,
+    color: colors.textPrimary,
     width: 200,
   };
 
   return (
     <AppShell showFilter={false}>
-      <div style={{ padding: '24px 28px' }}>
-        <h1 className="page-title" style={{ marginBottom: 16 }}>동의서</h1>
+      <div style={{ padding: spacing.cardPadding }}>
+        <h1 style={{ ...typo.pageTitle, color: colors.textPrimary, margin: 0, marginBottom: spacing.gap }}>동의서</h1>
 
         {/* Filter bar */}
-        <div className="section" style={{ marginBottom: 16 }}>
+        <Card style={{ marginBottom: spacing.gap }}>
           <div style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
             {/* Left: campaign dropdown */}
             <select
@@ -306,18 +307,17 @@ export default function ConsentsClient() {
               />
             </div>
           </div>
-        </div>
+        </Card>
 
         {/* Table or empty state */}
         {loading ? (
-          <div className="section" style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-muted)' }}>불러오는 중...</div>
+          <Card style={{ padding: '40px 20px', textAlign: 'center', color: colors.textMuted }}>불러오는 중...</Card>
         ) : filtered.length === 0 ? (
-          <div className="section" style={{ minHeight: 220, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-            <div style={{ fontSize: 14.5, fontWeight: 550, color: '#61686F' }}>제출된 동의서가 없습니다</div>
-            <div style={{ fontSize: 12.5, fontWeight: 450, color: '#838B93' }}>동의서를 회수하면 여기에 모입니다</div>
-          </div>
+          <Card>
+            <Empty message="제출된 동의서가 없습니다" />
+          </Card>
         ) : (
-          <div className="section">
+          <Card>
             <div className="section-body">
               <table className="data-table" style={{ tableLayout: 'fixed' }}>
                 <thead>
@@ -336,14 +336,14 @@ export default function ConsentsClient() {
                       key={row.id}
                       style={{ cursor: 'pointer' }}
                       onClick={() => { setDetailRow(row); setExpanded(new Set()); }}
-                      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = '#FBFCFD'; }}
+                      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = colors.bg; }}
                       onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = ''; }}
                     >
                       <td>
                         <div style={{ fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {row.name || row.display_name || '(채널명 미입력)'}
                         </div>
-                        <div style={{ fontSize: 12, color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <div style={{ fontSize: 12, color: colors.textMuted, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {[row.handle ? `@${row.handle}` : null, row.channel ? CHANNEL_LABELS[row.channel] : null].filter(Boolean).join(' · ')}
                         </div>
                       </td>
@@ -352,59 +352,49 @@ export default function ConsentsClient() {
                       <td>{getConsentItemCount(row)}개 항목</td>
                       <td style={{ fontSize: 13 }}>{fmtDate(row.consent_agreed_at)}</td>
                       <td style={{ textAlign: 'right' }}>
-                        <button
-                          style={{
-                            padding: '3px 10px',
-                            fontSize: 12,
-                            borderRadius: 6,
-                            border: '1px solid var(--border)',
-                            background: 'transparent',
-                            color: 'var(--accent)',
-                            cursor: 'pointer',
-                            fontWeight: 500,
-                          }}
-                          onClick={(e) => { e.stopPropagation(); setDetailRow(row); setExpanded(new Set()); }}
+                        <Btn
+                          size="sm"
+                          onClick={(e: React.MouseEvent) => { e.stopPropagation(); setDetailRow(row); setExpanded(new Set()); }}
                         >
                           보기
-                        </button>
+                        </Btn>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-          </div>
+          </Card>
         )}
       </div>
 
-      {/* Detail panel (480px right slide) */}
-      {detailRow && (
-        <>
-          <div
-            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.2)', zIndex: 200 }}
-            onClick={() => setDetailRow(null)}
-          />
-          <DetailPanel
+      {/* Detail panel */}
+      <Drawer
+        open={!!detailRow}
+        onClose={() => setDetailRow(null)}
+        title={detailRow?.display_name || detailRow?.name || '(이름 미입력)'}
+        sub={detailRow ? [detailRow.handle ? `@${detailRow.handle}` : null, detailRow.channel ? CHANNEL_LABELS[detailRow.channel] : null, detailRow.campaign_name].filter(Boolean).join(' · ') : undefined}
+      >
+        {detailRow && (
+          <DetailPanelBody
             row={detailRow}
             resolveTexts={resolveConsentTexts}
             expanded={expanded}
             toggleExpand={toggleExpand}
-            onClose={() => setDetailRow(null)}
           />
-        </>
-      )}
+        )}
+      </Drawer>
     </AppShell>
   );
 }
 
 /* ── Detail Panel ────────────────────────────────────── */
 
-function DetailPanel({
+function DetailPanelBody({
   row,
   resolveTexts,
   expanded,
   toggleExpand,
-  onClose,
 }: {
   row: ConsentRow;
   resolveTexts: (row: ConsentRow) => {
@@ -416,11 +406,9 @@ function DetailPanel({
   };
   expanded: Set<string>;
   toggleExpand: (key: string) => void;
-  onClose: () => void;
 }) {
   const texts = resolveTexts(row);
   const isPaid = row.fee > 0;
-  const channelLabel = row.channel ? CHANNEL_LABELS[row.channel] : null;
   const contentDisplay = row.post_type
     ? `${FORMAT_LABELS[row.post_type] ?? row.post_type} ${row.post_count ?? 1}건`
     : null;
@@ -428,13 +416,13 @@ function DetailPanel({
   const sectionTitle: React.CSSProperties = {
     fontSize: 13,
     fontWeight: 600,
-    color: 'var(--text-secondary)',
+    color: colors.textSecondary,
     marginBottom: 10,
     paddingBottom: 6,
-    borderBottom: '1px solid var(--border)',
+    borderBottom: `1px solid ${colors.border}`,
   };
 
-  const infoLabel: React.CSSProperties = { color: 'var(--text-info)', fontSize: 13 };
+  const infoLabel: React.CSSProperties = { color: colors.textInfo, fontSize: 13 };
   const infoRow: React.CSSProperties = { display: 'flex', justifyContent: 'space-between', padding: '5px 0', fontSize: 13 };
 
   // Build consent items list
@@ -462,34 +450,7 @@ function DetailPanel({
   };
 
   return (
-    <div
-      className="consent-detail-panel"
-      style={{
-        position: 'fixed', top: 0, right: 0, bottom: 0, width: 480,
-        background: 'var(--surface)',
-        boxShadow: '-4px 0 24px rgba(0,0,0,0.08)',
-        zIndex: 201, overflowY: 'auto', padding: '24px',
-      }}
-    >
-      {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
-        <div>
-          <h2 style={{ fontSize: 18, fontWeight: 650, margin: 0 }}>{row.display_name || row.name || '(이름 미입력)'}</h2>
-          <div style={{ fontSize: 12.5, fontWeight: 450, color: '#838B93', marginTop: 2 }}>
-            {[row.handle ? `@${row.handle}` : null, channelLabel].filter(Boolean).join(' · ')}
-          </div>
-          <div style={{ fontSize: 12.5, fontWeight: 450, color: '#838B93', marginTop: 1 }}>
-            {row.campaign_name}
-          </div>
-        </div>
-        <button
-          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px 8px', fontSize: 16, color: 'var(--text-muted)' }}
-          onClick={onClose}
-        >
-          &#10005;
-        </button>
-      </div>
-
+    <>
       {/* Collaboration terms */}
       <div style={{ marginBottom: 20 }}>
         <div style={sectionTitle}>협업 조건</div>
@@ -526,7 +487,7 @@ function DetailPanel({
       <div style={{ marginBottom: 20 }}>
         <div style={sectionTitle}>동의 항목</div>
         {!texts.hasSnapshot && (
-          <div style={{ fontSize: 11, color: '#9AA2AA', marginBottom: 8, fontStyle: 'italic' }}>
+          <div style={{ fontSize: 11, color: colors.textMuted, marginBottom: 8, fontStyle: 'italic' }}>
             문구 스냅샷 없음 (기존 데이터)
           </div>
         )}
@@ -534,7 +495,7 @@ function DetailPanel({
           {consentItems.map((item) => {
             const isOpen = expanded.has(item.key);
             return (
-              <div key={item.key} style={{ borderBottom: '1px solid var(--border)' }}>
+              <div key={item.key} style={{ borderBottom: `1px solid ${colors.border}` }}>
                 <div
                   style={{
                     display: 'flex', alignItems: 'center', gap: 8, padding: '10px 0',
@@ -542,13 +503,13 @@ function DetailPanel({
                   }}
                   onClick={() => toggleExpand(item.key)}
                 >
-                  <span style={{ color: '#4A7DB5', fontSize: 14, flexShrink: 0 }}>&#10003;</span>
+                  <span style={{ color: colors.accent, fontSize: 14, flexShrink: 0 }}>&#10003;</span>
                   <span style={{ flex: 1, fontSize: 13, fontWeight: 500 }}>{item.title}</span>
-                  <span style={{ fontSize: 12, color: '#838B93', marginRight: 4 }}>
+                  <span style={{ fontSize: 12, color: colors.textInfo, marginRight: 4 }}>
                     {fmtDate(row.consent_agreed_at)}
                   </span>
                   <span style={{
-                    fontSize: 11, color: '#838B93',
+                    fontSize: 11, color: colors.textInfo,
                     transform: isOpen ? 'rotate(180deg)' : 'none',
                     transition: 'transform 0.2s',
                   }}>
@@ -558,7 +519,7 @@ function DetailPanel({
                 {isOpen && (
                   <div style={{
                     padding: '8px 0 14px 22px',
-                    fontSize: 13, color: '#61686F', lineHeight: 1.7,
+                    fontSize: 13, color: colors.textSecondary, lineHeight: 1.7,
                     whiteSpace: 'pre-wrap', wordBreak: 'keep-all',
                   }}>
                     {item.body.includes('|')
@@ -568,7 +529,7 @@ function DetailPanel({
                           if (dashIdx >= 0) {
                             return (
                               <div key={i} style={{ marginBottom: 6 }}>
-                                <div style={{ fontSize: 12, color: '#9AA2AA', fontWeight: 500 }}>{trimmed.slice(0, dashIdx).trim()}</div>
+                                <div style={{ fontSize: 12, color: colors.textMuted, fontWeight: 500 }}>{trimmed.slice(0, dashIdx).trim()}</div>
                                 <div>{trimmed.slice(dashIdx + 1).trim()}</div>
                               </div>
                             );
@@ -586,23 +547,9 @@ function DetailPanel({
       </div>
 
       {/* Footer: Print */}
-      <div style={{ borderTop: '1px solid var(--border)', paddingTop: 16 }}>
-        <button
-          onClick={handlePrint}
-          style={{
-            padding: '8px 20px',
-            fontSize: 13,
-            fontWeight: 500,
-            borderRadius: 8,
-            border: '1px solid var(--border)',
-            background: 'var(--surface)',
-            color: 'var(--text-primary)',
-            cursor: 'pointer',
-          }}
-        >
-          인쇄
-        </button>
+      <div style={{ borderTop: `1px solid ${colors.border}`, paddingTop: 16 }}>
+        <Btn size="sm" onClick={handlePrint}>인쇄</Btn>
       </div>
-    </div>
+    </>
   );
 }

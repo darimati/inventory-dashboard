@@ -14,6 +14,7 @@ import {
   type SubmissionStage,
 } from '@/lib/types/influencer';
 import { formatFileSize } from '@/lib/helpers';
+import { colors, radii } from '@/lib/influencer/styles';
 
 /* ── Props ── */
 
@@ -364,21 +365,21 @@ export default function SubmissionsTab({ campaignId, participants, onRefresh }: 
   const filterBtn = (active: boolean): React.CSSProperties => ({
     padding: '6px 14px',
     fontSize: 13,
-    borderRadius: 6,
-    border: '1px solid var(--border)',
-    background: active ? 'var(--text)' : 'var(--surface)',
-    color: active ? 'var(--surface)' : 'var(--text)',
+    borderRadius: radii.chip,
+    border: `1px solid ${colors.border}`,
+    background: active ? colors.accentDark : colors.surface,
+    color: active ? '#fff' : colors.textPrimary,
     cursor: 'pointer',
     fontWeight: active ? 600 : 400,
   });
 
   const cellBase: React.CSSProperties = { padding: '10px 8px', verticalAlign: 'top', fontSize: 13 };
-  const btnSmall: React.CSSProperties = { padding: '4px 10px', fontSize: 12, borderRadius: 6, border: '1px solid var(--border)', background: 'var(--surface)', cursor: 'pointer' };
-  const btnPrimary: React.CSSProperties = { ...btnSmall, background: 'var(--text)', color: 'var(--surface)', border: 'none' };
-  const inputStyle: React.CSSProperties = { width: '100%', padding: '8px 12px', fontSize: 14, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface)' };
+  const btnSmall: React.CSSProperties = { padding: '4px 10px', fontSize: 12, borderRadius: radii.chip, border: `1px solid ${colors.border}`, background: colors.surface, cursor: 'pointer' };
+  const btnPrimary: React.CSSProperties = { ...btnSmall, background: colors.accentDark, color: '#fff', border: 'none' };
+  const inputStyle: React.CSSProperties = { width: '100%', padding: '8px 12px', fontSize: 14, borderRadius: radii.button, border: `1px solid ${colors.border}`, background: colors.surface, boxSizing: 'border-box' };
   const labelStyle: React.CSSProperties = { fontSize: 13, fontWeight: 500, marginBottom: 6, display: 'block' };
 
-  if (loading) return <p style={{ padding: 20, color: 'var(--text-muted)', fontSize: 13 }}>불러오는 중...</p>;
+  if (loading) return <p style={{ padding: 20, color: colors.textMuted, fontSize: 13 }}>불러오는 중...</p>;
 
   /* ── Summary bar ── */
 
@@ -406,7 +407,7 @@ export default function SubmissionsTab({ campaignId, participants, onRefresh }: 
       >
         {/* Row 1: Asset link/file */}
         {info.status === 'not_received' ? (
-          <span style={{ color: '#C4CAD1', fontSize: 12 }}>—</span>
+          <span style={{ color: colors.textDisabled, fontSize: 12 }}>—</span>
         ) : (
           <>
             <div style={{ marginBottom: 2 }}>
@@ -454,7 +455,7 @@ export default function SubmissionsTab({ campaignId, participants, onRefresh }: 
             </div>
 
             {/* Row 3: Supplementary info */}
-            <div style={{ fontSize: 11, color: '#9AA2AA', marginTop: 1 }}>
+            <div style={{ fontSize: 11, color: colors.textMuted, marginTop: 1 }}>
               {info.status === 'received' && latest?.received_at && (
                 <span>{formatShortDate(latest.received_at)} 수령</span>
               )}
@@ -548,7 +549,7 @@ export default function SubmissionsTab({ campaignId, participants, onRefresh }: 
       {/* Summary */}
       <div style={{ display: 'flex', gap: 16, alignItems: 'center', marginBottom: 12 }}>
         <span style={{ fontSize: 14, fontWeight: 600 }}>제출 자료</span>
-        <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>{summaryItems.join(' · ')}</span>
+        <span style={{ fontSize: 13, color: colors.textMuted }}>{summaryItems.join(' · ')}</span>
       </div>
 
       {/* Filter bar */}
@@ -584,7 +585,7 @@ export default function SubmissionsTab({ campaignId, participants, onRefresh }: 
           </thead>
           <tbody>
             {filtered.length === 0 ? (
-              <tr><td colSpan={4} style={{ textAlign: 'center', padding: 24, color: 'var(--text-muted)' }}>
+              <tr><td colSpan={4} style={{ textAlign: 'center', padding: 24, color: colors.textMuted }}>
                 {filter === 'needs_review' ? '확인 필요한 자료가 없습니다' : filter === 'awaiting_revision' ? '수정본 대기 중인 건이 없습니다' : filter === 'done' ? '완료된 참여자가 없습니다' : '참여자가 없습니다'}
               </td></tr>
             ) : (
@@ -595,7 +596,7 @@ export default function SubmissionsTab({ campaignId, participants, onRefresh }: 
                   <tr key={p.id}>
                     <td style={{ ...cellBase, fontWeight: 500 }}>
                       <div>{name}</div>
-                      {p.handle && <div style={{ fontSize: 11, color: '#9AA2AA' }}>@{p.handle}</div>}
+                      {p.handle && <div style={{ fontSize: 11, color: colors.textMuted }}>@{p.handle}</div>}
                     </td>
                     {renderCell(p.id, 'proposal', name)}
                     {renderCell(p.id, 'rough_cut', name)}
@@ -612,7 +613,7 @@ export default function SubmissionsTab({ campaignId, participants, onRefresh }: 
       {revisionModal && (
         <ModalOverlay onClose={() => !revisionSaving && setRevisionModal(null)}>
           <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 16 }}>수정 요청</h3>
-          <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 12 }}>{revisionModal.participantName} · {SUBMISSION_STAGE_LABELS[revisionModal.stage]}</p>
+          <p style={{ fontSize: 13, color: colors.textMuted, marginBottom: 12 }}>{revisionModal.participantName} · {SUBMISSION_STAGE_LABELS[revisionModal.stage]}</p>
 
           {revisionModal.stage === 'proposal' ? (
             <div>
@@ -649,7 +650,7 @@ export default function SubmissionsTab({ campaignId, participants, onRefresh }: 
             </div>
           )}
 
-          {error && <p style={{ color: '#D9534F', fontSize: 13, marginTop: 8 }}>{error}</p>}
+          {error && <p style={{ color: colors.coral, fontSize: 13, marginTop: 8 }}>{error}</p>}
           <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 16 }}>
             <button style={btnSmall} onClick={() => setRevisionModal(null)} disabled={revisionSaving}>취소</button>
             <button style={btnPrimary} onClick={handleRevisionSubmit} disabled={revisionSaving}>
@@ -663,7 +664,7 @@ export default function SubmissionsTab({ campaignId, participants, onRefresh }: 
       {proposalModal && (
         <ModalOverlay onClose={() => !proposalSaving && setProposalModal(null)}>
           <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 16 }}>기획안 링크 등록</h3>
-          <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 12 }}>{proposalModal.participantName}</p>
+          <p style={{ fontSize: 13, color: colors.textMuted, marginBottom: 12 }}>{proposalModal.participantName}</p>
 
           <div style={{ marginBottom: 12 }}>
             <label style={labelStyle}>링크 주소 *</label>
@@ -678,7 +679,7 @@ export default function SubmissionsTab({ campaignId, participants, onRefresh }: 
             <input style={inputStyle} value={proposalMemo} onChange={e => setProposalMemo(e.target.value)} placeholder="선택" />
           </div>
 
-          {error && <p style={{ color: '#D9534F', fontSize: 13, marginTop: 8 }}>{error}</p>}
+          {error && <p style={{ color: colors.coral, fontSize: 13, marginTop: 8 }}>{error}</p>}
           <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 16 }}>
             <button style={btnSmall} onClick={() => setProposalModal(null)} disabled={proposalSaving}>취소</button>
             <button style={btnPrimary} onClick={handleProposalSubmit} disabled={proposalSaving}>
@@ -692,11 +693,11 @@ export default function SubmissionsTab({ campaignId, participants, onRefresh }: 
       {roughCutModal && (
         <ModalOverlay onClose={() => !roughCutUploading && setRoughCutModal(null)}>
           <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 16 }}>가편집본 업로드</h3>
-          <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 12 }}>{roughCutModal.participantName}</p>
+          <p style={{ fontSize: 13, color: colors.textMuted, marginBottom: 12 }}>{roughCutModal.participantName}</p>
 
           <div
             style={{
-              border: '2px dashed var(--border)',
+              border: `2px dashed ${colors.border}`,
               borderRadius: 12,
               padding: 32,
               textAlign: 'center',
@@ -723,12 +724,12 @@ export default function SubmissionsTab({ campaignId, participants, onRefresh }: 
             {roughCutFile ? (
               <div>
                 <div style={{ fontWeight: 500, fontSize: 14 }}>{roughCutFile.name}</div>
-                <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>{formatFileSize(roughCutFile.size)}</div>
+                <div style={{ fontSize: 12, color: colors.textMuted, marginTop: 4 }}>{formatFileSize(roughCutFile.size)}</div>
               </div>
             ) : (
               <div>
-                <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>파일을 끌어다 놓거나 클릭하세요</div>
-                <div style={{ fontSize: 12, color: '#9AA2AA', marginTop: 4 }}>MOV, MP4 · 최대 500MB</div>
+                <div style={{ fontSize: 14, color: colors.textMuted }}>파일을 끌어다 놓거나 클릭하세요</div>
+                <div style={{ fontSize: 12, color: colors.textMuted, marginTop: 4 }}>MOV, MP4 · 최대 500MB</div>
               </div>
             )}
           </div>
@@ -738,7 +739,7 @@ export default function SubmissionsTab({ campaignId, participants, onRefresh }: 
               <div style={{ height: 4, background: '#E5E7EB', borderRadius: 2, overflow: 'hidden' }}>
                 <div style={{ height: '100%', width: `${roughCutProgress}%`, background: '#2563EB', transition: 'width 0.3s' }} />
               </div>
-              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4, textAlign: 'center' }}>
+              <div style={{ fontSize: 12, color: colors.textMuted, marginTop: 4, textAlign: 'center' }}>
                 {roughCutProgress}%
                 <button style={{ ...btnSmall, marginLeft: 8 }} onClick={() => { abortRef.current?.abort(); }}>취소</button>
               </div>
@@ -754,7 +755,7 @@ export default function SubmissionsTab({ campaignId, participants, onRefresh }: 
             <input style={inputStyle} value={roughCutMemo} onChange={e => setRoughCutMemo(e.target.value)} placeholder="선택" />
           </div>
 
-          {error && <p style={{ color: '#D9534F', fontSize: 13, marginTop: 8 }}>{error}</p>}
+          {error && <p style={{ color: colors.coral, fontSize: 13, marginTop: 8 }}>{error}</p>}
           <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 16 }}>
             <button style={btnSmall} onClick={() => setRoughCutModal(null)} disabled={roughCutUploading}>취소</button>
             <button style={btnPrimary} onClick={handleRoughCutSubmit} disabled={roughCutUploading || !roughCutFile}>
@@ -768,7 +769,7 @@ export default function SubmissionsTab({ campaignId, participants, onRefresh }: 
       {uploadModal && (
         <ModalOverlay onClose={() => !uploadSaving && setUploadModal(null)}>
           <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 16 }}>최종 업로드 링크 등록</h3>
-          <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 12 }}>{uploadModal.participantName}</p>
+          <p style={{ fontSize: 13, color: colors.textMuted, marginBottom: 12 }}>{uploadModal.participantName}</p>
 
           <div style={{ marginBottom: 12 }}>
             <label style={labelStyle}>링크 주소 *</label>
@@ -787,7 +788,7 @@ export default function SubmissionsTab({ campaignId, participants, onRefresh }: 
             <DatePicker value={uploadDate} onChange={setUploadDate} />
           </div>
 
-          {error && <p style={{ color: '#D9534F', fontSize: 13, marginTop: 8 }}>{error}</p>}
+          {error && <p style={{ color: colors.coral, fontSize: 13, marginTop: 8 }}>{error}</p>}
           <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 16 }}>
             <button style={btnSmall} onClick={() => setUploadModal(null)} disabled={uploadSaving}>취소</button>
             <button style={btnPrimary} onClick={handleFinalUploadSubmit} disabled={uploadSaving}>
@@ -810,7 +811,7 @@ function ModalOverlay({ children, onClose }: { children: React.ReactNode; onClos
     >
       <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.3)' }} />
       <div
-        style={{ position: 'relative', background: 'var(--surface)', borderRadius: 12, padding: 24, width: 420, maxWidth: '90vw', maxHeight: '80vh', overflow: 'auto' }}
+        style={{ position: 'relative', background: colors.surface, borderRadius: 12, padding: 24, width: 420, maxWidth: '90vw', maxHeight: '80vh', overflow: 'auto' }}
         onClick={e => e.stopPropagation()}
       >
         {children}

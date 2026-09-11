@@ -4,6 +4,8 @@ import { useState, useEffect, useRef } from 'react';
 import AppShell from '@/components/AppShell';
 import { formatKRW } from '@/lib/helpers';
 import { CHANNEL_LABELS, TAX_TYPE_LABELS, type Channel, type TaxType, type ContentFormatEntry, formatContentFormats } from '@/lib/types/influencer';
+import { colors, typo, spacing, radii } from '@/lib/influencer/styles';
+import { Btn, Card, Toast, Empty } from '@/lib/influencer/ui';
 
 /* ── Types ──────────────────────────────────────────── */
 
@@ -253,20 +255,20 @@ export default function SettlementsClient() {
   /* ── Styles ──────────────────────────────────────── */
 
   const cardBg: React.CSSProperties = {
-    background: 'var(--surface)',
-    border: 'var(--card-border)',
-    borderRadius: 'var(--card-radius)',
+    background: colors.surface,
+    border: `1px solid ${colors.border}`,
+    borderRadius: radii.card,
     padding: '16px 20px',
   };
 
   const tabBtn = (active: boolean): React.CSSProperties => ({
     padding: '8px 16px',
     border: 'none',
-    borderBottom: active ? '2px solid var(--accent)' : '2px solid transparent',
+    borderBottom: active ? `2px solid ${colors.accent}` : '2px solid transparent',
     background: 'none',
     fontSize: 14,
     fontWeight: active ? 600 : 400,
-    color: active ? 'var(--accent)' : 'var(--text-muted)',
+    color: active ? colors.accent : colors.textMuted,
     cursor: 'pointer',
     fontFamily: 'var(--font)',
   });
@@ -274,11 +276,11 @@ export default function SettlementsClient() {
   const btnSmall: React.CSSProperties = {
     padding: '4px 12px',
     background: 'none',
-    border: '1px solid var(--border)',
-    borderRadius: 6,
+    border: `1px solid ${colors.border}`,
+    borderRadius: radii.chip,
     fontSize: 12,
     cursor: 'pointer',
-    color: 'var(--text-secondary)',
+    color: colors.textSecondary,
     whiteSpace: 'nowrap',
     fontFamily: 'var(--font)',
   };
@@ -286,10 +288,10 @@ export default function SettlementsClient() {
   const btnPrimary: React.CSSProperties = {
     height: 36,
     padding: '0 16px',
-    background: '#1A1D21',
+    background: colors.accentDark,
     color: '#fff',
     border: 'none',
-    borderRadius: 10,
+    borderRadius: radii.button,
     fontSize: 13.5,
     fontWeight: 550,
     cursor: 'pointer',
@@ -299,17 +301,17 @@ export default function SettlementsClient() {
   const thStyle: React.CSSProperties = {
     fontSize: 12,
     fontWeight: 450,
-    color: 'var(--text-info)',
+    color: colors.textInfo,
     padding: '8px 10px',
     textAlign: 'left',
-    borderBottom: '1px solid var(--border)',
+    borderBottom: `1px solid ${colors.border}`,
   };
 
   const tdStyle: React.CSSProperties = {
     fontSize: 13,
-    color: 'var(--text-primary)',
+    color: colors.textPrimary,
     padding: '10px 10px',
-    borderBottom: '1px solid var(--border)',
+    borderBottom: `1px solid ${colors.border}`,
   };
 
   const modalOverlay: React.CSSProperties = {
@@ -318,26 +320,26 @@ export default function SettlementsClient() {
   };
 
   const modalContent: React.CSSProperties = {
-    background: 'var(--surface)', borderRadius: 12, padding: '24px',
+    background: colors.surface, borderRadius: radii.card, padding: spacing.cardPadding,
     width: 520, maxHeight: '85vh', overflowY: 'auto',
   };
 
   const detailRowStyle: React.CSSProperties = {
     display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
-    padding: '6px 0', fontSize: 13, borderBottom: '1px solid var(--track)',
+    padding: '6px 0', fontSize: 13, borderBottom: `1px solid ${colors.borderLight}`,
   };
 
-  const detailLabel: React.CSSProperties = { color: 'var(--text-info)', flexShrink: 0 };
-  const detailValue: React.CSSProperties = { color: 'var(--text-primary)', fontWeight: 500, textAlign: 'right' };
+  const detailLabel: React.CSSProperties = { color: colors.textInfo, flexShrink: 0 };
+  const detailValue: React.CSSProperties = { color: colors.textPrimary, fontWeight: 500, textAlign: 'right' };
 
   /* ── 2-line name cell ──────────────────────────────── */
 
   const NameCell = ({ name, handle, channel }: { name: string; handle?: string | null; channel?: string | null }) => (
     <div>
-      <div style={{ fontWeight: 500, color: name ? 'var(--text-primary)' : '#9AA2AA', lineHeight: 1.3 }}>
+      <div style={{ fontWeight: 500, color: name ? colors.textPrimary : colors.textMuted, lineHeight: 1.3 }}>
         {name || '(채널명 미입력)'}
       </div>
-      <div style={{ fontSize: 11.5, color: 'var(--text-muted)', marginTop: 1 }}>
+      <div style={{ fontSize: 11.5, color: colors.textMuted, marginTop: 1 }}>
         {[handle ? `@${handle}` : null, channel ? channelLabel(channel) : null].filter(Boolean).join(' · ') || ''}
       </div>
     </div>
@@ -393,10 +395,10 @@ export default function SettlementsClient() {
         <div style={modalContent}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <h2 style={{ fontSize: 16, fontWeight: 600, margin: 0 }}>정산 상세</h2>
-            <button style={{ background: 'none', border: 'none', fontSize: 18, cursor: 'pointer', color: 'var(--text-muted)', padding: '4px 8px' }} onClick={() => setDetailRow(null)}>&#10005;</button>
+            <button style={{ background: 'none', border: 'none', fontSize: 18, cursor: 'pointer', color: colors.textMuted, padding: '4px 8px' }} onClick={() => setDetailRow(null)}>&#10005;</button>
           </div>
 
-          <div style={{ borderBottom: '1px solid var(--border)', paddingBottom: 12, marginBottom: 12 }}>
+          <div style={{ borderBottom: `1px solid ${colors.border}`, paddingBottom: 12, marginBottom: 12 }}>
             <div style={detailRowStyle}>
               <span style={detailLabel}>인플루언서</span>
               <span style={detailValue}>{r.participant_name}</span>
@@ -411,7 +413,7 @@ export default function SettlementsClient() {
             </div>
           </div>
 
-          <div style={{ borderBottom: '1px solid var(--border)', paddingBottom: 12, marginBottom: 12 }}>
+          <div style={{ borderBottom: `1px solid ${colors.border}`, paddingBottom: 12, marginBottom: 12 }}>
             <div style={detailRowStyle}>
               <span style={detailLabel}>세금 방식</span>
               <span style={detailValue}>{taxLabel(r.tax_type)}</span>
@@ -444,7 +446,7 @@ export default function SettlementsClient() {
             </div>
           </div>
 
-          <div style={{ borderBottom: '1px solid var(--border)', paddingBottom: 12, marginBottom: 12 }}>
+          <div style={{ borderBottom: `1px solid ${colors.border}`, paddingBottom: 12, marginBottom: 12 }}>
             <div style={detailRowStyle}>
               <span style={detailLabel}>은행</span>
               <span style={detailValue}>{r.bank_name || '-'}</span>
@@ -476,7 +478,7 @@ export default function SettlementsClient() {
                 <span style={{ ...detailValue, display: 'flex', alignItems: 'center', gap: 6 }}>
                   {formatContentFormats(r.content_formats as ContentFormatEntry[])}
                   {r.published_url && (
-                    <a href={r.published_url} target="_blank" rel="noopener noreferrer" style={{ color: '#4A90D9', fontSize: 12 }}>[보기]</a>
+                    <a href={r.published_url} target="_blank" rel="noopener noreferrer" style={{ color: colors.accent, fontSize: 12 }}>[보기]</a>
                   )}
                 </span>
               </div>
@@ -495,7 +497,7 @@ export default function SettlementsClient() {
 
           {/* Invoice status — P2-2 */}
           {isInvoiceType(r.tax_type) && (
-            <div style={{ borderBottom: '1px solid var(--border)', paddingBottom: 12, marginBottom: 12 }}>
+            <div style={{ borderBottom: `1px solid ${colors.border}`, paddingBottom: 12, marginBottom: 12 }}>
               <div style={detailRowStyle}>
                 <span style={detailLabel}>{r.tax_type === 'tax_invoice' ? '세금계산서' : '계산서'} 상태</span>
                 <span style={{ ...detailValue, display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -523,7 +525,7 @@ export default function SettlementsClient() {
 
           {/* Attachments — P0-3 */}
           {r.has_biz_reg_file && (
-            <div style={{ borderBottom: '1px solid var(--border)', paddingBottom: 12, marginBottom: 12 }}>
+            <div style={{ borderBottom: `1px solid ${colors.border}`, paddingBottom: 12, marginBottom: 12 }}>
               <div style={detailRowStyle}>
                 <span style={detailLabel}>사업자등록증</span>
                 <button style={btnSmall} onClick={() => handleDownloadFile(r.participant_id)}>다운로드</button>
@@ -557,8 +559,8 @@ export default function SettlementsClient() {
         </div>
         {pendingDocs.length === 0 ? (
           <div style={{ ...cardBg, textAlign: 'center', padding: '48px 24px' }}>
-            <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginBottom: 4 }}>정산 정보 대기 건이 없습니다</p>
-            <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>업로드 완료 후 정산 링크를 생성하면 여기에 표시됩니다</p>
+            <p style={{ fontSize: 14, color: colors.textSecondary, marginBottom: 4 }}>정산 정보 대기 건이 없습니다</p>
+            <p style={{ fontSize: 12, color: colors.textMuted }}>업로드 완료 후 정산 링크를 생성하면 여기에 표시됩니다</p>
           </div>
         ) : (
           <div style={cardBg}>
@@ -590,8 +592,8 @@ export default function SettlementsClient() {
                     <td style={tdStyle}>{p.planned_upload_date || '-'}</td>
                     <td style={tdStyle}>
                       {p.published_url ? (
-                        <a href={p.published_url} target="_blank" rel="noopener noreferrer" style={{ color: '#4A90D9', fontSize: 12 }}>보기</a>
-                      ) : <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>-</span>}
+                        <a href={p.published_url} target="_blank" rel="noopener noreferrer" style={{ color: colors.accent, fontSize: 12 }}>보기</a>
+                      ) : <span style={{ fontSize: 12, color: colors.textMuted }}>-</span>}
                     </td>
                     <td style={tdStyle}>
                       {p.settlement_status === 'none' ? (
@@ -603,7 +605,7 @@ export default function SettlementsClient() {
                         >생성</button>
                       ) : p.settlement_token ? (
                         <button style={btnSmall} onClick={() => copyLink(p.settlement_token!)}>복사</button>
-                      ) : <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 4, fontSize: 11.5, fontWeight: 500, color: '#8E959D', background: '#F2F4F7' }}>발송</span>}
+                      ) : <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 4, fontSize: 11.5, fontWeight: 500, color: colors.textDisabled, background: colors.grayBadgeBg }}>발송</span>}
                     </td>
                   </tr>
                 ))}
@@ -633,8 +635,8 @@ export default function SettlementsClient() {
         </div>
         {waitingRows.length === 0 ? (
           <div style={{ ...cardBg, textAlign: 'center', padding: '48px 24px' }}>
-            <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginBottom: 4 }}>지급 대기 건이 없습니다</p>
-            <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>인플루언서가 정산 정보를 제출하면 여기에 표시됩니다</p>
+            <p style={{ fontSize: 14, color: colors.textSecondary, marginBottom: 4 }}>지급 대기 건이 없습니다</p>
+            <p style={{ fontSize: 12, color: colors.textMuted }}>인플루언서가 정산 정보를 제출하면 여기에 표시됩니다</p>
           </div>
         ) : (
           <div style={cardBg}>
@@ -681,7 +683,7 @@ export default function SettlementsClient() {
                         }}>
                           {r.invoice_status ? INVOICE_STATUS_LABELS[r.invoice_status] ?? r.invoice_status : '대기'}
                         </span>
-                      ) : <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>-</span>}
+                      ) : <span style={{ fontSize: 11, color: colors.textMuted }}>-</span>}
                     </td>
                     <td style={{ ...tdStyle, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{fmtDate(r.submitted_at)}</td>
                     <td style={tdStyle} onClick={(e) => e.stopPropagation()}>
@@ -705,8 +707,8 @@ export default function SettlementsClient() {
   const renderCompleted = () => (
     completedRows.length === 0 ? (
       <div style={{ ...cardBg, textAlign: 'center', padding: '48px 24px' }}>
-        <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginBottom: 4 }}>완료된 정산이 없습니다</p>
-        <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>지급 완료 처리된 정산이 여기에 표시됩니다</p>
+        <p style={{ fontSize: 14, color: colors.textSecondary, marginBottom: 4 }}>완료된 정산이 없습니다</p>
+        <p style={{ fontSize: 12, color: colors.textMuted }}>지급 완료 처리된 정산이 여기에 표시됩니다</p>
       </div>
     ) : (
       <div style={cardBg}>
@@ -749,7 +751,7 @@ export default function SettlementsClient() {
                     }}>
                       {r.invoice_status ? INVOICE_STATUS_LABELS[r.invoice_status] ?? r.invoice_status : '대기'}
                     </span>
-                  ) : <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>-</span>}
+                  ) : <span style={{ fontSize: 11, color: colors.textMuted }}>-</span>}
                 </td>
                 <td style={{ ...tdStyle, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{fmtDate(r.submitted_at)}</td>
                 <td style={{ ...tdStyle, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{fmtDate(r.paid_date)}</td>
@@ -767,40 +769,34 @@ export default function SettlementsClient() {
     <AppShell showFilter={false}>
       <div>
         {errorMsg && (
-          <div style={{ background: '#FEE2E2', color: '#DC2626', padding: '8px 16px', borderRadius: 8, marginBottom: 12, fontSize: 13 }}>{errorMsg}</div>
+          <div style={{ background: '#FEE2E2', color: '#DC2626', padding: '8px 16px', borderRadius: radii.button, marginBottom: 12, fontSize: 13 }}>{errorMsg}</div>
         )}
 
-        {toast && (
-          <div style={{
-            position: 'fixed', bottom: 32, left: '50%', transform: 'translateX(-50%)',
-            background: '#1A1D21', color: '#fff', padding: '10px 20px', borderRadius: 10,
-            fontSize: 13, fontWeight: 500, zIndex: 999, fontFamily: 'var(--font)',
-          }}>{toast}</div>
-        )}
+        {toast && <Toast message={toast} />}
 
-        <h1 style={{ fontSize: 20, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 16 }}>정산 관리</h1>
+        <h1 style={{ ...typo.pageTitle, color: colors.textPrimary, margin: 0, marginBottom: spacing.gap }}>정산 관리</h1>
 
         {/* KPI Cards — 3-column grid, label → number → sub */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14, marginBottom: 20 }}>
           <div style={{ ...cardBg, minHeight: 100 }}>
-            <div style={{ fontSize: 12, fontWeight: 450, color: 'var(--text-info)', marginBottom: 6 }}>정산 정보 대기</div>
-            <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{pendingDocs.length}<span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-info)', marginLeft: 2 }}>건</span></div>
-            <div style={{ fontSize: 12, color: 'var(--text-info)', marginTop: 4 }}>링크 미발송 {pendingDocs.filter(p => p.settlement_status === 'none').length} · 발송 {pendingDocs.filter(p => p.settlement_status !== 'none').length}</div>
+            <div style={{ fontSize: 12, fontWeight: 450, color: colors.textInfo, marginBottom: 6 }}>정산 정보 대기</div>
+            <div style={{ fontSize: 24, fontWeight: 700, color: colors.textPrimary, lineHeight: 1.2 }}>{pendingDocs.length}<span style={{ fontSize: 13, fontWeight: 400, color: colors.textInfo, marginLeft: 2 }}>건</span></div>
+            <div style={{ fontSize: 12, color: colors.textInfo, marginTop: 4 }}>링크 미발송 {pendingDocs.filter(p => p.settlement_status === 'none').length} · 발송 {pendingDocs.filter(p => p.settlement_status !== 'none').length}</div>
           </div>
           <div style={{ ...cardBg, minHeight: 100 }}>
-            <div style={{ fontSize: 12, fontWeight: 450, color: 'var(--text-info)', marginBottom: 6 }}>지급 대기</div>
-            <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{formatKRW(totalWaiting)}</div>
-            <div style={{ fontSize: 12, color: 'var(--text-info)', marginTop: 4 }}>{waitingRows.length}건</div>
+            <div style={{ fontSize: 12, fontWeight: 450, color: colors.textInfo, marginBottom: 6 }}>지급 대기</div>
+            <div style={{ fontSize: 24, fontWeight: 700, color: colors.textPrimary, lineHeight: 1.2 }}>{formatKRW(totalWaiting)}</div>
+            <div style={{ fontSize: 12, color: colors.textInfo, marginTop: 4 }}>{waitingRows.length}건</div>
           </div>
           <div style={{ ...cardBg, minHeight: 100 }}>
-            <div style={{ fontSize: 12, fontWeight: 450, color: 'var(--text-info)', marginBottom: 6 }}>이번 달 지급 완료</div>
-            <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{formatKRW(totalCompleted)}</div>
-            <div style={{ fontSize: 12, color: 'var(--text-info)', marginTop: 4 }}>{completedRows.length}건 · {new Date().getFullYear()}년 {new Date().getMonth() + 1}월</div>
+            <div style={{ fontSize: 12, fontWeight: 450, color: colors.textInfo, marginBottom: 6 }}>이번 달 지급 완료</div>
+            <div style={{ fontSize: 24, fontWeight: 700, color: colors.textPrimary, lineHeight: 1.2 }}>{formatKRW(totalCompleted)}</div>
+            <div style={{ fontSize: 12, color: colors.textInfo, marginTop: 4 }}>{completedRows.length}건 · {new Date().getFullYear()}년 {new Date().getMonth() + 1}월</div>
           </div>
         </div>
 
         {/* Tabs */}
-        <div style={{ borderBottom: '1px solid var(--border)', marginBottom: 16, display: 'flex', gap: 4 }}>
+        <div style={{ borderBottom: `1px solid ${colors.border}`, marginBottom: 16, display: 'flex', gap: 4 }}>
           {([
             ['pending_docs', '정산 정보 대기'],
             ['pending_payment', '지급 대기'],
@@ -817,7 +813,7 @@ export default function SettlementsClient() {
         </div>
 
         {loading ? (
-          <p style={{ color: 'var(--text-muted)' }}>로딩 중...</p>
+          <p style={{ color: colors.textMuted }}>로딩 중...</p>
         ) : (
           <>
             {tab === 'pending_docs' && renderPendingDocs()}

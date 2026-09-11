@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { colors, radii } from '@/lib/influencer/styles';
 
 // ── Types ──────────────────────────────────────────────────────────
 
@@ -697,7 +698,7 @@ export default function CalendarView({ onParticipantClick }: CalendarViewProps) 
             width: 6,
             height: 6,
             borderRadius: '50%',
-            background: active ? tc!.bar : '#C4CAD1',
+            background: active ? tc!.bar : colors.textDisabled,
             flexShrink: 0,
           }} />
         )}
@@ -722,7 +723,7 @@ export default function CalendarView({ onParticipantClick }: CalendarViewProps) 
         top: '100%',
         left: 0,
         zIndex: 200,
-        background: '#FFFFFF',
+        background: colors.surface,
         border: '1px solid #EDF0F3',
         borderRadius: 12,
         boxShadow: '0 8px 24px rgba(26,29,33,0.10)',
@@ -742,7 +743,7 @@ export default function CalendarView({ onParticipantClick }: CalendarViewProps) 
           >
             <ChevronLeft />
           </button>
-          <span style={{ fontSize: 13, fontWeight: 600, color: '#1A1D21' }}>{dpLabel}</span>
+          <span style={{ fontSize: 13, fontWeight: 600, color: colors.textPrimary }}>{dpLabel}</span>
           <button
             onClick={() => setDatePickerMonth(new Date(datePickerMonth.getFullYear(), datePickerMonth.getMonth() + 1, 1))}
             style={navBtnStyle}
@@ -756,7 +757,7 @@ export default function CalendarView({ onParticipantClick }: CalendarViewProps) 
               textAlign: 'center',
               fontSize: 10,
               fontWeight: 450,
-              color: i === 0 ? '#D9534F' : i === 6 ? '#4A7DB5' : '#838B93',
+              color: i === 0 ? colors.coral : i === 6 ? colors.accent : colors.textInfo,
               padding: '4px 0',
             }}>{dn}</div>
           ))}
@@ -775,8 +776,8 @@ export default function CalendarView({ onParticipantClick }: CalendarViewProps) 
                   padding: '6px 0',
                   cursor: 'pointer',
                   borderRadius: 4,
-                  color: isSelected ? '#FFFFFF' : !isInMonth ? '#C4CAD1' : isToday ? '#4A7DB5' : '#1A1D21',
-                  background: isSelected ? '#4A7DB5' : 'transparent',
+                  color: isSelected ? '#fff' : !isInMonth ? colors.textDisabled : isToday ? colors.accent : colors.textPrimary,
+                  background: isSelected ? colors.accent : 'transparent',
                   fontWeight: isToday || isSelected ? 600 : 400,
                 }}
               >{d.getDate()}</div>
@@ -827,7 +828,7 @@ export default function CalendarView({ onParticipantClick }: CalendarViewProps) 
               {summaryParts.join(' · ')}
             </div>
           ) : (
-            <div style={{ fontSize: 12.5, color: '#838B93' }}>
+            <div style={{ fontSize: 12.5, color: colors.textInfo }}>
               오늘 예정된 일정이 없습니다
             </div>
           )}
@@ -872,7 +873,7 @@ export default function CalendarView({ onParticipantClick }: CalendarViewProps) 
           top: rect.bottom + 4,
           left: Math.min(rect.left, window.innerWidth - 340),
           width: 320,
-          background: '#FFFFFF',
+          background: colors.surface,
           border: '1px solid #EDF0F3',
           borderRadius: 12,
           boxShadow: '0 8px 24px rgba(26,29,33,0.10)',
@@ -888,7 +889,7 @@ export default function CalendarView({ onParticipantClick }: CalendarViewProps) 
           alignItems: 'center',
           marginBottom: 10,
         }}>
-          <span style={{ fontSize: 13, fontWeight: 600, color: '#1A1D21' }}>
+          <span style={{ fontSize: 13, fontWeight: 600, color: colors.textPrimary }}>
             {(() => {
               const d = parseDate(overflowPopover.date);
               return `${d.getMonth() + 1}월 ${d.getDate()}일 (${DAY_NAMES[d.getDay()]})`;
@@ -896,7 +897,7 @@ export default function CalendarView({ onParticipantClick }: CalendarViewProps) 
           </span>
           <button
             onClick={() => setOverflowPopover(null)}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#838B93', padding: 2 }}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: colors.textInfo, padding: 2 }}
           >
             <CloseIcon />
           </button>
@@ -930,7 +931,7 @@ export default function CalendarView({ onParticipantClick }: CalendarViewProps) 
           ref={popoverRef}
           style={{
             width: 320,
-            background: '#FFFFFF',
+            background: colors.surface,
             border: '1px solid #EDF0F3',
             borderRadius: 12,
             boxShadow: '0 8px 24px rgba(26,29,33,0.10)',
@@ -943,10 +944,10 @@ export default function CalendarView({ onParticipantClick }: CalendarViewProps) 
             alignItems: 'center',
             marginBottom: 16,
           }}>
-            <span style={{ fontSize: 14, fontWeight: 600, color: '#1A1D21' }}>일정 수정</span>
+            <span style={{ fontSize: 14, fontWeight: 600, color: colors.textPrimary }}>일정 수정</span>
             <button
               onClick={() => setEditingEvent(null)}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#838B93', padding: 2 }}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: colors.textInfo, padding: 2 }}
             >
               <CloseIcon />
             </button>
@@ -1069,7 +1070,7 @@ export default function CalendarView({ onParticipantClick }: CalendarViewProps) 
           ref={modalRef}
           style={{
             width: 360,
-            background: '#FFFFFF',
+            background: colors.surface,
             border: '1px solid #EDF0F3',
             borderRadius: 12,
             boxShadow: '0 8px 24px rgba(26,29,33,0.10)',
@@ -1082,10 +1083,10 @@ export default function CalendarView({ onParticipantClick }: CalendarViewProps) 
             alignItems: 'center',
             marginBottom: 20,
           }}>
-            <span style={{ fontSize: 15, fontWeight: 600, color: '#1A1D21' }}>일정 추가</span>
+            <span style={{ fontSize: 15, fontWeight: 600, color: colors.textPrimary }}>일정 추가</span>
             <button
               onClick={() => setShowAddModal(false)}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#838B93', padding: 2 }}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: colors.textInfo, padding: 2 }}
             >
               <CloseIcon />
             </button>
@@ -1243,7 +1244,7 @@ export default function CalendarView({ onParticipantClick }: CalendarViewProps) 
                   color: isToday
                     ? '#1A1D21'
                     : !isCurrentMonth
-                      ? '#C4CAD1'
+                      ? colors.textDisabled
                       : dow === 0
                         ? '#C86B67'
                         : dow === 6
@@ -1265,7 +1266,7 @@ export default function CalendarView({ onParticipantClick }: CalendarViewProps) 
                   <div
                     style={{
                       fontSize: 11,
-                      color: '#838B93',
+                      color: colors.textInfo,
                       marginTop: 2,
                       cursor: 'pointer',
                       paddingLeft: 3,
@@ -1380,7 +1381,7 @@ export default function CalendarView({ onParticipantClick }: CalendarViewProps) 
     border: 'none',
     cursor: 'pointer',
     padding: '4px 6px',
-    color: '#61686F',
+    color: colors.textSecondary,
     borderRadius: 6,
     display: 'inline-flex',
     alignItems: 'center',
@@ -1391,7 +1392,7 @@ export default function CalendarView({ onParticipantClick }: CalendarViewProps) 
     display: 'block',
     fontSize: 12,
     fontWeight: 450,
-    color: '#838B93',
+    color: colors.textInfo,
     marginBottom: 5,
   };
 
@@ -1403,9 +1404,9 @@ export default function CalendarView({ onParticipantClick }: CalendarViewProps) 
     padding: '0 10px',
     fontSize: 13,
     fontFamily: 'var(--font)',
-    color: '#1A1D21',
+    color: colors.textPrimary,
     outline: 'none',
-    background: '#FFFFFF',
+    background: colors.surface,
   };
 
   // ── Main Render ──
@@ -1470,10 +1471,10 @@ export default function CalendarView({ onParticipantClick }: CalendarViewProps) 
                 paddingRight: 10,
                 fontSize: 12.5,
                 fontFamily: 'var(--font)',
-                color: '#1A1D21',
+                color: colors.textPrimary,
                 outline: 'none',
                 width: 170,
-                background: '#FFFFFF',
+                background: colors.surface,
               }}
             />
           </div>
@@ -1509,7 +1510,7 @@ export default function CalendarView({ onParticipantClick }: CalendarViewProps) 
                 ...navBtnStyle,
                 fontSize: 13,
                 fontWeight: 600,
-                color: '#1A1D21',
+                color: colors.textPrimary,
                 padding: '4px 8px',
                 whiteSpace: 'nowrap',
               }}
@@ -1534,8 +1535,8 @@ export default function CalendarView({ onParticipantClick }: CalendarViewProps) 
               gap: 4,
               height: 32,
               padding: '0 14px',
-              background: '#1A1D21',
-              color: '#FFFFFF',
+              background: colors.accentDark,
+              color: '#fff',
               border: 'none',
               borderRadius: 8,
               fontSize: 12.5,
@@ -1557,7 +1558,7 @@ export default function CalendarView({ onParticipantClick }: CalendarViewProps) 
 
         {/* Loading state */}
         {loading ? (
-          <div style={{ padding: '40px 0', textAlign: 'center', color: '#9AA2AA', fontSize: 13 }}>
+          <div style={{ padding: '40px 0', textAlign: 'center', color: colors.textMuted, fontSize: 13 }}>
             일정을 불러오는 중...
           </div>
         ) : (
@@ -1566,7 +1567,7 @@ export default function CalendarView({ onParticipantClick }: CalendarViewProps) 
             {/* Empty state messages */}
             {filteredEvents.length === 0 && events.length > 0 && (
               <div style={{ padding: '24px 0', textAlign: 'center' }}>
-                <div style={{ fontSize: 13, fontWeight: 500, color: '#61686F', marginBottom: 8 }}>
+                <div style={{ fontSize: 13, fontWeight: 500, color: colors.textSecondary, marginBottom: 8 }}>
                   선택한 유형에 해당하는 일정이 없습니다
                 </div>
                 <button
@@ -1574,7 +1575,7 @@ export default function CalendarView({ onParticipantClick }: CalendarViewProps) 
                   style={{
                     fontSize: 12.5,
                     fontWeight: 500,
-                    color: '#4A7DB5',
+                    color: colors.accent,
                     background: 'none',
                     border: 'none',
                     cursor: 'pointer',
@@ -1589,10 +1590,10 @@ export default function CalendarView({ onParticipantClick }: CalendarViewProps) 
             )}
             {events.length === 0 && (
               <div style={{ padding: '24px 0', textAlign: 'center' }}>
-                <div style={{ fontSize: 13, fontWeight: 500, color: '#61686F', marginBottom: 4 }}>
+                <div style={{ fontSize: 13, fontWeight: 500, color: colors.textSecondary, marginBottom: 4 }}>
                   이 달에 예정된 일정이 없습니다
                 </div>
-                <div style={{ fontSize: 12.5, fontWeight: 450, color: '#838B93' }}>
+                <div style={{ fontSize: 12.5, fontWeight: 450, color: colors.textInfo }}>
                   참여자 일정을 입력하면 여기에 표시됩니다
                 </div>
               </div>
@@ -1616,8 +1617,8 @@ export default function CalendarView({ onParticipantClick }: CalendarViewProps) 
           position: 'fixed',
           top: dragTooltip.y - 36,
           left: dragTooltip.x,
-          background: '#1A1D21',
-          color: '#FFFFFF',
+          background: colors.accentDark,
+          color: '#fff',
           fontSize: 11,
           padding: '5px 10px',
           borderRadius: 6,
@@ -1637,8 +1638,8 @@ export default function CalendarView({ onParticipantClick }: CalendarViewProps) 
           bottom: 24,
           left: '50%',
           transform: 'translateX(-50%)',
-          background: '#1A1D21',
-          color: '#FFFFFF',
+          background: colors.accentDark,
+          color: '#fff',
           fontSize: 13,
           padding: '10px 20px',
           borderRadius: 10,
