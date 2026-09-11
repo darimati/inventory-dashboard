@@ -35,6 +35,8 @@ import {
 } from '@/lib/types/influencer';
 import { formatFileSize, formatKRW } from '@/lib/helpers';
 import { isParticipantCompletedSimple } from '@/lib/influencer/metrics';
+import { colors, typo, spacing, radii } from '@/lib/influencer/styles';
+import { Chip, Btn, Card, Drawer, Toast, MoreButton, Menu } from '@/lib/influencer/ui';
 
 /* ── Types ─────────────────────────────────────────────── */
 
@@ -147,11 +149,9 @@ export default function ManageClient() {
 
   // Campaign ⋯ menu
   const [campaignMenuId, setCampaignMenuId] = useState<string | null>(null);
-  const campaignMenuRef = useRef<HTMLDivElement>(null);
 
   // Participant ⋯ menu
   const [partMenuId, setPartMenuId] = useState<string | null>(null);
-  const partMenuRef = useRef<HTMLDivElement>(null);
 
   // Memo popover
   const [memoTarget, setMemoTarget] = useState<{ type: 'campaign' | 'participant'; id: string; memo: string } | null>(null);
@@ -339,16 +339,6 @@ export default function ManageClient() {
       }
     });
   }, [expanded]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Close menus on outside click
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (campaignMenuId && campaignMenuRef.current && !campaignMenuRef.current.contains(e.target as Node)) setCampaignMenuId(null);
-      if (partMenuId && partMenuRef.current && !partMenuRef.current.contains(e.target as Node)) setPartMenuId(null);
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [campaignMenuId, partMenuId]);
 
   const toggleExpand = (id: string) => {
     setExpanded((prev) => {
@@ -1046,109 +1036,55 @@ export default function ManageClient() {
     return null;
   };
 
-  /* ── Styles ──────────────────────────────────────────── */
+  /* ── Styles (design tokens) ──────────────────────────── */
 
   const sectionStyle: React.CSSProperties = {
-    background: 'var(--surface)', border: 'var(--card-border)',
-    borderRadius: 'var(--card-radius)', marginBottom: 'var(--card-gap)', overflow: 'hidden',
+    background: colors.surface, border: `1px solid ${colors.border}`,
+    borderRadius: radii.card, marginBottom: spacing.gap, overflow: 'hidden',
   };
   const inputStyle: React.CSSProperties = {
-    width: '100%', padding: '8px 12px', border: '1px solid var(--border)',
-    borderRadius: 8, fontSize: 14, fontFamily: 'var(--font)',
-    background: 'var(--surface)', color: 'var(--text-primary)',
+    width: '100%', padding: '8px 12px', border: `1px solid ${colors.border}`,
+    borderRadius: radii.button, fontSize: 14, fontFamily: 'var(--font)',
+    background: colors.surface, color: colors.textPrimary, boxSizing: 'border-box' as const,
   };
   const labelStyle: React.CSSProperties = {
-    fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)', marginBottom: 4, display: 'block',
+    fontSize: 13, fontWeight: 500, color: colors.textSecondary, marginBottom: 4, display: 'block',
   };
-  const hintStyle: React.CSSProperties = { fontSize: 11, color: 'var(--text-muted)', marginTop: 2 };
+  const hintStyle: React.CSSProperties = { fontSize: 11, color: colors.textMuted, marginTop: 2 };
 
-  const campaignStatusBadge = (status: CampaignStatus) => {
-    // P0-3: greyscale only for normal states
-    const isGrey = status === 'active' || status === 'preparing' || status === 'completed';
-    const c = isGrey ? '#8E959D' : status === 'cancelled' ? '#8E959D' : '#8E959D';
-    const bg = '#F2F4F7';
-    return (
-      <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 4, fontSize: 12, fontWeight: 500, color: c, background: bg }}>
-        {CAMPAIGN_STATUS_LABELS[status]}
-      </span>
-    );
-  };
+  const campaignStatusBadge = (status: CampaignStatus) => (
+    <Chip variant="gray">{CAMPAIGN_STATUS_LABELS[status]}</Chip>
+  );
 
   const modalOverlay: React.CSSProperties = {
     position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.3)',
     display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200,
   };
   const modalContent: React.CSSProperties = {
-    background: 'var(--surface)', borderRadius: 12, padding: '24px',
+    background: colors.surface, borderRadius: radii.card, padding: spacing.cardPadding,
     width: 520, maxHeight: '85vh', overflowY: 'auto',
   };
   const btnPrimary: React.CSSProperties = {
-    padding: '8px 20px', background: '#1A1D21', color: '#fff',
-    border: 'none', borderRadius: 10, fontSize: 13.5, fontWeight: 550,
+    padding: '8px 20px', background: colors.accentDark, color: '#fff',
+    border: 'none', borderRadius: radii.button, fontSize: 13.5, fontWeight: 550,
     height: 36, cursor: 'pointer', fontFamily: 'var(--font)',
   };
   const btnGhost: React.CSSProperties = {
-    padding: '8px 16px', background: 'none', border: '1px solid var(--border)',
-    borderRadius: 8, fontSize: 14, cursor: 'pointer', color: 'var(--text-secondary)',
+    padding: '8px 16px', background: 'none', border: `1px solid ${colors.border}`,
+    borderRadius: radii.button, fontSize: 14, cursor: 'pointer', color: colors.textSecondary,
     fontFamily: 'var(--font)',
   };
   const btnSmall: React.CSSProperties = {
-    padding: '3px 10px', background: 'none', border: '1px solid var(--border)',
-    borderRadius: 6, fontSize: 12, cursor: 'pointer', color: 'var(--text-secondary)',
+    padding: '3px 10px', background: 'none', border: `1px solid ${colors.border}`,
+    borderRadius: radii.chip, fontSize: 12, cursor: 'pointer', color: colors.textSecondary,
     whiteSpace: 'nowrap', fontFamily: 'var(--font)',
   };
-  const chipStyle = (active: boolean): React.CSSProperties => ({
+  const toggleChipStyle = (active: boolean): React.CSSProperties => ({
     padding: '4px 12px', borderRadius: 16, fontSize: 13,
-    border: active ? '1px solid var(--text-primary)' : '1px solid var(--border)',
-    background: active ? 'var(--text-primary)' : 'transparent',
-    color: active ? '#fff' : 'var(--text-secondary)', cursor: 'pointer',
+    border: active ? `1px solid ${colors.textPrimary}` : `1px solid ${colors.border}`,
+    background: active ? colors.textPrimary : 'transparent',
+    color: active ? '#fff' : colors.textSecondary, cursor: 'pointer',
   });
-
-  /* ── ⋯ Menu component ──────────────────────────────── */
-
-  const EllipsisMenu = ({ items, menuRef }: { items: { label: string; onClick: () => void; danger?: boolean }[]; menuRef: React.RefObject<HTMLDivElement | null> }) => (
-    <div
-      ref={menuRef}
-      style={{
-        position: 'absolute', top: 'calc(100% + 4px)', right: 0,
-        background: '#FFFFFF', border: '1px solid #EDF0F3', borderRadius: 8,
-        boxShadow: '0 4px 16px rgba(0,0,0,0.10)', zIndex: 100, padding: '4px 0',
-        minWidth: 140, animation: 'selectSlideIn 0.12s ease-out',
-      }}
-    >
-      {items.map((item, i) => (
-        <button
-          key={i}
-          onClick={(e) => { e.stopPropagation(); item.onClick(); }}
-          style={{
-            display: 'block', width: '100%', padding: '7px 14px',
-            background: 'none', border: 'none', fontSize: 13,
-            color: item.danger ? '#D9534F' : '#1A1D21',
-            textAlign: 'left', cursor: 'pointer', fontFamily: 'var(--font)',
-          }}
-          onMouseEnter={(e) => { (e.target as HTMLElement).style.background = '#F2F4F7'; }}
-          onMouseLeave={(e) => { (e.target as HTMLElement).style.background = 'none'; }}
-        >
-          {item.label}
-        </button>
-      ))}
-    </div>
-  );
-
-  const EllipsisBtn = ({ onClick }: { onClick: (e: React.MouseEvent) => void }) => (
-    <button
-      onClick={onClick}
-      style={{
-        background: 'none', border: 'none', cursor: 'pointer', fontSize: 16,
-        color: '#9AA2AA', padding: '2px 6px', borderRadius: 4, fontFamily: 'var(--font)',
-        lineHeight: 1,
-      }}
-      onMouseEnter={(e) => { (e.target as HTMLElement).style.background = '#F2F4F7'; }}
-      onMouseLeave={(e) => { (e.target as HTMLElement).style.background = 'none'; }}
-    >
-      ⋯
-    </button>
-  );
 
   /* ── Column widths ────────────────────────── */
   const colW = {
@@ -1248,13 +1184,13 @@ export default function ManageClient() {
                 </div>
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexShrink: 0, position: 'relative' }}>
                   <div style={{ position: 'relative' }}>
-                    <EllipsisBtn onClick={(e) => { e.stopPropagation(); setCampaignMenuId(campaignMenuId === c.id ? null : c.id); }} />
+                    <MoreButton onClick={() => setCampaignMenuId(campaignMenuId === c.id ? null : c.id)} />
                     {campaignMenuId === c.id && (
-                      <EllipsisMenu
-                        menuRef={campaignMenuRef}
+                      <Menu
+                        onClose={() => setCampaignMenuId(null)}
                         items={[
                           { label: '캠페인 수정', onClick: () => openEditCampaign(c) },
-                          { label: '모든 참여자 진행 초기화', onClick: () => { setResetModal({ type: 'campaign', id: c.id, name: c.name, confirmName: c.name }); setResetConfirmInput(''); setResetError(''); setCampaignMenuId(null); } },
+                          { label: '모든 참여자 진행 초기화', onClick: () => { setResetModal({ type: 'campaign', id: c.id, name: c.name, confirmName: c.name }); setResetConfirmInput(''); setResetError(''); } },
                           { label: '캠페인 삭제', onClick: () => openDeleteCampaign(c), danger: true },
                         ]}
                       />
@@ -1548,15 +1484,15 @@ export default function ManageClient() {
                                       {/* ⋯ menu */}
                                       <td style={{ textAlign: 'center', position: 'relative', verticalAlign: 'middle', padding: '8px 2px' }}>
                                         <div style={{ position: 'relative', display: 'inline-block' }}>
-                                          <EllipsisBtn onClick={(e) => { e.stopPropagation(); setPartMenuId(partMenuId === p.id ? null : p.id); }} />
+                                          <MoreButton onClick={() => setPartMenuId(partMenuId === p.id ? null : p.id)} />
                                           {partMenuId === p.id && (
-                                            <EllipsisMenu
-                                              menuRef={partMenuRef}
+                                            <Menu
+                                              onClose={() => setPartMenuId(null)}
                                               items={[
                                                 { label: '참여자 수정', onClick: () => openEditParticipant(p) },
                                                 { label: '업로드 정보 수정', onClick: () => openUploadModal(p) },
-                                                ...(p.consent_token ? [{ label: '동의서 열기', onClick: () => { window.open(getLinkUrl(p.consent_token!, 'consent'), '_blank'); setPartMenuId(null); } }] : []),
-                                                { label: '모든 진행 기록 초기화', onClick: () => { setResetModal({ type: 'participant', id: p.id, name: (p.display_name || p.name || p.channel || ''), confirmName: (p.channel || p.display_name || p.name || '') }); setResetConfirmInput(''); setResetError(''); setPartMenuId(null); } },
+                                                ...(p.consent_token ? [{ label: '동의서 열기', onClick: () => window.open(getLinkUrl(p.consent_token!, 'consent'), '_blank') }] : []),
+                                                { label: '모든 진행 기록 초기화', onClick: () => { setResetModal({ type: 'participant', id: p.id, name: (p.display_name || p.name || p.channel || ''), confirmName: (p.channel || p.display_name || p.name || '') }); setResetConfirmInput(''); setResetError(''); } },
                                                 { label: '삭제', onClick: () => openDeleteParticipant(p), danger: true },
                                               ]}
                                             />
@@ -1689,7 +1625,7 @@ export default function ManageClient() {
                     {[...settingsSets.map((s) => s.name), ...settingsProducts.map((p) => p.name)].filter((n) => n.trim()).map((name) => {
                       const active = partForm.product_set_name === name;
                       return (
-                        <button key={name} style={chipStyle(active)} onClick={() => setPartForm({ ...partForm, product_set_name: active ? '' : name })}>{name}</button>
+                        <button key={name} style={toggleChipStyle(active)} onClick={() => setPartForm({ ...partForm, product_set_name: active ? '' : name })}>{name}</button>
                       );
                     })}
                   </div>
@@ -1699,7 +1635,7 @@ export default function ManageClient() {
                   <label style={labelStyle}>콘텐츠 형식</label>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
                     {(Object.entries(CONTENT_FORMAT_LABELS) as [ContentFormat, string][]).map(([k, v]) => (
-                      <button key={k} style={chipStyle(partForm.content_formats.some((f) => f.format === k))} onClick={() => toggleContentFormat(k)}>{v}</button>
+                      <button key={k} style={toggleChipStyle(partForm.content_formats.some((f) => f.format === k))} onClick={() => toggleContentFormat(k)}>{v}</button>
                     ))}
                   </div>
                   {partForm.content_formats.length > 0 && (
@@ -1748,28 +1684,16 @@ export default function ManageClient() {
           </div>
         )}
 
-        {/* Detail Panel (480px right slide) */}
-        {detailPart && (
-          <>
-            <div
-              style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.2)', zIndex: 200 }}
-              onClick={() => { setDetailPart(null); setDetailCampaign(null); }}
-            />
-            <div style={{
-              position: 'fixed', top: 0, right: 0, bottom: 0, width: 480, background: 'var(--surface)',
-              boxShadow: '-4px 0 24px rgba(0,0,0,0.08)', zIndex: 201, overflowY: 'auto', padding: '24px',
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
-                <div>
-                  <h2 style={{ fontSize: 18, fontWeight: 600, margin: 0 }}>{detailPart.name || detailPart.display_name || '(채널명 미입력)'}</h2>
-                  <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>
-                    {[detailPart.handle ? `@${detailPart.handle}` : null, detailPart.channel ? CHANNEL_LABELS[detailPart.channel] : null].filter(Boolean).join(' · ')}
-                  </div>
-                </div>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <button style={btnSmall} onClick={() => { setDetailPart(null); openEditParticipant(detailPart); }}>수정</button>
-                  <button style={{ ...btnGhost, padding: '4px 8px' }} onClick={() => { setDetailPart(null); setDetailCampaign(null); }}>&#10005;</button>
-                </div>
+        {/* Detail Panel */}
+        <Drawer
+          open={!!detailPart}
+          onClose={() => { setDetailPart(null); setDetailCampaign(null); }}
+          title={detailPart?.name || detailPart?.display_name || '(채널명 미입력)'}
+          sub={detailPart ? [detailPart.handle ? `@${detailPart.handle}` : null, detailPart.channel ? CHANNEL_LABELS[detailPart.channel] : null].filter(Boolean).join(' · ') : undefined}
+        >
+          {detailPart && (<>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>
+                <Btn size="sm" onClick={() => { setDetailPart(null); openEditParticipant(detailPart); }}>수정</Btn>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 16px', fontSize: 13, marginBottom: 20 }}>
                 <div><span style={{ color: 'var(--text-info)' }}>채널:</span> {detailPart.channel ? CHANNEL_LABELS[detailPart.channel] : '-'}</div>
@@ -2161,9 +2085,8 @@ export default function ManageClient() {
                   </div>
                 </div>
               )}
-            </div>
-          </>
-        )}
+          </>)}
+        </Drawer>
         {/* Submit Asset Modal */}
         {submitModal && (
           <div style={modalOverlay} onMouseDown={(e) => { mouseDownRef.current = e.target; }} onClick={(e) => { if (e.target === e.currentTarget && mouseDownRef.current === e.currentTarget) { setSubmitModal(null); } }}>
@@ -2301,29 +2224,17 @@ export default function ManageClient() {
           const pp = progressPanel.participant;
           const panelTitle = progressPanel.type === 'consent' ? '동의서 상세'
             : progressPanel.type === 'upload' ? '업로드 상세' : '정산 상세';
-          const rowStyle: React.CSSProperties = { display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--border)' };
-          const rlabel: React.CSSProperties = { color: 'var(--text-info)', fontSize: 13 };
-          const rvalue: React.CSSProperties = { color: 'var(--text-primary)', fontSize: 13, fontWeight: 500, textAlign: 'right' };
+          const rowStyle: React.CSSProperties = { display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: `1px solid ${colors.borderLight}` };
+          const rlabel: React.CSSProperties = { color: colors.textInfo, fontSize: 13 };
+          const rvalue: React.CSSProperties = { color: colors.textPrimary, fontSize: 13, fontWeight: 500, textAlign: 'right' };
 
           return (
-            <>
-              <div
-                style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.2)', zIndex: 200 }}
-                onClick={() => setProgressPanel(null)}
-              />
-              <div style={{
-                position: 'fixed', top: 0, right: 0, bottom: 0, width: 420, background: 'var(--surface)',
-                boxShadow: '-4px 0 24px rgba(0,0,0,0.08)', zIndex: 201, overflowY: 'auto', padding: '24px',
-              }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-                  <h3 style={{ fontSize: 16, fontWeight: 600, margin: 0 }}>{panelTitle}</h3>
-                  <button style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, color: 'var(--text-info)' }} onClick={() => setProgressPanel(null)}>&#10005;</button>
-                </div>
-                <div style={{ fontSize: 14, fontWeight: 500, marginBottom: 16, color: 'var(--text-primary)' }}>
-                  {pp.name || pp.display_name || '(채널명 미입력)'}
-                  {pp.handle && <span style={{ color: 'var(--text-muted)', fontWeight: 400, marginLeft: 6 }}>@{pp.handle}</span>}
-                </div>
-
+            <Drawer
+              open={true}
+              onClose={() => setProgressPanel(null)}
+              title={panelTitle}
+              sub={`${pp.name || pp.display_name || '(채널명 미입력)'}${pp.handle ? ` @${pp.handle}` : ''}`}
+            >
                 {progressPanel.type === 'consent' && (
                   <div>
                     <div style={rowStyle}><span style={rlabel}>동의 상태</span><span style={rvalue}>{pp.consent_status === 'agreed' ? '동의 완료' : pp.consent_status === 'sent' ? '발송됨' : '미발송'}</span></div>
@@ -2335,8 +2246,8 @@ export default function ManageClient() {
                     {pp.planned_upload_date && <div style={rowStyle}><span style={rlabel}>업로드 예정일</span><span style={rvalue}>{pp.planned_upload_date}</span></div>}
                     {pp.phone && <div style={rowStyle}><span style={rlabel}>연락처</span><span style={rvalue}>{pp.phone}</span></div>}
                     {(pp.delivery_name || pp.delivery_address) && (
-                      <div style={{ marginTop: 16, padding: 12, background: '#F2F4F7', borderRadius: 8, fontSize: 13 }}>
-                        <div style={{ fontWeight: 600, marginBottom: 6, color: 'var(--text-secondary)' }}>배송 정보</div>
+                      <div style={{ marginTop: 16, padding: 12, background: colors.grayBadgeBg, borderRadius: radii.button, fontSize: 13 }}>
+                        <div style={{ fontWeight: 600, marginBottom: 6, color: colors.textSecondary }}>배송 정보</div>
                         {pp.delivery_name && <div>수령인: {pp.delivery_name}</div>}
                         {pp.delivery_phone && <div>연락처: {pp.delivery_phone}</div>}
                         {(pp.delivery_address || pp.delivery_address_base) && <div>주소: {pp.delivery_address || [pp.delivery_postal_code, pp.delivery_address_base, pp.delivery_address_detail].filter(Boolean).join(' ')}</div>}
@@ -2348,7 +2259,7 @@ export default function ManageClient() {
                 {progressPanel.type === 'upload' && (
                   <div>
                     <div style={rowStyle}><span style={rlabel}>업로드 상태</span><span style={rvalue}>{pp.published_url ? '완료' : '미완료'}</span></div>
-                    {pp.published_url && <div style={rowStyle}><span style={rlabel}>콘텐츠 URL</span><span style={{ ...rvalue, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis' }}><a href={pp.published_url} target="_blank" rel="noopener noreferrer" style={{ color: '#4A7DB5' }}>{pp.published_url}</a></span></div>}
+                    {pp.published_url && <div style={rowStyle}><span style={rlabel}>콘텐츠 URL</span><span style={{ ...rvalue, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis' }}><a href={pp.published_url} target="_blank" rel="noopener noreferrer" style={{ color: colors.accent }}>{pp.published_url}</a></span></div>}
                     {pp.planned_upload_date && <div style={rowStyle}><span style={rlabel}>업로드 예정일</span><span style={rvalue}>{pp.planned_upload_date}</span></div>}
                     {pp.post_type && <div style={rowStyle}><span style={rlabel}>콘텐츠 형식</span><span style={rvalue}>{pp.post_type} {pp.post_count ?? 1}건</span></div>}
                     <div style={rowStyle}><span style={rlabel}>채널</span><span style={rvalue}>{pp.channel ? CHANNEL_LABELS[pp.channel] : '-'}</span></div>
@@ -2362,35 +2273,23 @@ export default function ManageClient() {
                     <div style={rowStyle}><span style={rlabel}>정산 정보</span><span style={rvalue}>{pp.settlement_status === 'docs_submitted' ? '회수 완료' : pp.settlement_status === 'docs_requested' ? '발송됨' : '미발송'}</span></div>
                     {pp.settlement_token && pp.settlement_status === 'docs_requested' && (
                       <div style={{ marginTop: 12 }}>
-                        <button style={btnSmall} onClick={() => { copyToClipboard(getLinkUrl(pp.settlement_token!, 'settlement')); }}>정산 링크 복사</button>
+                        <Btn size="sm" onClick={() => { copyToClipboard(getLinkUrl(pp.settlement_token!, 'settlement')); }}>정산 링크 복사</Btn>
                       </div>
                     )}
                   </div>
                 )}
-              </div>
-            </>
+            </Drawer>
           );
         })()}
         {/* Copy toast */}
-        {copyToast && (
-          <div style={{ position: 'fixed', bottom: 32, left: '50%', transform: 'translateX(-50%)', background: '#1A1D21', color: '#fff', padding: '8px 20px', borderRadius: 8, fontSize: 14, zIndex: 300, boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}>
-            복사됨
-          </div>
-        )}
+        {copyToast && <Toast message="복사됨" />}
 
         {/* Manage toast with undo */}
         {manageToast && (
-          <div style={{ position: 'fixed', bottom: 32, left: '50%', transform: 'translateX(-50%)', background: '#1A1D21', color: '#fff', padding: '8px 20px', borderRadius: 8, fontSize: 14, zIndex: 300, boxShadow: '0 4px 12px rgba(0,0,0,0.15)', display: 'flex', alignItems: 'center', gap: 12 }}>
-            {manageToast.message}
-            {manageToast.undoAction && (
-              <button
-                onClick={() => { manageToast.undoAction!(); setManageToast(null); }}
-                style={{ background: 'none', border: 'none', color: '#7CB3F0', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font)', whiteSpace: 'nowrap' }}
-              >
-                실행 취소
-              </button>
-            )}
-          </div>
+          <Toast
+            message={manageToast.message}
+            action={manageToast.undoAction ? { label: '실행 취소', onClick: () => { manageToast.undoAction!(); setManageToast(null); } } : undefined}
+          />
         )}
 
         {/* Undo step confirmation modal */}
