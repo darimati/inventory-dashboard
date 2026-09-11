@@ -105,11 +105,21 @@ export async function GET(req: NextRequest) {
     `planned_upload_date.gte.${start},planned_upload_date.lte.${end}`,
   ].join(',');
 
-  let participantsResult = await supabaseAdmin
-    .from('inf_participants')
-    .select(FULL_SELECT)
-    .neq('status', 'cancelled')
-    .or(dateOrFilter);
+  // Parallel fetch: participants + payment schedule setting
+  const [participantsResult1, { data: paymentScheduleSetting }] = await Promise.all([
+    supabaseAdmin
+      .from('inf_participants')
+      .select(FULL_SELECT)
+      .neq('status', 'cancelled')
+      .or(dateOrFilter),
+    supabaseAdmin
+      .from('inf_settings')
+      .select('value')
+      .eq('key', 'payment_schedule')
+      .single(),
+  ]);
+
+  let participantsResult = participantsResult1;
 
   // Graceful fallback: if error mentions a column name, retry without new columns
   if (participantsResult.error && participantsResult.error.message.includes('column')) {
@@ -123,13 +133,6 @@ export async function GET(req: NextRequest) {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const participants = (participantsResult.data ?? []) as any[];
-
-  // ---- Fetch payment schedule setting ----
-  const { data: paymentScheduleSetting } = await supabaseAdmin
-    .from('inf_settings')
-    .select('value')
-    .eq('key', 'payment_schedule')
-    .single();
 
   const paymentSchedule = paymentScheduleSetting?.value as
     | { day_of_month?: number }

@@ -5,21 +5,24 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    // 1) Fetch all inventory rows
-    const { data: inventoryRows, error: invError } = await supabaseAdmin
-      .from('inventory_coupang')
-      .select('vendor_id, vendor_item_id, brand, country, total_orderable_quantity, sales_count_last_thirty_days, snapshot_at')
-      .order('snapshot_at', { ascending: false });
+    // Parallel fetch: inventory rows + product name mapping
+    const [{ data: inventoryRows, error: invError }, { data: salesMapping, error: salesError }] = await Promise.all([
+      supabaseAdmin
+        .from('inventory_coupang')
+        .select('vendor_id, vendor_item_id, brand, country, total_orderable_quantity, sales_count_last_thirty_days, snapshot_at')
+        .order('snapshot_at', { ascending: false }),
+      supabaseAdmin
+        .from('sales_coupang')
+        .select('vendor_item_id, product_name')
+        .eq('brand', 'HEEDA')
+        .eq('country', 'KR')
+        .order('sale_date', { ascending: false })
+        .limit(5000),
+    ]);
 
     if (invError) {
       return NextResponse.json({ error: invError.message }, { status: 500 });
     }
-
-    // 2) Fetch distinct vendor_item_id + product_name mapping from sales_coupang
-    const { data: salesMapping, error: salesError } = await supabaseAdmin
-      .from('sales_coupang')
-      .select('vendor_item_id, product_name');
-
     if (salesError) {
       return NextResponse.json({ error: salesError.message }, { status: 500 });
     }
