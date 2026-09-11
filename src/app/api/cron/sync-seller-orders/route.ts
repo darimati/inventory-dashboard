@@ -107,8 +107,8 @@ async function fetchRevenueHistory(dateFrom: string, dateTo: string): Promise<Re
       recognitionDateFrom: dateFrom,
       recognitionDateTo: dateTo,
       maxPerPage: '50',
+      token: token,  // Required even on first page (empty string)
     };
-    if (token) query.token = token;
 
     const resp = await coupangGet(apiPath, query);
     const data = resp.data || [];
@@ -223,8 +223,10 @@ async function runSync(triggerType: 'cron' | 'manual') {
 
   try {
     // Sync last 7 days (recognition dates)
+    // Coupang API: dateTo must be <= yesterday
     const now = new Date();
     const toDate = new Date(now);
+    toDate.setDate(toDate.getDate() - 1);
     const fromDate = new Date(now);
     fromDate.setDate(fromDate.getDate() - 7);
 
