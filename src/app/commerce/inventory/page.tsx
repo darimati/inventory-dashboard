@@ -120,7 +120,11 @@ export default async function InventoryPage() {
       .order('total_orderable_quantity', { ascending: false }),
     supabaseAdmin
       .from('sales_coupang')
-      .select('vendor_item_id, product_name'),
+      .select('vendor_item_id, product_name')
+      .eq('brand', 'HEEDA')
+      .eq('country', 'KR')
+      .order('sale_date', { ascending: false })
+      .limit(5000),
     supabaseAdmin
       .from('ezadmin_inventory')
       .select('product_code, product_name, normal_stock, defective_stock, available_stock, shipping, incoming, updated_at')

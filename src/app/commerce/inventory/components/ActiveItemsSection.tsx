@@ -438,55 +438,40 @@ export function ActiveItemsSection({
   return (
     <div id="section-active" className="section">
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderBottom: '1px solid var(--border-light)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', borderBottom: '1px solid var(--border-light)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <h2 style={{ fontSize: 14, fontWeight: 600, color: '#1F2328', margin: 0 }}>진행 중</h2>
-          <span style={{ fontSize: 12, color: '#9AA2AA' }}>
+          <h2 style={{ fontSize: 14.5, fontWeight: 600, color: '#1F2328', margin: 0 }}>진행 중</h2>
+          <span style={{ fontSize: 12, color: '#6E767E' }}>
             입고 {activeInbound.length}건
             {activeOrders.length > 0 && ` · 발주 ${activeOrders.length}건`}
           </span>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: '#9AA2AA', cursor: 'pointer', marginLeft: 8 }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#6E767E', cursor: 'pointer', marginLeft: 8 }}>
             <input type="checkbox" checked={showHistory} onChange={e => setShowHistory(e.target.checked)} style={{ margin: 0 }} />
             이력 포함
           </label>
         </div>
         <div style={{ display: 'flex', gap: 6 }}>
           <button onClick={openInboundModal} style={{
-            padding: '5px 12px', fontSize: 12, fontWeight: 500,
-            background: '#1F2328', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer',
+            height: 36, padding: '0 14px', fontSize: 13, fontWeight: 550,
+            background: '#1A1D21', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer',
           }}>+ 입고 등록</button>
           <button onClick={openOrderModal} style={{
-            padding: '5px 12px', fontSize: 12, fontWeight: 500,
-            background: '#F2F4F7', color: '#565D64', border: '1px solid var(--border-light)', borderRadius: 6, cursor: 'pointer',
+            height: 36, padding: '0 14px', fontSize: 13, fontWeight: 550,
+            background: '#F2F4F7', color: '#565D64', border: '1px solid #E4E8EC', borderRadius: 8, cursor: 'pointer',
           }}>+ 발주 등록</button>
         </div>
       </div>
 
-      {/* List */}
+      {/* List — card rows */}
       {allItems.length > 0 ? (
-        <div style={{ overflowX: 'auto' }}>
-          <table className="data-table" style={{ width: '100%', fontSize: 13 }}>
-            <thead>
-              <tr>
-                <th style={{ width: 54, textAlign: 'center' }}>구분</th>
-                <th>제품·옵션</th>
-                <th style={{ width: 100 }}>수량</th>
-                <th style={{ width: 80 }}>물류센터</th>
-                <th style={{ width: 100 }}>도착기한</th>
-                <th style={{ width: 80, textAlign: 'center' }}>현재상태</th>
-                <th style={{ width: 100, textAlign: 'center' }}>다음 액션</th>
-              </tr>
-            </thead>
-            <tbody>
-              {allItems.map((item) => {
-                if (item.kind === 'inbound') return renderInboundRows(item.req);
-                return renderOrderRows(item.order);
-              })}
-            </tbody>
-          </table>
+        <div>
+          {allItems.map((item, idx) => {
+            if (item.kind === 'inbound') return renderInboundRows(item.req, idx === allItems.length - 1);
+            return renderOrderRows(item.order, idx === allItems.length - 1);
+          })}
         </div>
       ) : (
-        <div style={{ padding: '32px 16px', textAlign: 'center', color: '#9AA2AA', fontSize: 13 }}>
+        <div style={{ padding: '32px 20px', textAlign: 'center', color: '#6E767E', fontSize: 13, fontWeight: 450 }}>
           진행 중인 입고·발주 건이 없습니다
         </div>
       )}
@@ -802,7 +787,7 @@ export function ActiveItemsSection({
 
   // ---- Render helpers ----
 
-  function renderInboundRows(req: InboundRequest) {
+  function renderInboundRows(req: InboundRequest, isLast: boolean) {
     const isExpanded_ = expandedId === req.id;
     const isTerminal = ['rejected', 'cancelled'].includes(req.status);
     const allDone = isAllChecked(req);
@@ -812,232 +797,220 @@ export function ActiveItemsSection({
     const prodInfo = req.vendor_item_id ? getProductInfo(req.vendor_item_id) : null;
     const unitCount = prodInfo?.unitCount || 1;
     const rowOpacity = (isTerminal || allDone) ? 0.55 : 1;
+    const isMenuOpen = menuId === `inb-${req.id}`;
 
-    const nextActionMap: Record<string, { label: string; handler: () => void } | null> = {
-      order_needed: { label: '3PL 출고', handler: () => setExpandedId(isExpanded_ ? null : req.id) },
-      tracking_needed: { label: '송장 입력', handler: () => setExpandedId(isExpanded_ ? null : req.id) },
-      waiting: { label: '쿠팡 확인', handler: () => window.open('https://wing.coupang.com/tenants/direct-wing/vendor-inventory/inbound/management', '_blank') },
-      done: null, cancelled: null,
-    };
-    const nextAction = (!isTerminal && !allDone) ? nextActionMap[status] : null;
-    const cellBtnStyle: React.CSSProperties = {
-      padding: '3px 8px', fontSize: 11, fontWeight: 600,
-      background: '#1F2328', color: '#fff', border: 'none', borderRadius: 5,
-      cursor: 'pointer', whiteSpace: 'nowrap',
-    };
+    // Build detail line parts
+    const detailParts: string[] = [];
+    if (req.quantity) {
+      const qtyStr = `${formatNumber(req.quantity)}세트`;
+      detailParts.push(unitCount > 1 ? `${qtyStr} (낱개 ${formatNumber(req.quantity * unitCount)})` : qtyStr);
+    }
+    if (req.warehouse) detailParts.push(req.warehouse);
+    if (req.coupang_deadline) {
+      let dlStr = `도착기한 ${req.coupang_deadline.slice(5).replace('-', '/')}`;
+      if (dday && !isTerminal && !allDone) dlStr += ` (${dday.text})`;
+      detailParts.push(dlStr);
+    }
 
     return (
-      <React.Fragment key={`inb-${req.id}`}>
-        {/* Main row */}
-        <tr
-          onClick={() => setExpandedId(isExpanded_ ? null : req.id)}
-          style={{ cursor: 'pointer', opacity: rowOpacity }}
-        >
-          <td style={{ textAlign: 'center' }}>
-            <span style={{
-              fontSize: 10, fontWeight: 600, padding: '1px 5px', borderRadius: 3,
-              color: '#565D64', background: '#F1F3F6',
-            }}>이관</span>
-          </td>
-          <td style={{ fontWeight: 500, color: '#1A1D21' }}>
+      <div
+        key={`inb-${req.id}`}
+        style={{
+          padding: '14px 20px', opacity: rowOpacity,
+          borderBottom: isLast ? 'none' : '1px solid #F2F4F7',
+        }}
+      >
+        {/* Line 1: type badge + product + inbound ID + status badge + ⋯ */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{
+            fontSize: 11.5, fontWeight: 550, padding: '2px 8px', borderRadius: 6,
+            color: '#565D64', background: '#F1F3F6', flexShrink: 0,
+          }}>이관</span>
+          <span style={{ fontSize: 13.5, fontWeight: 600, color: '#1A1D21' }}>
             {reqProductLabel(req)}
-          </td>
-          <td style={{ fontVariantNumeric: 'tabular-nums', color: '#1A1D21' }}>
-            {formatNumber(req.quantity)}세트
-            {unitCount > 1 && (
-              <span style={{ fontSize: 11, color: '#9AA2AA', marginLeft: 4 }}>
-                ({formatNumber(req.quantity * unitCount)})
-              </span>
-            )}
-          </td>
-          <td style={{ color: '#565D64', fontSize: 12 }}>
-            {req.warehouse || '—'}
-          </td>
-          <td style={{ fontSize: 12, whiteSpace: 'nowrap' }}>
-            {req.coupang_deadline ? (
-              <>
-                <span style={{ color: '#565D64' }}>{req.coupang_deadline.slice(5).replace('-', '/')}</span>
-                {dday && !isTerminal && !allDone && (
-                  <span style={{
-                    fontSize: 11, fontWeight: 600, color: dday.color, marginLeft: 4,
-                    padding: '0 4px', borderRadius: 6,
-                    background: dday.overdue || dday.diff === 0 ? '#FBE9E8' : dday.urgent ? '#FDF4E7' : 'transparent',
-                  }}>
-                    {dday.text}
-                  </span>
-                )}
-              </>
-            ) : '—'}
-          </td>
-          <td style={{ textAlign: 'center' }}>
-            <span style={{
-              display: 'inline-block', fontSize: 11, fontWeight: 500,
-              padding: '1px 6px', borderRadius: 4,
-              color: badge.color, background: badge.bg, whiteSpace: 'nowrap',
-            }}>
-              {badge.text}
+          </span>
+          {req.coupang_inbound_id && (
+            <span style={{ fontSize: 12, color: '#9AA2AA', fontVariantNumeric: 'tabular-nums' }}>
+              {req.coupang_inbound_id}
             </span>
-          </td>
-          <td style={{ textAlign: 'center' }}>
-            {nextAction ? (
+          )}
+          <span style={{
+            fontSize: 11.5, fontWeight: 550, padding: '2px 8px', borderRadius: 6,
+            color: badge.color, background: badge.bg, whiteSpace: 'nowrap', marginLeft: 'auto', flexShrink: 0,
+          }}>
+            {badge.text}
+          </span>
+          {/* ⋯ menu */}
+          {!isTerminal && !allDone && (
+            <div style={{ position: 'relative', flexShrink: 0 }}>
               <button
-                onClick={e => { e.stopPropagation(); nextAction.handler(); }}
-                style={cellBtnStyle}
-              >
-                {nextAction.label}
-              </button>
-            ) : '—'}
-          </td>
-        </tr>
+                onClick={e => { e.stopPropagation(); setMenuId(isMenuOpen ? null : `inb-${req.id}`); }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px 6px', fontSize: 16, color: '#6E767E', lineHeight: 1 }}
+              >⋯</button>
+              {isMenuOpen && (
+                <div ref={menuRef} style={{
+                  position: 'absolute', right: 0, top: '100%', background: '#fff', borderRadius: 8,
+                  boxShadow: '0 4px 16px rgba(0,0,0,0.12)', border: '1px solid #E4E8EC', zIndex: 100,
+                  minWidth: 100, padding: '4px 0',
+                }}>
+                  <button onClick={() => openEdit(req)} style={{ display: 'block', width: '100%', padding: '8px 14px', fontSize: 13, color: '#565D64', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}>수정</button>
+                  <button onClick={() => { setCancelTarget(req); setCancelReason(''); setMenuId(null); }} style={{ display: 'block', width: '100%', padding: '8px 14px', fontSize: 13, color: '#B03F3B', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}>취소</button>
+                  <button onClick={() => handleDeleteInbound(req.id)} style={{ display: 'block', width: '100%', padding: '8px 14px', fontSize: 13, color: '#9AA2AA', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}>삭제</button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
 
-        {/* Expanded detail row */}
-        {isExpanded_ && (
-          <tr>
-            <td colSpan={7} style={{ padding: 0, background: '#FAFBFC' }}>
-              <div style={{ padding: '10px 16px' }} onClick={e => e.stopPropagation()}>
-                {/* Inbound ID */}
-                {req.coupang_inbound_id && (
-                  <div style={{ fontSize: 12, color: '#6E767E', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <span style={{ color: '#9AA2AA' }}>입고ID</span>
-                    <span style={{ fontFamily: 'monospace' }}>{req.coupang_inbound_id}</span>
-                    <span
-                      onClick={() => { navigator.clipboard.writeText(req.coupang_inbound_id!); showToast('입고ID 복사됨'); }}
-                      style={{ cursor: 'pointer', fontSize: 11, color: '#0969DA' }}
-                    >복사</span>
-                  </div>
-                )}
+        {/* Line 2: detail */}
+        <div style={{ fontSize: 12.5, fontWeight: 450, color: '#6E767E', marginTop: 4 }}>
+          {detailParts.join(' · ')}
+          {dday && !isTerminal && !allDone && (dday.overdue || dday.diff === 0) && (
+            <span style={{ fontWeight: 550, color: '#B03F3B', marginLeft: 4 }}>{dday.text}</span>
+          )}
+        </div>
 
-                {/* Horizontal checklist */}
-                {!isTerminal && (
-                  <div style={{ display: 'flex', gap: 16, marginBottom: 8 }}>
-                    {INBOUND_STEP_LABELS.map((label, i) => {
-                      const checked = isStepChecked(req, i);
-                      const dateStr = getCheckedDate(req, i);
-                      return (
-                        <label key={i} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, cursor: saving ? 'default' : 'pointer' }}>
-                          <input
-                            type="checkbox" checked={checked} disabled={isTerminal || saving}
-                            onChange={() => handleToggle(req.id, i)}
-                            style={{ margin: 0, accentColor: '#1A7F37', width: 14, height: 14 }}
-                          />
-                          <span style={{
-                            color: checked ? '#9AA2AA' : '#1F2328',
-                            fontWeight: !checked ? 500 : 400,
-                            textDecoration: checked ? 'line-through' : 'none',
-                          }}>{label}</span>
-                          {checked && dateStr && <span style={{ fontSize: 10, color: '#C4CAD1' }}>{dateStr}</span>}
-                        </label>
-                      );
-                    })}
-                  </div>
-                )}
-
-                {/* Tracking input */}
-                {!isTerminal && !allDone && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
-                    <span style={{ fontSize: 12, color: '#565D64', whiteSpace: 'nowrap' }}>운송장번호</span>
-                    <input
-                      value={trackingInputs[req.id] ?? req.tracking_number ?? ''}
-                      onChange={e => setTrackingInputs({ ...trackingInputs, [req.id]: e.target.value })}
-                      style={{ ...poInputStyle, width: 200, marginBottom: 0, fontSize: 12, borderRadius: 8, height: 32, border: '1px solid #E4E8EC' }}
-                    />
-                    <button onClick={() => handleSaveTracking(req.id)} disabled={saving} style={poActionBtnStyle}>저장</button>
-                  </div>
-                )}
-
-                {/* Memo */}
-                {req.memo && (
-                  <div style={{ fontSize: 12, color: '#61686F', marginBottom: 6 }}>
-                    <span style={{ color: '#9AA2AA' }}>메모:</span> {req.memo}
-                  </div>
-                )}
-
-                {/* Rejected info */}
-                {req.status === 'rejected' && req.reject_reason && (
-                  <div style={{ fontSize: 11, color: '#B03F3B', marginBottom: 6 }}>
-                    반송: {REJECT_REASON_LABELS[req.reject_reason] || req.reject_reason}
-                    {req.reject_memo && ` · ${req.reject_memo}`}
-                  </div>
-                )}
-
-                {/* Action buttons */}
-                {!isTerminal && !allDone && (
-                  <div style={{ display: 'flex', gap: 6, marginTop: 4, borderTop: '1px solid #E4E8EC', paddingTop: 8 }}>
-                    <button onClick={() => openEdit(req)} style={{ ...poActionBtnStyle, background: '#F2F4F7', color: '#565D64' }}>수정</button>
-                    <button onClick={() => { setCancelTarget(req); setCancelReason(''); }} style={{ ...poActionBtnStyle, background: '#F2F4F7', color: '#B03F3B' }}>취소</button>
-                    <button onClick={() => handleDeleteInbound(req.id)} style={{ ...poActionBtnStyle, background: '#F2F4F7', color: '#9AA2AA' }}>삭제</button>
-                  </div>
-                )}
-              </div>
-            </td>
-          </tr>
+        {/* Line 3: horizontal checklist (always visible) */}
+        {!isTerminal && (
+          <div style={{ display: 'flex', gap: 16, marginTop: 8 }}>
+            {INBOUND_STEP_LABELS.map((label, i) => {
+              const checked = isStepChecked(req, i);
+              const dateStr = getCheckedDate(req, i);
+              return (
+                <label key={i} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12.5, cursor: saving ? 'default' : 'pointer' }}>
+                  <input
+                    type="checkbox" checked={checked} disabled={isTerminal || saving}
+                    onChange={() => handleToggle(req.id, i)}
+                    style={{ margin: 0, accentColor: '#1A7F37', width: 14, height: 14 }}
+                  />
+                  <span style={{
+                    color: checked ? '#9AA2AA' : '#1F2328',
+                    fontWeight: !checked ? 500 : 400,
+                    textDecoration: checked ? 'line-through' : 'none',
+                  }}>{label}</span>
+                  {checked && dateStr && <span style={{ fontSize: 11, color: '#C4CAD1' }}>{dateStr}</span>}
+                </label>
+              );
+            })}
+          </div>
         )}
-      </React.Fragment>
+
+        {/* Expand toggle */}
+        {!isTerminal && !allDone && (
+          <button
+            onClick={() => setExpandedId(isExpanded_ ? null : req.id)}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px 0', fontSize: 12, color: '#6E767E', marginTop: 4 }}
+          >
+            {isExpanded_ ? '접기 ▴' : '운송장·메모 ▾'}
+          </button>
+        )}
+
+        {/* Expanded: tracking + memo */}
+        {isExpanded_ && (
+          <div style={{ padding: '8px 0 0', marginTop: 4 }}>
+            {/* Tracking input */}
+            {!isTerminal && !allDone && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+                <span style={{ fontSize: 12, color: '#565D64', whiteSpace: 'nowrap' }}>운송장번호</span>
+                <input
+                  value={trackingInputs[req.id] ?? req.tracking_number ?? ''}
+                  onChange={e => setTrackingInputs({ ...trackingInputs, [req.id]: e.target.value })}
+                  style={{ ...poInputStyle, width: 200, marginBottom: 0, fontSize: 12, borderRadius: 8, height: 36, border: '1px solid #E4E8EC' }}
+                />
+                <button onClick={() => handleSaveTracking(req.id)} disabled={saving} style={poActionBtnStyle}>저장</button>
+              </div>
+            )}
+
+            {/* Memo */}
+            {req.memo && (
+              <div style={{ fontSize: 12, color: '#6E767E', marginBottom: 4 }}>
+                <span style={{ color: '#9AA2AA' }}>메모:</span> {req.memo}
+              </div>
+            )}
+
+            {/* Rejected info */}
+            {req.status === 'rejected' && req.reject_reason && (
+              <div style={{ fontSize: 12, color: '#B03F3B' }}>
+                반송: {REJECT_REASON_LABELS[req.reject_reason] || req.reject_reason}
+                {req.reject_memo && ` · ${req.reject_memo}`}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     );
   }
 
-  function renderOrderRows(order: PurchaseOrder) {
+  function renderOrderRows(order: PurchaseOrder, isLast: boolean) {
     const st = STATUS_LABELS[order.status] ?? STATUS_LABELS.ordered;
     const isOverdue = order.expected_at && order.status === 'ordered' && order.expected_at < todayStr;
     const itemSummary = order.purchase_order_items.map(i => `${i.product} ${formatNumber(i.quantity)}개`).join(', ');
-    const totalQty = order.purchase_order_items.reduce((sum, i) => sum + i.quantity, 0);
-    const destShort = order.destination === 'rocketgrowth' ? 'RG' : '3PL';
-    const cellBtnStyle: React.CSSProperties = {
-      padding: '3px 8px', fontSize: 11, fontWeight: 600,
-      background: '#1F2328', color: '#fff', border: 'none', borderRadius: 5,
-      cursor: 'pointer', whiteSpace: 'nowrap',
-    };
+    const destLabel = order.destination === 'rocketgrowth' ? '로켓그로스' : '판매자배송 3PL(이지어드민)';
+
+    // Detail parts
+    const detailParts: string[] = [];
+    detailParts.push(destLabel);
+    if (order.expected_at) {
+      let dtStr = `예정 ${order.expected_at.slice(5).replace('-', '/')}`;
+      if (isOverdue) {
+        const diff = Math.round((Date.now() + 9 * 3_600_000 - new Date(order.expected_at + 'T00:00:00+09:00').getTime()) / 86_400_000);
+        dtStr += ` (${diff}일 경과)`;
+      }
+      detailParts.push(dtStr);
+    }
 
     return (
-      <tr key={`ord-${order.id}`} style={{ opacity: order.status === 'cancelled' ? 0.55 : 1 }}>
-        <td style={{ textAlign: 'center' }}>
+      <div
+        key={`ord-${order.id}`}
+        style={{
+          padding: '14px 20px', opacity: order.status === 'cancelled' ? 0.55 : 1,
+          borderBottom: isLast ? 'none' : '1px solid #F2F4F7',
+        }}
+      >
+        {/* Line 1: type badge + items + order type + status badge + buttons */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <span style={{
-            fontSize: 10, fontWeight: 600, padding: '1px 5px', borderRadius: 3,
-            color: '#A8712A', background: '#FDF6EC',
+            fontSize: 11.5, fontWeight: 550, padding: '2px 8px', borderRadius: 6,
+            color: '#A8712A', background: '#FDF4E7', flexShrink: 0,
           }}>발주</span>
-        </td>
-        <td style={{ fontWeight: 500, color: '#1A1D21' }}>
-          {itemSummary}
-          <span style={{ fontSize: 11, color: '#9AA2AA', marginLeft: 6 }}>
+          <span style={{ fontSize: 13.5, fontWeight: 600, color: '#1A1D21' }}>
+            {itemSummary}
+          </span>
+          <span style={{ fontSize: 12, color: '#9AA2AA' }}>
             {ORDER_TYPE_LABELS[order.order_type]}
           </span>
-          {order.memo && <span style={{ fontSize: 11, color: '#C4CAD1', marginLeft: 4 }}>{order.memo}</span>}
-        </td>
-        <td style={{ fontVariantNumeric: 'tabular-nums', color: '#1A1D21' }}>
-          {formatNumber(totalQty)}개
-        </td>
-        <td style={{ color: '#565D64', fontSize: 12 }}>
-          {destShort}
-        </td>
-        <td style={{ fontSize: 12, whiteSpace: 'nowrap' }}>
-          {order.expected_at ? (
-            <>
-              <span style={{ color: '#565D64' }}>{order.expected_at.slice(5).replace('-', '/')}</span>
-              {isOverdue && (
-                <span style={{ fontSize: 11, fontWeight: 600, color: '#B03F3B', marginLeft: 4 }}>
-                  {Math.round((Date.now() + 9 * 3_600_000 - new Date(order.expected_at + 'T00:00:00+09:00').getTime()) / 86_400_000)}일 경과
-                </span>
-              )}
-            </>
-          ) : '—'}
-        </td>
-        <td style={{ textAlign: 'center' }}>
           <span style={{
-            display: 'inline-block', fontSize: 11, fontWeight: 500,
-            padding: '1px 6px', borderRadius: 4,
-            color: st.color, background: st.bg, whiteSpace: 'nowrap',
+            fontSize: 11.5, fontWeight: 550, padding: '2px 8px', borderRadius: 6,
+            color: st.color, background: st.bg, whiteSpace: 'nowrap', marginLeft: 'auto', flexShrink: 0,
           }}>{st.text}</span>
-        </td>
-        <td style={{ textAlign: 'center' }}>
-          {order.status === 'ordered' ? (
-            <div style={{ display: 'flex', gap: 4, justifyContent: 'center' }}>
-              <button onClick={() => openArriveModal(order)} style={cellBtnStyle}>입고</button>
-              <button onClick={() => handleCancelOrder(order)}
-                style={{ ...cellBtnStyle, background: '#F2F4F7', color: '#D9534F' }}>취소</button>
-            </div>
-          ) : '—'}
-        </td>
-      </tr>
+        </div>
+
+        {/* Line 2: detail */}
+        <div style={{ fontSize: 12.5, fontWeight: 450, color: '#6E767E', marginTop: 4 }}>
+          {detailParts.join(' · ')}
+        </div>
+
+        {/* Line 3: action buttons for active orders */}
+        {order.status === 'ordered' && (
+          <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
+            <button onClick={() => openArriveModal(order)} style={{
+              height: 32, padding: '0 12px', fontSize: 12, fontWeight: 550,
+              background: '#1A1D21', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer',
+            }}>입고</button>
+            <button onClick={() => handleCancelOrder(order)} style={{
+              height: 32, padding: '0 12px', fontSize: 12, fontWeight: 550,
+              background: '#F2F4F7', color: '#B03F3B', border: 'none', borderRadius: 8, cursor: 'pointer',
+            }}>취소</button>
+          </div>
+        )}
+
+        {/* Memo */}
+        {order.memo && (
+          <div style={{ fontSize: 12, color: '#6E767E', marginTop: 4 }}>
+            <span style={{ color: '#9AA2AA' }}>메모:</span> {order.memo}
+          </div>
+        )}
+      </div>
     );
   }
 }

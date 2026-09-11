@@ -190,7 +190,9 @@ export default async function HomePage(props: {
       .from('sales_coupang')
       .select('vendor_item_id, product_name')
       .eq('brand', 'HEEDA')
-      .eq('country', 'KR'),
+      .eq('country', 'KR')
+      .order('sale_date', { ascending: false })
+      .limit(5000),
     // 8. last 30 days sales for reliable dailyAvg per VID
     supabaseAdmin
       .from('sales_coupang')

@@ -112,7 +112,7 @@ export default function InventoryClient({
     finally { setUploading(false); e.target.value = ''; }
   };
 
-  // Data freshness — 3일+ warning (orange), none = red
+  // Data freshness — 2일+ orange, 7일+ red
   const latestEzadminUpdate = ezadminItems.length > 0 ? ezadminItems[0].updatedAt : null;
   const ezadminFreshness = (() => {
     if (!latestEzadminUpdate) return { label: '업로드 필요', color: '#D9534F', bg: '#FBE9E8', tooltip: '이지어드민 파일을 업로드하세요' };
@@ -124,8 +124,9 @@ export default function InventoryClient({
     const mi = String(updAt.getMinutes()).padStart(2, '0');
     const dateTimeLabel = `${mm}/${dd} ${hh}:${mi}`;
     const fullTooltip = `판매자배송 3PL(이지어드민): ${updAt.getFullYear()}.${mm}.${dd} ${hh}:${mi} 업로드 기준`;
-    if (daysAgo < 3) return { label: dateTimeLabel, color: '#565D64', bg: 'transparent', tooltip: fullTooltip };
-    return { label: `${Math.round(daysAgo)}일 전 기준 · 업데이트 필요`, color: '#A8712A', bg: '#FDF6EC', tooltip: fullTooltip };
+    if (daysAgo < 2) return { label: dateTimeLabel, color: '#565D64', bg: 'transparent', tooltip: fullTooltip };
+    if (daysAgo < 7) return { label: `${Math.round(daysAgo)}일 전 기준 · 업데이트 필요`, color: '#A8712A', bg: '#FDF4E7', tooltip: fullTooltip };
+    return { label: `${Math.round(daysAgo)}일 전 기준 · 업데이트 필요`, color: '#B03F3B', bg: '#FBE9E8', tooltip: fullTooltip };
   })();
 
   // Unmapped SKUs
@@ -167,7 +168,7 @@ export default function InventoryClient({
           <span
             title={ezadminFreshness.tooltip}
             style={{
-              fontSize: 11, fontWeight: 500, padding: '2px 8px', borderRadius: 10,
+              fontSize: 12, fontWeight: 450, padding: '4px 10px', borderRadius: 6,
               color: ezadminFreshness.color, background: ezadminFreshness.bg, cursor: 'default',
             }}
           >
@@ -180,9 +181,9 @@ export default function InventoryClient({
             onClick={() => fileInputRef.current?.click()}
             disabled={uploading}
             style={{
-              padding: '5px 12px', fontSize: 12, fontWeight: 500,
-              background: uploading ? '#E4E8EC' : '#F2F4F7', color: uploading ? '#9AA2AA' : '#565D64',
-              border: '1px solid var(--border-light)', borderRadius: 6, cursor: uploading ? 'default' : 'pointer',
+              height: 36, padding: '0 14px', fontSize: 13, fontWeight: 500,
+              background: uploading ? '#E4E8EC' : '#F2F4F7', color: uploading ? '#8A9199' : '#565D64',
+              border: '1px solid #E4E8EC', borderRadius: 8, cursor: uploading ? 'default' : 'pointer',
             }}
           >
             {uploading ? '업로드 중...' : '이지어드민 업로드'}
@@ -197,9 +198,9 @@ export default function InventoryClient({
             onClick={handleManualSync}
             disabled={syncing}
             style={{
-              padding: '5px 12px', fontSize: 12, fontWeight: 500,
-              background: syncing ? '#E4E8EC' : '#F2F4F7', color: syncing ? '#9AA2AA' : '#565D64',
-              border: '1px solid var(--border-light)', borderRadius: 6, cursor: syncing ? 'default' : 'pointer',
+              height: 36, padding: '0 14px', fontSize: 13, fontWeight: 500,
+              background: syncing ? '#E4E8EC' : '#F2F4F7', color: syncing ? '#8A9199' : '#565D64',
+              border: '1px solid #E4E8EC', borderRadius: 8, cursor: syncing ? 'default' : 'pointer',
               display: 'flex', alignItems: 'center', gap: 4,
             }}
           >

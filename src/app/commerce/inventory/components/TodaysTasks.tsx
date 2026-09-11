@@ -22,11 +22,11 @@ export interface TaskItem {
 }
 
 const CATEGORY_META: Record<TaskItem['category'], { label: string; color: string; bg: string; priority: number; actionLabel: string }> = {
-  inbound_delayed: { label: '긴급',   color: '#D9534F', bg: '#FBE9E8', priority: 0, actionLabel: '쿠팡 확인' },
-  urgent_order:    { label: '긴급',   color: '#D9534F', bg: '#FBE9E8', priority: 1, actionLabel: '이관 등록' },
-  tracking_needed: { label: '주의',   color: '#A8712A', bg: '#FDF6EC', priority: 2, actionLabel: '송장 입력' },
-  ea_order_needed: { label: '주의',   color: '#A8712A', bg: '#FDF6EC', priority: 3, actionLabel: '3PL 출고 요청' },
-  inbound_needed:  { label: '주의',   color: '#A8712A', bg: '#FDF6EC', priority: 4, actionLabel: '이관 등록' },
+  inbound_delayed: { label: '긴급',   color: '#B03F3B', bg: '#FBE9E8', priority: 0, actionLabel: '쿠팡 확인' },
+  urgent_order:    { label: '긴급',   color: '#B03F3B', bg: '#FBE9E8', priority: 1, actionLabel: '이관 등록' },
+  tracking_needed: { label: '주의',   color: '#A8712A', bg: '#FDF4E7', priority: 2, actionLabel: '송장 입력' },
+  ea_order_needed: { label: '주의',   color: '#A8712A', bg: '#FDF4E7', priority: 3, actionLabel: '3PL 출고 요청' },
+  inbound_needed:  { label: '주의',   color: '#A8712A', bg: '#FDF4E7', priority: 4, actionLabel: '이관 등록' },
   unmapped_sku:    { label: '확인 필요', color: '#6E767E', bg: '#F1F3F6', priority: 5, actionLabel: '매핑하기' },
 };
 
@@ -153,8 +153,25 @@ export function buildTasks(
 }
 
 /* ------------------------------------------------------------------ */
-/*  TodaysTasks component                                              */
+/*  TodaysTasks component — card rows                                  */
 /* ------------------------------------------------------------------ */
+
+const badgeStyle = (meta: typeof CATEGORY_META[TaskItem['category']]): React.CSSProperties => ({
+  display: 'inline-block', fontSize: 11.5, fontWeight: 550,
+  padding: '2px 8px', borderRadius: 6,
+  color: meta.color, background: meta.bg,
+  whiteSpace: 'nowrap', flexShrink: 0,
+});
+
+const primaryBtnStyle: React.CSSProperties = {
+  height: 36, padding: '0 14px', fontSize: 13, fontWeight: 550,
+  background: '#1A1D21', color: '#fff', border: 'none', borderRadius: 8,
+  cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0,
+};
+
+const secondaryBtnStyle: React.CSSProperties = {
+  ...primaryBtnStyle, background: '#F2F4F7', color: '#565D64',
+};
 
 export function TodaysTasks({ tasks, onInboundClick, onScrollToSection }: {
   tasks: TaskItem[];
@@ -166,61 +183,54 @@ export function TodaysTasks({ tasks, onInboundClick, onScrollToSection }: {
 
   return (
     <div id="section-tasks" className="section">
-      <div style={{ padding: '12px 16px', borderBottom: visible.length > 0 ? '1px solid var(--border-light)' : 'none' }}>
-        <h2 style={{ fontSize: 14, fontWeight: 600, color: '#1F2328', margin: 0 }}>오늘 할 일</h2>
+      {/* Section header */}
+      <div style={{ padding: '16px 20px', borderBottom: visible.length > 0 ? '1px solid var(--border-light)' : 'none', display: 'flex', alignItems: 'center', gap: 8 }}>
+        <h2 style={{ fontSize: 14.5, fontWeight: 600, color: '#1F2328', margin: 0 }}>오늘 할 일</h2>
+        {visible.length > 0 && (
+          <span style={{ fontSize: 12, color: '#6E767E' }}>{tasks.length}</span>
+        )}
       </div>
 
       {visible.length === 0 ? (
-        <div style={{ padding: '20px 16px', fontSize: 13, color: '#9AA2AA', textAlign: 'center' }}>
-          오늘 처리할 입고 이슈가 없습니다
+        <div style={{ padding: '24px 20px', fontSize: 13, fontWeight: 450, color: '#6E767E', textAlign: 'center' }}>
+          조치가 필요한 항목이 없습니다
         </div>
       ) : (
-        <div style={{ overflowX: 'auto' }}>
-          <table className="data-table" style={{ width: '100%', fontSize: 13 }}>
-            <thead>
-              <tr>
-                <th style={{ width: 60, textAlign: 'center' }}>상태</th>
-                <th>제품·옵션</th>
-                <th>사유</th>
-                <th style={{ width: 140 }}>기한</th>
-                <th style={{ width: 100, textAlign: 'center' }}>액션</th>
-              </tr>
-            </thead>
-            <tbody>
-              {visible.map((t, i) => {
-                const meta = CATEGORY_META[t.category];
-                return (
-                  <tr key={i}>
-                    <td style={{ textAlign: 'center' }}>
-                      <span style={{
-                        display: 'inline-block', fontSize: 11, fontWeight: 600,
-                        padding: '1px 6px', borderRadius: 4,
-                        color: meta.color, background: meta.bg,
-                        whiteSpace: 'nowrap',
-                      }}>
-                        {meta.label}
-                      </span>
-                    </td>
-                    <td style={{ fontWeight: 500, color: '#1A1D21' }}>
-                      {t.option ? `${t.product} ${t.option}` : t.product || '미매핑 SKU'}
-                      {t.detail && (
-                        <span style={{ fontWeight: 400, color: '#6E767E', marginLeft: 6, fontSize: 12 }}>
-                          {t.detail}
-                        </span>
-                      )}
-                    </td>
-                    <td style={{ color: '#565D64', fontSize: 12 }}>{t.reason}</td>
-                    <td style={{ color: '#6E767E', fontSize: 12 }}>{t.deadline}</td>
-                    <td style={{ textAlign: 'center' }}>
-                      {renderActionButton(t, meta, onInboundClick, onScrollToSection)}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+        <div>
+          {visible.map((t, i) => {
+            const meta = CATEGORY_META[t.category];
+            const title = t.option ? `${t.product} ${t.option}` : t.product || '미매핑 SKU';
+            return (
+              <div
+                key={i}
+                style={{
+                  minHeight: 64, padding: '14px 20px',
+                  borderBottom: i < visible.length - 1 ? '1px solid #F2F4F7' : 'none',
+                  display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 4,
+                }}
+              >
+                {/* Line 1: badge + title + detail + action button */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={badgeStyle(meta)}>{meta.label}</span>
+                  <span style={{ fontSize: 13.5, fontWeight: 600, color: '#1A1D21' }}>{title}</span>
+                  {t.detail && (
+                    <span style={{ fontSize: 12.5, fontWeight: 450, color: '#6E767E' }}>
+                      {t.detail}
+                    </span>
+                  )}
+                  <div style={{ marginLeft: 'auto', flexShrink: 0 }}>
+                    {renderActionButton(t, onInboundClick, onScrollToSection)}
+                  </div>
+                </div>
+                {/* Line 2: reason + deadline */}
+                <div style={{ fontSize: 12.5, fontWeight: 450, color: '#6E767E', paddingLeft: 0 }}>
+                  {[t.reason, t.deadline].filter(Boolean).join(' · ')}
+                </div>
+              </div>
+            );
+          })}
           {remaining > 0 && (
-            <div style={{ padding: '8px 16px', fontSize: 12, color: '#9AA2AA', textAlign: 'center' }}>
+            <div style={{ padding: '10px 20px', fontSize: 12, color: '#6E767E', textAlign: 'center' }}>
               외 {remaining}건
             </div>
           )}
@@ -232,24 +242,14 @@ export function TodaysTasks({ tasks, onInboundClick, onScrollToSection }: {
 
 function renderActionButton(
   t: TaskItem,
-  meta: typeof CATEGORY_META[TaskItem['category']],
   onInboundClick?: (product: string, qty: number) => void,
   onScrollToSection?: (id: string) => void,
 ): React.ReactNode {
-  const btnStyle: React.CSSProperties = {
-    padding: '4px 10px', fontSize: 11, fontWeight: 600,
-    background: '#1F2328', color: '#fff', border: 'none', borderRadius: 5,
-    cursor: 'pointer', whiteSpace: 'nowrap',
-  };
-  const secondaryBtnStyle: React.CSSProperties = {
-    ...btnStyle, background: '#F2F4F7', color: '#565D64',
-  };
-
   switch (t.category) {
     case 'urgent_order':
     case 'inbound_needed':
       return onInboundClick ? (
-        <button onClick={() => onInboundClick(t.product, t.quantity || 150)} style={btnStyle}>
+        <button onClick={() => onInboundClick(t.product, t.quantity || 150)} style={primaryBtnStyle}>
           이관 등록
         </button>
       ) : null;
@@ -258,7 +258,7 @@ function renderActionButton(
       return (
         <button
           onClick={() => window.open('https://wing.coupang.com/tenants/direct-wing/vendor-inventory/inbound/management', '_blank')}
-          style={btnStyle}
+          style={primaryBtnStyle}
         >
           쿠팡 확인
         </button>
@@ -268,7 +268,7 @@ function renderActionButton(
       return (
         <button
           onClick={() => window.open('https://wing.coupang.com/tenants/direct-wing/vendor-inventory/inbound/management', '_blank')}
-          style={btnStyle}
+          style={primaryBtnStyle}
         >
           송장 입력
         </button>

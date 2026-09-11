@@ -40,7 +40,7 @@ function computeAggregates(props: StockProps) {
   return { activeInbound, inboundByProduct, ezadminByProduct };
 }
 
-const numS: React.CSSProperties = { fontSize: 13, fontVariantNumeric: 'tabular-nums', textAlign: 'right', whiteSpace: 'nowrap' };
+const numS: React.CSSProperties = { fontSize: 13, fontVariantNumeric: 'tabular-nums', textAlign: 'right' as const, whiteSpace: 'nowrap' };
 
 /* ================================================================== */
 /*  1. StockComparisonTable — 제품별 재고 운영표                         */
@@ -64,15 +64,15 @@ export function StockComparisonTable({
   }
 
   const btnStyle: React.CSSProperties = {
-    padding: '4px 10px', fontSize: 11, fontWeight: 600,
-    background: '#1F2328', color: '#fff', border: 'none', borderRadius: 5,
+    height: 36, padding: '0 14px', fontSize: 13, fontWeight: 550,
+    background: '#1A1D21', color: '#fff', border: 'none', borderRadius: 8,
     cursor: 'pointer', whiteSpace: 'nowrap',
   };
 
   return (
     <div className="section" id="section-stock">
-      <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border-light)' }}>
-        <h2 style={{ fontSize: 14, fontWeight: 600, color: '#1F2328', margin: 0 }}>제품별 재고 운영표</h2>
+      <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-light)' }}>
+        <h2 style={{ fontSize: 14.5, fontWeight: 600, color: '#1F2328', margin: 0 }}>제품별 재고 운영표</h2>
       </div>
 
       <div style={{ overflowX: 'auto' }}>
@@ -116,9 +116,9 @@ export function StockComparisonTable({
               const isWarning = st.text === '발주 필요';
 
               return (
-                <tr key={s.product}>
+                <tr key={s.product} style={{ minHeight: 60 }}>
                   {/* 제품 */}
-                  <td style={{ fontWeight: 600, color: '#1A1D21' }}>
+                  <td style={{ fontSize: 13.5, fontWeight: 600, color: '#1A1D21' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                       <span style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: s.color, flexShrink: 0 }} />
                       {s.product}
@@ -127,10 +127,10 @@ export function StockComparisonTable({
 
                   {/* 로켓그로스 재고 */}
                   <td className="right">
-                    <div style={{ fontWeight: 700, fontSize: 14, color: isUrgent ? '#D9534F' : '#1A1D21', fontVariantNumeric: 'tabular-nums' }}>
-                      {formatNumber(s.rocketStock)}개
+                    <div style={{ fontWeight: 700, fontSize: 24, color: isUrgent ? '#B03F3B' : '#1A1D21', fontVariantNumeric: 'tabular-nums', lineHeight: 1.2 }}>
+                      {formatNumber(s.rocketStock)}<span style={{ fontSize: 14, fontWeight: 500 }}>개</span>
                     </div>
-                    <div style={{ fontSize: 11, color: '#6E767E', marginTop: 1 }}>
+                    <div style={{ fontSize: 12.5, fontWeight: 500, color: '#565D64', marginTop: 2 }}>
                       {rgDaysLeft !== null ? `${rgDaysLeft}일치` : '—'}
                       {fastest && ` · 최단 ${fastest.days}일`}
                     </div>
@@ -138,10 +138,10 @@ export function StockComparisonTable({
 
                   {/* 판매자배송 3PL(이지어드민) */}
                   <td className="right">
-                    <div style={{ fontWeight: 700, fontSize: 14, color: '#565D64', fontVariantNumeric: 'tabular-nums' }}>
-                      {formatNumber(totalEz)}개
+                    <div style={{ fontWeight: 600, fontSize: 20, color: '#565D64', fontVariantNumeric: 'tabular-nums', lineHeight: 1.2 }}>
+                      {formatNumber(totalEz)}<span style={{ fontSize: 13, fontWeight: 500 }}>개</span>
                     </div>
-                    <div style={{ fontSize: 11, color: '#9AA2AA', marginTop: 1 }}>
+                    <div style={{ fontSize: 12, fontWeight: 450, color: '#6E767E', marginTop: 2 }}>
                       {exportStock > 0 ? `수출용 ${formatNumber(exportStock)} · 국내 ${formatNumber(domesticStock)}` : `국내 ${formatNumber(domesticStock)}`}
                     </div>
                   </td>
@@ -164,7 +164,7 @@ export function StockComparisonTable({
                   {/* 가장 빠른 소진 */}
                   <td style={{ fontSize: 12 }}>
                     {fastest ? (
-                      <span style={{ color: fastest.days <= 10 ? '#D9534F' : fastest.days <= 21 ? '#A8712A' : '#565D64', fontWeight: 500 }}>
+                      <span style={{ color: fastest.days <= 10 ? '#B03F3B' : fastest.days <= 21 ? '#A8712A' : '#565D64', fontWeight: 500 }}>
                         {fastest.option} {fastest.days}일
                       </span>
                     ) : (
@@ -174,16 +174,24 @@ export function StockComparisonTable({
 
                   {/* 상태 */}
                   <td style={{ textAlign: 'center' }}>
-                    {st.text !== '정상' && st.text !== '판매 없음' ? (
+                    {st.text === '긴급' || st.text === '품절' ? (
                       <span style={{
-                        display: 'inline-block', fontSize: 11, fontWeight: 600,
-                        padding: '1px 6px', borderRadius: 4,
-                        color: st.color, background: st.bg,
+                        display: 'inline-block', fontSize: 11.5, fontWeight: 550,
+                        padding: '2px 8px', borderRadius: 6,
+                        color: '#B03F3B', background: '#FBE9E8',
+                      }}>
+                        {st.text}
+                      </span>
+                    ) : st.text === '발주 필요' ? (
+                      <span style={{
+                        display: 'inline-block', fontSize: 11.5, fontWeight: 550,
+                        padding: '2px 8px', borderRadius: 6,
+                        color: '#A8712A', background: '#FDF4E7',
                       }}>
                         {st.text}
                       </span>
                     ) : (
-                      <span style={{ fontSize: 11, color: '#9AA2AA' }}>{st.text}</span>
+                      <span style={{ fontSize: 12, color: '#6E767E' }}>—</span>
                     )}
                   </td>
 
@@ -246,14 +254,14 @@ export function OptionDetailSection({
         onClick={() => setOpen(!open)}
         style={{
           display: 'flex', alignItems: 'center', gap: 8, width: '100%',
-          padding: '12px 16px', background: 'none', border: 'none', cursor: 'pointer',
-          fontSize: 13, fontWeight: 600, color: '#1F2328', textAlign: 'left',
+          padding: '16px 20px', background: 'none', border: 'none', cursor: 'pointer',
+          fontSize: 13, fontWeight: 500, color: '#565D64', textAlign: 'left',
         }}
       >
-        <span style={{ transition: 'transform 0.2s', transform: open ? 'rotate(90deg)' : 'none', display: 'inline-block', color: '#9AA2AA' }}>▸</span>
+        <span style={{ transition: 'transform 0.2s', transform: open ? 'rotate(90deg)' : 'none', display: 'inline-block', color: '#6E767E' }}>▸</span>
         옵션별 상세
         {!open && riskSummaryText && (
-          <span style={{ fontWeight: 400, fontSize: 12, color: '#A8712A', marginLeft: 8 }}>
+          <span style={{ fontWeight: 500, fontSize: 12.5, color: '#565D64', marginLeft: 8 }}>
             위험 옵션: {riskSummaryText}
           </span>
         )}
@@ -262,8 +270,8 @@ export function OptionDetailSection({
       {open && (
         <div>
           {/* Filter row */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '6px 16px', borderTop: '1px solid var(--border-light)', borderBottom: '1px solid var(--border-light)' }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: '#9AA2AA', cursor: 'pointer' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '6px 20px', borderTop: '1px solid var(--border-light)', borderBottom: '1px solid var(--border-light)' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#6E767E', cursor: 'pointer' }}>
               <input type="checkbox" checked={showExport} onChange={e => setShowExport(e.target.checked)} style={{ margin: 0 }} />
               수출용 포함
             </label>
@@ -314,7 +322,7 @@ export function OptionDetailSection({
                         key={item.vendorItemId}
                         style={{
                           opacity: isInactive ? 0.45 : 1,
-                          background: isUrgent ? '#FBE9E810' : isWarning ? '#FDF6EC10' : 'transparent',
+                          background: isUrgent ? '#FEFAF9' : 'transparent',
                         }}
                       >
                         <td style={{ paddingLeft: 12 }}>
@@ -347,8 +355,9 @@ export function OptionDetailSection({
                         <td style={{ textAlign: 'center' }}>
                           {(isUrgent || isWarning) && (
                             <span style={{
-                              display: 'inline-block', padding: '1px 6px', borderRadius: 4, fontSize: 10, fontWeight: 600,
-                              color: st.color, background: st.bg,
+                              display: 'inline-block', padding: '2px 8px', borderRadius: 6, fontSize: 11.5, fontWeight: 550,
+                              color: isUrgent ? '#B03F3B' : '#A8712A',
+                              background: isUrgent ? '#FBE9E8' : '#FDF4E7',
                             }}>{st.text}</span>
                           )}
                         </td>
@@ -406,16 +415,16 @@ export function UnmappedSkuSection({
         onClick={() => setOpen(!open)}
         style={{
           display: 'flex', alignItems: 'center', gap: 8, width: '100%',
-          padding: '12px 16px', background: 'none', border: 'none', cursor: 'pointer',
-          fontSize: 13, fontWeight: 600, color: '#1F2328', textAlign: 'left',
+          padding: '16px 20px', background: 'none', border: 'none', cursor: 'pointer',
+          fontSize: 13, fontWeight: 500, color: '#565D64', textAlign: 'left',
         }}
       >
-        <span style={{ transition: 'transform 0.2s', transform: open ? 'rotate(90deg)' : 'none', display: 'inline-block', color: '#9AA2AA' }}>▸</span>
+        <span style={{ transition: 'transform 0.2s', transform: open ? 'rotate(90deg)' : 'none', display: 'inline-block', color: '#6E767E' }}>▸</span>
         미매핑 SKU
         <span style={{ fontWeight: 400, fontSize: 12, color: '#A8712A', marginLeft: 4 }}>
           {unmappedSkus.length}건
         </span>
-        <span style={{ fontWeight: 400, fontSize: 12, color: '#9AA2AA', marginLeft: 4 }}>
+        <span style={{ fontWeight: 400, fontSize: 12, color: '#6E767E', marginLeft: 4 }}>
           · 총 {formatNumber(unmappedSkus.reduce((sum, e) => sum + e.availableStock, 0))}개 재고
         </span>
       </button>
@@ -458,19 +467,19 @@ export function UnmappedSkuSection({
                             onChange={e => setMapOption(e.target.value)}
                             placeholder="옵션명"
                             style={{
-                              padding: '5px 8px', fontSize: 12, border: '1px solid #E4E8EC',
-                              borderRadius: 6, background: '#fff', outline: 'none', width: 100,
-                              height: 32, boxSizing: 'border-box',
+                              padding: '0 10px', fontSize: 13, border: '1px solid #E4E8EC',
+                              borderRadius: 8, background: '#fff', outline: 'none', width: 100,
+                              height: 36, boxSizing: 'border-box',
                             }}
                           />
                           <button
                             onClick={() => { onSaveMapping(sku, mapProduct, mapOption); setMappingCode(null); }}
                             disabled={!mapOption || mapSaving}
                             style={{
-                              padding: '5px 10px', fontSize: 11, fontWeight: 500, height: 32,
-                              background: (!mapOption || mapSaving) ? '#E4E8EC' : '#1F2328',
-                              color: (!mapOption || mapSaving) ? '#9AA2AA' : '#fff',
-                              border: 'none', borderRadius: 6, cursor: (!mapOption || mapSaving) ? 'default' : 'pointer',
+                              padding: '0 14px', fontSize: 13, fontWeight: 550, height: 36,
+                              background: (!mapOption || mapSaving) ? '#E4E8EC' : '#1A1D21',
+                              color: (!mapOption || mapSaving) ? '#8A9199' : '#fff',
+                              border: 'none', borderRadius: 8, cursor: (!mapOption || mapSaving) ? 'default' : 'pointer',
                             }}
                           >
                             {mapSaving ? '...' : '저장'}
@@ -478,9 +487,9 @@ export function UnmappedSkuSection({
                           <button
                             onClick={() => setMappingCode(null)}
                             style={{
-                              padding: '5px 8px', fontSize: 11, height: 32,
-                              background: 'none', color: '#9AA2AA',
-                              border: '1px solid #E4E8EC', borderRadius: 6, cursor: 'pointer',
+                              padding: '0 10px', fontSize: 13, height: 36,
+                              background: 'none', color: '#6E767E',
+                              border: '1px solid #E4E8EC', borderRadius: 8, cursor: 'pointer',
                             }}
                           >
                             취소
@@ -490,9 +499,9 @@ export function UnmappedSkuSection({
                         <button
                           onClick={() => { setMappingCode(sku.productCode); setMapProduct('클렌징밤'); setMapOption(''); }}
                           style={{
-                            padding: '3px 8px', fontSize: 11, fontWeight: 500,
+                            padding: '0 10px', fontSize: 12, fontWeight: 500, height: 32,
                             background: 'none', color: '#0969DA',
-                            border: '1px solid var(--border-light)', borderRadius: 4, cursor: 'pointer',
+                            border: '1px solid #E4E8EC', borderRadius: 8, cursor: 'pointer',
                           }}
                         >
                           매핑
