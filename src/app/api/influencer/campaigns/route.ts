@@ -5,16 +5,23 @@ import { requireAdmin } from '@/lib/auth';
 export async function GET(req: NextRequest) {
   const status = req.nextUrl.searchParams.get('status');
 
-  let query = supabaseAdmin
+  let campaignQuery = supabaseAdmin
     .from('inf_campaigns')
     .select('*, inf_participants(*)')
     .order('created_at', { ascending: false });
 
   if (status && status !== 'all') {
-    query = query.eq('status', status);
+    campaignQuery = campaignQuery.eq('status', status);
   }
 
-  const { data, error } = await query;
+  // Parallel fetch: campaigns + deliverable settings
+  const [{ data, error }, { data: dlvSettings }] = await Promise.all([
+    campaignQuery,
+    supabaseAdmin
+      .from('inf_settings')
+      .select('key, value')
+      .like('key', 'dlv:%'),
+  ]);
 
   if (error) {
     console.error('[campaigns GET]', error.message);
@@ -23,28 +30,20 @@ export async function GET(req: NextRequest) {
 
   // Attach deliverables from inf_settings (dlv:{participant_id}:{step})
   const campaigns = data ?? [];
-  const allPartIds = campaigns.flatMap((c: any) => (c.inf_participants ?? []).map((p: any) => p.id));
-  if (allPartIds.length > 0) {
-    const { data: dlvSettings } = await supabaseAdmin
-      .from('inf_settings')
-      .select('key, value')
-      .like('key', 'dlv:%');
-
-    if (dlvSettings && dlvSettings.length > 0) {
-      const dlvMap: Record<string, Record<string, unknown>> = {};
-      for (const s of dlvSettings) {
-        const parts = s.key.split(':');
-        if (parts.length >= 3) {
-          const pid = parts[1];
-          const step = parts[2];
-          if (!dlvMap[pid]) dlvMap[pid] = {};
-          dlvMap[pid][step] = s.value;
-        }
+  if (dlvSettings && dlvSettings.length > 0) {
+    const dlvMap: Record<string, Record<string, unknown>> = {};
+    for (const s of dlvSettings) {
+      const parts = s.key.split(':');
+      if (parts.length >= 3) {
+        const pid = parts[1];
+        const step = parts[2];
+        if (!dlvMap[pid]) dlvMap[pid] = {};
+        dlvMap[pid][step] = s.value;
       }
-      for (const c of campaigns) {
-        for (const p of ((c as any).inf_participants ?? [])) {
-          (p as any)._deliverables = dlvMap[p.id] || {};
-        }
+    }
+    for (const c of campaigns) {
+      for (const p of ((c as any).inf_participants ?? [])) {
+        (p as any)._deliverables = dlvMap[p.id] || {};
       }
     }
   }

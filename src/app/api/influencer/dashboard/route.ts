@@ -20,6 +20,13 @@ export async function GET() {
     { data: annualPaidSettlements },
     { data: waitingSettlements },
     { data: pendingDocsParticipants },
+    // Submission asset alerts (parallelized)
+    { count: proposalUnreviewed },
+    { count: roughCutUnreviewed },
+    { count: revisionWaiting },
+    { data: finalUploads },
+    // Deliverable settings
+    { data: allDeliverables },
   ] = await Promise.all([
     supabaseAdmin
       .from('inf_campaigns')
@@ -64,6 +71,30 @@ export async function GET() {
       .eq('settlement_status', 'docs_requested')
       .gt('fee', 0)
       .lt('settlement_token_expires_at', new Date(now.getTime() + 11 * 86400000).toISOString()),
+    // Submission asset alerts
+    supabaseAdmin
+      .from('campaign_submission_assets')
+      .select('*', { count: 'exact', head: true })
+      .eq('stage', 'proposal')
+      .eq('status', 'received'),
+    supabaseAdmin
+      .from('campaign_submission_assets')
+      .select('*', { count: 'exact', head: true })
+      .eq('stage', 'rough_cut')
+      .eq('status', 'received'),
+    supabaseAdmin
+      .from('campaign_submission_assets')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', 'revision_requested'),
+    supabaseAdmin
+      .from('campaign_submission_assets')
+      .select('participant_id')
+      .eq('stage', 'final_upload'),
+    // Deliverable settings
+    supabaseAdmin
+      .from('inf_settings')
+      .select('key, value')
+      .like('key', 'dlv:%'),
   ]);
 
   // ─── [FIX] totalParticipants / pendingConsent: active 캠페인 참여자만 ───
@@ -267,32 +298,6 @@ export async function GET() {
 
   if (overdueInfoCount > 0) todayChecklist.push({ type: 'settlement_info_overdue', label: '정산 정보 미회수 (3일 경과)', count: overdueInfoCount });
 
-  // ─── Submission asset alerts ───
-  const [
-    { count: proposalUnreviewed },
-    { count: roughCutUnreviewed },
-    { count: revisionWaiting },
-  ] = await Promise.all([
-    supabaseAdmin
-      .from('campaign_submission_assets')
-      .select('*', { count: 'exact', head: true })
-      .eq('stage', 'proposal')
-      .eq('status', 'received'),
-    supabaseAdmin
-      .from('campaign_submission_assets')
-      .select('*', { count: 'exact', head: true })
-      .eq('stage', 'rough_cut')
-      .eq('status', 'received'),
-    supabaseAdmin
-      .from('campaign_submission_assets')
-      .select('*', { count: 'exact', head: true })
-      .eq('status', 'revision_requested'),
-  ]);
-
-  const { data: finalUploads } = await supabaseAdmin
-    .from('campaign_submission_assets')
-    .select('participant_id')
-    .eq('stage', 'final_upload');
   const finalUploadPids = new Set((finalUploads ?? []).map(a => a.participant_id));
   const uploadOverdueSubmission = allActiveParts.filter(p => {
     const deadline = (p.publish_deadline as string | null) || effectiveDate(p, 'confirmed_upload_date', 'planned_upload_date');
@@ -306,11 +311,6 @@ export async function GET() {
 
   // ─── Weekly Tasks — 1 participant = 1 row ───
   // [FIX] metrics.ts의 getParticipantStep 사용, skip 설정 기반
-
-  const { data: allDeliverables } = await supabaseAdmin
-    .from('inf_settings')
-    .select('key, value')
-    .like('key', 'dlv:%');
 
   const dlvMap: Record<string, Record<string, unknown>> = {};
   for (const d of allDeliverables ?? []) {
