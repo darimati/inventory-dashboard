@@ -51,6 +51,12 @@ const KPI_NUM: React.CSSProperties = {
   fontVariantNumeric: 'tabular-nums',
 };
 
+/* §2 — 6-label visual stepper */
+const VISUAL_LABELS = ['섭외', '동의서', '기획안', '가편집본', '업로드', '정산'] as const;
+const STEP_TO_VISUAL: Record<string, number> = {
+  consent: 0, draft: 2, edit: 3, upload: 4, payment: 5,
+};
+
 /* Stack bar segment config — donut 3-color + mint (캠페인 진행 card) */
 const BAR_SEGS = [
   { label: '가편집본', steps: ['consent', 'draft', 'edit'] as string[], color: colors.seg1 },
@@ -123,6 +129,30 @@ function fmtDate(d: string | null | undefined): string {
   if (!d) return '—';
   const dt = new Date(d + 'T00:00:00');
   return `${dt.getMonth() + 1}/${dt.getDate()}`;
+}
+
+/** §2 — step cell (6-label visual stepper with connecting lines) */
+function renderStepCell(step: string) {
+  const cur = STEP_TO_VISUAL[step] ?? -1;
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, minWidth: 0 }}>
+      {VISUAL_LABELS.map((label, i) => {
+        const clr = i < cur ? colors.textSecondary
+          : i === cur ? colors.seg1
+          : colors.textDisabled;
+        return (
+          <span key={i} style={{ display: 'contents' }}>
+            {i > 0 && (
+              <span style={{ width: 6, height: 1, flex: 'none', background: colors.border }} />
+            )}
+            <span style={{ fontSize: 12, fontWeight: i === cur ? 600 : 400, color: clr, flex: 'none' }}>
+              {label}
+            </span>
+          </span>
+        );
+      })}
+    </div>
+  );
 }
 
 /** §3 — strip "캠페인" suffix from campaign name */
@@ -446,10 +476,8 @@ export default function InfluencerDashboardClient() {
                         {shortCampName(t.campaign_name)}
                       </span>
                       <span />{/* Col 4: spacer */}
-                      {/* Col 5: 단계 */}
-                      <span style={{ ...CELL_CLIP, fontSize: 13, color: colors.textSecondary, textAlign: 'center' }}>
-                        {STEP_LABELS[t.step] || t.step}
-                      </span>
+                      {/* Col 5: 단계 — §2 visual stepper */}
+                      {renderStepCell(t.step)}
                       <span />{/* Col 6: spacer */}
                       {/* Col 7: 마감 — center */}
                       <span style={{
