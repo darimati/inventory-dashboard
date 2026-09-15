@@ -35,11 +35,11 @@ const ROW_H = 44;
 const VISIBLE_COUNT = 10;
 const SECTION_GAP = 24;
 
-/* §1 — 인플루언서 현황 9-column grid (spacer cols 2,4,6) */
-const TABLE_GRID = 'minmax(0,88px) 12px minmax(0,104px) 16px minmax(0,340px) 20px minmax(0,72px) minmax(0,88px) 1fr';
+/* §1 — 인플루언서 현황 5-column grid */
+const TABLE_GRID = 'minmax(0,100px) minmax(0,1fr) minmax(0,360px) minmax(0,80px) minmax(0,110px)';
 
-/* §4 — 지급 예정 5-column grid */
-const PAYMENT_GRID = 'minmax(0,88px) minmax(0,80px) minmax(0,80px) minmax(0,88px) 1fr';
+/* §4 — 지급 예정 4-column grid */
+const PAYMENT_GRID = 'minmax(0,1fr) minmax(0,120px) minmax(0,120px) minmax(0,140px)';
 
 const COL_HDR: React.CSSProperties = {
   fontSize: 13, color: colors.textSecondary,
@@ -409,25 +409,21 @@ export default function InfluencerDashboardClient() {
               </div>
             ) : (
               <>
-                {/* Column header — 9 cols (2,4,6 = spacer) */}
+                {/* Column header — 5 cols */}
                 <div style={{
-                  display: 'grid', gridTemplateColumns: TABLE_GRID, gap: 14,
+                  display: 'grid', gridTemplateColumns: TABLE_GRID, gap: 24,
                   height: 36, alignItems: 'center',
                   borderBottom: `0.5px solid ${colors.borderLight}`,
                   minWidth: 0,
                 }}>
                   <span style={COL_HDR}>인플루언서</span>
-                  <span />
                   <span style={COL_HDR}>캠페인</span>
-                  <span />
                   <span style={{ ...COL_HDR, textAlign: 'center' }}>단계</span>
-                  <span />
                   <span style={{ ...COL_HDR, textAlign: 'center' }}>마감</span>
                   <span style={{ ...COL_HDR, textAlign: 'center' }}>고료</span>
-                  <span />
                 </div>
 
-                {/* Data rows — 9 cols */}
+                {/* Data rows — 5 cols */}
                 {visibleTasks.map((t, i) => {
                   const isLast = i === visibleTasks.length - 1 && hiddenCount <= 0;
                   const hasFee = (t.fee ?? 0) > 0;
@@ -436,7 +432,7 @@ export default function InfluencerDashboardClient() {
                       key={`${t.participant_id}-${t.step}-${i}`}
                       onClick={() => handleRowClick(t)}
                       style={{
-                        display: 'grid', gridTemplateColumns: TABLE_GRID, gap: 14,
+                        display: 'grid', gridTemplateColumns: TABLE_GRID, gap: 24,
                         height: ROW_H, alignItems: 'center',
                         borderBottom: isLast ? 'none' : `0.5px solid ${colors.borderLight}`,
                         cursor: 'pointer',
@@ -445,20 +441,13 @@ export default function InfluencerDashboardClient() {
                       onMouseEnter={e => { e.currentTarget.style.background = colors.surfaceHover; }}
                       onMouseLeave={e => { e.currentTarget.style.background = ''; }}
                     >
-                      {/* Col 1: 인플루언서 — 14px 600 */}
                       <span style={{ ...CELL_CLIP, fontSize: 14, fontWeight: 600, color: colors.textPrimary }}>
                         {t.display_name}
                       </span>
-                      <span />{/* Col 2: spacer */}
-                      {/* Col 3: 캠페인 */}
                       <span style={{ ...CELL_CLIP, fontSize: 13, color: colors.textSecondary }}>
                         {shortCampName(t.campaign_name)}
                       </span>
-                      <span />{/* Col 4: spacer */}
-                      {/* Col 5: 단계 — §2 visual stepper */}
                       {renderStepCell(t.step)}
-                      <span />{/* Col 6: spacer */}
-                      {/* Col 7: 마감 — center */}
                       <span style={{
                         fontSize: 13, textAlign: 'center',
                         fontVariantNumeric: 'tabular-nums',
@@ -466,7 +455,6 @@ export default function InfluencerDashboardClient() {
                       }}>
                         {dDayText(t.days_until)}
                       </span>
-                      {/* Col 8: 고료 — center, tabular-nums */}
                       <span style={{
                         fontSize: 13, textAlign: 'center',
                         fontVariantNumeric: 'tabular-nums',
@@ -474,7 +462,6 @@ export default function InfluencerDashboardClient() {
                       }}>
                         {hasFee ? formatKRW(t.fee!) : '무가'}
                       </span>
-                      <span />{/* Col 9: absorber */}
                     </div>
                   );
                 })}
@@ -513,7 +500,7 @@ export default function InfluencerDashboardClient() {
             ) : (
               <>
                 <div style={{
-                  display: 'grid', gridTemplateColumns: PAYMENT_GRID, gap: 16,
+                  display: 'grid', gridTemplateColumns: PAYMENT_GRID, gap: 24,
                   height: 36, alignItems: 'center',
                   borderBottom: `0.5px solid ${colors.borderLight}`,
                   minWidth: 0,
@@ -522,14 +509,13 @@ export default function InfluencerDashboardClient() {
                   <span style={{ ...COL_HDR, textAlign: 'center' }}>업로드일</span>
                   <span style={{ ...COL_HDR, textAlign: 'center' }}>지급일</span>
                   <span style={{ ...COL_HDR, textAlign: 'center' }}>금액</span>
-                  <span />
                 </div>
                 {paymentTasks.map((t, i) => {
                   const isLast = i === paymentTasks.length - 1;
                   const upDate = uploadDateMap.get(t.participant_id);
                   return (
                     <div key={t.participant_id} style={{
-                      display: 'grid', gridTemplateColumns: PAYMENT_GRID, gap: 16,
+                      display: 'grid', gridTemplateColumns: PAYMENT_GRID, gap: 24,
                       height: ROW_H, alignItems: 'center',
                       borderBottom: isLast ? 'none' : `0.5px solid ${colors.borderLight}`,
                       minWidth: 0,
@@ -546,7 +532,6 @@ export default function InfluencerDashboardClient() {
                       <span style={{ fontSize: 13, color: colors.textPrimary, textAlign: 'center', fontVariantNumeric: 'tabular-nums' }}>
                         {formatKRW(t.fee ?? 0)}
                       </span>
-                      <span />
                     </div>
                   );
                 })}
