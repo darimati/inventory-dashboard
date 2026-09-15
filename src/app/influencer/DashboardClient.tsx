@@ -447,7 +447,6 @@ export default function InfluencerDashboardClient() {
                   <span />
                 </div>
 
-                {/* Data rows */}
                 {/* Data rows — 9 cols */}
                 {visibleTasks.map((t, i) => {
                   const isLast = i === visibleTasks.length - 1 && hiddenCount <= 0;
@@ -491,7 +490,7 @@ export default function InfluencerDashboardClient() {
                       <span style={{
                         fontSize: 13, textAlign: 'center',
                         fontVariantNumeric: 'tabular-nums',
-                        color: hasFee ? colors.textSecondary : colors.textSecondary,
+                        color: hasFee ? colors.textPrimary : colors.textSecondary,
                       }}>
                         {hasFee ? formatKRW(t.fee!) : '무가'}
                       </span>
