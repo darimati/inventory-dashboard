@@ -8,11 +8,11 @@ const STEP_COLUMNS: Record<string, string> = {
   upload: 'uploaded_at',
 };
 
-// Cascade protection: which next-step field blocks undo
+// Cascade protection: which next-step field blocks undo/delete
 const NEXT_STEP_BLOCK: Record<string, { column: string; label: string }> = {
-  draft: { column: 'edit_received_at', label: '가편집본이 완료된 상태에서는 기획안을 취소할 수 없습니다' },
-  edit: { column: 'uploaded_at', label: '업로드가 완료된 상태에서는 가편집본을 취소할 수 없습니다' },
-  upload: { column: 'settlement_status', label: '지급 완료 상태에서는 업로드를 취소할 수 없습니다' },
+  draft: { column: 'edit_received_at', label: '가편집본이 완료된 상태에서는 기획안을 삭제할 수 없습니다' },
+  edit: { column: 'uploaded_at', label: '업로드가 완료된 상태에서는 가편집본을 삭제할 수 없습니다' },
+  upload: { column: 'settlement_status', label: '지급 완료 상태에서는 업로드를 삭제할 수 없습니다' },
 };
 
 export async function PATCH(req: NextRequest) {
@@ -32,7 +32,6 @@ export async function PATCH(req: NextRequest) {
   const {
     participant_id, step, undo,
     link, memo, received_at,
-    status: delivStatus, revision_note, review_category,
     // File deliverable fields
     file_url, original_filename, mime_type, file_size,
     // Upload step fields
@@ -44,9 +43,6 @@ export async function PATCH(req: NextRequest) {
     link?: string;
     memo?: string;
     received_at?: string;
-    status?: string;
-    revision_note?: string;
-    review_category?: string;
     file_url?: string;
     original_filename?: string;
     mime_type?: string;
@@ -64,12 +60,9 @@ export async function PATCH(req: NextRequest) {
   }
 
   const now = new Date().toISOString();
-  const effectiveStatus = delivStatus || 'approved';
-  const isRevisionRequest = effectiveStatus === 'revision_requested';
-
-  // Store/remove deliverable in inf_settings (key: dlv:{participant_id}:{step})
   const settingsKey = `dlv:${participant_id}:${step}`;
 
+  // ── DELETE / UNDO ──────────────────────────────────────────
   if (undo) {
     // Upload step: special cascade check for payment
     if (step === 'upload') {
@@ -103,7 +96,7 @@ export async function PATCH(req: NextRequest) {
         }
       }
 
-      // Undo: clear participant timestamp
+      // Clear participant timestamp
       const { error: updateError } = await supabaseAdmin
         .from('inf_participants')
         .update({ [column]: null })
@@ -116,35 +109,23 @@ export async function PATCH(req: NextRequest) {
     // Remove deliverable
     await supabaseAdmin.from('inf_settings').delete().eq('key', settingsKey);
 
-    // Log to access_logs
+    // Log
     await supabaseAdmin.from('inf_access_logs').insert({
       participant_id,
       field_name: column,
-      action: 'undo_step',
+      action: 'delete_step',
     }).then(() => {});
 
     return NextResponse.json({ ok: true, column, value: null });
   }
 
-  // Check for existing deliverable (for version tracking)
-  const { data: existing } = await supabaseAdmin
-    .from('inf_settings')
-    .select('id, value')
-    .eq('key', settingsKey)
-    .maybeSingle();
-
-  const prevVersion = (existing?.value as Record<string, unknown>)?.version as number || 0;
-  const nextVersion = prevVersion + 1;
+  // ── REGISTER / UPDATE ──────────────────────────────────────
   const effectiveReceivedAt = received_at || now;
 
   const deliverable: Record<string, unknown> = {
     link_url: (link as string)?.trim() || null,
     received_at: effectiveReceivedAt,
     memo: (memo as string)?.trim() || null,
-    status: effectiveStatus,
-    revision_note: isRevisionRequest ? ((revision_note as string)?.trim() || null) : null,
-    review_category: isRevisionRequest ? ((review_category as string)?.trim() || null) : null,
-    version: nextVersion,
   };
 
   // File fields (for edit step with file upload)
@@ -158,40 +139,36 @@ export async function PATCH(req: NextRequest) {
     deliverable.asset_type = 'external_link';
   }
 
-  // Content type (for upload/final step)
+  // Content type (for upload step)
   if (content_type) {
     deliverable.content_type = content_type;
   }
 
-  // Only set participant timestamp for approved (not revision_requested)
-  if (!isRevisionRequest) {
-    const updateData: Record<string, unknown> = { [column]: effectiveReceivedAt };
+  // Set participant timestamp (registration = completion)
+  const updateData: Record<string, unknown> = { [column]: effectiveReceivedAt };
 
-    // For upload step, also set published_url and status
-    if (step === 'upload') {
-      if (link) updateData.published_url = (link as string).trim();
-      updateData.status = 'published';
-    }
-
-    const { error: updateError } = await supabaseAdmin
-      .from('inf_participants')
-      .update(updateData)
-      .eq('id', participant_id);
-    if (updateError) {
-      return NextResponse.json({ error: updateError.message }, { status: 500 });
-    }
+  // For upload step, also set published_url and status
+  if (step === 'upload') {
+    if (link) updateData.published_url = (link as string).trim();
+    updateData.status = 'published';
   }
 
-  // Upsert deliverable
-  if (existing) {
-    // For revision on edit step: store version history
-    const prevValue = existing.value as Record<string, unknown>;
-    const history = (prevValue?.history as unknown[]) || [];
-    // Save current state to history before overwriting
-    const { history: _, ...prevWithoutHistory } = prevValue as Record<string, unknown>;
-    history.push(prevWithoutHistory);
-    deliverable.history = history;
+  const { error: updateError } = await supabaseAdmin
+    .from('inf_participants')
+    .update(updateData)
+    .eq('id', participant_id);
+  if (updateError) {
+    return NextResponse.json({ error: updateError.message }, { status: 500 });
+  }
 
+  // Upsert deliverable (overwrite if exists — no version tracking)
+  const { data: existing } = await supabaseAdmin
+    .from('inf_settings')
+    .select('id')
+    .eq('key', settingsKey)
+    .maybeSingle();
+
+  if (existing) {
     const { error: sErr } = await supabaseAdmin
       .from('inf_settings')
       .update({ value: deliverable, updated_at: now, updated_by: 'admin' })
@@ -204,19 +181,17 @@ export async function PATCH(req: NextRequest) {
     if (sErr) return NextResponse.json({ error: sErr.message }, { status: 500 });
   }
 
-  // Log save to access_logs
+  // Log
   await supabaseAdmin.from('inf_access_logs').insert({
     participant_id,
     field_name: column,
-    action: isRevisionRequest ? 'revision_requested' : 'check_step',
+    action: 'register_step',
   }).then(() => {});
 
   return NextResponse.json({
     ok: true,
     column,
-    value: isRevisionRequest ? null : effectiveReceivedAt,
-    status: effectiveStatus,
-    version: nextVersion,
+    value: effectiveReceivedAt,
     deliverable,
   });
 }

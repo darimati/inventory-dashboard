@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-server';
 import { encrypt } from '@/lib/encryption';
+import { calcTaxBreakdown } from '@/lib/influencer/metrics';
+import { getNextPaymentDate, formatPaymentDate } from '@/lib/korean-holidays';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
@@ -15,7 +17,7 @@ export async function GET(
   const { data: participant, error } = await supabaseAdmin
     .from('inf_participants')
     .select(
-      'id, name, display_name, fee, channel, post_type, post_count, settlement_status, settlement_token_expires_at, campaign_id, published_url, planned_upload_date',
+      'id, name, display_name, fee, channel, post_type, post_count, settlement_status, settlement_token_expires_at, campaign_id, published_url, planned_upload_date, planned_payment_date',
     )
     .eq('settlement_token', token)
     .single();
@@ -29,14 +31,13 @@ export async function GET(
   }
 
   // 3. Already submitted — return settlement details for read-only view
-  if (participant.settlement_status === 'docs_submitted') {
+  const submittedStatuses = ['docs_submitted', 'payment_waiting', 'payment_requested', 'paid'];
+  if (participant.settlement_status && submittedStatuses.includes(participant.settlement_status)) {
     // Fetch settlement record
     const { data: settlement } = await supabaseAdmin
       .from('inf_settlements')
-      .select('tax_type, tax_rate, tax_amount, gross_amount, net_amount')
+      .select('tax_type, tax_rate, gross_amount, net_amount, income_tax_amount, local_tax_amount')
       .eq('participant_id', participant.id)
-      .order('created_at', { ascending: false })
-      .limit(1)
       .single();
 
     // Fetch bank info from participant
@@ -46,16 +47,24 @@ export async function GET(
       .eq('id', participant.id)
       .single();
 
+    // Payment date
+    let paymentDateStr: string | null = null;
+    if (participant.planned_payment_date) {
+      paymentDateStr = formatPaymentDate(new Date(participant.planned_payment_date));
+    }
+
     return NextResponse.json({
       status: 'already_submitted',
       participant_name: participant.display_name || participant.name,
       fee: participant.fee,
       bank_name: bankInfo?.bank_name ?? '',
       bank_holder: bankInfo?.bank_holder ?? '',
+      planned_payment_date: paymentDateStr,
       settlement: settlement ? {
         tax_type: settlement.tax_type,
         tax_rate: settlement.tax_rate,
-        tax_amount: settlement.tax_amount,
+        income_tax_amount: settlement.income_tax_amount,
+        local_tax_amount: settlement.local_tax_amount,
         gross_amount: settlement.gross_amount,
         net_amount: settlement.net_amount,
       } : null,
@@ -118,7 +127,17 @@ export async function GET(
     contentDisplay = `${FORMAT_LABELS[participant.post_type] ?? participant.post_type} ${participant.post_count ?? 1}건`;
   }
 
-  // 9. Return settlement page data
+  // 9. Payment date (from planned_payment_date or calculated)
+  let paymentDateStr: string | null = null;
+  if (participant.planned_payment_date) {
+    paymentDateStr = formatPaymentDate(new Date(participant.planned_payment_date));
+  } else {
+    // Calculate from now as fallback
+    const paymentDate = getNextPaymentDate(new Date());
+    paymentDateStr = formatPaymentDate(paymentDate);
+  }
+
+  // 10. Return settlement page data
   return NextResponse.json({
     status: 'valid',
     campaign_name: campaign?.name ?? '',
@@ -128,6 +147,7 @@ export async function GET(
     content_display: contentDisplay,
     published_url: participant.published_url || null,
     planned_upload_date: participant.planned_upload_date || null,
+    planned_payment_date: paymentDateStr,
     tax_rates: taxRates,
     guidance,
     company_info: companyInfo,
@@ -155,11 +175,10 @@ export async function POST(
     );
   }
 
-  if (participant.settlement_status === 'docs_submitted') {
-    return NextResponse.json(
-      { error: '이미 제출이 완료되었습니다.' },
-      { status: 400 },
-    );
+  // Already submitted — idempotent: return success
+  const submittedStatuses = ['docs_submitted', 'payment_waiting', 'payment_requested', 'paid'];
+  if (participant.settlement_status && submittedStatuses.includes(participant.settlement_status)) {
+    return NextResponse.json({ success: true, already_submitted: true });
   }
 
   if (
@@ -186,29 +205,11 @@ export async function POST(
     ? String(body.bank_account).replace(/[-\s]/g, '')
     : '';
 
-  // 3. Determine tax rate from inf_settings
-  const { data: taxRateSetting } = await supabaseAdmin
-    .from('inf_settings')
-    .select('value')
-    .eq('key', 'tax_rates')
-    .single();
-
-  const taxRates = (taxRateSetting?.value as Record<string, number>) ?? {
-    business_income: 3.3,
-    tax_invoice: 0,
-    tax_exempt_invoice: 0,
-    simplified_business: 0,
-  };
-  const taxRate = taxRates[taxType] ?? 0;
-
-  // 4. Get gross_amount from participant fee
+  // 3. Calculate tax using SINGLE SOURCE (calcTaxBreakdown)
   const grossAmount = participant.fee;
+  const tax = calcTaxBreakdown(grossAmount, taxType);
 
-  // 5. Calculate tax and net amounts
-  const taxAmount = Math.round(grossAmount * taxRate / 100);
-  const netAmount = grossAmount - taxAmount;
-
-  // 6. Build participant update — encrypt PII
+  // 4. Build participant update — encrypt PII
   const updates: Record<string, unknown> = {
     bank_name: body.bank_name || null,
     bank_holder: body.bank_holder || null,
@@ -247,43 +248,69 @@ export async function POST(
     return NextResponse.json({ error: updateResult.error.message }, { status: 500 });
   }
 
-  // 7. Create settlement record in inf_settlements
+  // 5. Check existing settlement (idempotent — unique constraint)
+  const { data: existingSettlement } = await supabaseAdmin
+    .from('inf_settlements')
+    .select('id')
+    .eq('participant_id', participant.id)
+    .single();
+
+  if (existingSettlement) {
+    // Already has settlement — update instead of insert
+    const { error: updateSettErr } = await supabaseAdmin
+      .from('inf_settlements')
+      .update({
+        gross_amount: grossAmount,
+        tax_type: taxType,
+        tax_rate: tax.totalTax > 0 ? (taxType === 'business_income' ? 3.3 : 0) : 0,
+        tax_amount: tax.totalTax,
+        income_tax_amount: tax.incomeTax,
+        local_tax_amount: tax.localTax,
+        net_amount: tax.netAmount,
+      })
+      .eq('id', existingSettlement.id);
+
+    if (updateSettErr) {
+      return NextResponse.json({ error: updateSettErr.message }, { status: 500 });
+    }
+    return NextResponse.json({ success: true });
+  }
+
+  // 6. Create settlement record in inf_settlements
   const settlementInsert: Record<string, unknown> = {
     participant_id: participant.id,
     gross_amount: grossAmount,
     tax_type: taxType,
-    tax_rate: taxRate,
-    tax_amount: taxAmount,
-    net_amount: netAmount,
+    tax_rate: tax.totalTax > 0 ? (taxType === 'business_income' ? 3.3 : 0) : 0,
+    tax_amount: tax.totalTax,
+    income_tax_amount: tax.incomeTax,
+    local_tax_amount: tax.localTax,
+    net_amount: tax.netAmount,
     payment_status: 'waiting',
     upload_link: null,
   };
-
-  // Try adding tax_rate_snapshot (column may not exist yet)
-  settlementInsert.tax_rate_snapshot = taxRates;
 
   let settlementResult = await supabaseAdmin
     .from('inf_settlements')
     .insert(settlementInsert);
 
-  // Fallback if tax_rate_snapshot column doesn't exist
-  if (settlementResult.error?.message?.includes('tax_rate_snapshot')) {
-    delete settlementInsert.tax_rate_snapshot;
+  // Fallback if income_tax_amount/local_tax_amount columns don't exist yet
+  if (settlementResult.error?.message?.includes('column')) {
+    delete settlementInsert.income_tax_amount;
+    delete settlementInsert.local_tax_amount;
     settlementResult = await supabaseAdmin
       .from('inf_settlements')
       .insert(settlementInsert);
   }
 
-  const settlementError = settlementResult.error;
-
-  if (settlementError) {
+  if (settlementResult.error) {
     return NextResponse.json(
-      { error: settlementError.message },
+      { error: settlementResult.error.message },
       { status: 500 },
     );
   }
 
-  // 8. Return success
+  // 7. Return success
   return NextResponse.json({ success: true });
 }
 
@@ -310,6 +337,7 @@ export async function PUT(
   // 2. Parse multipart form data
   const formData = await req.formData();
   const file = formData.get('file') as File | null;
+  const docType = (formData.get('doc_type') as string) || 'biz_reg_cert'; // biz_reg_cert or identity_doc
 
   if (!file) {
     return NextResponse.json({ error: '파일을 선택해주세요.' }, { status: 400 });
@@ -325,7 +353,8 @@ export async function PUT(
 
   // 3. Upload to Supabase Storage
   const ext = file.name.split('.').pop() ?? 'jpg';
-  const storagePath = `${participant.id}/biz_reg_cert.${ext}`;
+  const fileName = docType === 'identity_doc' ? 'identity_doc' : 'biz_reg_cert';
+  const storagePath = `${participant.id}/${fileName}.${ext}`;
 
   const buffer = Buffer.from(await file.arrayBuffer());
 
@@ -356,15 +385,15 @@ export async function PUT(
     }
   }
 
-  // 4. Save file path to participant record (graceful — column may not exist)
+  // 4. Save file path to participant record
+  const pathColumn = docType === 'identity_doc' ? 'identity_doc_file_path' : 'biz_reg_file_path';
   const { error: updateError } = await supabaseAdmin
     .from('inf_participants')
-    .update({ biz_reg_file_path: storagePath })
+    .update({ [pathColumn]: storagePath })
     .eq('id', participant.id);
 
-  if (updateError?.message?.includes('biz_reg_file_path')) {
-    // Column doesn't exist yet — file is still saved in storage
-    console.warn('[settlement file upload] biz_reg_file_path column not found, skipping participant update');
+  if (updateError?.message?.includes(pathColumn)) {
+    console.warn(`[settlement file upload] ${pathColumn} column not found, skipping participant update`);
   }
 
   return NextResponse.json({ success: true, path: storagePath });

@@ -32,10 +32,9 @@ export function Chip({ variant, children, style }: ChipProps) {
     <span style={{
       display: 'inline-flex',
       alignItems: 'center',
-      height: chipHeight,
-      padding: '0 8px',
-      borderRadius: radii.chip,
-      fontSize: 12,
+      padding: '3px 10px',
+      borderRadius: 12,
+      fontSize: 11.5,
       fontWeight: 500,
       whiteSpace: 'nowrap',
       background: bg,
@@ -87,12 +86,12 @@ export function Btn({ size = 'sm', fixedWidth, style, children, ...rest }: BtnPr
         justifyContent: 'center',
         gap: 4,
         height: btnHeight[size],
-        padding: size === 'sm' ? '0 12px' : '0 16px',
+        padding: size === 'sm' ? '0 10px' : '0 16px',
         border: `1px solid ${colors.border}`,
-        borderRadius: radii.button,
+        borderRadius: 7,
         background: colors.surface,
         color: colors.textSecondary,
-        fontSize: 13,
+        fontSize: size === 'sm' ? 12.5 : 13,
         fontWeight: 500,
         cursor: rest.disabled ? 'not-allowed' : 'pointer',
         whiteSpace: 'nowrap',
@@ -163,7 +162,7 @@ export function Section({ title, hint, right, children, style }: SectionProps) {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: `16px ${spacing.cardPadding}px`,
+        padding: '16px 20px',
         borderBottom: `1px solid ${colors.borderLight}`,
       }}>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
@@ -192,10 +191,11 @@ interface KPICardProps {
 
 export function KPICard({ label, value, unit, sub, alert, onClick, children, style }: KPICardProps) {
   return (
-    <Card alert={alert} onClick={onClick} style={{
+    <Card alert={alert} onClick={onClick} padding={20} style={{
       display: 'flex',
       flexDirection: 'column',
-      minHeight: 0,
+      height: 156,
+      overflow: 'hidden',
       ...style,
     }}>
       <span style={{ ...typo.meta, color: colors.textInfo, fontWeight: 450, marginBottom: 6 }}>
@@ -290,7 +290,7 @@ export function TabBar({ tabs, active, onChange, style }: TabBarProps) {
       gap: 2,
       padding: 3,
       background: colors.track,
-      borderRadius: 10,
+      borderRadius: 9,
       ...style,
     }}>
       {tabs.map(t => (
@@ -299,10 +299,9 @@ export function TabBar({ tabs, active, onChange, style }: TabBarProps) {
           disabled={t.disabled}
           onClick={() => !t.disabled && onChange(t.key)}
           style={{
-            height: 32,
-            padding: '0 14px',
+            padding: '7px 14px',
             border: 'none',
-            borderRadius: 8,
+            borderRadius: 7,
             background: active === t.key ? colors.surface : 'transparent',
             color: t.disabled ? colors.textMuted : (active === t.key ? colors.textPrimary : '#6E767E'),
             fontSize: 13,

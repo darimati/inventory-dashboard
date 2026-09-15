@@ -38,12 +38,12 @@ export function daysBetween(from: Date | string | null | undefined, to: Date | s
 /**
  * 일수 차이를 D-day 표기 문자열로 변환합니다.
  * @param diffDays - daysBetween() 결과값
- * @returns "D-7", "D-day", "D+3" 등
+ * @returns "D-7", "D-day", "3일 경과" 등
  */
 export function formatDDay(diffDays: number): string {
   if (diffDays > 0) return `D-${diffDays}`;
   if (diffDays === 0) return 'D-day';
-  return `D+${Math.abs(diffDays)}`;
+  return `${Math.abs(diffDays)}일 경과`;
 }
 
 /**

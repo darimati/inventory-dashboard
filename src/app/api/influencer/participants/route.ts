@@ -76,8 +76,37 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PUT(req: NextRequest) {
-  await requireAdmin();
+  const user = await requireAdmin();
   const body = await req.json();
+
+  // Handle archive/unarchive actions
+  if (body.action === 'archive' || body.action === 'unarchive') {
+    if (!body.id) {
+      return NextResponse.json({ error: 'id required' }, { status: 400 });
+    }
+    const isArchived = body.action === 'archive';
+    const { data, error } = await supabaseAdmin
+      .from('inf_participants')
+      .update({ is_archived: isArchived })
+      .eq('id', body.id)
+      .select()
+      .single();
+    if (error) {
+      // Column may not exist yet — skip gracefully
+      if (error.message?.includes('is_archived')) {
+        return NextResponse.json({ error: 'is_archived 컬럼이 아직 없습니다. 마이그레이션을 먼저 실행해주세요.' }, { status: 500 });
+      }
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+    await supabaseAdmin.from('inf_access_logs').insert({
+      actor_id: user.id,
+      participant_id: body.id,
+      field_name: 'is_archived',
+      action: body.action,
+    });
+    return NextResponse.json(data);
+  }
+
   const { id, ...updates } = body;
 
   if (!id) {
@@ -126,7 +155,7 @@ export async function PUT(req: NextRequest) {
   if (updates.generate_consent_token) {
     delete updates.generate_consent_token;
     updates.consent_token = randomBytes(32).toString('hex');
-    updates.consent_token_expires_at = new Date(Date.now() + 14 * 86400000).toISOString();
+    updates.consent_token_expires_at = new Date(Date.now() + 30 * 86400000).toISOString();
     updates.consent_status = 'sent';
   }
 
@@ -135,7 +164,7 @@ export async function PUT(req: NextRequest) {
     // Validate fee and published_url before generating
     const { data: participant } = await supabaseAdmin
       .from('inf_participants')
-      .select('fee, published_url')
+      .select('fee, published_url, settlement_status')
       .eq('id', id)
       .single();
 
@@ -150,8 +179,32 @@ export async function PUT(req: NextRequest) {
 
     delete updates.generate_settlement_token;
     updates.settlement_token = randomBytes(32).toString('hex');
-    updates.settlement_token_expires_at = new Date(Date.now() + 14 * 86400000).toISOString();
-    updates.settlement_status = 'docs_requested';
+    updates.settlement_token_expires_at = new Date(Date.now() + 30 * 86400000).toISOString();
+    // Don't overwrite status if already submitted or beyond
+    const submitted = ['docs_submitted', 'payment_waiting', 'payment_requested', 'paid'];
+    if (!participant?.settlement_status || !submitted.includes(participant.settlement_status)) {
+      updates.settlement_status = 'docs_requested';
+    }
+    // planned_payment_date is calculated at confirm time (settlements confirm handler)
+  }
+
+  // Auto-generate settlement token on upload confirmation (fee > 0)
+  if (updates.uploaded_at && !updates.generate_settlement_token) {
+    const { data: participant } = await supabaseAdmin
+      .from('inf_participants')
+      .select('fee, settlement_token, settlement_status')
+      .eq('id', id)
+      .single();
+
+    if (participant && (Number(participant.fee) || 0) > 0 && !participant.settlement_token) {
+      const needsToken = !participant.settlement_status || participant.settlement_status === 'none' || participant.settlement_status === 'not_sent';
+      if (needsToken) {
+        updates.settlement_token = randomBytes(32).toString('hex');
+        updates.settlement_token_expires_at = new Date(Date.now() + 30 * 86400000).toISOString();
+        updates.settlement_status = 'docs_requested';
+        // planned_payment_date is calculated at confirm time (settlements confirm handler)
+      }
+    }
   }
 
   let result = await supabaseAdmin
@@ -199,24 +252,45 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ error: 'participant not found' }, { status: 404 });
   }
 
-  const { count } = await supabaseAdmin
+  // Check settlements
+  const { data: settlements } = await supabaseAdmin
     .from('inf_settlements')
-    .select('id', { count: 'exact', head: true })
+    .select('id, payment_status')
     .eq('participant_id', id);
-  const settlementCount = count ?? 0;
+  const settlementCount = settlements?.length ?? 0;
 
-  const hasSettlement = settlementCount > 0 ||
-    ['docs_submitted', 'payment_requested', 'paid'].includes(p.settlement_status);
-
-  // Require name confirmation for settlement-included deletions
-  if (hasSettlement && confirm_name !== p.name) {
+  // Block deletion if paid settlement exists — cannot delete (RESTRICT FK)
+  const hasPaidSettlement = settlements?.some(s => s.payment_status === 'paid') ?? false;
+  if (hasPaidSettlement) {
     return NextResponse.json({
-      error: '정산 정보가 포함되어 있습니다. 참여자 이름을 정확히 입력해주세요.',
-      code: 'confirm_required',
+      error: '지급 완료된 정산이 있는 참여자는 삭제할 수 없습니다. 보관 처리를 사용하세요.',
+      code: 'paid_settlement',
+      action: 'archive',
     }, { status: 400 });
   }
 
-  // Log BEFORE deleting (FK constraint)
+  const hasSettlementStatus = ['docs_submitted', 'payment_waiting', 'payment_requested', 'paid'].includes(p.settlement_status);
+  const hasConsent = p.consent_status === 'agreed';
+  const hasRecords = settlementCount > 0 || hasSettlementStatus || hasConsent;
+
+  // Block deletion if records exist — suggest archive instead
+  if (hasRecords && confirm_name !== p.name) {
+    const reason = hasSettlementStatus || settlementCount > 0
+      ? '정산 기록이 있는 참여자입니다. 보관 처리를 사용하거나, 삭제하려면 이름을 정확히 입력해주세요.'
+      : '동의서 제출 기록이 있는 참여자입니다. 보관 처리를 사용하거나, 삭제하려면 이름을 정확히 입력해주세요.';
+    return NextResponse.json({
+      error: reason,
+      code: 'confirm_required',
+      action: 'archive',
+      details: {
+        consent: hasConsent,
+        settlement_status: hasSettlementStatus,
+        settlement_records: settlementCount,
+      },
+    }, { status: 400 });
+  }
+
+  // Log BEFORE deleting
   await supabaseAdmin.from('inf_access_logs').insert({
     actor_id: user.id,
     participant_id: id,
@@ -224,7 +298,7 @@ export async function DELETE(req: NextRequest) {
     action: `name=${p.name}, consent=${p.consent_status}, settlement=${p.settlement_status}, settlement_records=${settlementCount}`,
   });
 
-  // Cascade delete: settlements → participant
+  // Delete settlements first (RESTRICT FK requires manual cleanup)
   if (settlementCount > 0) {
     await supabaseAdmin.from('inf_settlements').delete().eq('participant_id', id);
   }

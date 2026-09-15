@@ -22,6 +22,7 @@ interface SettlementPageData {
   content_display: string | null;
   published_url: string | null;
   planned_upload_date: string | null;
+  planned_payment_date: string | null;
   tax_rates: Record<string, number>;
   guidance: {
     input_notice: string;
@@ -34,7 +35,8 @@ interface SettlementPageData {
   settlement?: {
     tax_type: string;
     tax_rate: number;
-    tax_amount: number;
+    income_tax_amount?: number;
+    local_tax_amount?: number;
     gross_amount: number;
     net_amount: number;
   } | null;
@@ -140,9 +142,11 @@ export default function SettlementFormClient({ token }: { token: string }) {
 
   // File upload state — P0-3
   const [bizRegFile, setBizRegFile] = useState<File | null>(null);
+  const [identityFile, setIdentityFile] = useState<File | null>(null);
   const [fileUploading, setFileUploading] = useState(false);
   const [fileUploaded, setFileUploaded] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const identityFileInputRef = useRef<HTMLInputElement>(null);
 
   // Toast state for copy feedback
   const [copiedField, setCopiedField] = useState<string | null>(null);
@@ -240,6 +244,7 @@ export default function SettlementFormClient({ token }: { token: string }) {
     if (taxType === 'business_income') {
       if (!realName.trim() || !ssn.trim()) return false;
       if (ssn.length !== 13) return false;
+      if (!identityFile) return false; // 신분증 필수
     }
     if (taxType === 'tax_invoice' || taxType === 'tax_exempt_invoice' || taxType === 'simplified_business') {
       if (!businessName.trim() || !businessReg.trim()) return false;
@@ -287,11 +292,20 @@ export default function SettlementFormClient({ token }: { token: string }) {
       });
 
       if (res.ok) {
-        // Upload biz reg file if attached (non-blocking — form submission already succeeded)
+        // Upload files (non-blocking — form submission already succeeded)
         if (bizRegFile) {
           try {
             const fd = new FormData();
             fd.append('file', bizRegFile);
+            fd.append('doc_type', 'biz_reg_cert');
+            await fetch(`/api/public/settlement/${token}`, { method: 'PUT', body: fd });
+          } catch { /* file upload failure is non-critical */ }
+        }
+        if (identityFile) {
+          try {
+            const fd = new FormData();
+            fd.append('file', identityFile);
+            fd.append('doc_type', 'identity_doc');
             await fetch(`/api/public/settlement/${token}`, { method: 'PUT', body: fd });
           } catch { /* file upload failure is non-critical */ }
         }
@@ -309,24 +323,26 @@ export default function SettlementFormClient({ token }: { token: string }) {
     }
   };
 
-  // Tax calculation preview
+  // Tax calculation preview — matches calcTaxBreakdown in metrics.ts
   const getTaxPreview = () => {
     if (!data || !taxType) return null;
-    const rate = data.tax_rates[taxType] ?? 0;
+    if (taxType === 'business_income') {
+      const incomeTax = Math.floor(data.fee * 0.03);
+      const localTax = Math.floor(incomeTax * 0.1);
+      const totalTax = incomeTax + localTax;
+      return { rate: 3.3, taxAmount: totalTax, incomeTax, localTax, netAmount: data.fee - totalTax, isVat: false, isExempt: false };
+    }
     if (taxType === 'tax_invoice') {
-      // VAT is added on top — rate from settings
       const vatPct = data.tax_rates.vat ?? 10;
       const vatAmount = Math.round(data.fee * vatPct / 100);
       const totalInvoice = data.fee + vatAmount;
-      return { rate: vatPct, taxAmount: vatAmount, netAmount: totalInvoice, isVat: true, isExempt: false };
+      return { rate: vatPct, taxAmount: vatAmount, incomeTax: 0, localTax: 0, netAmount: totalInvoice, isVat: true, isExempt: false };
     }
     if (taxType === 'tax_exempt_invoice') {
-      // No VAT, no withholding — full amount invoice
-      return { rate: 0, taxAmount: 0, netAmount: data.fee, isVat: false, isExempt: true };
+      return { rate: 0, taxAmount: 0, incomeTax: 0, localTax: 0, netAmount: data.fee, isVat: false, isExempt: true };
     }
-    const taxAmount = Math.round(data.fee * rate / 100);
-    const netAmount = data.fee - taxAmount;
-    return { rate, taxAmount, netAmount, isVat: false, isExempt: false };
+    // simplified_business
+    return { rate: 0, taxAmount: 0, incomeTax: 0, localTax: 0, netAmount: data.fee, isVat: false, isExempt: false };
   };
 
   // Holder mismatch warning
@@ -444,7 +460,7 @@ export default function SettlementFormClient({ token }: { token: string }) {
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#9AA2AA' }}>원고료</span><span>{formatFee(s.gross_amount)}</span></div>
                   {s.tax_type === 'tax_invoice' ? (
                     <>
-                      <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#9AA2AA' }}>부가세 ({s.tax_rate}%)</span><span>+{formatFee(s.tax_amount)}</span></div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#9AA2AA' }}>부가세 ({s.tax_rate}%)</span><span>+{formatFee(s.net_amount - s.gross_amount)}</span></div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600, color: '#1A1D21', borderTop: '1px solid #EDF0F3', paddingTop: 6, marginTop: 4 }}>
                         <span>세금계산서 발행액</span><span>{formatFee(s.net_amount)}</span>
                       </div>
@@ -453,9 +469,10 @@ export default function SettlementFormClient({ token }: { token: string }) {
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600, color: '#1A1D21', borderTop: '1px solid #EDF0F3', paddingTop: 6, marginTop: 4 }}>
                       <span>계산서 발행액</span><span>{formatFee(s.net_amount)}</span>
                     </div>
-                  ) : s.tax_rate > 0 ? (
+                  ) : s.tax_type === 'business_income' ? (
                     <>
-                      <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#9AA2AA' }}>원천징수 ({s.tax_rate}%)</span><span style={{ color: '#D9534F' }}>-{formatFee(s.tax_amount)}</span></div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#9AA2AA' }}>소득세 (3%)</span><span style={{ color: '#D9534F' }}>-{formatFee(s.income_tax_amount ?? Math.floor(s.gross_amount * 0.03))}</span></div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#9AA2AA' }}>지방소득세 (0.3%)</span><span style={{ color: '#D9534F' }}>-{formatFee(s.local_tax_amount ?? Math.floor(Math.floor(s.gross_amount * 0.03) * 0.1))}</span></div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600, color: '#1A1D21', borderTop: '1px solid #EDF0F3', paddingTop: 6, marginTop: 4 }}>
                         <span>실지급액</span><span>{formatFee(s.net_amount)}</span>
                       </div>
@@ -466,6 +483,9 @@ export default function SettlementFormClient({ token }: { token: string }) {
                     </div>
                   )}
                 </div>
+              )}
+              {data?.planned_payment_date && (
+                <div style={{ marginTop: 8 }}><span style={{ color: '#9AA2AA' }}>지급 예정일:</span> {data.planned_payment_date}</div>
               )}
               {s?.tax_type === 'business_income' && (
                 <div style={{ marginTop: 12, padding: '10px 12px', background: '#F7FAFD', borderRadius: 8, border: '1px solid #D6E4F0', fontSize: 12.5, color: '#61686F', lineHeight: 1.6 }}>
@@ -516,9 +536,10 @@ export default function SettlementFormClient({ token }: { token: string }) {
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600, color: '#1A1D21', borderTop: '1px solid #EDF0F3', paddingTop: 6, marginTop: 4 }}>
                       <span>계산서 발행액</span><span>{formatFee(taxPreview.netAmount)}</span>
                     </div>
-                  ) : taxPreview.rate > 0 ? (
+                  ) : taxPreview.incomeTax > 0 ? (
                     <>
-                      <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#9AA2AA' }}>원천징수 ({taxPreview.rate}%)</span><span style={{ color: '#D9534F' }}>-{formatFee(taxPreview.taxAmount)}</span></div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#9AA2AA' }}>소득세 (3%)</span><span style={{ color: '#D9534F' }}>-{formatFee(taxPreview.incomeTax)}</span></div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#9AA2AA' }}>지방소득세 (0.3%)</span><span style={{ color: '#D9534F' }}>-{formatFee(taxPreview.localTax)}</span></div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600, color: '#1A1D21', borderTop: '1px solid #EDF0F3', paddingTop: 6, marginTop: 4 }}>
                         <span>실지급액</span><span>{formatFee(taxPreview.netAmount)}</span>
                       </div>
@@ -657,10 +678,16 @@ export default function SettlementFormClient({ token }: { token: string }) {
             <span style={{ fontWeight: 500, color: '#1A1D21' }}>{formatDate(data.planned_upload_date)}</span>
           </div>
         )}
-        <div style={{ ...infoRow, borderBottom: 'none' }}>
+        <div style={infoRow}>
           <span style={{ color: '#9AA2AA' }}>원고료</span>
           <span style={{ fontWeight: 600, color: '#1A1D21' }}>{formatFee(data.fee)}</span>
         </div>
+        {data.planned_payment_date && (
+          <div style={{ ...infoRow, borderBottom: 'none' }}>
+            <span style={{ color: '#9AA2AA' }}>지급 예정일</span>
+            <span style={{ fontWeight: 500, color: '#1A1D21' }}>{data.planned_payment_date}</span>
+          </div>
+        )}
       </div>
 
       {/* 2. 세금 신고 방식 — tabs */}
@@ -833,6 +860,53 @@ export default function SettlementFormClient({ token }: { token: string }) {
                       <div style={{ fontSize: 12, color: '#9AA2AA', marginTop: 4 }}>{ssn.length}/13자리</div>
                     )}
                   </div>
+                  {/* Identity document upload (사업소득) */}
+                  <div>
+                    <label style={labelStyle}>신분증 사본 첨부 <span style={{ fontSize: 11, color: '#D9534F', fontWeight: 400 }}>(필수)</span></label>
+                    <input
+                      ref={identityFileInputRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,application/pdf"
+                      style={{ display: 'none' }}
+                      onChange={(e) => {
+                        const f = e.target.files?.[0] ?? null;
+                        if (f && f.size > 5 * 1024 * 1024) {
+                          setCopiedField('5MB 이하 파일만 가능');
+                          setTimeout(() => setCopiedField(null), 2000);
+                          return;
+                        }
+                        setIdentityFile(f);
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => identityFileInputRef.current?.click()}
+                      style={{
+                        width: '100%', height: 44, border: '1px dashed #D6E4F0', borderRadius: 10,
+                        background: identityFile ? '#F7FAFD' : '#FFFFFF', cursor: 'pointer',
+                        fontSize: 13, color: identityFile ? '#4A7DB5' : '#9AA2AA',
+                        fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                      }}
+                    >
+                      {identityFile ? (
+                        <>{identityFile.name} <span style={{ fontSize: 11, color: '#9AA2AA' }}>({(identityFile.size / 1024).toFixed(0)}KB)</span></>
+                      ) : (
+                        <>파일 선택 (JPG, PNG, PDF)</>
+                      )}
+                    </button>
+                    {identityFile && (
+                      <button
+                        type="button"
+                        onClick={() => { setIdentityFile(null); if (identityFileInputRef.current) identityFileInputRef.current.value = ''; }}
+                        style={{ fontSize: 12, color: '#D9534F', background: 'none', border: 'none', cursor: 'pointer', marginTop: 4, padding: 0 }}
+                      >
+                        삭제
+                      </button>
+                    )}
+                    <div style={{ fontSize: 11, color: '#9AA2AA', marginTop: 4, lineHeight: 1.5 }}>
+                      주민등록증, 운전면허증, 여권 중 택 1
+                    </div>
+                  </div>
                 </>
               ) : (
                 <>
@@ -935,9 +1009,10 @@ export default function SettlementFormClient({ token }: { token: string }) {
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600, color: '#1A1D21', borderTop: '1px solid #EDF0F3', paddingTop: 6, marginTop: 4 }}>
                     <span>계산서 발행액</span><span>{formatFee(taxPreview.netAmount)}</span>
                   </div>
-                ) : taxPreview.rate > 0 ? (
+                ) : taxPreview.incomeTax > 0 ? (
                   <>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>원천징수 ({taxPreview.rate}%)</span><span style={{ color: '#D9534F' }}>-{formatFee(taxPreview.taxAmount)}</span></div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>소득세 (3%)</span><span style={{ color: '#D9534F' }}>-{formatFee(taxPreview.incomeTax)}</span></div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>지방소득세 (0.3%)</span><span style={{ color: '#D9534F' }}>-{formatFee(taxPreview.localTax)}</span></div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600, color: '#1A1D21', borderTop: '1px solid #EDF0F3', paddingTop: 6, marginTop: 4 }}>
                       <span>실지급액</span><span>{formatFee(taxPreview.netAmount)}</span>
                     </div>
@@ -945,6 +1020,11 @@ export default function SettlementFormClient({ token }: { token: string }) {
                 ) : (
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600, color: '#1A1D21', borderTop: '1px solid #EDF0F3', paddingTop: 6, marginTop: 4 }}>
                     <span>실지급액</span><span>{formatFee(taxPreview.netAmount)}</span>
+                  </div>
+                )}
+                {data.planned_payment_date && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4, fontSize: 12.5, color: '#9AA2AA' }}>
+                    <span>지급 예정일</span><span>{data.planned_payment_date}</span>
                   </div>
                 )}
               </div>

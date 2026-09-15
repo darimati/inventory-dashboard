@@ -96,12 +96,69 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PUT(req: NextRequest) {
-  await requireAdmin();
+  const user = await requireAdmin();
   const body = await req.json();
+
+  // Handle archive/unarchive actions
+  if (body.action === 'archive' || body.action === 'unarchive') {
+    if (!body.id) {
+      return NextResponse.json({ error: 'id required' }, { status: 400 });
+    }
+    const isArchived = body.action === 'archive';
+    const { data, error } = await supabaseAdmin
+      .from('inf_campaigns')
+      .update({ is_archived: isArchived })
+      .eq('id', body.id)
+      .select()
+      .single();
+    if (error) {
+      if (error.message?.includes('is_archived')) {
+        return NextResponse.json({ error: 'is_archived 컬럼이 아직 없습니다. 마이그레이션을 먼저 실행해주세요.' }, { status: 500 });
+      }
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+    // Log archive action for all participants
+    const { data: parts } = await supabaseAdmin
+      .from('inf_participants')
+      .select('id')
+      .eq('campaign_id', body.id);
+    for (const p of parts ?? []) {
+      await supabaseAdmin.from('inf_access_logs').insert({
+        actor_id: user.id,
+        participant_id: p.id,
+        field_name: 'campaign_is_archived',
+        action: body.action,
+      });
+    }
+    return NextResponse.json(data);
+  }
+
   const { id, ...updates } = body;
 
   if (!id) {
     return NextResponse.json({ error: 'id required' }, { status: 400 });
+  }
+
+  // Log budget changes to inf_budget_history
+  if (updates.budget !== undefined) {
+    const { data: current } = await supabaseAdmin
+      .from('inf_campaigns')
+      .select('budget')
+      .eq('id', id)
+      .single();
+    if (current && Number(current.budget) !== Number(updates.budget)) {
+      try {
+        await supabaseAdmin.from('inf_budget_history').insert({
+          campaign_id: id,
+          field_name: 'budget',
+          old_value: current.budget,
+          new_value: updates.budget,
+          reason: updates.budget_change_reason || null,
+          changed_by: user.id,
+        });
+      } catch { /* Graceful — table may not exist yet */ }
+      delete updates.budget_change_reason;
+    }
   }
 
   let result = await supabaseAdmin
@@ -157,8 +214,17 @@ export async function DELETE(req: NextRequest) {
   const participants = parts ?? [];
   const participantIds = participants.map((p: any) => p.id);
   const consentCount = participants.filter((p: any) => p.consent_status === 'agreed').length;
+  const hasPaidParticipant = participants.some((p: any) => p.settlement_status === 'paid');
+  if (hasPaidParticipant) {
+    return NextResponse.json({
+      error: '지급 완료된 참여자가 있는 캠페인은 삭제할 수 없습니다. 보관 처리를 사용하세요.',
+      code: 'paid_settlement',
+      action: 'archive',
+    }, { status: 400 });
+  }
+
   const hasSettlementStatus = participants.some((p: any) =>
-    ['docs_submitted', 'payment_requested', 'paid'].includes(p.settlement_status)
+    ['docs_submitted', 'payment_waiting', 'payment_requested', 'paid'].includes(p.settlement_status)
   );
 
   let settlementCount = 0;
@@ -171,12 +237,22 @@ export async function DELETE(req: NextRequest) {
   }
 
   const hasSettlement = hasSettlementStatus || settlementCount > 0;
+  const hasRecords = participants.length > 0;
 
-  // Require name confirmation for settlement-included deletions
-  if (hasSettlement && confirm_name !== campaign.name) {
+  // Block deletion if participants exist — suggest archive instead
+  if (hasRecords && confirm_name !== campaign.name) {
+    const reason = hasSettlement
+      ? '정산 기록이 있는 캠페인입니다. 보관 처리를 사용하거나, 삭제하려면 캠페인 이름을 정확히 입력해주세요.'
+      : '참여자가 있는 캠페인입니다. 보관 처리를 사용하거나, 삭제하려면 캠페인 이름을 정확히 입력해주세요.';
     return NextResponse.json({
-      error: '정산 정보가 포함된 캠페인입니다. 캠페인 이름을 정확히 입력해주세요.',
+      error: reason,
       code: 'confirm_required',
+      action: 'archive',
+      details: {
+        participants: participants.length,
+        consent: consentCount,
+        settlements: settlementCount,
+      },
     }, { status: 400 });
   }
 

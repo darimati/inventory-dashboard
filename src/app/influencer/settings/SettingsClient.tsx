@@ -57,6 +57,19 @@ export default function SettingsClient() {
   // 부가세율
   const [vatRate, setVatRate] = useState(10);
 
+  // 무결성 점검
+  const [integrityLoading, setIntegrityLoading] = useState(false);
+  const [integrityResult, setIntegrityResult] = useState<{
+    checked_at: string;
+    total_issues: number;
+    checks: Array<{
+      check: string;
+      severity: 'error' | 'warning';
+      description: string;
+      items: Array<{ id: string; detail: string }>;
+    }>;
+  } | null>(null);
+
   // 접근 관리 (비밀번호 변경)
   type PwStep = 'idle' | 'code-sent' | 'done';
   const [pwStep, setPwStep] = useState<PwStep>('idle');
@@ -701,6 +714,75 @@ export default function SettingsClient() {
             </div>
           </>
         )}
+
+        {/* 무결성 점검 */}
+        <div style={{ ...sectionStyle, borderTop: `2px solid ${colors.border}`, marginTop: 32 }}>
+          <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 4 }}>데이터 무결성 점검</h2>
+          <p style={{ fontSize: 12, color: colors.textMuted, marginBottom: 16 }}>
+            정산·예산 데이터의 정합성을 검사합니다. 발견된 이슈는 표시만 하며 자동 수정하지 않습니다.
+          </p>
+          <button
+            style={{
+              padding: '8px 20px',
+              background: colors.textPrimary,
+              color: '#fff',
+              border: 'none',
+              borderRadius: 8,
+              fontSize: 13,
+              cursor: 'pointer',
+              opacity: integrityLoading ? 0.5 : 1,
+            }}
+            disabled={integrityLoading}
+            onClick={async () => {
+              setIntegrityLoading(true);
+              try {
+                const res = await fetch('/api/influencer/integrity');
+                const data = await res.json();
+                setIntegrityResult(data);
+              } catch {
+                setMessage('점검 실행에 실패했습니다.');
+              } finally {
+                setIntegrityLoading(false);
+              }
+            }}
+          >
+            {integrityLoading ? '점검 중...' : '점검 실행'}
+          </button>
+
+          {integrityResult && (
+            <div style={{ marginTop: 16 }}>
+              <div style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 8 }}>
+                점검 시각: {new Date(integrityResult.checked_at).toLocaleString('ko-KR')}
+                {' · '}
+                {integrityResult.total_issues === 0
+                  ? <span style={{ color: colors.mint, fontWeight: 600 }}>이상 없음</span>
+                  : <span style={{ color: '#D9534F', fontWeight: 600 }}>{integrityResult.total_issues}건 발견</span>
+                }
+              </div>
+              {integrityResult.checks.map((check, i) => (
+                <div key={i} style={{
+                  border: `1px solid ${check.severity === 'error' ? '#FECACA' : '#FEF3C7'}`,
+                  background: check.severity === 'error' ? '#FEF2F2' : '#FFFBEB',
+                  borderRadius: 8,
+                  padding: '12px 16px',
+                  marginBottom: 8,
+                }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: check.severity === 'error' ? '#DC2626' : '#D97706', marginBottom: 4 }}>
+                    {check.severity === 'error' ? '[오류]' : '[경고]'} {check.description}
+                  </div>
+                  <ul style={{ margin: 0, paddingLeft: 20, fontSize: 12, color: colors.textSecondary }}>
+                    {check.items.slice(0, 5).map((item, j) => (
+                      <li key={j} style={{ marginBottom: 2 }}>{item.detail}</li>
+                    ))}
+                    {check.items.length > 5 && (
+                      <li style={{ color: colors.textMuted }}>외 {check.items.length - 5}건</li>
+                    )}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </AppShell>
   );

@@ -43,7 +43,12 @@ export function encrypt(plaintext: string): string {
  */
 export function decrypt(encoded: string): string {
   const key = getKey();
-  const buf = Buffer.from(encoded, 'base64');
+  // Supabase returns bytea columns as '\x' + hex — decode hex first to recover the base64 string
+  let base64Str = encoded;
+  if (encoded.startsWith('\\x') || encoded.startsWith('\\X')) {
+    base64Str = Buffer.from(encoded.slice(2), 'hex').toString('utf8');
+  }
+  const buf = Buffer.from(base64Str, 'base64');
 
   const iv = buf.subarray(0, IV_LEN);
   const tag = buf.subarray(buf.length - TAG_LEN);

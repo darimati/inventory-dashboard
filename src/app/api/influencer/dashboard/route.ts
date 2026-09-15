@@ -101,7 +101,7 @@ export async function GET() {
   const allActiveParts = (campaignsRaw ?? []).flatMap(
     (c: Record<string, unknown>) => {
       const parts = (c.inf_participants as Record<string, unknown>[]) ?? [];
-      return parts.filter((p) => p.status !== 'cancelled');
+      return parts.filter((p) => p.status !== 'cancelled' && !p.is_archived);
     },
   );
 
@@ -121,44 +121,57 @@ export async function GET() {
     (p) => (p.created_at as string) >= yearStart,
   );
 
+  // [FIX] 고료 집계: 유가 캠페인(fixed_fee, fixed_fee_rs) 참여자만
+  // 캠페인별 collab_type 맵 생성
+  const campaignCollabMap: Record<string, string> = {};
+  for (const c of campaignsRaw ?? []) {
+    campaignCollabMap[c.id as string] = (c.collab_type as string) || 'free_seeding';
+  }
+  const isPaidCampaign = (p: Record<string, unknown>) => {
+    const ct = (p.collab_type as string) || campaignCollabMap[p.campaign_id as string] || '';
+    return ct === 'fixed_fee' || ct === 'fixed_fee_rs';
+  };
+
   const monthlyContractProductCost = monthlyParts.reduce(
     (sum, r) => sum + (Number(r.product_cost) || 0), 0,
   );
-  const monthlyContractFee = monthlyParts.reduce(
-    (sum, r) => sum + (Number(r.fee) || 0), 0,
-  );
+  const monthlyContractFee = monthlyParts
+    .filter(isPaidCampaign)
+    .reduce((sum, r) => sum + (Number(r.fee) || 0), 0);
   const monthlyContractTotal = monthlyContractProductCost + monthlyContractFee;
 
   const annualContractProductCost = annualParts.reduce(
     (sum, r) => sum + (Number(r.product_cost) || 0), 0,
   );
-  const annualContractFee = annualParts.reduce(
-    (sum, r) => sum + (Number(r.fee) || 0), 0,
-  );
+  const annualContractFee = annualParts
+    .filter(isPaidCampaign)
+    .reduce((sum, r) => sum + (Number(r.fee) || 0), 0);
   const annualContractTotal = annualContractProductCost + annualContractFee;
 
   // ─── [FIX] 예산: E-5 로직 (monthly budget fallback) ───
   const settingsMonthlyBudget = (budgetSetting?.value as Record<string, number>)?.monthly ?? 0;
   const campaignBudgetSum = (campaignsRaw ?? [])
-    .filter((c: Record<string, unknown>) => c.status === 'active')
+    .filter((c: Record<string, unknown>) => c.status === 'active' && !c.is_archived)
     .reduce((sum: number, c: Record<string, unknown>) => sum + (Number(c.budget) || 0), 0);
   const { amount: monthlyBudget, isFallback: isBudgetFallback } = getMonthlyBudget(settingsMonthlyBudget, campaignBudgetSum);
 
   const annualBudget = (annualBudgetSetting?.value as Record<string, number>)?.amount ?? 0;
 
-  // 집행 예정 (업로드 확인 완료 + 미지급, 세전)
-  const monthlyConfirmedFee = monthlyParts.reduce(
-    (sum, r) => (r.published_url && r.settlement_status !== 'paid')
-      ? sum + (Number(r.fee) || 0) : sum, 0,
-  );
-  const annualConfirmedFee = annualParts.reduce(
-    (sum, r) => (r.published_url && r.settlement_status !== 'paid')
-      ? sum + (Number(r.fee) || 0) : sum, 0,
-  );
+  // 배정 예정 (업로드 확인 완료 + 미지급, 세전, 유가만)
+  const monthlyConfirmedFee = monthlyParts
+    .filter(isPaidCampaign)
+    .reduce((sum, r) => (r.published_url && r.settlement_status !== 'paid')
+      ? sum + (Number(r.fee) || 0) : sum, 0);
+  const annualConfirmedFee = annualParts
+    .filter(isPaidCampaign)
+    .reduce((sum, r) => (r.published_url && r.settlement_status !== 'paid')
+      ? sum + (Number(r.fee) || 0) : sum, 0);
 
-  // ─── [FIX] Product execution: fee=0 제외 (metrics.ts) ───
+  // ─── [FIX] Product execution: fee=0 제외, 유가만 (metrics.ts) ───
   const productExecution = calcProductExecution(
-    annualParts.map(p => ({ product: p.product, fee: Number(p.fee) || 0 })),
+    annualParts
+      .filter(isPaidCampaign)
+      .map(p => ({ product: p.product, fee: Number(p.fee) || 0 })),
   );
 
   // ─── KST dates (used by campaign summaries + checklist) ───
@@ -167,8 +180,8 @@ export async function GET() {
   const kstThreshold = new Date(kstNow.getTime() + 3 * 86400000);
   const dueThreshold = kstThreshold.toISOString().slice(0, 10);
 
-  // ─── Campaign summaries ───
-  const campaigns: DashboardCampaignSummary[] = (campaignsRaw ?? []).map((c: Record<string, unknown>) => {
+  // ─── Campaign summaries (보관 제외) ───
+  const campaigns: DashboardCampaignSummary[] = (campaignsRaw ?? []).filter((c: Record<string, unknown>) => !c.is_archived).map((c: Record<string, unknown>) => {
     const parts = (c.inf_participants as Record<string, unknown>[]) ?? [];
     const activeParts = parts.filter((p) => p.status !== 'cancelled');
     const skip = getSkipConfig(c as Record<string, unknown>);
@@ -362,6 +375,9 @@ export async function GET() {
         const sd = getScheduleDate(p, step);
         scheduledDate = sd.date;
         isConfirmed = sd.isConfirmed;
+      } else if (step === 'payment') {
+        scheduledDate = (p.planned_payment_date as string | null) ?? null;
+        isConfirmed = !!scheduledDate;
       }
 
       const diff = scheduledDate ? daysBetween(new Date(), scheduledDate) : null;
@@ -433,7 +449,7 @@ export async function GET() {
     annualContractTotal,
     annualContractFee,
     annualContractProductCost,
-    // 집행 예정 (세전)
+    // 배정 예정 (세전)
     monthlyConfirmedFee,
     annualConfirmedFee,
     // 예산

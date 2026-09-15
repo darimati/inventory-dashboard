@@ -480,13 +480,7 @@ export default function SubmissionsTab({ campaignId, participants, onRefresh }: 
                     <button style={btnSmall} onClick={() => window.open(latest.external_url!, '_blank')}>열기</button>
                   )}
                   {info.status === 'received' && (
-                    <>
-                      <button style={btnPrimary} onClick={() => handleApprove(latest!.id)}>확인 완료</button>
-                      <button style={btnSmall} onClick={() => { setRevisionModal({ assetId: latest!.id, stage: 'proposal', participantName }); setRevisionReason(''); setError(''); }}>수정 요청</button>
-                    </>
-                  )}
-                  {info.status === 'revision_requested' && (
-                    <button style={btnSmall} onClick={() => handleConfirmRevision(latest!.id)}>수정본 확인</button>
+                    <button style={btnPrimary} onClick={() => handleApprove(latest!.id)}>확인 완료</button>
                   )}
                 </>
               )}
@@ -501,7 +495,6 @@ export default function SubmissionsTab({ campaignId, participants, onRefresh }: 
                   {info.status === 'received' && (
                     <>
                       <button style={btnPrimary} onClick={() => handleApprove(latest!.id)}>확인 완료</button>
-                      <button style={btnSmall} onClick={() => { setRevisionModal({ assetId: latest!.id, stage: 'rough_cut', participantName }); setRevisionCategory(''); setRevisionDetail(''); setError(''); }}>수정 요청</button>
                     </>
                   )}
                 </>
@@ -608,57 +601,6 @@ export default function SubmissionsTab({ campaignId, participants, onRefresh }: 
           </tbody>
         </table>
       </div>
-
-      {/* ── Revision Request Modal ── */}
-      {revisionModal && (
-        <ModalOverlay onClose={() => !revisionSaving && setRevisionModal(null)}>
-          <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 16 }}>수정 요청</h3>
-          <p style={{ fontSize: 13, color: colors.textMuted, marginBottom: 12 }}>{revisionModal.participantName} · {SUBMISSION_STAGE_LABELS[revisionModal.stage]}</p>
-
-          {revisionModal.stage === 'proposal' ? (
-            <div>
-              <label style={labelStyle}>요청 사유 *</label>
-              <textarea
-                style={{ ...inputStyle, minHeight: 72 }}
-                value={revisionReason}
-                onChange={e => setRevisionReason(e.target.value)}
-                placeholder="수정 요청 사유를 입력하세요"
-              />
-            </div>
-          ) : (
-            <div>
-              <label style={labelStyle}>요청 사유 *</label>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 8 }}>
-                {REVIEW_CATEGORIES.map(cat => (
-                  <label key={cat} style={{ fontSize: 13, display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-                    <input type="radio" name="rev_cat" checked={revisionCategory === cat} onChange={() => setRevisionCategory(cat)} />
-                    {cat}
-                  </label>
-                ))}
-              </div>
-              {revisionCategory === '기타' && (
-                <div style={{ marginTop: 8 }}>
-                  <label style={labelStyle}>상세 내용 *</label>
-                  <textarea
-                    style={{ ...inputStyle, minHeight: 56 }}
-                    value={revisionDetail}
-                    onChange={e => setRevisionDetail(e.target.value)}
-                    placeholder="상세 내용을 입력하세요"
-                  />
-                </div>
-              )}
-            </div>
-          )}
-
-          {error && <p style={{ color: colors.coral, fontSize: 13, marginTop: 8 }}>{error}</p>}
-          <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 16 }}>
-            <button style={btnSmall} onClick={() => setRevisionModal(null)} disabled={revisionSaving}>취소</button>
-            <button style={btnPrimary} onClick={handleRevisionSubmit} disabled={revisionSaving}>
-              {revisionSaving ? '저장 중...' : '저장'}
-            </button>
-          </div>
-        </ModalOverlay>
-      )}
 
       {/* ── Proposal Link Modal ── */}
       {proposalModal && (

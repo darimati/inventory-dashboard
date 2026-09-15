@@ -23,6 +23,8 @@ const FIELD_LABELS: Record<string, string> = {
 };
 
 const ACTION_LABELS: Record<string, string> = {
+  register_step: '단계 등록',
+  delete_step: '단계 삭제',
   check_step: '단계 확인',
   undo_step: '단계 취소',
   revision_requested: '수정 요청',
@@ -32,7 +34,7 @@ const ACTION_LABELS: Record<string, string> = {
 };
 
 function getActionChip(action: string): { label: string; variant: StatusColor } {
-  if (action === 'undo_step' || action === 'reset_progress') {
+  if (action === 'undo_step' || action === 'delete_step' || action === 'reset_progress') {
     return { label: ACTION_LABELS[action] ?? action, variant: 'coral' };
   }
   if (action === 'revision_requested') {
@@ -41,8 +43,8 @@ function getActionChip(action: string): { label: string; variant: StatusColor } 
   if (action === 'decrypt' || action === 'export_excel') {
     return { label: ACTION_LABELS[action] ?? action, variant: 'blue' };
   }
-  if (action === 'check_step') {
-    return { label: '단계 확인', variant: 'mint' };
+  if (action === 'check_step' || action === 'register_step') {
+    return { label: ACTION_LABELS[action] ?? action, variant: 'mint' };
   }
   if (action.startsWith('batch_update_') || action.startsWith('update_')) {
     const status = action.replace('batch_update_', '').replace('update_', '');
@@ -217,7 +219,7 @@ export default function HistoryClient() {
               }}>
                 {log.action.startsWith('batch_update_') || log.action.startsWith('update_')
                   ? log.action.replace('batch_update_', '').replace('update_', '')
-                  : (log.action === 'check_step' || log.action === 'undo_step' || log.action === 'revision_requested'
+                  : (log.action === 'check_step' || log.action === 'undo_step' || log.action === 'register_step' || log.action === 'delete_step' || log.action === 'revision_requested'
                     ? (FIELD_LABELS[log.field_name] ?? log.field_name)
                     : (log.action !== 'decrypt' && log.action !== 'export_excel' && log.action !== 'reset_progress'
                       ? log.action

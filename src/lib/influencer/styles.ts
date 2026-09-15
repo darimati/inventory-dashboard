@@ -36,8 +36,12 @@ export const colors = {
 
   // 3-color status system (from /commerce product colors)
   coral: '#D9534F',
+  coralDark: '#B03F3B',    // commerce daysColor ≤21일
   coralLight: '#FCEFEF',
   coralBorder: '#F3D5D5',
+
+  // Amber (from commerce --amber / daysColor 22-31일)
+  amber: '#E09B3D',
 
   blue: '#4A7DB5',
   blueLight: '#EDF3FA',
@@ -53,17 +57,21 @@ export const colors = {
 
   // Track/segment backgrounds
   track: '#F1F3F6',
+
+  // Stack bar (commerce donut chart 3-color)
+  seg1: '#9DC3E6',
+  seg2: '#7FCDBB',
+  seg3: '#F2A0A0',
 } as const;
 
 /* ── Typography ───────────────────────────────────────── */
 
 export const typo = {
-  pageTitle: { fontSize: 22, fontWeight: 600, letterSpacing: '-0.01em' } as const,
-  sectionTitle: { fontSize: 16, fontWeight: 600 } as const,
+  pageTitle: { fontSize: 26, fontWeight: 700, letterSpacing: '-0.03em' } as const,
+  sectionTitle: { fontSize: 15, fontWeight: 600 } as const,
   body: { fontSize: 14, fontWeight: 400 } as const,
   meta: { fontSize: 12, fontWeight: 400 } as const,
-  kpiValue: { fontSize: 28, fontWeight: 700, letterSpacing: '-0.03em', fontVariantNumeric: 'tabular-nums' as const } as const,
-  // KPI unit = 60% of kpiValue fontSize = 17px
+  kpiValue: { fontSize: 27, fontWeight: 650, letterSpacing: '-0.03em', fontVariantNumeric: 'tabular-nums' as const } as const,
   kpiUnit: { fontSize: 17, fontWeight: 600, color: colors.textInfo } as const,
   tableHeader: { fontSize: 12, fontWeight: 450, color: colors.textInfo } as const,
   tableBody: { fontSize: 13.5, fontWeight: 400, color: colors.textSecondary } as const,
@@ -76,7 +84,7 @@ export const spacing = {
   cardPadding: 24,  // card inner padding
   tableCellPx: 20,  // table cell horizontal padding
   tableCellPy: 0,   // will be controlled by row height
-  tableRowH: 64,    // fixed row height
+  tableRowH: 44,    // fixed row height
 } as const;
 
 /* ── Radii ────────────────────────────────────────────── */
@@ -84,7 +92,7 @@ export const spacing = {
 export const radii = {
   card: 12,
   button: 8,
-  chip: 6,
+  chip: 12,
   small: 4,
 } as const;
 
@@ -114,10 +122,9 @@ export function chipStyle(variant: StatusColor): React.CSSProperties {
   return {
     display: 'inline-flex',
     alignItems: 'center',
-    height: chipHeight,
-    padding: '0 8px',
-    borderRadius: radii.chip,
-    fontSize: 12,
+    padding: '3px 10px',
+    borderRadius: 12,
+    fontSize: 11.5,
     fontWeight: 500,
     whiteSpace: 'nowrap',
     background: bg,
@@ -142,12 +149,12 @@ export function btnStyle(size: 'sm' | 'md' = 'sm', active = false): React.CSSPro
     justifyContent: 'center',
     gap: 4,
     height: btnHeight[size],
-    padding: size === 'sm' ? '0 12px' : '0 16px',
+    padding: size === 'sm' ? '0 10px' : '0 16px',
     border: `1px solid ${active ? colors.accent : colors.border}`,
-    borderRadius: radii.button,
+    borderRadius: 7,
     background: active ? colors.accentLight : colors.surface,
     color: active ? colors.accentDark : colors.textSecondary,
-    fontSize: 13,
+    fontSize: size === 'sm' ? 12.5 : 13,
     fontWeight: 500,
     cursor: 'pointer',
     whiteSpace: 'nowrap',

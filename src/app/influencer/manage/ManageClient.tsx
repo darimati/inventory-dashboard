@@ -11,15 +11,10 @@ import {
   CHANNEL_LABELS,
   CONTENT_FORMAT_LABELS,
   SETTLEMENT_STAGE_LABELS,
-  REVIEW_CATEGORIES,
   FINAL_CONTENT_TYPES,
-  SUBMISSION_STATUS_LABELS,
-  SUBMISSION_STATUS_COLORS,
-  SUBMISSION_STAGE_LABELS,
   isPaidCollab,
   getSettlementStatus,
-  getSubmissionDisplayStatus,
-  getNextSubmissionAction,
+  getSettlementDisplayStatus,
   formatContentFormats,
   type CollabType,
   type CampaignStatus,
@@ -30,11 +25,10 @@ import {
   type InfluencerProduct,
   type ProductSet,
   type SettlementStage,
-  type SubmissionAsset,
-  type SubmissionStage,
 } from '@/lib/types/influencer';
 import { formatFileSize, formatKRW } from '@/lib/helpers';
-import { isParticipantCompletedSimple } from '@/lib/influencer/metrics';
+import { isParticipantCompletedSimple, getParticipantProgress, getSkipConfig, type ParticipantProgress } from '@/lib/influencer/metrics';
+import { daysBetween, formatDDay, getDDayStyle } from '@/lib/dday';
 import { colors, typo, spacing, radii } from '@/lib/influencer/styles';
 import { Chip, Btn, Card, Drawer, Toast, MoreButton, Menu } from '@/lib/influencer/ui';
 
@@ -88,6 +82,7 @@ interface Participant {
   planned_draft_date: string | null;
   planned_edit_date: string | null;
   planned_upload_date: string | null;
+  planned_payment_date: string | null;
   confirmed_draft_date: string | null;
   confirmed_edit_date: string | null;
   confirmed_upload_date: string | null;
@@ -105,7 +100,7 @@ interface Participant {
   bank_name: string | null;
   bank_holder: string | null;
   business_name: string | null;
-  _deliverables?: Record<string, { link_url?: string; memo?: string; status?: string; received_at?: string; revision_note?: string; review_category?: string; version?: number; file_url?: string; original_filename?: string; mime_type?: string; file_size?: number; asset_type?: string; content_type?: string; history?: Array<Record<string, unknown>> }>;
+  _deliverables?: Record<string, { link_url?: string; memo?: string; received_at?: string; file_url?: string; original_filename?: string; mime_type?: string; file_size?: number; content_type?: string }>;
 }
 
 interface Campaign {
@@ -180,9 +175,6 @@ export default function ManageClient() {
     memo: '',
   });
 
-  // Submission assets (keyed by campaign id)
-  const [submissionAssets, setSubmissionAssets] = useState<Record<string, SubmissionAsset[]>>({});
-
   // Detail modal
   const [detailPart, setDetailPart] = useState<Participant | null>(null);
   const [detailCampaign, setDetailCampaign] = useState<Campaign | null>(null);
@@ -239,9 +231,6 @@ export default function ManageClient() {
     link: string;
     receivedDate: string;
     memo: string;
-    processType: 'approved' | 'revision_requested';
-    revisionNote: string;
-    reviewCategory: string;
     noLink: boolean;
     // File upload fields
     fileUrl: string;
@@ -274,18 +263,6 @@ export default function ManageClient() {
   } | null>(null);
   const manageToastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Submit asset modal (register new submission from table)
-  const [submitModal, setSubmitModal] = useState<{
-    participantId: string;
-    participantName: string;
-    campaignId: string;
-    stage: SubmissionStage;
-    stageLabel: string;
-  } | null>(null);
-  const [submitLink, setSubmitLink] = useState('');
-  const [submitSaving, setSubmitSaving] = useState(false);
-  const [submitError, setSubmitError] = useState('');
-
   // Drag-and-drop file upload state
 
   // Fetch settings on mount
@@ -301,17 +278,6 @@ export default function ManageClient() {
       .catch(() => {});
   }, []);
 
-  // Fetch submission assets for a campaign
-  const fetchSubmissionAssets = async (campaignId: string) => {
-    try {
-      const res = await fetch(`/api/influencer/submissions?campaign_id=${campaignId}`);
-      const data = await res.json();
-      if (data.assets) {
-        setSubmissionAssets(prev => ({ ...prev, [campaignId]: data.assets }));
-      }
-    } catch { /* ignore */ }
-  };
-
   const fetchCampaigns = async () => {
     try {
       const url = filter === 'all' ? '/api/influencer/campaigns' : `/api/influencer/campaigns?status=${filter}`;
@@ -319,8 +285,6 @@ export default function ManageClient() {
       if (!res.ok) { console.error('[fetchCampaigns] HTTP', res.status); }
       const data = await res.json();
       setCampaigns(Array.isArray(data) ? data : []);
-      // Refresh submission assets for expanded campaigns
-      expanded.forEach(campaignId => fetchSubmissionAssets(campaignId));
     } catch (e) {
       console.error('[fetchCampaigns] error:', e);
       setCampaigns([]);
@@ -330,15 +294,6 @@ export default function ManageClient() {
   };
 
   useEffect(() => { fetchCampaigns(); }, [filter]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Fetch submissions when campaigns expand
-  useEffect(() => {
-    expanded.forEach(campaignId => {
-      if (!submissionAssets[campaignId]) {
-        fetchSubmissionAssets(campaignId);
-      }
-    });
-  }, [expanded]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const toggleExpand = (id: string) => {
     setExpanded((prev) => {
@@ -459,7 +414,7 @@ export default function ManageClient() {
       if (data.code === 'confirm_required') {
         setDeleteModal({ ...deleteModal, hasSettlement: true });
         setErrorMsg(data.error);
-        setTimeout(() => setErrorMsg(''), 4000);
+        setTimeout(() => setErrorMsg(''), 6000);
         return;
       }
       setErrorMsg(data.error || '삭제 실패');
@@ -469,6 +424,25 @@ export default function ManageClient() {
 
     setDeleteModal(null);
     if (detailPart?.id === deleteModal.id) { setDetailPart(null); setDetailCampaign(null); }
+    fetchCampaigns();
+  };
+
+  const handleArchive = async (type: 'campaign' | 'participant', id: string) => {
+    const endpoint = type === 'campaign'
+      ? '/api/influencer/campaigns'
+      : '/api/influencer/participants';
+    const res = await fetch(endpoint, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'archive', id }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setErrorMsg(data.error || '보관 처리 실패');
+      setTimeout(() => setErrorMsg(''), 4000);
+      return;
+    }
+    setDeleteModal(null);
     fetchCampaigns();
   };
 
@@ -676,10 +650,6 @@ export default function ManageClient() {
       setEditStepError(isUploadStep ? '콘텐츠 URL을 입력하세요' : '링크를 입력하세요');
       return;
     }
-    if (editStepModal.processType === 'revision_requested' && !editStepModal.revisionNote.trim()) {
-      setEditStepError('수정 요청 사유를 입력하세요');
-      return;
-    }
     if (isUploadStep && !editStepModal.contentType) {
       setEditStepError('콘텐츠 유형을 선택하세요');
       return;
@@ -693,9 +663,7 @@ export default function ManageClient() {
         link: editStepModal.noLink && !isFileStep ? '' : editStepModal.link.trim(),
         memo: editStepModal.memo.trim(),
         received_at: editStepModal.receivedDate ? new Date(editStepModal.receivedDate + 'T00:00:00+09:00').toISOString() : undefined,
-        status: editStepModal.processType,
-        revision_note: editStepModal.processType === 'revision_requested' ? editStepModal.revisionNote.trim() : undefined,
-        review_category: editStepModal.processType === 'revision_requested' ? editStepModal.reviewCategory : undefined,
+        status: 'approved',
       };
       // File fields
       if (editStepModal.fileUrl) {
@@ -724,12 +692,10 @@ export default function ManageClient() {
         const stepColMap: Record<string, string> = { draft: 'draft_received_at', edit: 'edit_received_at', upload: 'uploaded_at' };
         const key = stepColMap[editStepModal.step];
         const updated = { ...detailPart };
-        if (editStepModal.processType !== 'revision_requested') {
-          (updated as Record<string, unknown>)[key] = result.value;
-          if (editStepModal.step === 'upload' && editStepModal.link) {
-            updated.published_url = editStepModal.link.trim();
-            updated.status = 'published';
-          }
+        (updated as Record<string, unknown>)[key] = result.value;
+        if (editStepModal.step === 'upload' && editStepModal.link) {
+          updated.published_url = editStepModal.link.trim();
+          updated.status = 'published';
         }
         const newDlv = { ...(detailPart._deliverables || {}) };
         if (result.deliverable) {
@@ -739,13 +705,9 @@ export default function ManageClient() {
         setDetailPart(updated);
       }
       setEditStepModal(null);
-      const isUndo = editStepModal.processType !== 'revision_requested';
       showManageToast(
-        editStepModal.processType === 'revision_requested'
-          ? '수정 요청으로 기록했습니다'
-          : `${editStepModal.stepLabel} ${editStepModal.step === 'upload' ? '확인' : '수정'} 완료`,
-        isUndo ? () => {
-          // Undo the save
+        `${editStepModal.stepLabel} ${editStepModal.step === 'upload' ? '확인' : '컨펌'} 완료`,
+        () => {
           fetch('/api/influencer/participants/check-step', {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
@@ -758,7 +720,7 @@ export default function ManageClient() {
             fetchCampaigns();
             setManageToast(null);
           });
-        } : undefined,
+        },
       );
     } finally {
       setEditStepSaving(false);
@@ -808,59 +770,6 @@ export default function ManageClient() {
       setResetLoading(false);
     }
   };
-
-  // Inline approve asset (no modal)
-  const handleApproveAsset = async (assetId: string) => {
-    try {
-      const res = await fetch('/api/influencer/submissions/review', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ asset_id: assetId, action: 'approved' }),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: '알 수 없는 오류' }));
-        alert(err.error || '확인 완료 처리에 실패했습니다');
-        return;
-      }
-      // Refresh submission assets for all expanded campaigns
-      expanded.forEach(cid => fetchSubmissionAssets(cid));
-      showManageToast('확인 완료 처리했습니다');
-    } catch {
-      alert('네트워크 오류입니다. 다시 시도해주세요.');
-    }
-  };
-
-  // Submit new asset (from table [등록] button)
-  const handleSubmitAsset = async () => {
-    if (!submitModal || !submitLink.trim()) return;
-    setSubmitSaving(true);
-    setSubmitError('');
-    try {
-      const res = await fetch('/api/influencer/submissions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          participant_id: submitModal.participantId,
-          stage: submitModal.stage,
-          external_url: submitLink.trim(),
-        }),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: '알 수 없는 오류' }));
-        setSubmitError(err.error || '등록에 실패했습니다');
-        return;
-      }
-      fetchSubmissionAssets(submitModal.campaignId);
-      setSubmitModal(null);
-      setSubmitLink('');
-      showManageToast(`${submitModal.stageLabel} 등록 완료`);
-    } catch {
-      setSubmitError('네트워크 오류입니다. 다시 시도해주세요.');
-    } finally {
-      setSubmitSaving(false);
-    }
-  };
-
 
   const openUploadModal = (p: Participant) => {
     setUploadPartId(p.id);
@@ -1065,18 +974,18 @@ export default function ManageClient() {
     width: 520, maxHeight: '85vh', overflowY: 'auto',
   };
   const btnPrimary: React.CSSProperties = {
-    padding: '8px 20px', background: colors.accentDark, color: '#fff',
-    border: 'none', borderRadius: radii.button, fontSize: 13.5, fontWeight: 550,
+    padding: '8px 20px', background: '#1F2328', color: '#fff',
+    border: 'none', borderRadius: 7, fontSize: 13, fontWeight: 500,
     height: 36, cursor: 'pointer', fontFamily: 'var(--font)',
   };
   const btnGhost: React.CSSProperties = {
-    padding: '8px 16px', background: 'none', border: `1px solid ${colors.border}`,
-    borderRadius: radii.button, fontSize: 14, cursor: 'pointer', color: colors.textSecondary,
+    padding: '5px 10px', background: 'none', border: `1px solid ${colors.border}`,
+    borderRadius: 7, fontSize: 12.5, fontWeight: 500, cursor: 'pointer', color: colors.textSecondary,
     fontFamily: 'var(--font)',
   };
   const btnSmall: React.CSSProperties = {
     padding: '3px 10px', background: 'none', border: `1px solid ${colors.border}`,
-    borderRadius: radii.chip, fontSize: 12, cursor: 'pointer', color: colors.textSecondary,
+    borderRadius: 7, fontSize: 12, cursor: 'pointer', color: colors.textSecondary,
     whiteSpace: 'nowrap', fontFamily: 'var(--font)',
   };
   const toggleChipStyle = (active: boolean): React.CSSProperties => ({
@@ -1164,15 +1073,7 @@ export default function ManageClient() {
                     <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>
                       {c.month || ''}{c.month ? ' · ' : ''}참여자 {parts.length}명
                       {completedCount > 0 && ` · ${completedCount}명 완료`}
-                      {(() => {
-                        const pAssets = submissionAssets[c.id] || [];
-                        const needsReview = parts.filter(p => {
-                          const pa = pAssets.filter(a => a.participant_id === p.id);
-                          return (['proposal', 'rough_cut', 'final_upload'] as SubmissionStage[]).some(s => getSubmissionDisplayStatus(pa, s).status === 'received');
-                        }).length;
-                        return needsReview > 0 ? ` · 확인 필요 ${needsReview}건` : '';
-                      })()}
-                      {!allUnpaid && totalFee > 0 && ` · 집행 ${totalFee.toLocaleString()}원`}
+                      {!allUnpaid && totalFee > 0 && ` · 배정 ${totalFee.toLocaleString()}원`}
                       {!allUnpaid && c.budget > 0 && ` · 예산 ${c.budget.toLocaleString()}원`}
                       {!allUnpaid && c.budget > 0 && (
                         <span style={budgetPct > 100 ? { color: '#D9534F', fontWeight: 600 } : undefined}>
@@ -1233,144 +1134,123 @@ export default function ManageClient() {
 
                   {(() => {
                     const campCollab = c.collab_type || 'fixed_fee';
-                    const showProposal = campCollab !== 'free_seeding';
-                    const showRoughCut = campCollab !== 'free_seeding';
+                    const skip = getSkipConfig(c);
+                    const showProposal = !skip.skipDraft;
+                    const showRoughCut = !skip.skipEdit;
                     const showSettlement = isPaidCollab(campCollab);
                     const isFreeSeed = campCollab === 'free_seeding';
-                    const campAssets = submissionAssets[c.id] || [];
 
-                    // Sort participants: 1) has 확인필요 2) revision ≥3d 3) in-progress 4) completed
+                    // Build progress for each participant
+                    const progressMap = new Map<string, ParticipantProgress>();
+                    for (const p of parts) {
+                      progressMap.set(p.id, getParticipantProgress(p as unknown as Record<string, unknown>, p._deliverables || {}, skip));
+                    }
+
+                    // Sort: in-progress first, then completed last
                     const sorted = [...parts].sort((a, b) => {
-                      const aAssets = campAssets.filter(x => x.participant_id === a.id);
-                      const bAssets = campAssets.filter(x => x.participant_id === b.id);
-                      const stages: SubmissionStage[] = ['proposal', 'rough_cut', 'final_upload'];
-                      const hasReceived = (assets: SubmissionAsset[]) => stages.some(s => getSubmissionDisplayStatus(assets, s).status === 'received');
-                      const hasOverdue = (assets: SubmissionAsset[]) => stages.some(s => { const d = getSubmissionDisplayStatus(assets, s); return d.status === 'revision_requested' && (d.daysSinceRevision ?? 0) >= 3; });
-                      const allDone = (assets: SubmissionAsset[], part: Participant) => {
-                        const allApproved = stages.every(s => getSubmissionDisplayStatus(assets, s).status === 'approved' || getSubmissionDisplayStatus(assets, s).status === 'not_received');
-                        return allApproved && !!part.published_url;
-                      };
-
-                      const aR = hasReceived(aAssets) ? 0 : 1;
-                      const bR = hasReceived(bAssets) ? 0 : 1;
-                      if (aR !== bR) return aR - bR;
-
-                      const aO = hasOverdue(aAssets) ? 0 : 1;
-                      const bO = hasOverdue(bAssets) ? 0 : 1;
-                      if (aO !== bO) return aO - bO;
-
-                      const aD = allDone(aAssets, a) ? 1 : 0;
-                      const bD = allDone(bAssets, b) ? 1 : 0;
-                      return aD - bD;
+                      const pa = progressMap.get(a.id)!;
+                      const pb = progressMap.get(b.id)!;
+                      const aComplete = pa.currentStage === 'complete' ? 1 : 0;
+                      const bComplete = pb.currentStage === 'complete' ? 1 : 0;
+                      return aComplete - bComplete;
                     });
 
-                    // Submission cell renderer
-                    const STAGE_LABELS_MAP: Record<string, string> = { proposal: '기획안', rough_cut: '가편집본', final_upload: '최종 업로드' };
+                    // Step cell renderer using _deliverables + getParticipantProgress
+                    const fmtDate = (iso: string) => { const d = new Date(iso); return `${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`; };
+                    const stepDlvKey: Record<string, string> = { proposal: 'draft', roughCut: 'edit', upload: 'upload' };
+                    const stepLabels: Record<string, string> = { proposal: '기획안', roughCut: '가편집본', upload: '업로드' };
 
-                    const renderSubCell = (pId: string, stage: SubmissionStage, pName?: string) => {
-                      const pAssets = campAssets.filter(a => a.participant_id === pId);
-                      const ds = getSubmissionDisplayStatus(pAssets, stage);
-                      const latest = pAssets.filter(a => a.stage === stage).sort((a, b) => b.version - a.version)[0];
-                      const isOverdue = ds.status === 'revision_requested' && (ds.daysSinceRevision ?? 0) >= 3;
+                    const renderStepCell = (p: Participant, stepKey: 'proposal' | 'roughCut' | 'upload', progress: ParticipantProgress) => {
+                      const info = progress[stepKey];
+                      const isCurrentStage = progress.currentStage === stepKey;
+                      const dlvKey = stepDlvKey[stepKey];
+                      const dlv = (p._deliverables || {})[dlvKey];
 
-                      // Color rules per spec: only 확인 필요 = orange, 수정본 대기 3일+ = red, others = no bg
-                      const bg = ds.status === 'received' ? '#FDF4E7'
-                        : isOverdue ? '#FBE9E8'
-                        : undefined;
-                      const statusKey = isOverdue ? 'revision_overdue' : ds.status;
-                      const color = SUBMISSION_STATUS_COLORS[statusKey] || '#8A9199';
-
-                      if (ds.status === 'not_received') {
-                        const openRegister = () => {
-                          setSubmitModal({ participantId: pId, participantName: pName || '', campaignId: c.id, stage, stageLabel: STAGE_LABELS_MAP[stage] || stage });
-                          setSubmitLink('');
-                          setSubmitError('');
-                        };
+                      if (info.done) {
+                        const dateStr = info.date ? fmtDate(info.date) : '';
+                        const linkUrl = info.url;
                         return (
-                          <td style={{ verticalAlign: 'middle', padding: '8px 6px', textAlign: 'center' }}>
-                            <span
-                              style={{ fontSize: 11, color: '#9AA2AA', cursor: 'pointer', textDecoration: 'none' }}
-                              onClick={(e) => { e.stopPropagation(); openRegister(); }}
-                              onMouseEnter={(e) => { (e.target as HTMLElement).style.color = '#2563EB'; }}
-                              onMouseLeave={(e) => { (e.target as HTMLElement).style.color = '#9AA2AA'; }}
-                            >등록</span>
+                          <td key={stepKey} className="uc" style={{ textAlign: 'center', verticalAlign: 'middle', position: 'relative' }}>
+                            {linkUrl ? (
+                              <a href={linkUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#2563EB', textDecoration: 'none', fontSize: 12 }}>
+                                🔗 {dateStr}
+                              </a>
+                            ) : (
+                              <span style={{ color: '#22C55E', fontWeight: 500, fontSize: 12 }}>✓ {dateStr}</span>
+                            )}
+                            {/* Hover actions: 열기/수정/삭제 */}
+                            <div className="ua" style={{ display: 'none', position: 'absolute', top: 2, right: 2, gap: 3, zIndex: 5 }}>
+                              {linkUrl && (
+                                <button style={{ padding: '2px 6px', fontSize: 10, borderRadius: 4, border: '1px solid var(--border)', background: '#fff', cursor: 'pointer' }}
+                                  onClick={(e) => { e.stopPropagation(); window.open(linkUrl, '_blank'); }}>열기</button>
+                              )}
+                              <button style={{ padding: '2px 6px', fontSize: 10, borderRadius: 4, border: '1px solid var(--border)', background: '#fff', cursor: 'pointer' }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const kst = new Date(Date.now() + 9 * 3600000);
+                                  setEditStepModal({
+                                    participantId: p.id, step: dlvKey, stepLabel: stepLabels[stepKey],
+                                    link: (dlv?.link_url as string) || '', receivedDate: info.date?.slice(0, 10) || kst.toISOString().slice(0, 10),
+                                    memo: (dlv?.memo as string) || '', noLink: false,
+                                    fileUrl: (dlv?.file_url as string) || '', originalFilename: (dlv?.original_filename as string) || '',
+                                    mimeType: (dlv?.mime_type as string) || '', fileSize: (dlv?.file_size as number) || 0,
+                                    contentType: (dlv?.content_type as string) || '',
+                                  });
+                                  setEditStepError('');
+                                }}>수정</button>
+                              <button style={{ padding: '2px 6px', fontSize: 10, borderRadius: 4, border: 'none', background: '#B03F3B', color: '#fff', cursor: 'pointer' }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setUndoConfirmModal({ participantId: p.id, step: dlvKey, stepLabel: stepLabels[stepKey] });
+                                  setUndoConfirmError('');
+                                }}>삭제</button>
+                            </div>
                           </td>
                         );
                       }
 
-                      const fmtDate = (iso: string) => { const d = new Date(iso); return `${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`; };
+                      if (isCurrentStage) {
+                        return (
+                          <td key={stepKey} className="uc" style={{ textAlign: 'center', verticalAlign: 'middle', position: 'relative' }}>
+                            <Chip variant="gray">대기</Chip>
+                            <div className="ua" style={{ display: 'none', position: 'absolute', top: 2, right: 2, gap: 3, zIndex: 5 }}>
+                              <button style={{ padding: '2px 6px', fontSize: 10, borderRadius: 4, border: 'none', background: '#1A1D21', color: '#fff', cursor: 'pointer' }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const kst = new Date(Date.now() + 9 * 3600000);
+                                  setEditStepModal({
+                                    participantId: p.id, step: dlvKey, stepLabel: stepLabels[stepKey],
+                                    link: '', receivedDate: kst.toISOString().slice(0, 10), memo: '', noLink: false,
+                                    fileUrl: '', originalFilename: '', mimeType: '', fileSize: 0, contentType: '',
+                                  });
+                                  setEditStepError('');
+                                }}>등록</button>
+                            </div>
+                          </td>
+                        );
+                      }
 
                       return (
-                        <td className="uc" style={{ verticalAlign: 'middle', padding: '8px 6px', position: 'relative', textAlign: 'center', background: bg }}>
-                          {/* Row 1: Asset link */}
-                          <div style={{ fontSize: 12, marginBottom: 1 }}>
-                            {latest?.external_url ? (
-                              <a href={latest.external_url} target="_blank" rel="noopener noreferrer" style={{ color: '#2563EB', textDecoration: 'none' }}>
-                                🔗 {stage === 'rough_cut' ? `v${latest.version}` : '링크'}
-                              </a>
-                            ) : latest?.file_path ? (
-                              <span style={{ color: '#2563EB', cursor: 'pointer' }}>🎥 v{latest.version}{latest.file_size ? ` · ${formatFileSize(latest.file_size)}` : ''}</span>
-                            ) : null}
-                          </div>
-                          {/* Row 2: Status */}
-                          <div style={{ color, fontSize: 11, fontWeight: 500 }}>
-                            {ds.status === 'approved' && '✓ '}{ds.status === 'revision_requested' && '⚠ '}
-                            {SUBMISSION_STATUS_LABELS[ds.status]}
-                          </div>
-                          {/* Row 3: Date / revision info */}
-                          <div style={{ fontSize: 10, color: '#9AA2AA', marginTop: 1 }}>
-                            {ds.status === 'received' && latest?.received_at && `${fmtDate(latest.received_at)} 수령`}
-                            {ds.status === 'approved' && latest?.reviews?.[0]?.created_at && `${fmtDate(latest.reviews[0].created_at)}`}
-                            {ds.status === 'revision_requested' && (isOverdue ? `${ds.daysSinceRevision}일 경과` : `요청 ${ds.daysSinceRevision ?? 0}일`)}
-                          </div>
-                          {/* Hover inline actions */}
-                          <div className="ua" style={{ display: 'none', position: 'absolute', top: 2, right: 2, gap: 3, zIndex: 5 }}>
-                            {ds.status === 'received' && (
-                              <>
-                                <button style={{ padding: '2px 6px', fontSize: 10, borderRadius: 4, border: 'none', background: '#1A1D21', color: '#fff', cursor: 'pointer' }}
-                                  onClick={(e) => { e.stopPropagation(); handleApproveAsset(latest!.id); }}>확인 완료</button>
-                              </>
-                            )}
-                            {latest?.external_url && (
-                              <button style={{ padding: '2px 6px', fontSize: 10, borderRadius: 4, border: '1px solid var(--border)', background: '#fff', cursor: 'pointer' }}
-                                onClick={(e) => { e.stopPropagation(); window.open(latest.external_url!, '_blank'); }}>열기</button>
-                            )}
-                          </div>
+                        <td key={stepKey} style={{ textAlign: 'center', verticalAlign: 'middle',  }}>
+                          <span style={{ fontSize: 11, color: '#C4CAD1' }}>—</span>
                         </td>
                       );
                     };
 
-                    // Needs review count for the notice bar
-                    const needsReviewCount = parts.filter(p => {
-                      const pa = campAssets.filter(a => a.participant_id === p.id);
-                      return (['proposal', 'rough_cut', 'final_upload'] as SubmissionStage[]).some(s => getSubmissionDisplayStatus(pa, s).status === 'received');
-                    }).length;
-
                     return (
                       <>
-                        {needsReviewCount > 0 && (
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                            <span style={{ fontSize: 13, color: '#A8712A', fontWeight: 500 }}>확인 필요 {needsReviewCount}건</span>
-                            <button style={btnGhost} onClick={() => openAddParticipant(c.id)}>+ 참여자 추가</button>
-                          </div>
-                        )}
-                        {needsReviewCount === 0 && (
-                          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
-                            <button style={btnGhost} onClick={() => openAddParticipant(c.id)}>+ 참여자 추가</button>
-                          </div>
-                        )}
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
+                          <button style={btnGhost} onClick={() => openAddParticipant(c.id)}>+ 참여자 추가</button>
+                        </div>
 
                         {parts.length === 0 ? (
                           <p style={{ color: 'var(--text-muted)', fontSize: 13, padding: '20px 0', textAlign: 'center' }}>참여자가 없습니다</p>
                         ) : (
                           <div style={{ overflowX: 'auto' }}>
-                            <table className="data-table" style={{ width: '100%', fontSize: 13, tableLayout: 'fixed' }}>
+                            <table className="data-table" style={{ width: '100%', tableLayout: 'fixed' }}>
                               <colgroup>
                                 {(() => {
-                                  // Calculate column count and widths dynamically
-                                  const cols = 2 + (showProposal ? 1 : 0) + (showRoughCut ? 1 : 0) + 1 + (showSettlement ? 1 : 0); // name + consent + proposal? + roughcut? + upload + settlement?
-                                  const menuW = 36; // px for ⋯ column
-                                  // Distribute remaining width proportionally
+                                  const menuW = 36;
                                   const nameW = '18%';
                                   const consentW = '8%';
                                   const stageW = showSettlement ? '16%' : '20%';
@@ -1390,7 +1270,7 @@ export default function ManageClient() {
                               </colgroup>
                               <thead>
                                 <tr>
-                                  <th style={{ textAlign: 'left', paddingLeft: 6 }}>인플루언서</th>
+                                  <th style={{ textAlign: 'left' }}>인플루언서</th>
                                   <th style={{ textAlign: 'center' }}>동의서</th>
                                   {showProposal && <th style={{ textAlign: 'center' }}>기획안</th>}
                                   {showRoughCut && <th style={{ textAlign: 'center' }}>가편집본</th>}
@@ -1403,15 +1283,17 @@ export default function ManageClient() {
                                 {sorted.map((p) => {
                                   const pName = p.name || p.display_name || '(채널명 미입력)';
                                   const hasFee = isPaidCollab(p.collab_type) || (p.fee || 0) > 0;
+                                  const progress = progressMap.get(p.id)!;
 
-                                  // Consent cell content
+                                  // Consent cell
                                   const consentLabel = p.consent_status === 'agreed'
                                     ? <span style={{ color: '#22C55E', fontWeight: 500 }}>✓</span>
                                     : p.consent_status === 'sent'
-                                    ? <span style={{ fontSize: 11, color: '#A8712A' }}>발송</span>
+                                    ? <Chip variant="blue">발송</Chip>
                                     : p.consent_status === 'expired'
-                                    ? <span style={{ fontSize: 11, color: '#B03F3B' }}>만료</span>
+                                    ? <Chip variant="coral">만료</Chip>
                                     : <span style={{ fontSize: 11, color: '#C4CAD1' }}>—</span>;
+                                  const isConsentCurrent = progress.currentStage === 'consent';
                                   const consentCell = (
                                     <>
                                       {consentLabel}
@@ -1432,37 +1314,34 @@ export default function ManageClient() {
                                   );
 
                                   // Settlement cell
-                                  const settlementLabel = (() => {
-                                    if (!showSettlement) return null;
-                                    if (p.settlement_status === 'paid') return <span style={{ color: '#22C55E', fontWeight: 500, fontSize: 12 }}>✓ 완료</span>;
-                                    if (p.settlement_status === 'docs_submitted' || p.settlement_status === 'payment_requested') return <span style={{ fontSize: 11, color: '#A8712A' }}>지급 대기</span>;
-                                    if (p.settlement_status === 'docs_requested') return <span style={{ fontSize: 11, color: '#9AA2AA' }}>정보 대기</span>;
-                                    if (!p.published_url) return <span style={{ fontSize: 11, color: '#C4CAD1' }}>—</span>;
-                                    return <span style={{ fontSize: 11, color: '#9AA2AA' }}>대기</span>;
-                                  })();
-                                  const settlementCell = showSettlement ? (
-                                    <>
-                                      {settlementLabel}
-                                      <div className="ua" style={{ display: 'none', position: 'absolute', top: 2, right: 2, gap: 3, zIndex: 5 }}>
-                                        {p.settlement_token ? (
-                                          <>
+                                  const settlementCell = showSettlement ? (() => {
+                                    const sd = getSettlementDisplayStatus(p.settlement_status, !!p.published_url);
+                                    const isPaid = p.settlement_status === 'paid';
+                                    const isSettlementCurrent = progress.currentStage === 'settlement';
+                                    return (
+                                      <>
+                                        <Chip variant={isPaid ? 'mint' : (p.settlement_status as string) === 'expired' ? 'coral' : p.settlement_status === 'docs_submitted' ? 'blue' : 'gray'}>{isPaid ? '✓ ' : ''}{sd.label}</Chip>
+                                        <div className="ua" style={{ display: 'none', position: 'absolute', top: 2, right: 2, gap: 3, zIndex: 5 }}>
+                                          {p.settlement_token ? (
+                                            <>
+                                              <button style={{ padding: '2px 6px', fontSize: 10, borderRadius: 4, border: 'none', background: '#1A1D21', color: '#fff', cursor: 'pointer' }}
+                                                onClick={(e) => { e.stopPropagation(); copyToClipboard(getLinkUrl(p.settlement_token!, 'settlement')); }}>복사</button>
+                                              <button style={{ padding: '2px 6px', fontSize: 10, borderRadius: 4, border: '1px solid var(--border)', background: '#fff', cursor: 'pointer' }}
+                                                onClick={(e) => { e.stopPropagation(); window.open(getLinkUrl(p.settlement_token!, 'settlement'), '_blank'); }}>열기</button>
+                                            </>
+                                          ) : isSettlementCurrent && p.published_url && p.settlement_status !== 'paid' && p.settlement_status !== 'docs_submitted' && p.settlement_status !== 'payment_requested' ? (
                                             <button style={{ padding: '2px 6px', fontSize: 10, borderRadius: 4, border: 'none', background: '#1A1D21', color: '#fff', cursor: 'pointer' }}
-                                              onClick={(e) => { e.stopPropagation(); copyToClipboard(getLinkUrl(p.settlement_token!, 'settlement')); }}>복사</button>
-                                            <button style={{ padding: '2px 6px', fontSize: 10, borderRadius: 4, border: '1px solid var(--border)', background: '#fff', cursor: 'pointer' }}
-                                              onClick={(e) => { e.stopPropagation(); window.open(getLinkUrl(p.settlement_token!, 'settlement'), '_blank'); }}>열기</button>
-                                          </>
-                                        ) : p.published_url && p.settlement_status !== 'paid' && p.settlement_status !== 'docs_submitted' && p.settlement_status !== 'payment_requested' ? (
-                                          <button style={{ padding: '2px 6px', fontSize: 10, borderRadius: 4, border: 'none', background: '#1A1D21', color: '#fff', cursor: 'pointer' }}
-                                            onClick={(e) => { e.stopPropagation(); handleUpdateParticipant(p.id, { generate_settlement_token: true }); }}>발급</button>
-                                        ) : null}
-                                      </div>
-                                    </>
-                                  ) : null;
+                                              onClick={(e) => { e.stopPropagation(); handleUpdateParticipant(p.id, { generate_settlement_token: true }); }}>발급</button>
+                                          ) : null}
+                                        </div>
+                                      </>
+                                    );
+                                  })() : null;
 
                                   return (
                                     <tr key={p.id}>
                                       {/* 인플루언서 + 고료 */}
-                                      <td style={{ verticalAlign: 'middle', padding: '8px 6px' }}>
+                                      <td style={{ verticalAlign: 'middle',  }}>
                                         <div style={{ fontWeight: 500, color: pName !== '(채널명 미입력)' ? '#1A1D21' : '#9AA2AA', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
                                           onClick={() => { setDetailPart(p); setDetailCampaign(c); }}>
                                           {pName}
@@ -1472,17 +1351,17 @@ export default function ManageClient() {
                                         {!hasFee && p.handle && <div style={{ fontSize: 11, color: '#9AA2AA', marginTop: 1 }}>@{p.handle}</div>}
                                       </td>
                                       {/* 동의서 */}
-                                      <td className="uc" style={{ textAlign: 'center', verticalAlign: 'middle', padding: '8px 6px', position: 'relative' }}>{consentCell}</td>
+                                      <td className="uc" style={{ textAlign: 'center', verticalAlign: 'middle', position: 'relative' }}>{consentCell}</td>
                                       {/* 기획안 */}
-                                      {showProposal && renderSubCell(p.id, 'proposal', pName)}
+                                      {showProposal && renderStepCell(p, 'proposal', progress)}
                                       {/* 가편집본 */}
-                                      {showRoughCut && renderSubCell(p.id, 'rough_cut', pName)}
+                                      {showRoughCut && renderStepCell(p, 'roughCut', progress)}
                                       {/* 업로드 */}
-                                      {renderSubCell(p.id, 'final_upload', pName)}
+                                      {renderStepCell(p, 'upload', progress)}
                                       {/* 정산 */}
-                                      {showSettlement && <td className="uc" style={{ textAlign: 'center', verticalAlign: 'middle', padding: '8px 6px', position: 'relative' }}>{settlementCell}</td>}
+                                      {showSettlement && <td className="uc" style={{ textAlign: 'center', verticalAlign: 'middle', position: 'relative' }}>{settlementCell}</td>}
                                       {/* ⋯ menu */}
-                                      <td style={{ textAlign: 'center', position: 'relative', verticalAlign: 'middle', padding: '8px 2px' }}>
+                                      <td style={{ textAlign: 'center', position: 'relative', verticalAlign: 'middle',  }}>
                                         <div style={{ position: 'relative', display: 'inline-block' }}>
                                           <MoreButton onClick={() => setPartMenuId(partMenuId === p.id ? null : p.id)} />
                                           {partMenuId === p.id && (
@@ -1490,7 +1369,6 @@ export default function ManageClient() {
                                               onClose={() => setPartMenuId(null)}
                                               items={[
                                                 { label: '참여자 수정', onClick: () => openEditParticipant(p) },
-                                                { label: '업로드 정보 수정', onClick: () => openUploadModal(p) },
                                                 ...(p.consent_token ? [{ label: '동의서 열기', onClick: () => window.open(getLinkUrl(p.consent_token!, 'consent'), '_blank') }] : []),
                                                 { label: '모든 진행 기록 초기화', onClick: () => { setResetModal({ type: 'participant', id: p.id, name: (p.display_name || p.name || p.channel || ''), confirmName: (p.channel || p.display_name || p.name || '') }); setResetConfirmInput(''); setResetError(''); } },
                                                 { label: '삭제', onClick: () => openDeleteParticipant(p), danger: true },
@@ -1779,213 +1657,129 @@ export default function ManageClient() {
               {(() => {
                 const ct = detailPart.collab_type || detailCampaign?.collab_type || ((detailPart.fee || 0) > 0 ? 'fixed_fee' : 'free_seeding');
                 const paid = isPaidCollab(ct);
-                const pAssets = detailCampaign ? (submissionAssets[detailCampaign.id] || []).filter(a => a.participant_id === detailPart.id) : [];
+                const skip = getSkipConfig({ collab_type: ct } as { collab_type: string });
+                const progress = getParticipantProgress(detailPart as unknown as Record<string, unknown>, detailPart._deliverables || {}, skip);
 
-                type StepDef = {
-                  key: string; stage: SubmissionStage | 'consent' | 'payment'; label: string;
-                  isApproved: boolean; hasData: boolean; disabled?: boolean; dateLabel?: string;
-                  asset?: SubmissionAsset; allVersions?: SubmissionAsset[];
+                const fmtDate = (iso: string) => new Date(iso).toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' });
+                const dlvKeyMap: Record<string, string> = { proposal: 'draft', roughCut: 'edit', upload: 'upload' };
+                const stepLabel: Record<string, string> = { consent: '동의서', proposal: '기획안', roughCut: '가편집본', upload: '업로드', settlement: '정산' };
+
+                type StepKey = 'consent' | 'proposal' | 'roughCut' | 'upload' | 'settlement';
+                const visibleSteps: StepKey[] = ['consent'];
+                if (!skip.skipDraft) visibleSteps.push('proposal');
+                if (!skip.skipEdit) visibleSteps.push('roughCut');
+                visibleSteps.push('upload');
+                if (paid) visibleSteps.push('settlement');
+
+                const renderDetailStep = (key: StepKey) => {
+                  const label = stepLabel[key];
+                  const isCurrentStage = progress.currentStage === key;
+
+                  // Consent
+                  if (key === 'consent') {
+                    const done = progress.consent.done;
+                    const dateStr = progress.consent.date ? fmtDate(progress.consent.date) : null;
+                    return (
+                      <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 8, minHeight: 32, padding: '4px 0', borderRadius: 6 }}>
+                        <span style={{ width: 16, textAlign: 'center', fontSize: 13 }}>{done ? <span style={{ color: '#22C55E' }}>✓</span> : <span style={{ color: '#C4CAD1' }}>○</span>}</span>
+                        <span style={{ flex: 1, color: done ? 'var(--text-secondary)' : 'var(--text-muted)' }}>
+                          {label}
+                          {done && dateStr && <span style={{ fontSize: 11, color: 'var(--text-info)', marginLeft: 6 }}>{dateStr}</span>}
+                        </span>
+                        {done && detailPart.consent_token && (
+                          <button onClick={() => window.open(getLinkUrl(detailPart.consent_token!, 'consent'), '_blank')}
+                            style={{ fontSize: 11, padding: '1px 6px', border: '1px solid var(--border)', borderRadius: 4, background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer', fontFamily: 'var(--font)', flexShrink: 0 }}>열기</button>
+                        )}
+                        {!done && !detailPart.consent_token && (
+                          <button onClick={() => handleUpdateParticipant(detailPart.id, { generate_consent_token: true })}
+                            style={{ fontSize: 11, padding: '1px 8px', border: 'none', borderRadius: 4, background: '#1A1D21', color: '#fff', cursor: 'pointer', fontFamily: 'var(--font)', flexShrink: 0 }}>발송</button>
+                        )}
+                      </div>
+                    );
+                  }
+
+                  // Settlement
+                  if (key === 'settlement') {
+                    const isPaid = progress.settlement.status === 'paid';
+                    const sd = getSettlementDisplayStatus(detailPart.settlement_status, !!detailPart.published_url);
+                    return (
+                      <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 8, minHeight: 32, padding: '4px 0', borderRadius: 6 }}>
+                        <span style={{ width: 16, textAlign: 'center', fontSize: 13 }}>{isPaid ? <span style={{ color: '#22C55E' }}>✓</span> : <span style={{ color: '#C4CAD1' }}>○</span>}</span>
+                        <span style={{ flex: 1, color: isPaid ? 'var(--text-secondary)' : 'var(--text-muted)' }}>
+                          {label}
+                          <Chip variant={isPaid ? 'mint' : (detailPart.settlement_status as string) === 'expired' ? 'coral' : detailPart.settlement_status === 'docs_submitted' ? 'blue' : 'gray'} style={{ marginLeft: 6 }}>{sd.label}</Chip>
+                        </span>
+                        {detailPart.settlement_token && (
+                          <>
+                            <button onClick={() => copyToClipboard(getLinkUrl(detailPart.settlement_token!, 'settlement'))}
+                              style={{ fontSize: 11, padding: '1px 6px', border: '1px solid var(--border)', borderRadius: 4, background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer', fontFamily: 'var(--font)', flexShrink: 0 }}>복사</button>
+                            <button onClick={() => window.open(getLinkUrl(detailPart.settlement_token!, 'settlement'), '_blank')}
+                              style={{ fontSize: 11, padding: '1px 6px', border: '1px solid var(--border)', borderRadius: 4, background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer', fontFamily: 'var(--font)', flexShrink: 0 }}>열기</button>
+                          </>
+                        )}
+                      </div>
+                    );
+                  }
+
+                  // Proposal / RoughCut / Upload
+                  const info = progress[key as 'proposal' | 'roughCut' | 'upload'];
+                  const dlvKey = dlvKeyMap[key];
+                  const dlv = (detailPart._deliverables || {})[dlvKey];
+                  const done = info.done;
+                  const dateStr = info.date ? fmtDate(info.date) : null;
+                  const linkUrl = info.url;
+
+                  return (
+                    <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 8, minHeight: 32, padding: '4px 0', borderRadius: 6 }}>
+                      <span style={{ width: 16, textAlign: 'center', fontSize: 13 }}>{done ? <span style={{ color: '#22C55E' }}>✓</span> : <span style={{ color: '#C4CAD1' }}>○</span>}</span>
+                      <span style={{ flex: 1, color: done ? 'var(--text-secondary)' : 'var(--text-muted)' }}>
+                        {label}
+                        {done && dateStr && <span style={{ fontSize: 11, color: 'var(--text-info)', marginLeft: 6 }}>{dateStr}</span>}
+                      </span>
+                      {done && linkUrl && (
+                        <button onClick={() => window.open(linkUrl, '_blank')}
+                          style={{ fontSize: 11, padding: '1px 6px', border: '1px solid var(--border)', borderRadius: 4, background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer', fontFamily: 'var(--font)', flexShrink: 0 }}>열기</button>
+                      )}
+                      {done && (
+                        <button onClick={() => {
+                          const kst = new Date(Date.now() + 9 * 3600000);
+                          setEditStepModal({
+                            participantId: detailPart.id, step: dlvKey, stepLabel: label,
+                            link: (dlv?.link_url as string) || '', receivedDate: info.date?.slice(0, 10) || kst.toISOString().slice(0, 10),
+                            memo: (dlv?.memo as string) || '', noLink: false,
+                            fileUrl: (dlv?.file_url as string) || '', originalFilename: (dlv?.original_filename as string) || '',
+                            mimeType: (dlv?.mime_type as string) || '', fileSize: (dlv?.file_size as number) || 0,
+                            contentType: (dlv?.content_type as string) || '',
+                          });
+                          setEditStepError('');
+                        }}
+                          style={{ fontSize: 11, padding: '1px 6px', border: '1px solid var(--border)', borderRadius: 4, background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer', fontFamily: 'var(--font)', flexShrink: 0 }}>수정</button>
+                      )}
+                      {done && (
+                        <button onClick={() => { setUndoConfirmModal({ participantId: detailPart.id, step: dlvKey, stepLabel: label }); setUndoConfirmError(''); }}
+                          style={{ fontSize: 11, padding: '1px 6px', border: '1px solid var(--border)', borderRadius: 4, background: 'transparent', color: '#B03F3B', cursor: 'pointer', fontFamily: 'var(--font)', flexShrink: 0 }}>삭제</button>
+                      )}
+                      {!done && isCurrentStage && (
+                        <button onClick={() => {
+                          const kst = new Date(Date.now() + 9 * 3600000);
+                          setEditStepModal({
+                            participantId: detailPart.id, step: dlvKey, stepLabel: label,
+                            link: '', receivedDate: kst.toISOString().slice(0, 10), memo: '', noLink: false,
+                            fileUrl: '', originalFilename: '', mimeType: '', fileSize: 0, contentType: '',
+                          });
+                          setEditStepError('');
+                        }}
+                          style={{ fontSize: 11, padding: '1px 8px', border: 'none', borderRadius: 4, background: '#1A1D21', color: '#fff', cursor: 'pointer', fontFamily: 'var(--font)', flexShrink: 0 }}>등록</button>
+                      )}
+                    </div>
+                  );
                 };
-                const steps: StepDef[] = [];
-
-                // Consent
-                steps.push({
-                  key: 'consent', stage: 'consent', label: '동의서',
-                  isApproved: !!detailPart.consent_agreed_at,
-                  hasData: !!detailPart.consent_agreed_at,
-                  disabled: true,
-                  dateLabel: detailPart.consent_agreed_at
-                    ? `회수 ${new Date(detailPart.consent_agreed_at).toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' })}`
-                    : undefined,
-                });
-
-                // Proposal / Rough cut (only for paid collabs, i.e. not free_seeding)
-                const stageMap: { stage: SubmissionStage; label: string; paidOnly: boolean }[] = [
-                  { stage: 'proposal', label: '기획안', paidOnly: true },
-                  { stage: 'rough_cut', label: '가편집본', paidOnly: true },
-                  { stage: 'final_upload', label: '최종 업로드', paidOnly: false },
-                ];
-
-                for (const sm of stageMap) {
-                  if (sm.paidOnly && ct === 'free_seeding') continue;
-                  const stageAssets = pAssets.filter(a => a.stage === sm.stage).sort((a, b) => b.version - a.version);
-                  const latest = stageAssets[0];
-                  const ds = getSubmissionDisplayStatus(pAssets, sm.stage);
-                  steps.push({
-                    key: sm.stage, stage: sm.stage, label: sm.label,
-                    isApproved: ds.status === 'approved',
-                    hasData: !!latest,
-                    asset: latest,
-                    allVersions: stageAssets,
-                    dateLabel: ds.status === 'approved' && latest?.reviews?.[0]?.created_at
-                      ? `확인 ${new Date(latest.reviews[0].created_at).toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' })}`
-                      : ds.status === 'received' && latest?.received_at
-                        ? `수령 ${new Date(latest.received_at).toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' })}`
-                        : ds.status === 'revision_requested'
-                          ? `수정 요청 ${ds.daysSinceRevision ?? 0}일`
-                          : undefined,
-                  });
-                }
-
-                // Payment
-                if (paid) {
-                  const isPaid = detailPart.settlement_status === 'paid';
-                  steps.push({
-                    key: 'payment', stage: 'payment', label: '지급',
-                    isApproved: isPaid, hasData: isPaid, disabled: true,
-                    dateLabel: isPaid ? '완료' : undefined,
-                  });
-                }
 
                 return (
                   <div style={{ marginBottom: 16, fontSize: 13 }}>
                     <div style={{ fontWeight: 600, marginBottom: 8, color: 'var(--text-secondary)' }}>진행</div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                      {steps.map((s) => {
-                        const isSubmissionStage = s.stage === 'proposal' || s.stage === 'rough_cut' || s.stage === 'final_upload';
-                        const ds = isSubmissionStage ? getSubmissionDisplayStatus(pAssets, s.stage as SubmissionStage) : null;
-                        const oldStepMap: Record<string, string> = { proposal: 'draft', rough_cut: 'edit', final_upload: 'upload' };
-                        const oldStep = oldStepMap[s.stage] || s.stage;
-                        return (
-                          <div key={s.key}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, minHeight: 26 }}>
-                              <input
-                                type="checkbox"
-                                checked={s.isApproved}
-                                disabled={s.disabled}
-                                onChange={() => {
-                                  if (s.disabled) return;
-                                  if (!isSubmissionStage) return;
-                                  if (s.isApproved && s.asset) {
-                                    // Undo approved: use old check-step undo
-                                    if (oldStep === 'upload') {
-                                      if (detailPart.settlement_status === 'paid') {
-                                        setErrorMsg('지급 완료 상태에서는 업로드를 취소할 수 없습니다');
-                                        setTimeout(() => setErrorMsg(''), 4000);
-                                        return;
-                                      }
-                                    }
-                                    setUndoConfirmModal({ participantId: detailPart.id, step: oldStep, stepLabel: s.label });
-                                    setUndoConfirmError('');
-                                  } else if (!s.hasData) {
-                                    // Open receive modal
-                                    const kst = new Date(Date.now() + 9 * 3600000);
-                                    const today = kst.toISOString().slice(0, 10);
-                                    setEditStepModal({
-                                      participantId: detailPart.id,
-                                      step: oldStep,
-                                      stepLabel: s.label,
-                                      link: '',
-                                      receivedDate: today,
-                                      memo: '',
-                                      processType: 'approved',
-                                      revisionNote: '',
-                                      reviewCategory: '',
-                                      noLink: false,
-                                      fileUrl: '',
-                                      originalFilename: '',
-                                      mimeType: '',
-                                      fileSize: 0,
-                                      contentType: '',
-                                    });
-                                    setEditStepError('');
-                                  } else if (s.hasData && !s.isApproved && s.asset) {
-                                    // Has data but not approved → approve inline
-                                    handleApproveAsset(s.asset.id);
-                                  }
-                                }}
-                                style={{ accentColor: 'var(--accent)', width: 14, height: 14, cursor: s.disabled ? 'default' : 'pointer' }}
-                              />
-                              <span style={{ color: s.isApproved ? 'var(--text-secondary)' : s.hasData ? 'var(--text-secondary)' : 'var(--text-muted)', flex: 1 }}>
-                                {s.label}
-                                {s.dateLabel && (
-                                  <span style={{ fontSize: 11, color: ds?.status === 'revision_requested' ? '#B03F3B' : 'var(--text-info)', marginLeft: 6 }}>{s.dateLabel}</span>
-                                )}
-                              </span>
-                              {isSubmissionStage && s.hasData && ds?.status === 'received' && s.asset && (
-                                <button
-                                  onClick={() => handleApproveAsset(s.asset!.id)}
-                                  style={{ fontSize: 11, padding: '1px 8px', border: 'none', borderRadius: 4, background: '#1A1D21', color: '#fff', cursor: 'pointer', fontFamily: 'var(--font)', flexShrink: 0 }}
-                                >확인 완료</button>
-                              )}
-                            </div>
-                            {/* Asset link */}
-                            {s.asset?.external_url && (
-                              <div style={{ marginLeft: 20, marginTop: 2, display: 'flex', alignItems: 'center', gap: 6 }}>
-                                <a href={s.asset.external_url} target="_blank" rel="noopener noreferrer"
-                                  style={{ fontSize: 12, color: '#4A7DB5', textDecoration: 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 240 }}>
-                                  {s.asset.external_url}
-                                </a>
-                                <button onClick={() => copyToClipboard(s.asset!.external_url!)}
-                                  style={{ fontSize: 11, padding: '1px 6px', border: '1px solid var(--border)', borderRadius: 4, background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer', fontFamily: 'var(--font)', flexShrink: 0 }}>복사</button>
-                                <a href={s.asset.external_url} target="_blank" rel="noopener noreferrer"
-                                  style={{ fontSize: 11, padding: '1px 6px', border: '1px solid var(--border)', borderRadius: 4, background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer', fontFamily: 'var(--font)', textDecoration: 'none', flexShrink: 0 }}>열기</a>
-                              </div>
-                            )}
-                            {/* Asset file */}
-                            {s.asset?.file_path && (
-                              <div style={{ marginLeft: 20, marginTop: 2, display: 'flex', alignItems: 'center', gap: 6 }}>
-                                <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
-                                  {s.asset.original_filename || '파일'}
-                                </span>
-                                {s.asset.file_size && (
-                                  <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>({formatFileSize(s.asset.file_size)})</span>
-                                )}
-                                <button onClick={async () => {
-                                  const res = await fetch(`/api/influencer/files/signed-url?path=${encodeURIComponent(s.asset!.file_path!)}`);
-                                  const data = await res.json();
-                                  if (data.url) window.open(data.url, '_blank');
-                                }} style={{ fontSize: 11, padding: '1px 6px', border: '1px solid var(--border)', borderRadius: 4, background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer', fontFamily: 'var(--font)', flexShrink: 0 }}>열기</button>
-                                <button onClick={async () => {
-                                  const res = await fetch(`/api/influencer/files/signed-url?path=${encodeURIComponent(s.asset!.file_path!)}`);
-                                  const data = await res.json();
-                                  if (data.url) { const a = document.createElement('a'); a.href = data.url; a.download = s.asset!.original_filename || 'download'; a.click(); }
-                                }} style={{ fontSize: 11, padding: '1px 6px', border: '1px solid var(--border)', borderRadius: 4, background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer', fontFamily: 'var(--font)', flexShrink: 0 }}>다운로드</button>
-                              </div>
-                            )}
-                            {/* Status label */}
-                            {ds && ds.status !== 'approved' && ds.status !== 'not_received' && (
-                              <div style={{ marginLeft: 20, marginTop: 2, fontSize: 12, color: ds.status === 'revision_requested' ? '#B03F3B' : 'var(--text-muted)' }}>
-                                {SUBMISSION_STATUS_LABELS[ds.status]}
-                                {s.asset?.reviews?.[0]?.reason && ` · ${s.asset.reviews[0].reason}`}
-                              </div>
-                            )}
-                            {/* Content type */}
-                            {s.asset?.content_type && (
-                              <div style={{ marginLeft: 20, marginTop: 2, fontSize: 12, color: 'var(--text-muted)' }}>
-                                유형: {FINAL_CONTENT_TYPES[s.asset.content_type] || s.asset.content_type}
-                              </div>
-                            )}
-                            {/* Review memo */}
-                            {s.asset?.reviews?.[0]?.memo && (
-                              <div style={{ marginLeft: 20, marginTop: 2, fontSize: 12, color: 'var(--text-muted)' }}>
-                                메모: {s.asset.reviews[0].memo}
-                              </div>
-                            )}
-                            {/* Version history */}
-                            {s.allVersions && s.allVersions.length > 1 && (
-                              <div style={{ marginLeft: 20, marginTop: 4 }}>
-                                <details>
-                                  <summary style={{ fontSize: 11, color: 'var(--text-muted)', cursor: 'pointer' }}>
-                                    이전 버전 ({s.allVersions.length - 1}건)
-                                  </summary>
-                                  {s.allVersions.slice(1).map((v) => (
-                                    <div key={v.id} style={{ marginTop: 4, padding: '4px 8px', background: '#F2F4F7', borderRadius: 4, fontSize: 11 }}>
-                                      <span style={{ color: 'var(--text-muted)' }}>v{v.version}</span>
-                                      <span style={{ marginLeft: 6, color: v.status === 'revision_requested' ? '#B03F3B' : 'var(--text-secondary)' }}>
-                                        {SUBMISSION_STATUS_LABELS[v.status] || v.status}
-                                      </span>
-                                      {v.reviews?.[0]?.reason && <span style={{ marginLeft: 4, color: '#B03F3B' }}>{'\u00B7'} {v.reviews[0].reason}</span>}
-                                      {v.original_filename && <span style={{ marginLeft: 6, color: 'var(--text-muted)' }}>{v.original_filename}</span>}
-                                      {v.external_url && <span style={{ marginLeft: 6, color: 'var(--text-muted)' }}>{v.external_url.slice(0, 40)}...</span>}
-                                    </div>
-                                  ))}
-                                </details>
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                      {visibleSteps.map(renderDetailStep)}
                     </div>
                   </div>
                 );
@@ -2087,37 +1881,6 @@ export default function ManageClient() {
               )}
           </>)}
         </Drawer>
-        {/* Submit Asset Modal */}
-        {submitModal && (
-          <div style={modalOverlay} onMouseDown={(e) => { mouseDownRef.current = e.target; }} onClick={(e) => { if (e.target === e.currentTarget && mouseDownRef.current === e.currentTarget) { setSubmitModal(null); } }}>
-            <div style={{ ...modalContent, width: 440 }}>
-              <h2 style={{ fontSize: 18, fontWeight: 600, marginBottom: 4 }}>{submitModal.stageLabel} 등록</h2>
-              <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 16, marginTop: 0 }}>{submitModal.participantName}</p>
-              <div>
-                <label style={labelStyle}>링크 *</label>
-                <input
-                  style={inputStyle}
-                  value={submitLink}
-                  onChange={(e) => setSubmitLink(e.target.value)}
-                  placeholder={submitModal.stage === 'proposal' ? 'https://docs.google.com/...' : submitModal.stage === 'rough_cut' ? 'https://drive.google.com/...' : 'https://instagram.com/reel/...'}
-                  autoFocus
-                  onKeyDown={(e) => { if (e.key === 'Enter' && submitLink.trim()) handleSubmitAsset(); }}
-                />
-              </div>
-              {submitError && (
-                <div style={{ marginTop: 12, padding: '8px 12px', background: '#FBE9E8', borderRadius: 6, fontSize: 13, color: '#8F3A37' }}>
-                  {submitError}
-                </div>
-              )}
-              <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 20 }}>
-                <button style={btnGhost} onClick={() => { setSubmitModal(null); setSubmitLink(''); }} disabled={submitSaving}>취소</button>
-                <button style={btnPrimary} onClick={handleSubmitAsset} disabled={!submitLink.trim() || submitSaving}>
-                  {submitSaving ? '등록 중...' : '등록'}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
         {/* Upload Confirmation Modal */}
         {showUploadModal && (
           <div style={modalOverlay} onMouseDown={(e) => { mouseDownRef.current = e.target; }} onClick={(e) => { if (e.target === e.currentTarget && mouseDownRef.current === e.currentTarget) setShowUploadModal(false); }}>
@@ -2166,20 +1929,28 @@ export default function ManageClient() {
               )}
               {deleteModal.hasSettlement && (
                 <div style={{ marginBottom: 16 }}>
-                  <div style={{ background: '#FCEFEF', borderRadius: 8, padding: '10px 14px', fontSize: 13, marginBottom: 12, color: '#D9534F' }}>
-                    정산 정보가 포함되어 있습니다. {deleteModal.type === 'campaign' ? '캠페인' : '참여자'} 이름을 정확히 입력해주세요.
+                  <div style={{ background: '#FFF7ED', borderRadius: 8, padding: '10px 14px', fontSize: 13, marginBottom: 12, color: '#92400E', lineHeight: 1.6 }}>
+                    기록이 있는 {deleteModal.type === 'campaign' ? '캠페인' : '참여자'}입니다.
+                    <strong> 보관 처리</strong>를 권장합니다.
+                    <br/>영구 삭제하려면 이름을 정확히 입력하세요.
                   </div>
                   <input
                     style={inputStyle}
                     placeholder={deleteModal.name}
                     value={deleteConfirmName}
                     onChange={(e) => setDeleteConfirmName(e.target.value)}
-                    autoFocus
                   />
                 </div>
               )}
               <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 20 }}>
                 <button style={btnGhost} onClick={() => setDeleteModal(null)} disabled={deleteLoading}>취소</button>
+                {deleteModal.hasSettlement && (
+                  <button
+                    style={{ ...btnPrimary, background: '#4A7DB5' }}
+                    onClick={() => handleArchive(deleteModal.type, deleteModal.id)}
+                    disabled={deleteLoading}
+                  >보관 처리</button>
+                )}
                 <button
                   style={{
                     ...btnPrimary,
@@ -2190,7 +1961,7 @@ export default function ManageClient() {
                   disabled={(deleteModal.hasSettlement && deleteConfirmName !== deleteModal.name) || deleteLoading}
                   onClick={handleDelete}
                 >
-                  {deleteLoading ? '삭제 중...' : '삭제'}
+                  {deleteLoading ? '삭제 중...' : '영구 삭제'}
                 </button>
               </div>
             </div>
@@ -2266,18 +2037,26 @@ export default function ManageClient() {
                   </div>
                 )}
 
-                {progressPanel.type === 'payment' && (
-                  <div>
-                    <div style={rowStyle}><span style={rlabel}>정산 상태</span><span style={rvalue}>{SETTLEMENT_STAGE_LABELS[getSettlementStatus(pp)]}</span></div>
-                    <div style={rowStyle}><span style={rlabel}>고료 (세전)</span><span style={rvalue}>{fmtKRW(pp.fee)}</span></div>
-                    <div style={rowStyle}><span style={rlabel}>정산 정보</span><span style={rvalue}>{pp.settlement_status === 'docs_submitted' ? '회수 완료' : pp.settlement_status === 'docs_requested' ? '발송됨' : '미발송'}</span></div>
-                    {pp.settlement_token && pp.settlement_status === 'docs_requested' && (
-                      <div style={{ marginTop: 12 }}>
-                        <Btn size="sm" onClick={() => { copyToClipboard(getLinkUrl(pp.settlement_token!, 'settlement')); }}>정산 링크 복사</Btn>
-                      </div>
-                    )}
-                  </div>
-                )}
+                {progressPanel.type === 'payment' && (() => {
+                  const sd = getSettlementDisplayStatus(pp.settlement_status, !!pp.published_url);
+                  return (
+                    <div>
+                      <div style={rowStyle}><span style={rlabel}>정산 상태</span><span style={{ ...rvalue, color: sd.color, fontWeight: 500 }}>{sd.label}</span></div>
+                      <div style={rowStyle}><span style={rlabel}>고료 (세전)</span><span style={rvalue}>{fmtKRW(pp.fee)}</span></div>
+                      <div style={rowStyle}><span style={rlabel}>정산 정보</span><span style={rvalue}>{pp.settlement_status === 'docs_submitted' ? '회수 완료' : pp.settlement_status === 'docs_requested' ? '발송됨' : '미발송'}</span></div>
+                      {pp.planned_payment_date && (() => {
+                        const dd = daysBetween(null, pp.planned_payment_date);
+                        const dds = getDDayStyle(dd);
+                        return <div style={rowStyle}><span style={rlabel}>지급 예정일</span><span style={rvalue}>{pp.planned_payment_date} <span style={{ fontSize: 11, color: dds.color, fontWeight: dds.weight }}>{formatDDay(dd)}</span></span></div>;
+                      })()}
+                      {pp.settlement_token && pp.settlement_status === 'docs_requested' && (
+                        <div style={{ marginTop: 12 }}>
+                          <Btn size="sm" onClick={() => { copyToClipboard(getLinkUrl(pp.settlement_token!, 'settlement')); }}>정산 링크 복사</Btn>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
             </Drawer>
           );
         })()}
@@ -2436,60 +2215,6 @@ export default function ManageClient() {
                 />
               </div>
 
-              {/* Process type (not shown for upload step) */}
-              {editStepModal.step !== 'upload' && (
-                <div style={{ marginBottom: 12 }}>
-                  <label style={{ fontSize: 13, fontWeight: 500, marginBottom: 6, display: 'block', color: 'var(--text-secondary)' }}>처리</label>
-                  <div style={{ display: 'flex', gap: 12 }}>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer', fontSize: 13 }}>
-                      <input type="radio" name="editStepProcessType" checked={editStepModal.processType === 'approved'} onChange={() => setEditStepModal({ ...editStepModal, processType: 'approved' })} />
-                      컨펌 완료
-                    </label>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer', fontSize: 13 }}>
-                      <input type="radio" name="editStepProcessType" checked={editStepModal.processType === 'revision_requested'} onChange={() => setEditStepModal({ ...editStepModal, processType: 'revision_requested' })} />
-                      수정 요청
-                    </label>
-                  </div>
-                </div>
-              )}
-
-              {/* Revision category */}
-              {editStepModal.processType === 'revision_requested' && (
-                <div style={{ marginBottom: 12 }}>
-                  <label style={{ fontSize: 13, fontWeight: 500, marginBottom: 6, display: 'block', color: 'var(--text-secondary)' }}>
-                    수정 카테고리
-                  </label>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                    {REVIEW_CATEGORIES.map((cat) => (
-                      <label key={cat} style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 13 }}>
-                        <input
-                          type="radio"
-                          name="reviewCategory"
-                          checked={editStepModal.reviewCategory === cat}
-                          onChange={() => setEditStepModal({ ...editStepModal, reviewCategory: cat })}
-                        />
-                        {cat}
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Revision note */}
-              {editStepModal.processType === 'revision_requested' && (
-                <div style={{ marginBottom: 12 }}>
-                  <label style={{ fontSize: 13, fontWeight: 500, marginBottom: 4, display: 'block', color: 'var(--text-secondary)' }}>
-                    수정 요청 사유 <span style={{ color: '#B03F3B' }}>*</span>
-                  </label>
-                  <textarea
-                    placeholder="수정이 필요한 부분을 적어주세요"
-                    value={editStepModal.revisionNote}
-                    onChange={(e) => setEditStepModal({ ...editStepModal, revisionNote: e.target.value })}
-                    rows={3}
-                    style={{ width: '100%', padding: '8px 10px', border: '1px solid var(--border)', borderRadius: 8, fontSize: 13, fontFamily: 'var(--font)', boxSizing: 'border-box', resize: 'vertical' }}
-                  />
-                </div>
-              )}
 
               {/* No-link checkbox (only for draft/edit, not upload) */}
               {editStepModal.step !== 'upload' && !editStepModal.fileUrl && (
