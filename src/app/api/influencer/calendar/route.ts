@@ -74,8 +74,8 @@ const BASE_SELECT = [
   'id', 'name', 'display_name', 'channel', 'campaign_id',
   'status', 'fee',
   'planned_draft_date', 'planned_edit_date', 'planned_upload_date',
-  'published_url', 'settlement_status',
-  'inf_campaigns(name, collab_type)',
+  'published_url', 'settlement_status', 'planned_payment_date',
+  'inf_campaigns(name, collab_type, status)',
 ].join(', ');
 
 const FULL_SELECT = [BASE_SELECT, ...NEW_COLUMNS].join(', ');
@@ -159,10 +159,15 @@ export async function GET(req: NextRequest) {
   const events: CalendarEvent[] = [];
 
   for (const p of participants) {
-    const campaign = p.inf_campaigns as { name: string; collab_type: string } | null;
+    const campaign = p.inf_campaigns as { name: string; collab_type: string; status: string } | null;
+
+    // [FIX] dashboard와 동일 대상: active/preparing 캠페인만
+    const campStatus = campaign?.status ?? '';
+    if (campStatus !== 'active' && campStatus !== 'preparing') continue;
+
     const collabType = campaign?.collab_type ?? null;
     const campaignName = campaign?.name ?? '';
-    const title = p.display_name || p.name || '';
+    const title = p.name || p.display_name || '';
     const participantId = p.id as string;
     const campaignId = p.campaign_id as string;
     const channel = (p.channel as string) || null;
@@ -178,6 +183,10 @@ export async function GET(req: NextRequest) {
     const uploadedAt = hasNewColumns ? (p.uploaded_at as string | null) : null;
 
     const paid = isPaidCollab(collabType) || fee > 0;
+
+    // [FIX] 완료된 참여자 제외 (dashboard와 동일 기준)
+    if (paid && settlementStatus === 'paid') continue;
+    if (!paid && (uploadedAt || p.published_url)) continue;
 
     if (paid) {
       // Draft event
@@ -253,18 +262,21 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // Payment event
+    // Payment event — use planned_payment_date if stored, otherwise calculate
     if (
       fee > 0 &&
-      (settlementStatus === 'docs_submitted' || settlementStatus === 'payment_requested')
+      (settlementStatus === 'docs_submitted' || settlementStatus === 'payment_requested' || settlementStatus === 'payment_waiting')
     ) {
-      // Determine base date: upload confirmation or planned upload
-      const uploadConfirmDate = uploadedAt
-        ? uploadedAt.slice(0, 10)
-        : (p.published_url ? (confirmedUpload || (p.planned_upload_date as string | null) || today) : null);
-
-      if (uploadConfirmDate) {
-        const payDate = nextPaymentDate(uploadConfirmDate, dayOfMonth);
+      let payDate: string | null = (p.planned_payment_date as string | null) || null;
+      if (!payDate) {
+        const uploadConfirmDate = uploadedAt
+          ? uploadedAt.slice(0, 10)
+          : (p.published_url ? (confirmedUpload || (p.planned_upload_date as string | null) || today) : null);
+        if (uploadConfirmDate) {
+          payDate = nextPaymentDate(uploadConfirmDate, dayOfMonth);
+        }
+      }
+      if (payDate) {
         events.push({
           id: `${participantId}_payment`,
           type: 'payment',
