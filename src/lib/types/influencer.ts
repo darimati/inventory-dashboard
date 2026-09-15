@@ -54,15 +54,61 @@ export const CONSENT_STATUS_LABELS: Record<ConsentStatus, string> = {
   expired: '만료',
 };
 
-export type SettlementDocStatus = 'none' | 'docs_requested' | 'docs_submitted' | 'payment_requested' | 'paid';
+export type SettlementDocStatus = 'none' | 'not_sent' | 'docs_requested' | 'docs_submitted' | 'payment_waiting' | 'payment_requested' | 'paid' | 'expired';
 
-export const SETTLEMENT_DOC_STATUS_LABELS: Record<SettlementDocStatus, string> = {
-  none: '없음',
-  docs_requested: '발송',
-  docs_submitted: '정보 제출',
-  payment_requested: '지급 요청',
+export const SETTLEMENT_DOC_STATUS_LABELS: Record<string, string> = {
+  none: '미발송',
+  not_sent: '미발송',
+  docs_requested: '제출 대기',
+  docs_submitted: '확인 필요',
+  payment_waiting: '지급 대기',
+  payment_requested: '지급 대기',
   paid: '지급 완료',
+  expired: '만료',
 };
+
+/**
+ * 정산 상태 판정 단일 함수.
+ * 캠페인 정산 탭 · 대시보드 · 할 일 목록이 모두 이 함수를 호출해야 합니다.
+ */
+export function getSettlementDisplayStatus(
+  settlementStatus: string | null | undefined,
+  hasPublishedUrl: boolean,
+): { label: string; color: string; nextAction: string | null } {
+  switch (settlementStatus) {
+    case 'paid':
+      return { label: '지급 완료', color: '#22C55E', nextAction: null };
+    case 'payment_waiting':
+    case 'payment_requested':
+      return { label: '지급 대기', color: '#A8712A', nextAction: 'mark_paid' };
+    case 'docs_submitted':
+      return { label: '확인 필요', color: '#D97706', nextAction: 'confirm' };
+    case 'docs_requested':
+      return { label: '정보 대기', color: '#9AA2AA', nextAction: null };
+    case 'expired':
+      return { label: '만료', color: '#DC2626', nextAction: 'resend' };
+    default:
+      if (!hasPublishedUrl) return { label: '—', color: '#C4CAD1', nextAction: null };
+      return { label: '미발송', color: '#9AA2AA', nextAction: 'send_link' };
+  }
+}
+
+/** 유효한 정산 상태 전환 */
+const VALID_SETTLEMENT_TRANSITIONS: Record<string, string[]> = {
+  'none': ['docs_requested'],
+  'not_sent': ['docs_requested'],
+  'docs_requested': ['docs_submitted', 'not_sent'],
+  'docs_submitted': ['payment_waiting', 'docs_requested'], // 확인 완료 또는 수정 요청
+  'payment_waiting': ['paid'],
+  'paid': [],
+  'expired': ['docs_requested'],
+};
+
+export function isValidSettlementTransition(from: string, to: string): boolean {
+  const allowed = VALID_SETTLEMENT_TRANSITIONS[from];
+  if (!allowed) return false;
+  return allowed.includes(to);
+}
 
 /* ---- Settlement Stage (single-source display status) ---- */
 
@@ -91,11 +137,15 @@ export function getSettlementStatus(p: {
   // 유가이나 업로드 미확인 → 대기
   if (!p.published_url) return 'waiting';
   // 업로드 확인, 정산 정보 미회수 → 정산정보 대기
-  if (!p.settlement_status || p.settlement_status === 'none' || p.settlement_status === 'docs_requested') {
+  if (!p.settlement_status || p.settlement_status === 'none' || p.settlement_status === 'not_sent' || p.settlement_status === 'docs_requested') {
     return 'info_waiting';
   }
-  // 정산 정보 회수됨, 미지급 → 정산 대기
-  if (p.settlement_status === 'docs_submitted' || p.settlement_status === 'payment_requested') {
+  // 정산 정보 회수됨 (확인 필요) → 정산 대기
+  if (p.settlement_status === 'docs_submitted') {
+    return 'payment_waiting';
+  }
+  // 확인 완료, 미지급 → 정산 대기
+  if (p.settlement_status === 'payment_waiting' || p.settlement_status === 'payment_requested') {
     return 'payment_waiting';
   }
   // 지급 완료
@@ -103,11 +153,12 @@ export function getSettlementStatus(p: {
   return 'not_applicable';
 }
 
-export type PaymentStatus = 'waiting' | 'requested' | 'paid' | 'on_hold';
+export type PaymentStatus = 'waiting' | 'confirmed' | 'requested' | 'paid' | 'on_hold';
 
 export const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
-  waiting: '정산 대기',
-  requested: '요청',
+  waiting: '확인 필요',
+  confirmed: '지급 대기',
+  requested: '지급 대기',
   paid: '지급 완료',
   on_hold: '보류',
 };
@@ -364,7 +415,7 @@ export interface DashboardChecklist {
 
 /* ---- Schedule Date (shared between calendar + dashboard) ---- */
 
-export type WeeklyStep = 'consent' | 'draft' | 'edit' | 'upload' | 'performance' | 'payment';
+export type WeeklyStep = 'consent' | 'draft' | 'edit' | 'upload' | 'payment';
 
 export interface ScheduleDate {
   date: string | null;  // YYYY-MM-DD
@@ -453,14 +504,14 @@ export interface DashboardData {
   annualContractTotal: number;
   annualContractFee: number;
   annualContractProductCost: number;
-  // 집행 예정 (업로드 확인 완료 · 미지급, 세전)
+  // 배정 예정 (업로드 확인 완료 · 미지급, 세전)
   monthlyConfirmedFee: number;
   annualConfirmedFee: number;
   // 예산
   monthlyBudget: number;
   isBudgetFallback: boolean; // true = 캠페인 예산 합 기준
   annualBudget: number;
-  // 제품별 집행
+  // 제품별 배정
   productExecution: Record<string, { count: number; fee: number }>;
   campaigns: DashboardCampaignSummary[];
   // 정산 지표 (실제 지급 레코드 기반)

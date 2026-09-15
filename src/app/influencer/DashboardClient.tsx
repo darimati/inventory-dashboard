@@ -1,88 +1,190 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import AppShell from '@/components/AppShell';
-import CustomSelect from '@/components/CustomSelect';
 import { formatKRW } from '@/lib/helpers';
-import { CHANNEL_LABELS } from '@/lib/types/influencer';
-import type { DashboardData, WeeklyTaskItem, WeeklyStep } from '@/lib/types/influencer';
-import { formatDDay, getDDayStyle, NO_SCHEDULE_STYLE } from '@/lib/dday';
-import { colors, typo, spacing, radii, STEP_LABELS } from '@/lib/influencer/styles';
-import { KPICard, Card, Section, TabBar, Chip, Btn, Toast, ProgressBar, Empty } from '@/lib/influencer/ui';
+import type { DashboardData, WeeklyTaskItem } from '@/lib/types/influencer';
+import { colors, radii, STEP_LABELS } from '@/lib/influencer/styles';
+import { Empty } from '@/lib/influencer/ui';
+
+/* ── Types ───────────────────────────────────────────── */
+
+interface CalendarEvent {
+  id: string;
+  type: string;
+  date: string;
+  title: string;
+  campaign_name: string;
+  participant_id: string;
+  campaign_id: string;
+  is_confirmed: boolean;
+  is_completed: boolean;
+  is_overdue: boolean;
+  channel: string | null;
+  memo?: string | null;
+  schedule_id?: string;
+}
 
 /* ── Constants ───────────────────────────────────────── */
 
-const STEP_FILTER_TABS: Array<{ key: string; label: string }> = [
-  { key: 'all', label: '전체' },
-  { key: 'consent', label: '섭외' },
-  { key: 'draft', label: '기획안' },
-  { key: 'edit', label: '가편집본' },
-  { key: 'upload', label: '업로드' },
-  { key: 'payment', label: '정산' },
-];
+const DAY_NAMES = ['일', '월', '화', '수', '목', '금', '토'] as const;
+const STEP_ORDER = ['consent', 'draft', 'edit', 'upload', 'payment'] as const;
+const TOTAL_STEPS = STEP_ORDER.length;
+const ROW_H = 44;
+const VISIBLE_COUNT = 10;
+const SECTION_GAP = 24;
 
-const STEP_BTN_LABELS: Record<string, string> = {
-  draft: '기획안 받음',
-  edit: '가편집본 받음',
-  upload: '업로드 확인',
-  payment: '지급 완료',
+/* §3 — 6-column fixed-width grid */
+const TABLE_GRID = '84px 100px 64px minmax(80px,1fr) 100px 76px';
+
+const COL_HDR: React.CSSProperties = {
+  fontSize: 13, color: colors.textSecondary,
+  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
 };
 
-const DAY_NAMES = ['일', '월', '화', '수', '목', '금', '토'];
+const KPI_NUM: React.CSSProperties = {
+  fontSize: 32, fontWeight: 700, letterSpacing: '-0.03em',
+  fontVariantNumeric: 'tabular-nums',
+};
 
-function formatDateShort(dateStr: string): string {
-  const d = new Date(dateStr + 'T00:00:00');
-  return `${d.getMonth() + 1}/${String(d.getDate()).padStart(2, '0')}(${DAY_NAMES[d.getDay()]})`;
+/* §4 — progress bar color from commerce donut (클렌징밤 = seg1) */
+const BAR_FILL = colors.seg1;   /* #9DC3E6 */
+const BAR_TRACK = colors.track; /* #F1F3F6 */
+
+/* Stack bar segment config — donut 3-color + mint */
+const BAR_SEGS = [
+  { label: '가편집본', steps: ['consent', 'draft', 'edit'] as string[], color: colors.seg1 },
+  { label: '업로드', steps: ['upload'] as string[], color: colors.seg2 },
+  { label: '정산', steps: ['payment'] as string[], color: colors.seg3 },
+] as const;
+
+/* §8 — card base (all 5 cards) */
+const CARD_BASE: React.CSSProperties = {
+  background: colors.surface,
+  border: `0.5px solid ${colors.border}`,
+  borderRadius: radii.card,
+  padding: '20px 24px',
+};
+
+/* §8 — text cell overflow guard for §9 layout stability */
+const CELL_CLIP: React.CSSProperties = {
+  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+};
+
+/* ── Card wrapper (dashboard-only, §8) ──────────────── */
+
+function DashCard({ title, summary, right, children, style }: {
+  title: string;
+  summary?: string;
+  right?: React.ReactNode;
+  children: React.ReactNode;
+  style?: React.CSSProperties;
+}) {
+  return (
+    <div style={{ ...CARD_BASE, minHeight: 120, ...style }}>
+      <div style={{
+        display: 'grid', gridTemplateColumns: '1fr auto',
+        alignItems: 'baseline', marginBottom: 16,
+      }}>
+        <span style={{ fontSize: 15, fontWeight: 600, color: colors.textPrimary }}>
+          {title}
+        </span>
+        {summary != null && (
+          <span style={{ fontSize: 13, color: colors.textSecondary }}>{summary}</span>
+        )}
+        {right}
+      </div>
+      {children}
+    </div>
+  );
 }
 
-function getStatusDisplay(t: WeeklyTaskItem): { text: string; color: string; weight: number } {
-  if (t.days_until === null || t.days_until === undefined) return { ...NO_SCHEDULE_STYLE };
-  return { text: formatDDay(t.days_until), ...getDDayStyle(t.days_until) };
+/* ── Helpers ──────────────────────────────────────────── */
+
+/** §5 — D-day text */
+function dDayText(daysUntil: number | null | undefined): string {
+  if (daysUntil === null || daysUntil === undefined) return '—';
+  if (daysUntil === 0) return 'D-day';
+  if (daysUntil < 0) return `D+${Math.abs(daysUntil)}`;
+  return `D-${daysUntil}`;
 }
 
-/* ── Table styles ────────────────────────────────────── */
+/** §5 — D-day style */
+function dDayStyle(daysUntil: number | null | undefined): React.CSSProperties {
+  if (daysUntil === null || daysUntil === undefined)
+    return { color: colors.textSecondary, fontWeight: 400 };
+  if (daysUntil <= 0) return { color: colors.coralDark, fontWeight: 600 };
+  if (daysUntil <= 3) return { color: colors.amber, fontWeight: 600 };
+  return { color: colors.textPrimary, fontWeight: 400 };
+}
 
-const thStyle: React.CSSProperties = {
-  padding: `0 ${spacing.tableCellPx}px`,
-  height: 40,
-  textAlign: 'left',
-  ...typo.tableHeader,
-  borderBottom: `1px solid ${colors.border}`,
-  verticalAlign: 'middle',
-};
+/** §4 — progress bar fraction (step position / total) */
+function stepFraction(step: string): number {
+  const idx = STEP_ORDER.indexOf(step as typeof STEP_ORDER[number]);
+  if (idx === -1) return 1;
+  return idx / TOTAL_STEPS;
+}
 
-const tdStyle: React.CSSProperties = {
-  padding: `0 ${spacing.tableCellPx}px`,
-  height: spacing.tableRowH,
-  ...typo.tableBody,
-  borderBottom: `1px solid ${colors.borderLight}`,
-  verticalAlign: 'middle',
-};
+/** §3 — strip "캠페인" suffix from campaign name */
+function shortCampName(name: string): string {
+  return name.replace(/\s*캠페인\s*$/g, '').trim();
+}
 
-/* ── Receive Modal Types ─────────────────────────────── */
+function checkDotColor(type: string): string {
+  if (type.includes('overdue')) return colors.coral;
+  if (type.includes('due_today') || type.includes('expiring') || type.includes('due_soon'))
+    return colors.amber;
+  return colors.textSecondary;
+}
 
-interface ReceiveModal {
-  item: WeeklyTaskItem;
-  link: string;
-  receivedDate: string;
-  memo: string;
-  processType: 'approved' | 'revision_requested';
-  revisionNote: string;
-  noLink: boolean;
-  saving: boolean;
-  error: string | null;
+/* ── Calendar grid builder ───────────────────────────── */
+
+interface CalCell {
+  day: number | null;
+  dateStr: string;
+  events: CalendarEvent[];
+}
+
+function buildCalGrid(year: number, month: number, events: CalendarEvent[]): CalCell[][] {
+  const first = new Date(year, month - 1, 1);
+  const last = new Date(year, month, 0);
+  const startDow = first.getDay();
+  const daysInMonth = last.getDate();
+
+  const byDate = new Map<string, CalendarEvent[]>();
+  for (const ev of events) {
+    const arr = byDate.get(ev.date);
+    if (arr) arr.push(ev); else byDate.set(ev.date, [ev]);
+  }
+
+  const weeks: CalCell[][] = [];
+  let week: CalCell[] = [];
+  for (let i = 0; i < startDow; i++) week.push({ day: null, dateStr: '', events: [] });
+  for (let d = 1; d <= daysInMonth; d++) {
+    const ds = `${year}-${String(month).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    week.push({ day: d, dateStr: ds, events: byDate.get(ds) ?? [] });
+    if (week.length === 7) { weeks.push(week); week = []; }
+  }
+  while (week.length > 0 && week.length < 7) week.push({ day: null, dateStr: '', events: [] });
+  if (week.length > 0) weeks.push(week);
+  return weeks;
 }
 
 /* ══════════════════════════════════════════════════════ */
 
 export default function InfluencerDashboardClient() {
+  const router = useRouter();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [campaignFilter, setCampaignFilter] = useState('all');
-  const [stepFilter, setStepFilter] = useState('all');
-  const [undoToast, setUndoToast] = useState<{ id: string; step: string; name: string } | null>(null);
-  const [undoTimer, setUndoTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
-  const [modal, setModal] = useState<ReceiveModal | null>(null);
+  const [showAll, setShowAll] = useState(false);
+
+  /* calendar state */
+  const [calMonth, setCalMonth] = useState(() => {
+    const n = new Date();
+    return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}`;
+  });
+  const [calEvents, setCalEvents] = useState<CalendarEvent[]>([]);
 
   /* ── Data fetch ─────────────────────────── */
 
@@ -101,170 +203,33 @@ export default function InfluencerDashboardClient() {
       .finally(() => setLoading(false));
   }, [refreshData]);
 
-  /* ── Handlers ───────────────────────────── */
+  /* ── Calendar fetch ─────────────────────── */
 
-  function handleCheckStep(item: WeeklyTaskItem) {
-    if (item.step === 'draft' || item.step === 'edit' || item.step === 'upload') {
-      const kstNow = new Date(Date.now() + 9 * 3600000);
-      const dateStr = item.step === 'upload'
-        ? kstNow.toISOString().slice(0, 16)
-        : kstNow.toISOString().slice(0, 10);
-      setModal({
-        item, link: '', receivedDate: dateStr, memo: '',
-        processType: 'approved', revisionNote: '',
-        noLink: false, saving: false, error: null,
-      });
-    }
-  }
+  useEffect(() => {
+    const [y, m] = calMonth.split('-').map(Number);
+    const start = `${y}-${String(m).padStart(2, '0')}-01`;
+    const last = new Date(y, m, 0).getDate();
+    const end = `${y}-${String(m).padStart(2, '0')}-${String(last).padStart(2, '0')}`;
+    fetch(`/api/influencer/calendar?start=${start}&end=${end}`)
+      .then(r => r.json())
+      .then(d => { setCalEvents(Array.isArray(d?.events) ? d.events : []); })
+      .catch(() => {});
+  }, [calMonth]);
 
-  async function handleSaveDeliverable() {
-    if (!modal) return;
-    const { item, link, receivedDate, memo, processType, revisionNote, noLink } = modal;
+  /* ── Calendar derived (must be before early returns — Rules of Hooks) */
+  const [calY, calM] = calMonth.split('-').map(Number);
+  const calGrid = useMemo(() => buildCalGrid(calY, calM, calEvents), [calY, calM, calEvents]);
+  const todayStr = useMemo(() => {
+    const n = new Date();
+    return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}`;
+  }, []);
 
-    const linkRequired = item.step === 'upload' || !noLink;
-    if (linkRequired) {
-      if (!link.trim()) {
-        setModal({ ...modal, error: item.step === 'upload' ? '업로드 링크를 입력해주세요' : '링크를 입력하거나 "링크 없이 확인함"을 체크해주세요' });
-        return;
-      }
-      try { new URL(link.trim()); } catch {
-        setModal({ ...modal, error: '올바른 URL을 입력해주세요' });
-        return;
-      }
-    }
-
-    if (item.step !== 'upload' && processType === 'revision_requested' && !revisionNote.trim()) {
-      setModal({ ...modal, error: '수정 요청 사항을 입력해주세요' });
-      return;
-    }
-
-    setModal({ ...modal, saving: true, error: null });
-
-    try {
-      const res = await fetch('/api/influencer/participants/check-step', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          participant_id: item.participant_id,
-          step: item.step,
-          link: (item.step === 'upload' || !noLink) ? link.trim() : undefined,
-          memo: item.step !== 'upload' ? (memo.trim() || undefined) : undefined,
-          received_at: receivedDate ? new Date(
-            item.step === 'upload' ? receivedDate + ':00+09:00' : receivedDate + 'T00:00:00+09:00'
-          ).toISOString() : undefined,
-          status: item.step === 'upload' ? 'approved' : processType,
-          revision_note: item.step !== 'upload' && processType === 'revision_requested' ? revisionNote.trim() : undefined,
-        }),
-      });
-
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: '알 수 없는 오류' }));
-        setModal({ ...modal, saving: false, error: err.error || '저장에 실패했습니다' });
-        return;
-      }
-
-      const isRevision = processType === 'revision_requested';
-      setModal(null);
-
-      if (isRevision) {
-        setData(prev => {
-          if (!prev) return prev;
-          return {
-            ...prev,
-            weeklyTasks: prev.weeklyTasks.map(t =>
-              t.participant_id === item.participant_id && t.step === item.step
-                ? { ...t, deliverable_status: 'revision_requested', deliverable_version: (t.deliverable_version || 0) + 1 }
-                : t
-            ),
-          };
-        });
-        showToast(item.participant_id, item.step, '_revision_');
-      } else {
-        setData(prev => {
-          if (!prev) return prev;
-          return {
-            ...prev,
-            weeklyTasks: prev.weeklyTasks.filter(t =>
-              !(t.participant_id === item.participant_id && t.step === item.step)
-            ),
-            weeklyTaskSummary: prev.weeklyTaskSummary.map(s =>
-              s.step === item.step ? { ...s, count: Math.max(0, s.count - 1) } : s
-            ),
-          };
-        });
-        showToast(item.participant_id, item.step, item.display_name);
-      }
-    } catch {
-      setModal({ ...modal, saving: false, error: '네트워크 오류입니다' });
-    }
-  }
-
-  async function handlePaymentComplete(item: WeeklyTaskItem) {
-    if (!confirm(`${item.display_name}님의 지급을 완료 처리하시겠습니까?`)) return;
-    try {
-      const settlementsRes = await fetch('/api/influencer/settlements');
-      const settlements = await settlementsRes.json();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const settlement = Array.isArray(settlements)
-        ? settlements.find((s: any) => s.participant_id === item.participant_id)
-        : null;
-
-      if (settlement) {
-        await fetch('/api/influencer/settlements', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: settlement.id, payment_status: 'paid' }),
-        });
-      } else {
-        await fetch('/api/influencer/participants', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: item.participant_id, settlement_status: 'paid' }),
-        });
-      }
-
-      setData(prev => {
-        if (!prev) return prev;
-        return {
-          ...prev,
-          weeklyTasks: prev.weeklyTasks.filter(t =>
-            !(t.participant_id === item.participant_id && t.step === item.step)
-          ),
-          weeklyTaskSummary: prev.weeklyTaskSummary.map(s =>
-            s.step === 'payment' ? { ...s, count: Math.max(0, s.count - 1) } : s
-          ),
-        };
-      });
-    } catch {
-      alert('처리 중 오류가 발생했습니다.');
-    }
-  }
-
-  function showToast(id: string, step: string, name: string) {
-    if (undoTimer) clearTimeout(undoTimer);
-    setUndoToast({ id, step, name });
-    const timer = setTimeout(() => setUndoToast(null), name === '_revision_' ? 5000 : 8000);
-    setUndoTimer(timer);
-  }
-
-  async function handleUndo() {
-    if (!undoToast) return;
-    if (undoTimer) clearTimeout(undoTimer);
-    await fetch('/api/influencer/participants/check-step', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ participant_id: undoToast.id, step: undoToast.step, undo: true }),
-    });
-    setUndoToast(null);
-    refreshData();
-  }
-
-  /* ── Loading ────────────────────────────── */
+  /* ── Loading / Error ────────────────────── */
 
   if (loading) {
     return (
       <AppShell showFilter={false}>
-        <p style={{ color: colors.textMuted, padding: '40px 0' }}>로딩 중...</p>
+        <p style={{ color: colors.textSecondary, padding: '40px 0' }}>로딩 중...</p>
       </AppShell>
     );
   }
@@ -280,507 +245,552 @@ export default function InfluencerDashboardClient() {
   /* ── Derived data ───────────────────────── */
 
   const allTasks = data.weeklyTasks ?? [];
-  const dueThisWeek = allTasks.filter(t =>
-    t.scheduled_date && t.days_until !== null && t.days_until >= 0 && t.days_until <= 7,
-  ).length;
-  const blockedCount = allTasks.filter(t => t.is_overdue).length;
-  const budgetPct = data.monthlyBudget > 0
-    ? Math.round((data.monthlyContractTotal / data.monthlyBudget) * 100) : 0;
+  const sortedTasks = [...allTasks].sort((a, b) => {
+    if (a.is_overdue !== b.is_overdue) return a.is_overdue ? -1 : 1;
+    return (a.days_until ?? 999) - (b.days_until ?? 999);
+  });
+  const visibleTasks = showAll ? sortedTasks : sortedTasks.slice(0, VISIBLE_COUNT);
+  const hiddenCount = sortedTasks.length - VISIBLE_COUNT;
 
   const allCampaigns = data.campaigns ?? [];
-  const campaignOptions = [
-    { value: 'all', label: '전체 캠페인' },
-    ...allCampaigns.map(c => ({ value: c.id, label: c.name })),
-  ];
-  const filteredCampaigns = campaignFilter === 'all'
-    ? allCampaigns
-    : allCampaigns.filter(c => c.id === campaignFilter);
+  const checklist = data.todayChecklist ?? [];
+  const overdueCount = allTasks.filter(t => t.is_overdue).length;
+  const completedTotal = allCampaigns.reduce((s, c) => s + (c.completedCount ?? 0), 0);
 
-  const stepTabs = STEP_FILTER_TABS.map(tab => ({
-    ...tab,
-    count: tab.key === 'all'
-      ? allTasks.length
-      : allTasks.filter(t => t.step === tab.key).length,
-  }));
+  /* KPI values */
+  const taskSummary = data.weeklyTaskSummary ?? [];
+  const kpi1Sub = taskSummary
+    .filter(s => s.count > 0)
+    .map(s => `${STEP_LABELS[s.step] || s.step} ${s.count}`)
+    .join(' · ') || '처리할 일 없음';
+  const kpi2Sub = overdueCount === 0
+    ? '지연 항목 없음'
+    : allTasks.filter(t => t.is_overdue).slice(0, 3).map(t => t.display_name).join(' · ')
+      + (overdueCount > 3 ? ` 외 ${overdueCount - 3}건` : '');
 
-  const filteredTasks = stepFilter === 'all'
-    ? allTasks
-    : allTasks.filter(t => t.step === stepFilter);
+  /* Campaign totals for header summary */
+  const totalCampParticipants = allCampaigns.reduce((s, c) => s + c.participantCount, 0);
+
+  /* Payment day from calendar events */
+  const paymentDays = calEvents.filter(e => e.type === 'payment');
+  const paymentDateLabel = paymentDays.length > 0
+    ? (() => { const d = new Date(paymentDays[0].date + 'T00:00:00'); return `지급일 ${d.getMonth() + 1}/${d.getDate()}`; })()
+    : '';
+
+  /* ── Row click navigation (§6) ──────────── */
+
+  function handleRowClick(t: WeeklyTaskItem) {
+    if (t.step === 'payment') {
+      router.push('/influencer/settlements');
+    } else {
+      router.push(`/influencer/manage?campaign=${t.campaign_id}&open=${t.participant_id}`);
+    }
+  }
+
+  function handleChecklistClick(type: string) {
+    if (type.includes('settlement') || type.includes('payment')) {
+      router.push('/influencer/settlements');
+    } else if (type.includes('consent') || type.includes('expiring')) {
+      router.push('/influencer/consents');
+    } else {
+      router.push('/influencer/manage');
+    }
+  }
 
   /* ── Render ─────────────────────────────── */
 
   return (
     <AppShell showFilter={false}>
-      <div>
-        {/* Header */}
-        <div style={{
-          display: 'flex', alignItems: 'center',
-          justifyContent: 'space-between', marginBottom: spacing.gap,
-        }}>
-          <h1 style={{ ...typo.pageTitle, margin: 0 }}>인플루언서 운영</h1>
-          {allCampaigns.length > 1 && (
-            <CustomSelect
-              value={campaignFilter}
-              options={campaignOptions}
-              onChange={setCampaignFilter}
-              size="md"
-            />
-          )}
-        </div>
+      {/* §9 — responsive breakpoints */}
+      <style>{`
+        .dash-row3 {
+          display: grid;
+          grid-template-columns: 1fr 1fr 1fr;
+          gap: 16px;
+          align-items: stretch;
+        }
+        @media (max-width: 1279px) {
+          .dash-row3 {
+            grid-template-columns: 1fr 1fr;
+          }
+        }
+        @media (max-width: 860px) {
+          .dash-row3 {
+            grid-template-columns: 1fr;
+          }
+        }
+      `}</style>
 
-        {/* 4 KPI Cards */}
-        <div style={{
-          display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)',
-          gap: spacing.gap - 2, marginBottom: spacing.gap,
+      <div style={{ maxWidth: 'none' }}>
+        {/* ── Page title ─────────────────────── */}
+        <h1 style={{
+          fontSize: 20, fontWeight: 600, letterSpacing: '-0.02em',
+          margin: 0, marginBottom: SECTION_GAP,
         }}>
-          <KPICard
-            label="이번 주 마감"
-            value={dueThisWeek}
-            unit="건"
-            sub={`전체 ${allTasks.length}건`}
-          />
-          <KPICard
-            label="막힌 건"
-            value={blockedCount}
-            unit="건"
-            alert={blockedCount > 0}
-            sub={blockedCount > 0
-              ? allTasks.filter(t => t.is_overdue).slice(0, 2).map(t => t.display_name).join(' · ')
-              : '지연 항목 없음'}
-          />
-          <KPICard
-            label="정산 대기"
-            value={data.settlementWaitingCount ?? 0}
-            unit="건"
-            sub={data.settlementWaitingAmount > 0 ? formatKRW(data.settlementWaitingAmount) : '—'}
-          />
-          <KPICard label="이번 달 계약액" value={formatKRW(data.monthlyContractTotal ?? 0)}
-            sub={data.monthlyBudget > 0
-              ? `예산 ${formatKRW(data.monthlyBudget)} · ${budgetPct}%${data.isBudgetFallback ? ' (캠페인 합)' : ''}`
-              : `제품 ${formatKRW(data.monthlyContractProductCost)} + 고료 ${formatKRW(data.monthlyContractFee)}`}
-          >
-            {data.monthlyBudget > 0 && (
-              <ProgressBar pct={budgetPct} height={4} style={{ marginTop: 8 }} />
-            )}
-          </KPICard>
-        </div>
+          인플루언서 운영
+        </h1>
 
-        {/* ─── 할 일 ─────────────────────────── */}
-        <Section
-          title="할 일"
-          right={<TabBar tabs={stepTabs} active={stepFilter} onChange={setStepFilter} />}
-          style={{ marginBottom: spacing.gap }}
-        >
-          {filteredTasks.length === 0 ? (
-            <div style={{ padding: '32px 0', textAlign: 'center' }}>
-              <span style={{ fontSize: 13, color: colors.textMuted }}>
-                {stepFilter === 'all' ? '처리할 일이 없습니다' : `${STEP_LABELS[stepFilter] || stepFilter} 항목이 없습니다`}
+        {/* ══ 1단: KPI row (§1, §0-1) ═══════════ */}
+        <div style={{
+          display: 'grid', gridTemplateColumns: '1fr 1fr 1fr',
+          gap: 16, marginBottom: SECTION_GAP,
+        }}>
+          {/* 이번 주 마감 */}
+          <div style={CARD_BASE}>
+            <div style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 4 }}>
+              이번 주 마감
+            </div>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 6 }}>
+              <span style={{ ...KPI_NUM, color: colors.textPrimary }}>
+                {allTasks.length}
               </span>
+              <span style={{ fontSize: 13, color: colors.textSecondary }}>건</span>
             </div>
-          ) : (
-            <div style={{ overflowX: 'auto' }}>
-              <table className="inf-table" style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
-                <thead>
-                  <tr>
-                    <th style={{ ...thStyle, width: '20%' }}>인플루언서</th>
-                    <th style={{ ...thStyle, width: '20%' }}>캠페인</th>
-                    <th style={{ ...thStyle, width: '15%' }}>단계</th>
-                    <th style={{ ...thStyle, width: '15%' }}>예정일</th>
-                    <th style={{ ...thStyle, width: '15%', textAlign: 'center' }}>상태</th>
-                    <th style={{ ...thStyle, width: '15%', textAlign: 'right' }}></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredTasks.map((t, i) => {
-                    const status = getStatusDisplay(t);
-                    return (
-                      <tr
-                        key={`${t.participant_id}-${t.step}-${i}`}
-                        onMouseEnter={e => (e.currentTarget.style.background = colors.surfaceHover)}
-                        onMouseLeave={e => (e.currentTarget.style.background = '')}
-                      >
-                        <td style={tdStyle}>
-                          <div style={{
-                            fontWeight: 500, fontSize: 13.5, color: colors.textPrimary,
-                            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                          }}>
-                            {t.display_name}
-                          </div>
-                          {t.channel && (
-                            <div style={{ ...typo.meta, color: colors.textMuted, marginTop: 1 }}>
-                              {CHANNEL_LABELS[t.channel as keyof typeof CHANNEL_LABELS] || t.channel}
-                            </div>
-                          )}
-                        </td>
-                        <td style={{
-                          ...tdStyle, overflow: 'hidden',
-                          textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: 12.5,
-                        }}>
-                          {t.campaign_name}
-                        </td>
-                        <td style={tdStyle}>
-                          <Chip variant={t.is_overdue ? 'coral' : t.step === 'payment' ? 'blue' : 'gray'}>
-                            {STEP_LABELS[t.step] || t.step}
-                          </Chip>
-                        </td>
-                        <td style={{
-                          ...tdStyle,
-                          color: t.is_overdue ? colors.coral : colors.textSecondary,
-                        }}>
-                          {t.scheduled_date ? formatDateShort(t.scheduled_date) : (
-                            <span style={{ color: colors.textMuted }}>—</span>
-                          )}
-                        </td>
-                        <td style={{ ...tdStyle, textAlign: 'center' }}>
-                          {t.step === 'payment' ? (
-                            <Chip variant={
-                              (t.settlement_status === 'docs_submitted' || t.settlement_status === 'payment_requested')
-                                ? 'blue' : 'gray'
-                            }>
-                              {(t.settlement_status === 'docs_submitted' || t.settlement_status === 'payment_requested')
-                                ? '제출 완료'
-                                : t.settlement_status === 'docs_requested' ? '정보 대기' : '미발송'}
-                            </Chip>
-                          ) : (
-                            <span style={{
-                              color: status.color,
-                              fontWeight: status.weight,
-                              fontSize: 13,
-                            }}>
-                              {status.text}
-                            </span>
-                          )}
-                        </td>
-                        <td style={{ ...tdStyle, textAlign: 'right' }}>
-                          {(t.step === 'draft' || t.step === 'edit' || t.step === 'upload') && (
-                            <Btn size="sm" onClick={() => handleCheckStep(t)}>
-                              {t.deliverable_status === 'revision_requested'
-                                ? `${(t.deliverable_version || 1) + 1}안 받음`
-                                : STEP_BTN_LABELS[t.step]}
-                            </Btn>
-                          )}
-                          {t.step === 'payment' && (
-                            <Btn size="sm" onClick={() => handlePaymentComplete(t)}>
-                              {STEP_BTN_LABELS[t.step]}
-                            </Btn>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+            <div style={{ fontSize: 13, color: colors.textSecondary }}>{kpi1Sub}</div>
+          </div>
+
+          {/* 지연 */}
+          <div style={CARD_BASE}>
+            <div style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 4 }}>
+              지연
             </div>
-          )}
-        </Section>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 6 }}>
+              <span style={{
+                ...KPI_NUM,
+                color: overdueCount > 0 ? colors.coralDark : colors.textPrimary,
+              }}>
+                {overdueCount}
+              </span>
+              <span style={{ fontSize: 13, color: colors.textSecondary }}>건</span>
+            </div>
+            <div style={{ fontSize: 13, color: colors.textSecondary }}>{kpi2Sub}</div>
+          </div>
 
-        {/* ─── 캠페인 진행 ──────────────────── */}
-        {filteredCampaigns.length > 0 && (
-          <Section title="캠페인 진행" style={{ marginBottom: spacing.gap }}>
-            <div style={{
-              padding: `${spacing.gap}px ${spacing.cardPadding}px`,
-              display: 'flex', flexDirection: 'column', gap: 20,
-            }}>
-              {filteredCampaigns.map(c => {
-                const total = c.participantCount;
-                if (total === 0) return null;
-                const completed = c.completedCount ?? c.uploadDone;
-                const completePct = Math.round((completed / total) * 100);
-                const delayed = c.delayedCount ?? 0;
+          {/* 이번 달 계약액 */}
+          <div style={CARD_BASE}>
+            <div style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 4 }}>
+              이번 달 계약액
+            </div>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 6 }}>
+              <span style={{ ...KPI_NUM, color: colors.textPrimary }}>
+                {new Intl.NumberFormat('ko-KR', { maximumFractionDigits: 0 }).format(Math.round(data.monthlyContractTotal ?? 0))}
+              </span>
+              <span style={{ fontSize: 13, color: colors.textSecondary }}>원</span>
+            </div>
+            <div style={{ fontSize: 13, color: colors.textSecondary }}>
+              확정 {data.totalParticipants ?? 0}명 · 지급 완료 {formatKRW(data.monthlyPaidAmount ?? 0)}
+            </div>
+          </div>
+        </div>
 
-                return (
-                  <div key={c.id}>
-                    <div style={{
-                      display: 'flex', justifyContent: 'space-between',
-                      alignItems: 'baseline', marginBottom: 8,
-                    }}>
-                      <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-                        <span style={{ fontSize: 13, fontWeight: 500, color: colors.textPrimary }}>
+        {/* ══ 2단: 인플루언서 현황 — 풀폭 (§2) ══ */}
+        <div style={{ marginBottom: SECTION_GAP }}>
+          <DashCard
+            title="인플루언서 현황"
+            summary={`진행 ${allTasks.length} · 완료 ${completedTotal}`}
+          >
+            {allTasks.length === 0 ? (
+              <div style={{ padding: '16px 0', fontSize: 13, color: colors.textSecondary }}>
+                진행 중인 인플루언서가 없습니다
+              </div>
+            ) : (
+              <>
+                {/* Column header */}
+                <div style={{
+                  display: 'grid', gridTemplateColumns: TABLE_GRID, gap: 12,
+                  height: 36, alignItems: 'center',
+                  borderBottom: `0.5px solid ${colors.borderLight}`,
+                }}>
+                  <span style={COL_HDR}>인플루언서</span>
+                  <span style={COL_HDR}>캠페인</span>
+                  <span style={COL_HDR}>단계</span>
+                  <span style={COL_HDR}>진행</span>
+                  <span style={COL_HDR}>마감</span>
+                  <span style={{ ...COL_HDR, textAlign: 'right' }}>고료</span>
+                </div>
+
+                {/* Data rows */}
+                {visibleTasks.map((t, i) => {
+                  const isLast = i === visibleTasks.length - 1 && hiddenCount <= 0;
+                  const ds = dDayStyle(t.days_until);
+                  const pct = stepFraction(t.step);
+                  const hasFee = (t.fee ?? 0) > 0;
+                  return (
+                    <div
+                      key={`${t.participant_id}-${t.step}-${i}`}
+                      onClick={() => handleRowClick(t)}
+                      style={{
+                        display: 'grid', gridTemplateColumns: TABLE_GRID, gap: 12,
+                        height: ROW_H, alignItems: 'center',
+                        borderBottom: isLast ? 'none' : `0.5px solid ${colors.borderLight}`,
+                        cursor: 'pointer',
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.background = colors.surfaceHover; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = ''; }}
+                    >
+                      {/* 인플루언서 — 14px 600 */}
+                      <span style={{
+                        ...CELL_CLIP, fontSize: 14, fontWeight: 600, color: colors.textPrimary,
+                      }}>
+                        {t.display_name}
+                      </span>
+
+                      {/* 캠페인 — 13px, strip suffix */}
+                      <span style={{
+                        ...CELL_CLIP, fontSize: 13, color: colors.textSecondary,
+                      }}>
+                        {shortCampName(t.campaign_name)}
+                      </span>
+
+                      {/* 단계 — 13px */}
+                      <span style={{
+                        ...CELL_CLIP, fontSize: 13, color: colors.textSecondary,
+                      }}>
+                        {STEP_LABELS[t.step] || t.step}
+                      </span>
+
+                      {/* §4 — 진행 바 (6px, seg1 fill, track bg) */}
+                      <div style={{
+                        height: 6, borderRadius: 3, background: BAR_TRACK,
+                        overflow: 'hidden',
+                      }}>
+                        <div style={{
+                          height: '100%', borderRadius: 3,
+                          width: `${Math.round(pct * 100)}%`,
+                          background: BAR_FILL,
+                        }} />
+                      </div>
+
+                      {/* §5 — 마감 D-day */}
+                      <span style={{
+                        ...CELL_CLIP, fontSize: 13,
+                        fontVariantNumeric: 'tabular-nums',
+                        ...ds,
+                      }}>
+                        {dDayText(t.days_until)}
+                      </span>
+
+                      {/* 고료 — right align, tabular-nums, 무가=회색 */}
+                      <span style={{
+                        ...CELL_CLIP, fontSize: 13,
+                        textAlign: 'right',
+                        fontVariantNumeric: 'tabular-nums',
+                        color: hasFee ? colors.textSecondary : colors.textSecondary,
+                      }}>
+                        {hasFee ? formatKRW(t.fee!) : '무가'}
+                      </span>
+                    </div>
+                  );
+                })}
+
+                {/* 더 보기 */}
+                {!showAll && hiddenCount > 0 && (
+                  <div style={{
+                    paddingTop: 12, textAlign: 'center',
+                    borderTop: `0.5px solid ${colors.borderLight}`,
+                  }}>
+                    <button
+                      onClick={() => setShowAll(true)}
+                      style={{
+                        background: 'none', border: 'none',
+                        color: colors.textSecondary, fontSize: 13, fontWeight: 500,
+                        cursor: 'pointer', fontFamily: 'var(--font)',
+                      }}
+                    >
+                      더 보기 ({hiddenCount}명)
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
+          </DashCard>
+        </div>
+
+        {/* ══ 3단: 캠페인 진행 / 지급 예정 / 확인할 것 (§1, §7) ══ */}
+        <div className="dash-row3" style={{ marginBottom: SECTION_GAP }}>
+          {/* ── 캠페인 진행 (§7 — 삭제 금지) ── */}
+          <DashCard
+            title="캠페인 진행"
+            summary={`캠페인 ${allCampaigns.length} · 인원 ${totalCampParticipants}`}
+          >
+            {allCampaigns.length === 0 ? (
+              <div style={{ padding: '16px 0', fontSize: 13, color: colors.textSecondary }}>
+                진행 중인 캠페인이 없습니다
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+                {allCampaigns.map(c => {
+                  const total = c.participantCount;
+                  if (total === 0) return null;
+
+                  const sc = c.stepCounts ?? {};
+                  const segments = BAR_SEGS.map(seg => ({
+                    ...seg,
+                    count: seg.steps.reduce((s, k) => s + ((sc as Record<string, number>)[k] ?? 0), 0),
+                  }));
+                  const completedCnt = c.completedCount ?? 0;
+
+                  return (
+                    <div key={c.id}>
+                      <div style={{
+                        display: 'grid', gridTemplateColumns: 'auto auto',
+                        gap: 8, alignItems: 'baseline',
+                        justifyContent: 'start', marginBottom: 8,
+                      }}>
+                        <span style={{ fontSize: 14, fontWeight: 600, color: colors.textPrimary }}>
                           {c.name}
                         </span>
-                        {c.month && (
-                          <span style={{ ...typo.meta, color: colors.textMuted }}>{c.month}</span>
-                        )}
+                        <span style={{ fontSize: 13, color: colors.textSecondary }}>
+                          {total}명
+                        </span>
                       </div>
+
+                      {/* Stacked bar */}
                       <div style={{
-                        display: 'flex', alignItems: 'center', gap: 8,
-                        ...typo.meta, color: colors.textInfo,
+                        display: 'flex', gap: 2, height: 8, borderRadius: 4, overflow: 'hidden',
                       }}>
-                        <span>{total}명</span>
-                        <span>완료 {completed}</span>
-                        {delayed > 0 && (
-                          <span style={{ color: colors.coral, fontWeight: 500 }}>
-                            지연 {delayed}
-                          </span>
+                        {segments.map((seg, si) => seg.count > 0 && (
+                          <div key={si} style={{
+                            flex: seg.count, background: seg.color,
+                            borderRadius: 4, minWidth: 4,
+                          }} />
+                        ))}
+                        {completedCnt > 0 && (
+                          <div style={{
+                            flex: completedCnt, background: colors.mint,
+                            borderRadius: 4, minWidth: 4,
+                          }} />
                         )}
                       </div>
+
+                      {/* Caption */}
+                      <div style={{
+                        marginTop: 6, fontSize: 13, display: 'flex', gap: 4, flexWrap: 'wrap',
+                      }}>
+                        {segments.map((seg, si) => (
+                          <span key={si} style={{
+                            color: seg.count > 0 ? colors.textPrimary : colors.textSecondary,
+                          }}>
+                            {seg.label} {seg.count} · </span>
+                        ))}
+                        <span style={{
+                          color: completedCnt > 0 ? colors.textPrimary : colors.textSecondary,
+                        }}>
+                          완료 {completedCnt}
+                        </span>
+                      </div>
                     </div>
-                    {/* Stack bar */}
-                    <div style={{
-                      height: 10, borderRadius: 5, background: colors.track,
-                      overflow: 'hidden', display: 'flex',
+                  );
+                })}
+              </div>
+            )}
+          </DashCard>
+
+          {/* ── 이번 달 지급 예정 ────────────── */}
+          <DashCard title="이번 달 지급 예정" summary={paymentDateLabel}>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              {/* 정산 대기 */}
+              <div style={{
+                display: 'grid', gridTemplateColumns: '5.5em auto',
+                gap: 12, height: ROW_H, alignItems: 'center',
+                borderBottom: `0.5px solid ${colors.borderLight}`,
+              }}>
+                <span style={{ fontSize: 14, fontWeight: 600, color: colors.textPrimary, ...CELL_CLIP }}>정산 대기</span>
+                <span style={{ fontSize: 13, color: colors.textSecondary, fontVariantNumeric: 'tabular-nums', ...CELL_CLIP }}>
+                  {data.settlementWaitingCount ?? 0}건 {formatKRW(data.settlementWaitingAmount ?? 0)}
+                </span>
+              </div>
+
+              {/* 지급 완료 */}
+              <div style={{
+                display: 'grid', gridTemplateColumns: '5.5em auto',
+                gap: 12, height: ROW_H, alignItems: 'center',
+                borderBottom: `0.5px solid ${colors.borderLight}`,
+              }}>
+                <span style={{ fontSize: 14, fontWeight: 600, color: colors.textPrimary, ...CELL_CLIP }}>지급 완료</span>
+                <span style={{ fontSize: 13, color: colors.mint, fontVariantNumeric: 'tabular-nums', ...CELL_CLIP }}>
+                  {data.monthlyPaidCount ?? 0}건 {formatKRW(data.monthlyPaidAmount ?? 0)}
+                </span>
+              </div>
+
+              {/* 계약 총액 */}
+              <div style={{
+                display: 'grid', gridTemplateColumns: '5.5em auto',
+                gap: 12, height: ROW_H, alignItems: 'center',
+                borderBottom: `0.5px solid ${colors.borderLight}`,
+              }}>
+                <span style={{ fontSize: 14, fontWeight: 600, color: colors.textPrimary, ...CELL_CLIP }}>계약 총액</span>
+                <span style={{ fontSize: 13, color: colors.textSecondary, fontVariantNumeric: 'tabular-nums', ...CELL_CLIP }}>
+                  {formatKRW(data.monthlyContractTotal ?? 0)}
+                </span>
+              </div>
+
+              {/* 확정 고료 */}
+              <div style={{
+                display: 'grid', gridTemplateColumns: '5.5em auto',
+                gap: 12, height: ROW_H, alignItems: 'center',
+              }}>
+                <span style={{ fontSize: 14, fontWeight: 600, color: colors.textPrimary, ...CELL_CLIP }}>확정 고료</span>
+                <span style={{ fontSize: 13, color: colors.textSecondary, fontVariantNumeric: 'tabular-nums', ...CELL_CLIP }}>
+                  {formatKRW(data.monthlyConfirmedFee ?? 0)}
+                </span>
+              </div>
+            </div>
+          </DashCard>
+
+          {/* ── 오늘 확인할 것 (§6 — 행 클릭 이동) ── */}
+          <DashCard title="오늘 확인할 것" summary={`${checklist.length}건`}>
+            {checklist.length === 0 ? (
+              <div style={{ padding: '16px 0', fontSize: 13, color: colors.textSecondary }}>
+                특이사항 없음
+              </div>
+            ) : (
+              <div>
+                {checklist.map((item, i) => (
+                  <div
+                    key={i}
+                    onClick={() => handleChecklistClick(item.type)}
+                    style={{
+                      display: 'grid', gridTemplateColumns: 'auto 1fr auto',
+                      gap: 8, height: ROW_H, alignItems: 'center',
+                      borderBottom: i < checklist.length - 1 ? `0.5px solid ${colors.borderLight}` : 'none',
+                      cursor: 'pointer',
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.background = colors.surfaceHover; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = ''; }}
+                  >
+                    <span style={{
+                      width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
+                      background: checkDotColor(item.type),
+                    }} />
+                    <span style={{ fontSize: 14, fontWeight: 600, color: colors.textPrimary, ...CELL_CLIP }}>
+                      {item.label}
+                    </span>
+                    <span style={{
+                      fontSize: 13, color: colors.textSecondary,
+                      fontVariantNumeric: 'tabular-nums',
                     }}>
-                      {completed > 0 && (
+                      {item.count}건
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </DashCard>
+        </div>
+
+        {/* ══ 4단: 이번 달 일정 — 풀폭 (§1) ═══════ */}
+        <DashCard
+          title="이번 달 일정"
+          right={
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <button onClick={() => {
+                const d = new Date(calY, calM - 2, 1);
+                setCalMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
+              }} style={{
+                background: 'none', border: 'none', cursor: 'pointer',
+                fontSize: 15, color: colors.textSecondary, padding: '2px 6px',
+                fontFamily: 'var(--font)',
+              }}>&lt;</button>
+              <span style={{ fontSize: 13, color: colors.textSecondary, fontVariantNumeric: 'tabular-nums' }}>
+                {calMonth}
+              </span>
+              <button onClick={() => {
+                const d = new Date(calY, calM, 1);
+                setCalMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
+              }} style={{
+                background: 'none', border: 'none', cursor: 'pointer',
+                fontSize: 15, color: colors.textSecondary, padding: '2px 6px',
+                fontFamily: 'var(--font)',
+              }}>&gt;</button>
+            </div>
+          }
+        >
+          {/* Day headers */}
+          <div style={{
+            display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)',
+            borderBottom: `0.5px solid ${colors.borderLight}`,
+          }}>
+            {DAY_NAMES.map(d => (
+              <div key={d} style={{
+                textAlign: 'center', fontSize: 13, color: colors.textSecondary,
+                padding: '8px 0',
+              }}>
+                {d}
+              </div>
+            ))}
+          </div>
+
+          {/* Weeks */}
+          {calGrid.map((week, wi) => (
+            <div key={wi} style={{
+              display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)',
+              borderBottom: wi < calGrid.length - 1 ? `0.5px solid ${colors.borderLight}` : 'none',
+            }}>
+              {week.map((cell, ci) => {
+                const isToday = cell.dateStr === todayStr;
+                const isPaymentDay = cell.events.some(e => e.type === 'payment');
+                const normalEvents = cell.events.filter(e => e.type !== 'payment');
+                const paymentEvents = cell.events.filter(e => e.type === 'payment');
+                return (
+                  <div key={ci} style={{
+                    height: 88, padding: '4px 6px',
+                    background: isToday ? colors.borderLight : 'transparent',
+                    borderRight: ci < 6 ? `0.5px solid ${colors.borderLight}` : 'none',
+                    overflow: 'hidden',
+                  }}>
+                    {cell.day !== null && (
+                      <>
                         <div style={{
-                          width: `${completePct}%`, background: colors.mint,
-                          height: '100%', transition: 'width 0.3s',
-                        }} />
-                      )}
-                    </div>
-                    <div style={{
-                      display: 'flex', justifyContent: 'space-between',
-                      ...typo.meta, color: colors.textMuted, marginTop: 4,
-                    }}>
-                      <span>{completePct}% 완료</span>
-                      {c.budget > 0 && <span>예산 {formatKRW(c.budget)}</span>}
-                    </div>
+                          fontSize: 13, fontWeight: isToday ? 600 : 400,
+                          color: isToday ? colors.textPrimary : colors.textSecondary,
+                          marginBottom: 2,
+                        }}>
+                          {cell.day}
+                        </div>
+                        {isPaymentDay && (
+                          <div style={{
+                            fontSize: 12, lineHeight: '16px', color: colors.mint,
+                            ...CELL_CLIP,
+                          }}>
+                            지급일 · {paymentEvents.length}건
+                          </div>
+                        )}
+                        {normalEvents.slice(0, isPaymentDay ? 2 : 3).map((ev, j) => (
+                          <div key={j} style={{
+                            fontSize: 12, lineHeight: '16px',
+                            color: ev.is_overdue ? colors.coralDark : colors.textPrimary,
+                            ...CELL_CLIP,
+                          }}>
+                            {ev.title} · {STEP_LABELS[ev.type] || ev.type}
+                          </div>
+                        ))}
+                        {normalEvents.length > (isPaymentDay ? 2 : 3) && (
+                          <div style={{ fontSize: 12, color: colors.textSecondary }}>
+                            +{normalEvents.length - (isPaymentDay ? 2 : 3)}
+                          </div>
+                        )}
+                      </>
+                    )}
                   </div>
                 );
               })}
             </div>
-            {/* Legend */}
-            <div style={{
-              padding: `8px ${spacing.cardPadding}px 16px`,
-              display: 'flex', gap: 16, ...typo.meta, color: colors.textMuted,
-            }}>
-              <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                <span style={{ width: 8, height: 8, borderRadius: 2, background: colors.mint }} />
-                완료
-              </span>
-              <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                <span style={{ width: 8, height: 8, borderRadius: 2, background: colors.track }} />
-                진행 중
-              </span>
-            </div>
-          </Section>
-        )}
+          ))}
+        </DashCard>
 
         {/* Empty state */}
-        {data.activeCampaigns === 0 && data.totalParticipants === 0 && (
-          <Card style={{ textAlign: 'center', padding: '60px 24px' }}>
-            <p style={{ fontSize: 16, color: colors.textSecondary, marginBottom: 8 }}>
+        {data.activeCampaigns === 0 && data.totalParticipants === 0 && allTasks.length === 0 && (
+          <div style={{ textAlign: 'center', padding: '60px 24px' }}>
+            <p style={{ fontSize: 14, color: colors.textSecondary, marginBottom: 8 }}>
               아직 캠페인이 없습니다
             </p>
-            <p style={{ fontSize: 13, color: colors.textMuted }}>
+            <p style={{ fontSize: 13, color: colors.textSecondary }}>
               캠페인 관리에서 첫 캠페인을 만들어보세요
             </p>
-          </Card>
-        )}
-
-        {/* ─── Receive modal ────────────────── */}
-        {modal && renderReceiveModal()}
-
-        {/* ─── Undo toast ───────────────────── */}
-        {undoToast && (
-          <Toast
-            message={
-              undoToast.name === '_revision_'
-                ? '수정 요청으로 기록했습니다'
-                : `${STEP_LABELS[undoToast.step] || undoToast.step} 컨펌 완료`
-            }
-            action={undoToast.name !== '_revision_'
-              ? { label: '실행 취소', onClick: handleUndo }
-              : undefined}
-          />
+          </div>
         )}
       </div>
     </AppShell>
-  );
-
-  /* ── Receive Modal ──────────────────────── */
-
-  function renderReceiveModal() {
-    if (!modal) return null;
-    const isUpload = modal.item.step === 'upload';
-    const isDraftEdit = modal.item.step === 'draft' || modal.item.step === 'edit';
-
-    return (
-      <div
-        style={{
-          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.3)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9000,
-        }}
-        onClick={() => { if (!modal.saving) setModal(null); }}
-      >
-        <div onClick={e => e.stopPropagation()} style={{
-          background: colors.surface, borderRadius: radii.card,
-          padding: spacing.cardPadding, width: 440,
-          boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
-        }}>
-          <div style={{ ...typo.sectionTitle, marginBottom: 2 }}>
-            {isUpload ? '업로드 등록' : `${STEP_LABELS[modal.item.step]} 수령`}
-          </div>
-          <div style={{ ...typo.body, color: colors.textSecondary, marginBottom: 20 }}>
-            {modal.item.display_name} · {modal.item.campaign_name}
-          </div>
-
-          {/* Link */}
-          <ModalField label={isUpload ? '업로드 링크' : '링크 주소'} required={!(isDraftEdit && modal.noLink)}>
-            <input
-              type="url"
-              placeholder={isUpload ? 'https://www.instagram.com/...' : 'https://docs.google.com/...'}
-              value={modal.link}
-              onChange={e => setModal({ ...modal, link: e.target.value, error: null })}
-              disabled={(isDraftEdit && modal.noLink) || modal.saving}
-              autoFocus
-              style={inputStyle((isDraftEdit && modal.noLink))}
-            />
-          </ModalField>
-
-          {/* Date */}
-          <ModalField label={isUpload ? '업로드 시간' : '수령일'}>
-            <input
-              type={isUpload ? 'datetime-local' : 'date'}
-              value={modal.receivedDate}
-              onChange={e => setModal({ ...modal, receivedDate: e.target.value })}
-              disabled={modal.saving}
-              style={inputStyle(false)}
-            />
-          </ModalField>
-
-          {/* Memo (draft/edit) */}
-          {isDraftEdit && (
-            <ModalField label="메모" optional>
-              <textarea
-                placeholder="참고사항 입력"
-                value={modal.memo}
-                onChange={e => setModal({ ...modal, memo: e.target.value })}
-                disabled={modal.saving}
-                rows={2}
-                style={textareaStyle(44)}
-              />
-            </ModalField>
-          )}
-
-          {/* Process type (draft/edit) */}
-          {isDraftEdit && (
-            <div style={{ marginBottom: 14 }}>
-              <label style={fieldLabelStyle}>처리</label>
-              <div style={{ display: 'flex', gap: 16, marginTop: 6 }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 13 }}>
-                  <input type="radio" name="processType" value="approved"
-                    checked={modal.processType === 'approved'}
-                    onChange={() => setModal({ ...modal, processType: 'approved', error: null })}
-                    disabled={modal.saving} style={{ accentColor: colors.accent }} />
-                  컨펌 완료
-                  <span style={{ ...typo.meta, color: colors.textMuted, marginLeft: 2 }}>이대로 진행</span>
-                </label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 13 }}>
-                  <input type="radio" name="processType" value="revision_requested"
-                    checked={modal.processType === 'revision_requested'}
-                    onChange={() => setModal({ ...modal, processType: 'revision_requested', error: null })}
-                    disabled={modal.saving} style={{ accentColor: colors.accent }} />
-                  수정 요청
-                  <span style={{ ...typo.meta, color: colors.textMuted, marginLeft: 2 }}>수정을 요청</span>
-                </label>
-              </div>
-            </div>
-          )}
-
-          {/* Revision note */}
-          {isDraftEdit && modal.processType === 'revision_requested' && (
-            <ModalField label="수정 요청 사항" required>
-              <textarea
-                placeholder="수정 요청 내용을 입력하세요"
-                value={modal.revisionNote}
-                onChange={e => setModal({ ...modal, revisionNote: e.target.value, error: null })}
-                disabled={modal.saving}
-                rows={3}
-                style={textareaStyle(60)}
-              />
-            </ModalField>
-          )}
-
-          {/* No-link checkbox */}
-          {isDraftEdit && (
-            <label style={{
-              display: 'flex', alignItems: 'center', gap: 6,
-              cursor: 'pointer', fontSize: 13, color: colors.textSecondary, marginBottom: 16,
-            }}>
-              <input type="checkbox" checked={modal.noLink}
-                onChange={e => setModal({
-                  ...modal, noLink: e.target.checked,
-                  link: e.target.checked ? '' : modal.link, error: null,
-                })}
-                disabled={modal.saving}
-                style={{ accentColor: colors.accent, width: 14, height: 14 }} />
-              링크 없이 확인함
-            </label>
-          )}
-
-          {/* Error */}
-          {modal.error && (
-            <div style={{
-              padding: '8px 12px', marginBottom: 12,
-              background: colors.coralLight, borderRadius: radii.chip,
-              fontSize: 13, color: colors.coral,
-            }}>
-              {modal.error}
-            </div>
-          )}
-
-          {/* Actions */}
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-            <Btn size="md" onClick={() => setModal(null)} disabled={modal.saving}>취소</Btn>
-            <button
-              onClick={handleSaveDeliverable}
-              disabled={modal.saving}
-              style={{
-                height: 36, padding: '0 16px', border: 'none',
-                borderRadius: radii.button,
-                background: modal.saving ? colors.textMuted : colors.textPrimary,
-                fontSize: 13, fontWeight: 500, color: '#fff',
-                cursor: modal.saving ? 'not-allowed' : 'pointer',
-                fontFamily: 'var(--font)', minWidth: 70,
-              }}
-            >
-              {modal.saving ? '저장 중...' : '저장'}
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-}
-
-/* ── Modal form helpers ──────────────────── */
-
-const fieldLabelStyle: React.CSSProperties = {
-  display: 'block', fontSize: 12, fontWeight: 500, color: colors.textSecondary, marginBottom: 4,
-};
-
-function inputStyle(disabled: boolean): React.CSSProperties {
-  return {
-    width: '100%', height: 38, padding: '0 12px',
-    border: `1px solid ${colors.border}`, borderRadius: radii.button,
-    fontSize: 13, fontFamily: 'var(--font)',
-    outline: 'none', boxSizing: 'border-box' as const,
-    background: disabled ? colors.surfaceHover : colors.surface,
-    color: disabled ? colors.textMuted : colors.textPrimary,
-  };
-}
-
-function textareaStyle(minH: number): React.CSSProperties {
-  return {
-    width: '100%', padding: '8px 12px',
-    border: `1px solid ${colors.border}`, borderRadius: radii.button,
-    fontSize: 13, fontFamily: 'var(--font)',
-    outline: 'none', boxSizing: 'border-box' as const,
-    resize: 'vertical' as const, minHeight: minH,
-  };
-}
-
-function ModalField({ label, required, optional, children }: {
-  label: string; required?: boolean; optional?: boolean; children: React.ReactNode;
-}) {
-  return (
-    <div style={{ marginBottom: 14 }}>
-      <label style={fieldLabelStyle}>
-        {label}
-        {required && <span style={{ color: colors.coral, marginLeft: 2 }}>*</span>}
-        {optional && <span style={{ fontWeight: 400, color: colors.textMuted, marginLeft: 4 }}>(선택)</span>}
-      </label>
-      {children}
-    </div>
   );
 }
