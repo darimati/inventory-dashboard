@@ -36,7 +36,7 @@ const VISIBLE_COUNT = 10;
 const SECTION_GAP = 24;
 
 /* §1 — 인플루언서 현황 5-column grid */
-const TABLE_GRID = 'minmax(0,120px) minmax(0,1fr) minmax(0,420px) minmax(0,80px) minmax(0,110px)';
+const TABLE_GRID = 'minmax(0,120px) minmax(0,140px) minmax(0,1fr) minmax(0,80px) minmax(0,110px)';
 
 /* §4 — 지급 예정 4-column grid */
 const PAYMENT_GRID = 'minmax(0,1fr) minmax(0,120px) minmax(0,120px) minmax(0,140px)';
