@@ -35,8 +35,11 @@ const ROW_H = 44;
 const VISIBLE_COUNT = 10;
 const SECTION_GAP = 24;
 
-/* §3 — 6-column fixed-width grid */
-const TABLE_GRID = '84px 100px 64px minmax(80px,1fr) 100px 76px';
+/* §1 — 인플루언서 현황 9-column grid (spacer cols 2,4,6) */
+const TABLE_GRID = 'minmax(0,88px) 12px minmax(0,104px) 16px minmax(0,300px) 20px minmax(0,72px) minmax(0,88px) 1fr';
+
+/* §4 — 지급 예정 5-column grid */
+const PAYMENT_GRID = 'minmax(0,88px) minmax(0,80px) minmax(0,80px) minmax(0,88px) 1fr';
 
 const COL_HDR: React.CSSProperties = {
   fontSize: 13, color: colors.textSecondary,
@@ -48,11 +51,7 @@ const KPI_NUM: React.CSSProperties = {
   fontVariantNumeric: 'tabular-nums',
 };
 
-/* §4 — progress bar color from commerce donut (클렌징밤 = seg1) */
-const BAR_FILL = colors.seg1;   /* #9DC3E6 */
-const BAR_TRACK = colors.track; /* #F1F3F6 */
-
-/* Stack bar segment config — donut 3-color + mint */
+/* Stack bar segment config — donut 3-color + mint (캠페인 진행 card) */
 const BAR_SEGS = [
   { label: '가편집본', steps: ['consent', 'draft', 'edit'] as string[], color: colors.seg1 },
   { label: '업로드', steps: ['upload'] as string[], color: colors.seg2 },
@@ -119,11 +118,11 @@ function dDayStyle(daysUntil: number | null | undefined): React.CSSProperties {
   return { color: colors.textPrimary, fontWeight: 400 };
 }
 
-/** §4 — progress bar fraction (step position / total) */
-function stepFraction(step: string): number {
-  const idx = STEP_ORDER.indexOf(step as typeof STEP_ORDER[number]);
-  if (idx === -1) return 1;
-  return idx / TOTAL_STEPS;
+/** Format date as MM/DD */
+function fmtDate(d: string | null | undefined): string {
+  if (!d) return '—';
+  const dt = new Date(d + 'T00:00:00');
+  return `${dt.getMonth() + 1}/${dt.getDate()}`;
 }
 
 /** §3 — strip "캠페인" suffix from campaign name */
@@ -271,7 +270,12 @@ export default function InfluencerDashboardClient() {
   /* Campaign totals for header summary */
   const totalCampParticipants = allCampaigns.reduce((s, c) => s + c.participantCount, 0);
 
-  /* Payment day from calendar events */
+  /* Payment participants + upload date map */
+  const paymentTasks = allTasks.filter(t => t.step === 'payment');
+  const uploadDateMap = new Map<string, string>();
+  for (const e of calEvents) {
+    if (e.type === 'upload') uploadDateMap.set(e.participant_id, e.date);
+  }
   const paymentDays = calEvents.filter(e => e.type === 'payment');
   const paymentDateLabel = paymentDays.length > 0
     ? (() => { const d = new Date(paymentDays[0].date + 'T00:00:00'); return `지급일 ${d.getMonth() + 1}/${d.getDate()}`; })()
@@ -395,90 +399,75 @@ export default function InfluencerDashboardClient() {
               </div>
             ) : (
               <>
-                {/* Column header */}
+                {/* Column header — 9 cols (2,4,6 = spacer) */}
                 <div style={{
-                  display: 'grid', gridTemplateColumns: TABLE_GRID, gap: 12,
+                  display: 'grid', gridTemplateColumns: TABLE_GRID, gap: 14,
                   height: 36, alignItems: 'center',
                   borderBottom: `0.5px solid ${colors.borderLight}`,
+                  minWidth: 0,
                 }}>
                   <span style={COL_HDR}>인플루언서</span>
+                  <span />
                   <span style={COL_HDR}>캠페인</span>
-                  <span style={COL_HDR}>단계</span>
-                  <span style={COL_HDR}>진행</span>
-                  <span style={COL_HDR}>마감</span>
-                  <span style={{ ...COL_HDR, textAlign: 'right' }}>고료</span>
+                  <span />
+                  <span style={{ ...COL_HDR, textAlign: 'center' }}>단계</span>
+                  <span />
+                  <span style={{ ...COL_HDR, textAlign: 'center' }}>마감</span>
+                  <span style={{ ...COL_HDR, textAlign: 'center' }}>고료</span>
+                  <span />
                 </div>
 
                 {/* Data rows */}
+                {/* Data rows — 9 cols */}
                 {visibleTasks.map((t, i) => {
                   const isLast = i === visibleTasks.length - 1 && hiddenCount <= 0;
-                  const ds = dDayStyle(t.days_until);
-                  const pct = stepFraction(t.step);
                   const hasFee = (t.fee ?? 0) > 0;
                   return (
                     <div
                       key={`${t.participant_id}-${t.step}-${i}`}
                       onClick={() => handleRowClick(t)}
                       style={{
-                        display: 'grid', gridTemplateColumns: TABLE_GRID, gap: 12,
+                        display: 'grid', gridTemplateColumns: TABLE_GRID, gap: 14,
                         height: ROW_H, alignItems: 'center',
                         borderBottom: isLast ? 'none' : `0.5px solid ${colors.borderLight}`,
                         cursor: 'pointer',
+                        minWidth: 0,
                       }}
                       onMouseEnter={e => { e.currentTarget.style.background = colors.surfaceHover; }}
                       onMouseLeave={e => { e.currentTarget.style.background = ''; }}
                     >
-                      {/* 인플루언서 — 14px 600 */}
-                      <span style={{
-                        ...CELL_CLIP, fontSize: 14, fontWeight: 600, color: colors.textPrimary,
-                      }}>
+                      {/* Col 1: 인플루언서 — 14px 600 */}
+                      <span style={{ ...CELL_CLIP, fontSize: 14, fontWeight: 600, color: colors.textPrimary }}>
                         {t.display_name}
                       </span>
-
-                      {/* 캠페인 — 13px, strip suffix */}
-                      <span style={{
-                        ...CELL_CLIP, fontSize: 13, color: colors.textSecondary,
-                      }}>
+                      <span />{/* Col 2: spacer */}
+                      {/* Col 3: 캠페인 */}
+                      <span style={{ ...CELL_CLIP, fontSize: 13, color: colors.textSecondary }}>
                         {shortCampName(t.campaign_name)}
                       </span>
-
-                      {/* 단계 — 13px */}
-                      <span style={{
-                        ...CELL_CLIP, fontSize: 13, color: colors.textSecondary,
-                      }}>
+                      <span />{/* Col 4: spacer */}
+                      {/* Col 5: 단계 */}
+                      <span style={{ ...CELL_CLIP, fontSize: 13, color: colors.textSecondary, textAlign: 'center' }}>
                         {STEP_LABELS[t.step] || t.step}
                       </span>
-
-                      {/* §4 — 진행 바 (6px, seg1 fill, track bg) */}
-                      <div style={{
-                        height: 6, borderRadius: 3, background: BAR_TRACK,
-                        overflow: 'hidden',
-                      }}>
-                        <div style={{
-                          height: '100%', borderRadius: 3,
-                          width: `${Math.round(pct * 100)}%`,
-                          background: BAR_FILL,
-                        }} />
-                      </div>
-
-                      {/* §5 — 마감 D-day */}
+                      <span />{/* Col 6: spacer */}
+                      {/* Col 7: 마감 — center */}
                       <span style={{
-                        ...CELL_CLIP, fontSize: 13,
+                        fontSize: 13, textAlign: 'center',
                         fontVariantNumeric: 'tabular-nums',
-                        ...ds,
+                        ...dDayStyle(t.days_until),
                       }}>
                         {dDayText(t.days_until)}
                       </span>
-
-                      {/* 고료 — right align, tabular-nums, 무가=회색 */}
+                      {/* Col 8: 고료 — center, tabular-nums */}
                       <span style={{
-                        ...CELL_CLIP, fontSize: 13,
-                        textAlign: 'right',
+                        fontSize: 13, textAlign: 'center',
                         fontVariantNumeric: 'tabular-nums',
                         color: hasFee ? colors.textSecondary : colors.textSecondary,
                       }}>
                         {hasFee ? formatKRW(t.fee!) : '무가'}
                       </span>
+                      <span />{/* Col 9: absorber */}
                     </div>
                   );
                 })}
@@ -586,56 +575,54 @@ export default function InfluencerDashboardClient() {
             )}
           </DashCard>
 
-          {/* ── 이번 달 지급 예정 ────────────── */}
+          {/* ── 이번 달 지급 예정 (§4) ────────── */}
           <DashCard title="이번 달 지급 예정" summary={paymentDateLabel}>
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              {/* 정산 대기 */}
-              <div style={{
-                display: 'grid', gridTemplateColumns: '5.5em auto',
-                gap: 12, height: ROW_H, alignItems: 'center',
-                borderBottom: `0.5px solid ${colors.borderLight}`,
-              }}>
-                <span style={{ fontSize: 14, fontWeight: 600, color: colors.textPrimary, ...CELL_CLIP }}>정산 대기</span>
-                <span style={{ fontSize: 13, color: colors.textSecondary, fontVariantNumeric: 'tabular-nums', ...CELL_CLIP }}>
-                  {data.settlementWaitingCount ?? 0}건 {formatKRW(data.settlementWaitingAmount ?? 0)}
-                </span>
+            {paymentTasks.length === 0 ? (
+              <div style={{ padding: '16px 0', fontSize: 13, color: colors.textSecondary }}>
+                지급 예정 인플루언서가 없습니다
               </div>
-
-              {/* 지급 완료 */}
-              <div style={{
-                display: 'grid', gridTemplateColumns: '5.5em auto',
-                gap: 12, height: ROW_H, alignItems: 'center',
-                borderBottom: `0.5px solid ${colors.borderLight}`,
-              }}>
-                <span style={{ fontSize: 14, fontWeight: 600, color: colors.textPrimary, ...CELL_CLIP }}>지급 완료</span>
-                <span style={{ fontSize: 13, color: colors.mint, fontVariantNumeric: 'tabular-nums', ...CELL_CLIP }}>
-                  {data.monthlyPaidCount ?? 0}건 {formatKRW(data.monthlyPaidAmount ?? 0)}
-                </span>
-              </div>
-
-              {/* 계약 총액 */}
-              <div style={{
-                display: 'grid', gridTemplateColumns: '5.5em auto',
-                gap: 12, height: ROW_H, alignItems: 'center',
-                borderBottom: `0.5px solid ${colors.borderLight}`,
-              }}>
-                <span style={{ fontSize: 14, fontWeight: 600, color: colors.textPrimary, ...CELL_CLIP }}>계약 총액</span>
-                <span style={{ fontSize: 13, color: colors.textSecondary, fontVariantNumeric: 'tabular-nums', ...CELL_CLIP }}>
-                  {formatKRW(data.monthlyContractTotal ?? 0)}
-                </span>
-              </div>
-
-              {/* 확정 고료 */}
-              <div style={{
-                display: 'grid', gridTemplateColumns: '5.5em auto',
-                gap: 12, height: ROW_H, alignItems: 'center',
-              }}>
-                <span style={{ fontSize: 14, fontWeight: 600, color: colors.textPrimary, ...CELL_CLIP }}>확정 고료</span>
-                <span style={{ fontSize: 13, color: colors.textSecondary, fontVariantNumeric: 'tabular-nums', ...CELL_CLIP }}>
-                  {formatKRW(data.monthlyConfirmedFee ?? 0)}
-                </span>
-              </div>
-            </div>
+            ) : (
+              <>
+                <div style={{
+                  display: 'grid', gridTemplateColumns: PAYMENT_GRID, gap: 16,
+                  height: 36, alignItems: 'center',
+                  borderBottom: `0.5px solid ${colors.borderLight}`,
+                  minWidth: 0,
+                }}>
+                  <span style={COL_HDR}>인플루언서</span>
+                  <span style={{ ...COL_HDR, textAlign: 'center' }}>업로드일</span>
+                  <span style={{ ...COL_HDR, textAlign: 'center' }}>지급일</span>
+                  <span style={{ ...COL_HDR, textAlign: 'center' }}>금액</span>
+                  <span />
+                </div>
+                {paymentTasks.map((t, i) => {
+                  const isLast = i === paymentTasks.length - 1;
+                  const upDate = uploadDateMap.get(t.participant_id);
+                  return (
+                    <div key={t.participant_id} style={{
+                      display: 'grid', gridTemplateColumns: PAYMENT_GRID, gap: 16,
+                      height: ROW_H, alignItems: 'center',
+                      borderBottom: isLast ? 'none' : `0.5px solid ${colors.borderLight}`,
+                      minWidth: 0,
+                    }}>
+                      <span style={{ ...CELL_CLIP, fontSize: 13, color: colors.textPrimary }}>
+                        {t.display_name}
+                      </span>
+                      <span style={{ fontSize: 13, color: colors.textSecondary, textAlign: 'center', fontVariantNumeric: 'tabular-nums' }}>
+                        {fmtDate(upDate)}
+                      </span>
+                      <span style={{ fontSize: 13, color: colors.textPrimary, textAlign: 'center', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
+                        {fmtDate(t.scheduled_date)}
+                      </span>
+                      <span style={{ fontSize: 13, color: colors.textPrimary, textAlign: 'center', fontVariantNumeric: 'tabular-nums' }}>
+                        {formatKRW(t.fee ?? 0)}
+                      </span>
+                      <span />
+                    </div>
+                  );
+                })}
+              </>
+            )}
           </DashCard>
 
           {/* ── 오늘 확인할 것 (§6 — 행 클릭 이동) ── */}
