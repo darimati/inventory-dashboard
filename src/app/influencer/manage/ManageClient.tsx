@@ -828,6 +828,12 @@ export default function ManageClient() {
     }
   };
 
+  const toggleProductSet = (name: string) => {
+    const current = partForm.product_set_name ? partForm.product_set_name.split(',') : [];
+    const next = current.includes(name) ? current.filter((n) => n !== name) : [...current, name];
+    setPartForm({ ...partForm, product_set_name: next.join(',') });
+  };
+
   /* ── Helpers ──────────────────────────────────────────── */
 
   const fmtKRW = (n: number) => n > 0 ? formatKRW(n) : '-';
@@ -1501,9 +1507,10 @@ export default function ManageClient() {
                   <label style={labelStyle}>제공 제품</label>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
                     {[...settingsSets.map((s) => s.name), ...settingsProducts.map((p) => p.name)].filter((n) => n.trim()).map((name) => {
-                      const active = partForm.product_set_name === name;
+                      const selected = partForm.product_set_name ? partForm.product_set_name.split(',') : [];
+                      const active = selected.includes(name);
                       return (
-                        <button key={name} style={toggleChipStyle(active)} onClick={() => setPartForm({ ...partForm, product_set_name: active ? '' : name })}>{name}</button>
+                        <button key={name} style={toggleChipStyle(active)} onClick={() => toggleProductSet(name)}>{name}</button>
                       );
                     })}
                   </div>
@@ -1577,7 +1584,7 @@ export default function ManageClient() {
                 <div><span style={{ color: 'var(--text-info)' }}>채널:</span> {detailPart.channel ? CHANNEL_LABELS[detailPart.channel] : '-'}</div>
                 <div><span style={{ color: 'var(--text-info)' }}>협업유형:</span> {(() => { const ct = detailPart.collab_type || detailCampaign?.collab_type || ((detailPart.fee || 0) > 0 ? 'fixed_fee' : 'free_seeding'); return COLLAB_TYPE_LABELS[ct as CollabType] || '-'; })()}</div>
                 <div><span style={{ color: 'var(--text-info)' }}>프로필:</span> {detailPart.profile_url ? <a href={detailPart.profile_url} target="_blank" rel="noopener noreferrer" style={{ color: '#4A7DB5' }}>링크</a> : '-'}</div>
-                <div><span style={{ color: 'var(--text-info)' }}>제공제품:</span> {detailPart.product_set_name || detailPart.product || '-'}</div>
+                <div><span style={{ color: 'var(--text-info)' }}>제공제품:</span> {(() => { const raw = detailPart.product_set_name || detailPart.product || ''; const items = raw ? raw.split(',') : []; if (items.length === 0) return '-'; if (items.length <= 2) return items.join(', '); return `${items[0]} 외 ${items.length - 1}`; })()}</div>
                 <div><span style={{ color: 'var(--text-info)' }}>콘텐츠:</span> {formatContentFormats(detailPart.content_formats ?? []) || (detailPart.post_type ? `${CONTENT_FORMAT_LABELS[detailPart.post_type as ContentFormat] ?? detailPart.post_type} ${detailPart.post_count ?? 1}건` : '-')}</div>
                 <div><span style={{ color: 'var(--text-info)' }}>고료:</span> {fmtKRW(detailPart.fee)}</div>
                 <div><span style={{ color: 'var(--text-info)' }}>2차 활용:</span> {detailPart.secondary_use ? `예 (${detailPart.secondary_use_period || '-'})` : '아니오'}</div>
