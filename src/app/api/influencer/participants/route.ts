@@ -33,6 +33,7 @@ export async function POST(req: NextRequest) {
     product_quantity: body.product_quantity || 1,
     product_cost: productCost,
     fee: body.fee || 0,
+    collab_type: body.collab_type || null,
     post_type: firstFormat?.format || body.post_type || null,
     post_count: firstFormat?.count || body.post_count || 1,
     content_deadline: body.content_deadline || null,
@@ -46,7 +47,6 @@ export async function POST(req: NextRequest) {
   // Try with v3 columns first, fall back to base if migration not run
   const v3Data: Record<string, unknown> = {
     ...baseData,
-    collab_type: body.collab_type || null,
     provided_products: body.provided_products || [],
     product_set_name: body.product_set_name || null,
     rs_ratio: body.rs_ratio || null,
@@ -216,7 +216,7 @@ export async function PUT(req: NextRequest) {
 
   // If v3 columns don't exist, strip them and retry
   if (result.error && result.error.message.includes('column')) {
-    const v3Keys = ['collab_type', 'provided_products', 'product_set_name', 'rs_ratio', 'content_formats', 'confirmed_draft_date', 'confirmed_edit_date', 'confirmed_upload_date', 'draft_received_at', 'edit_received_at', 'uploaded_at'];
+    const v3Keys = ['provided_products', 'product_set_name', 'rs_ratio', 'content_formats'];
     const safeUpdates = { ...updates };
     for (const k of v3Keys) delete safeUpdates[k];
     result = await supabaseAdmin
