@@ -451,9 +451,10 @@ export default function ManageClient() {
   const openAddParticipant = (campaignId: string) => {
     setEditPartId(null);
     setPartCampaignId(campaignId);
+    const camp = campaigns.find((c) => c.id === campaignId);
     setPartForm({
       name: '', display_name: '', channel: '', profile_url: '',
-      collab_type: 'free_seeding', provided_products: [], product_set_name: '',
+      collab_type: camp?.collab_type || 'free_seeding', provided_products: [], product_set_name: '',
       content_formats: [], fee: 0, rs_ratio: '',
       secondary_use: false, secondary_use_period: '', memo: '',
     });
@@ -463,12 +464,13 @@ export default function ManageClient() {
   const openEditParticipant = (p: Participant) => {
     setEditPartId(p.id);
     setPartCampaignId(p.campaign_id);
+    const camp = campaigns.find((c) => c.id === p.campaign_id);
     setPartForm({
       name: p.name,
       display_name: p.display_name || '',
       channel: p.channel || '',
       profile_url: p.profile_url || '',
-      collab_type: (p.collab_type as CollabType) || ((p.fee || 0) > 0 ? 'fixed_fee' : 'free_seeding'),
+      collab_type: (p.collab_type as CollabType) || camp?.collab_type || ((p.fee || 0) > 0 ? 'fixed_fee' : 'free_seeding'),
       provided_products: p.provided_products ?? [],
       product_set_name: p.product_set_name || p.product || '',
       content_formats: p.content_formats ?? [],
