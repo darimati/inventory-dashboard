@@ -79,12 +79,15 @@ export async function GET(
   // 7. Build content format display from legacy or v3 columns
   let contentDisplay: string | null = null;
   if (participant.content_formats && Array.isArray(participant.content_formats) && participant.content_formats.length > 0) {
-    const FORMAT_LABELS: Record<string, string> = { reels: '릴스', feed: '피드', story: '스토리', shorts: '숏츠', video: '영상' };
+    const FORMAT_LABELS: Record<string, string> = { reels: '릴스', feed: '피드', story: '스토리', shorts: '숏츠', video: '영상', other: '기타' };
     contentDisplay = participant.content_formats
-      .map((f: { format: string; count: number }) => `${FORMAT_LABELS[f.format] ?? f.format} ${f.count}건`)
+      .map((f: { format: string; count: number; custom_label?: string }) => {
+        const label = f.format === 'other' && f.custom_label ? f.custom_label : (FORMAT_LABELS[f.format] ?? f.format);
+        return `${label} ${f.count}건`;
+      })
       .join(', ');
   } else if (participant.post_type) {
-    const FORMAT_LABELS: Record<string, string> = { reels: '릴스', feed: '피드', story: '스토리', shorts: '숏츠', video: '영상' };
+    const FORMAT_LABELS: Record<string, string> = { reels: '릴스', feed: '피드', story: '스토리', shorts: '숏츠', video: '영상', other: '기타' };
     const label = FORMAT_LABELS[participant.post_type] ?? participant.post_type;
     contentDisplay = `${label} ${participant.post_count ?? 1}건`;
   }

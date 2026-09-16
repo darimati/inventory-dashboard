@@ -184,7 +184,7 @@ export const CHANNEL_LABELS: Record<Channel, string> = {
 
 /* ---- Content Formats (v3) ---- */
 
-export type ContentFormat = 'reels' | 'feed' | 'story' | 'shorts' | 'video';
+export type ContentFormat = 'reels' | 'feed' | 'story' | 'shorts' | 'video' | 'other';
 
 export const CONTENT_FORMAT_LABELS: Record<ContentFormat, string> = {
   reels: '릴스',
@@ -192,17 +192,24 @@ export const CONTENT_FORMAT_LABELS: Record<ContentFormat, string> = {
   story: '스토리',
   shorts: '숏츠',
   video: '영상',
+  other: '기타',
 };
 
 export interface ContentFormatEntry {
   format: ContentFormat;
   count: number;
+  custom_label?: string;
 }
 
 export function formatContentFormats(formats: ContentFormatEntry[]): string {
   if (!formats || formats.length === 0) return '';
   return formats
-    .map(f => `${CONTENT_FORMAT_LABELS[f.format] ?? f.format} ${f.count}건`)
+    .map(f => {
+      const label = f.format === 'other' && f.custom_label
+        ? f.custom_label
+        : (CONTENT_FORMAT_LABELS[f.format] ?? f.format);
+      return `${label} ${f.count}건`;
+    })
     .join(' + ');
 }
 

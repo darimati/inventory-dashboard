@@ -1524,18 +1524,26 @@ export default function ManageClient() {
                     ))}
                   </div>
                   {partForm.content_formats.length > 0 && (
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                      {partForm.content_formats.map((cf, i) => (
-                        <div key={cf.format} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 13 }}>
-                          <span style={{ color: 'var(--text-secondary)' }}>{CONTENT_FORMAT_LABELS[cf.format]}</span>
-                          <input type="number" min={1} style={{ ...inputStyle, width: 50, padding: '4px 6px', textAlign: 'center' }} value={cf.count} onChange={(e) => {
-                            const next = [...partForm.content_formats];
-                            next[i] = { ...next[i], count: parseInt(e.target.value) || 1 };
-                            setPartForm({ ...partForm, content_formats: next });
-                          }} />
-                          <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>건</span>
-                        </div>
-                      ))}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                        {partForm.content_formats.map((cf, i) => (
+                          <div key={cf.format} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 13 }}>
+                            <span style={{ color: 'var(--text-secondary)' }}>{cf.format === 'other' && cf.custom_label ? cf.custom_label : CONTENT_FORMAT_LABELS[cf.format]}</span>
+                            <input type="number" min={1} style={{ ...inputStyle, width: 50, padding: '4px 6px', textAlign: 'center' }} value={cf.count} onChange={(e) => {
+                              const next = [...partForm.content_formats];
+                              next[i] = { ...next[i], count: parseInt(e.target.value) || 1 };
+                              setPartForm({ ...partForm, content_formats: next });
+                            }} />
+                            <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>건</span>
+                          </div>
+                        ))}
+                      </div>
+                      {partForm.content_formats.some((f) => f.format === 'other') && (
+                        <input style={inputStyle} placeholder="직접 입력 (예: 블로그 포스팅)" value={partForm.content_formats.find((f) => f.format === 'other')?.custom_label || ''} onChange={(e) => {
+                          const next = partForm.content_formats.map((f) => f.format === 'other' ? { ...f, custom_label: e.target.value } : f);
+                          setPartForm({ ...partForm, content_formats: next });
+                        }} />
+                      )}
                     </div>
                   )}
                 </div>
