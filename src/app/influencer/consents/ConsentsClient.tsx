@@ -456,7 +456,7 @@ function DetailPanelBody({
         <div style={sectionTitle}>협업 조건</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           <div style={infoRow}><span style={infoLabel}>협업 방식</span><span>{getCollabLabel(row.collab_type)}</span></div>
-          <div style={infoRow}><span style={infoLabel}>제공 제품</span><span>{row.product || '-'}</span></div>
+          <div style={infoRow}><span style={infoLabel}>제공 제품</span><span>{row.product ? row.product.split(',').map((s: string) => s.trim()).join(', ') : '-'}</span></div>
           {contentDisplay && <div style={infoRow}><span style={infoLabel}>콘텐츠 형식</span><span>{contentDisplay}</span></div>}
           <div style={infoRow}><span style={infoLabel}>고료</span><span>{fmtKRW(row.fee)}</span></div>
           <div style={infoRow}><span style={infoLabel}>2차 활용</span><span>{row.secondary_use ? `예 (${row.secondary_use_period || '-'})` : '아니오'}</span></div>

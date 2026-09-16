@@ -70,7 +70,8 @@ export async function GET(
   }
 
   // 6. Determine collab type: participant > campaign > fee fallback
-  const productName = participant.product_set_name || participant.product || null;
+  const rawProduct = participant.product_set_name || participant.product || null;
+  const productName = rawProduct ? rawProduct.split(',').map((s: string) => s.trim()).join(', ') : null;
   const collabType = participant.collab_type || campaign?.collab_type || null;
   const isPaid = collabType ? isPaidCollab(collabType) : (participant.fee > 0);
   const effectiveCollabType = collabType || (participant.fee > 0 ? 'fixed_fee' : 'free_seeding');

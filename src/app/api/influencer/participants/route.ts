@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
     channel: body.channel || null,
     handle: body.handle || null,
     profile_url: body.profile_url || null,
-    product: (body.product_set_name || body.product || '').split(',')[0] || null,
+    product: body.product_set_name || body.product || null,
     product_quantity: body.product_quantity || 1,
     product_cost: productCost,
     fee: body.fee || 0,
@@ -129,9 +129,9 @@ export async function PUT(req: NextRequest) {
     updates.post_count = firstFmt?.count || updates.post_count || 1;
   }
 
-  // Map product_set_name to legacy product column (first value only)
+  // Sync product_set_name to legacy product column
   if (updates.product_set_name !== undefined) {
-    updates.product = (updates.product_set_name || updates.product || '').split(',')[0] || null;
+    updates.product = updates.product_set_name || null;
   }
 
   // Date order validation: confirmed dates must be in order (draft ≤ edit ≤ upload)
