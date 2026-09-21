@@ -557,10 +557,18 @@ export default function InfluencerDashboardClient() {
                 {weekEvents.map((ev, i) => {
                   const evD = new Date(ev.date + 'T00:00:00');
                   const diff = Math.round((evD.getTime() - todayD.getTime()) / 86400000);
-                  const clr = ev.type === 'payment' ? colors.mint
-                    : diff <= 0 ? colors.coralDark
-                    : diff <= 3 ? colors.amber
-                    : colors.textPrimary;
+                  const WEEK_TYPE_COLORS: Record<string, { bar: string; bg: string; text: string }> = {
+                    draft:   { bar: '#7BAEDB', bg: '#E8F2FB', text: '#2E5A80' },
+                    edit:    { bar: '#6BC0AC', bg: '#E4F5F0', text: '#2A6B5C' },
+                    upload:  { bar: '#4A7DB5', bg: '#E6EEF9', text: '#244C77' },
+                    payment: { bar: colors.mint, bg: '#E6F5ED', text: '#2A6B4A' },
+                    custom:  { bar: '#9AA2AA', bg: '#F1F3F6', text: '#4A4F55' },
+                  };
+                  const wtc = WEEK_TYPE_COLORS[ev.type] || WEEK_TYPE_COLORS.custom;
+                  const isOverdue = diff <= 0 && ev.type !== 'payment';
+                  const barColor = isOverdue ? '#E85D4A' : wtc.bar;
+                  const bgColor = isOverdue ? '#FFF0EE' : wtc.bg;
+                  const textColor = isOverdue ? '#C0392B' : wtc.text;
                   return (
                     <div key={`${ev.id}-${i}`} style={{
                       display: 'grid', gridTemplateColumns: WEEK_GRID, gap: 12,
@@ -570,7 +578,17 @@ export default function InfluencerDashboardClient() {
                       <span style={{ fontSize: 13, color: colors.textSecondary, fontVariantNumeric: 'tabular-nums' }}>
                         {DAY_NAMES[evD.getDay()]} {evD.getMonth() + 1}/{evD.getDate()}
                       </span>
-                      <span style={{ ...CELL_CLIP, fontSize: 13, color: clr, fontWeight: diff <= 0 && ev.type !== 'payment' ? 600 : 400 }}>
+                      <span style={{
+                        fontSize: 13, fontWeight: isOverdue ? 600 : 400,
+                        borderLeft: `3px solid ${barColor}`,
+                        background: bgColor,
+                        color: textColor,
+                        borderRadius: 4,
+                        paddingLeft: 6, paddingRight: 6,
+                        lineHeight: '24px',
+                        opacity: ev.is_completed ? 0.55 : 1,
+                        ...CELL_CLIP,
+                      }}>
                         {ev.title} · {STEP_LABELS[ev.type] || ev.type}
                       </span>
                     </div>
@@ -658,15 +676,34 @@ export default function InfluencerDashboardClient() {
                             지급일 · {paymentEvents.length}건
                           </div>
                         )}
-                        {normalEvents.slice(0, isPaymentDay ? 2 : 3).map((ev, j) => (
-                          <div key={j} style={{
-                            fontSize: 12, lineHeight: '16px',
-                            color: ev.is_overdue ? colors.coralDark : colors.textPrimary,
-                            ...CELL_CLIP,
-                          }}>
-                            {ev.title} · {STEP_LABELS[ev.type] || ev.type}
-                          </div>
-                        ))}
+                        {normalEvents.slice(0, isPaymentDay ? 2 : 3).map((ev, j) => {
+                          const CAL_TYPE_COLORS: Record<string, { bar: string; bg: string; text: string }> = {
+                            draft:  { bar: '#7BAEDB', bg: '#E8F2FB', text: '#2E5A80' },
+                            edit:   { bar: '#6BC0AC', bg: '#E4F5F0', text: '#2A6B5C' },
+                            upload: { bar: '#4A7DB5', bg: '#E6EEF9', text: '#244C77' },
+                            custom: { bar: '#9AA2AA', bg: '#F1F3F6', text: '#4A4F55' },
+                          };
+                          const tc = CAL_TYPE_COLORS[ev.type] || CAL_TYPE_COLORS.custom;
+                          const barColor = ev.is_overdue ? '#E85D4A' : tc.bar;
+                          const bgColor = ev.is_overdue ? '#FFF0EE' : tc.bg;
+                          const textColor = ev.is_overdue ? '#C0392B' : tc.text;
+                          const borderStyle = ev.is_confirmed === false ? 'dashed' : 'solid';
+                          return (
+                            <div key={j} style={{
+                              fontSize: 12, lineHeight: '20px',
+                              borderLeft: `3px ${borderStyle} ${barColor}`,
+                              background: bgColor,
+                              color: textColor,
+                              borderRadius: 4,
+                              paddingLeft: 5, paddingRight: 4,
+                              marginBottom: 1,
+                              opacity: ev.is_completed ? 0.55 : 1,
+                              ...CELL_CLIP,
+                            }}>
+                              {ev.title} · {STEP_LABELS[ev.type] || ev.type}
+                            </div>
+                          );
+                        })}
                         {normalEvents.length > (isPaymentDay ? 2 : 3) && (
                           <div style={{ fontSize: 12, color: colors.textSecondary }}>
                             +{normalEvents.length - (isPaymentDay ? 2 : 3)}
