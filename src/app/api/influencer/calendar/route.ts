@@ -99,10 +99,17 @@ export async function GET(req: NextRequest) {
   // ---- 1. Fetch participants with date overlap ----
   let hasNewColumns = true;
 
-  const dateOrFilter = [
+  const baseDateFilter = [
     `planned_draft_date.gte.${start},planned_draft_date.lte.${end}`,
     `planned_edit_date.gte.${start},planned_edit_date.lte.${end}`,
     `planned_upload_date.gte.${start},planned_upload_date.lte.${end}`,
+  ].join(',');
+
+  const fullDateFilter = [
+    baseDateFilter,
+    `confirmed_draft_date.gte.${start},confirmed_draft_date.lte.${end}`,
+    `confirmed_edit_date.gte.${start},confirmed_edit_date.lte.${end}`,
+    `confirmed_upload_date.gte.${start},confirmed_upload_date.lte.${end}`,
   ].join(',');
 
   // Parallel fetch: participants + payment schedule setting
@@ -111,7 +118,8 @@ export async function GET(req: NextRequest) {
       .from('inf_participants')
       .select(FULL_SELECT)
       .neq('status', 'cancelled')
-      .or(dateOrFilter),
+      .neq('is_archived', true)
+      .or(fullDateFilter),
     supabaseAdmin
       .from('inf_settings')
       .select('value')
@@ -128,7 +136,7 @@ export async function GET(req: NextRequest) {
       .from('inf_participants')
       .select(BASE_SELECT)
       .neq('status', 'cancelled')
-      .or(dateOrFilter);
+      .or(baseDateFilter);
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

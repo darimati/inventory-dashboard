@@ -225,9 +225,13 @@ export default function InfluencerDashboardClient() {
 
   useEffect(() => {
     const [y, m] = calMonth.split('-').map(Number);
-    const start = `${y}-${String(m).padStart(2, '0')}-01`;
-    const last = new Date(y, m, 0).getDate();
-    const end = `${y}-${String(m).padStart(2, '0')}-${String(last).padStart(2, '0')}`;
+    const first = new Date(y, m - 1, 1);
+    const lastDate = new Date(y, m, 0);
+    const startD = new Date(first); startD.setDate(startD.getDate() - 7);
+    const endD = new Date(lastDate); endD.setDate(endD.getDate() + 7);
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const start = `${startD.getFullYear()}-${pad(startD.getMonth() + 1)}-${pad(startD.getDate())}`;
+    const end = `${endD.getFullYear()}-${pad(endD.getMonth() + 1)}-${pad(endD.getDate())}`;
     fetch(`/api/influencer/calendar?start=${start}&end=${end}`)
       .then(r => r.json())
       .then(d => { setCalEvents(Array.isArray(d?.events) ? d.events : []); })
