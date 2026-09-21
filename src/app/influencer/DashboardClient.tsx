@@ -552,50 +552,73 @@ export default function InfluencerDashboardClient() {
               <div style={{ padding: '16px 0', fontSize: 13, color: colors.textSecondary }}>
                 이번 주 일정 없음
               </div>
-            ) : (
-              <div>
-                {weekEvents.map((ev, i) => {
-                  const evD = new Date(ev.date + 'T00:00:00');
-                  const diff = Math.round((evD.getTime() - todayD.getTime()) / 86400000);
-                  const WEEK_TYPE_COLORS: Record<string, { bar: string; bg: string; text: string }> = {
-                    draft:   { bar: '#7BAEDB', bg: '#E8F2FB', text: '#2E5A80' },
-                    edit:    { bar: '#6BC0AC', bg: '#E4F5F0', text: '#2A6B5C' },
-                    upload:  { bar: '#4A7DB5', bg: '#E6EEF9', text: '#244C77' },
-                    payment: { bar: colors.mint, bg: '#E6F5ED', text: '#2A6B4A' },
-                    custom:  { bar: '#9AA2AA', bg: '#F1F3F6', text: '#4A4F55' },
-                  };
-                  const wtc = WEEK_TYPE_COLORS[ev.type] || WEEK_TYPE_COLORS.custom;
-                  const isOverdue = diff <= 0 && ev.type !== 'payment';
-                  const barColor = isOverdue ? '#E85D4A' : wtc.bar;
-                  const bgColor = isOverdue ? '#FFF0EE' : wtc.bg;
-                  const textColor = isOverdue ? '#C0392B' : wtc.text;
-                  return (
-                    <div key={`${ev.id}-${i}`} style={{
-                      display: 'grid', gridTemplateColumns: WEEK_GRID, gap: 12,
-                      height: ROW_H, alignItems: 'center',
-                      borderBottom: i < weekEvents.length - 1 ? `0.5px solid ${colors.borderLight}` : 'none',
-                    }}>
-                      <span style={{ fontSize: 13, color: colors.textSecondary, fontVariantNumeric: 'tabular-nums' }}>
-                        {DAY_NAMES[evD.getDay()]} {evD.getMonth() + 1}/{evD.getDate()}
-                      </span>
-                      <span style={{
-                        fontSize: 13, fontWeight: isOverdue ? 600 : 400,
-                        borderLeft: `3px solid ${barColor}`,
-                        background: bgColor,
-                        color: textColor,
-                        borderRadius: 4,
-                        paddingLeft: 6, paddingRight: 6,
-                        lineHeight: '24px',
-                        opacity: ev.is_completed ? 0.55 : 1,
-                        ...CELL_CLIP,
+            ) : (() => {
+              const WEEK_TYPE_COLORS: Record<string, { bar: string; bg: string; text: string }> = {
+                draft:   { bar: '#7BAEDB', bg: '#E8F2FB', text: '#2E5A80' },
+                edit:    { bar: '#6BC0AC', bg: '#E4F5F0', text: '#2A6B5C' },
+                upload:  { bar: '#4A7DB5', bg: '#E6EEF9', text: '#244C77' },
+                payment: { bar: colors.mint, bg: '#E6F5ED', text: '#2A6B4A' },
+                custom:  { bar: '#9AA2AA', bg: '#F1F3F6', text: '#4A4F55' },
+              };
+              const grouped = new Map<string, typeof weekEvents>();
+              for (const ev of weekEvents) {
+                const list = grouped.get(ev.date) || [];
+                list.push(ev);
+                grouped.set(ev.date, list);
+              }
+              const sortedDates = [...grouped.keys()].sort();
+              return (
+                <div>
+                  {sortedDates.map((dateKey, di) => {
+                    const evs = grouped.get(dateKey)!;
+                    const evD = new Date(dateKey + 'T00:00:00');
+                    const diff = Math.round((evD.getTime() - todayD.getTime()) / 86400000);
+                    const isToday = diff === 0;
+                    return (
+                      <div key={dateKey} style={{
+                        display: 'flex', alignItems: 'flex-start', gap: 12,
+                        padding: '8px 0',
+                        borderBottom: di < sortedDates.length - 1 ? `0.5px solid ${colors.borderLight}` : 'none',
                       }}>
-                        {ev.title} · {STEP_LABELS[ev.type] || ev.type}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+                        <span style={{
+                          fontSize: 13, color: isToday ? colors.textPrimary : colors.textSecondary,
+                          fontWeight: isToday ? 600 : 400,
+                          fontVariantNumeric: 'tabular-nums',
+                          minWidth: 56, flexShrink: 0,
+                          lineHeight: '26px',
+                        }}>
+                          {DAY_NAMES[evD.getDay()]} {evD.getMonth() + 1}/{evD.getDate()}
+                        </span>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, flex: 1, minWidth: 0 }}>
+                          {evs.map((ev, j) => {
+                            const wtc = WEEK_TYPE_COLORS[ev.type] || WEEK_TYPE_COLORS.custom;
+                            const isOverdue = diff <= 0 && ev.type !== 'payment';
+                            const barColor = isOverdue ? '#E85D4A' : wtc.bar;
+                            const bgColor = isOverdue ? '#FFF0EE' : wtc.bg;
+                            const textColor = isOverdue ? '#C0392B' : wtc.text;
+                            return (
+                              <span key={`${ev.id}-${j}`} style={{
+                                fontSize: 12, fontWeight: isOverdue ? 600 : 400,
+                                borderLeft: `3px solid ${barColor}`,
+                                background: bgColor,
+                                color: textColor,
+                                borderRadius: 4,
+                                padding: '2px 8px 2px 6px',
+                                lineHeight: '22px',
+                                whiteSpace: 'nowrap',
+                                opacity: ev.is_completed ? 0.55 : 1,
+                              }}>
+                                {ev.title} · {STEP_LABELS[ev.type] || ev.type}
+                              </span>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
           </DashCard>
         </div>
 
