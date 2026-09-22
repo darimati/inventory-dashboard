@@ -54,6 +54,7 @@ interface MonthGroup {
   totalServiceFee: number;
   totalLastAmount: number;
   totalDebtOfLastWeek: number;
+  totalPendingReleased: number;
   totalFinal: number;
   totalPaid: number;
   pendingCount: number;
@@ -199,6 +200,7 @@ export default function SettlementsClient({
           totalServiceFee: 0,
           totalLastAmount: 0,
           totalDebtOfLastWeek: 0,
+          totalPendingReleased: 0,
           totalFinal: 0,
           totalPaid: 0,
           pendingCount: 0,
@@ -214,6 +216,7 @@ export default function SettlementsClient({
       g.totalServiceFee += s.breakdown.serviceFee;
       g.totalLastAmount += s.breakdown.lastAmount;
       g.totalDebtOfLastWeek += s.breakdown.debtOfLastWeek;
+      g.totalPendingReleased += s.breakdown.pendingReleasedAmount;
       g.totalFinal += s.finalAmount;
       if (s.isPaid) {
         g.paidCount++;
@@ -268,15 +271,21 @@ export default function SettlementsClient({
     let totalSettlement = 0;
     let totalServiceFee = 0;
     let totalLastAmount = 0;
+    let totalDebtOfLastWeek = 0;
+    let totalPendingReleased = 0;
     let totalFinal = 0;
     for (const s of filtered) {
       if (isZeroRow(s)) continue;
       totalSettlement += s.settlementAmount;
       totalServiceFee += s.breakdown.serviceFee;
       totalLastAmount += s.breakdown.lastAmount;
+      totalDebtOfLastWeek += s.breakdown.debtOfLastWeek;
+      totalPendingReleased += s.breakdown.pendingReleasedAmount;
       totalFinal += s.finalAmount;
     }
-    return { totalSettlement, totalServiceFee, totalLastAmount, totalFinal };
+    const netCarryover = totalLastAmount - totalDebtOfLastWeek - totalPendingReleased;
+    const totalDeduction = totalSettlement - totalServiceFee - netCarryover - totalFinal;
+    return { totalSettlement, totalServiceFee, totalDeduction, netCarryover, totalFinal };
   }, [filtered]);
 
   /* --- Period label for KPI sub text --- */
@@ -517,7 +526,8 @@ export default function SettlementsClient({
                 <th style={{ color: 'var(--text-muted)' }}>정산일</th>
                 <th className="right" style={{ color: 'var(--text-muted)' }}>매출액</th>
                 <th className="right" style={{ color: 'var(--text-muted)' }}>수수료</th>
-                <th className="right" style={{ color: 'var(--text-muted)' }}>이월</th>
+                <th className="right" style={{ color: 'var(--text-muted)' }} title="반품/취소/유보금 등 기타 차감">차감</th>
+                <th className="right" style={{ color: 'var(--text-muted)' }} title="이월 - 전주미지급 - 보류해제">순이월</th>
                 <th className="right" style={{ color: 'var(--text-muted)' }}>지급액</th>
                 <th style={{ width: 90, color: 'var(--text-muted)', textAlign: 'center' }}>상태</th>
               </tr>
@@ -553,19 +563,30 @@ export default function SettlementsClient({
                           </span>
                         )}
                       </td>
-                      <td className="right" style={{ fontWeight: 600, color: 'var(--text-secondary)', ...nums, ...tdPad }}>
-                        {formatKRW(mg.totalSettlement)}
-                      </td>
-                      <td className="right" style={{ color: '#9AA2AA', ...nums, ...tdPad }}>
-                        {formatKRW(mg.totalServiceFee)}
-                      </td>
-                      <td className="right" style={{ color: '#9AA2AA', ...nums, ...tdPad }}>
-                        {mg.totalLastAmount > 0 ? formatKRW(mg.totalLastAmount) : '-'}
-                      </td>
-                      <td className="right" style={{ fontWeight: 600, color: 'var(--text-primary)', ...nums, ...tdPad }}>
-                        {formatKRW(mg.totalFinal)}
-                      </td>
-                      <td style={tdPad} />
+                      {(() => {
+                        const mgNetCarry = mg.totalLastAmount - mg.totalDebtOfLastWeek - mg.totalPendingReleased;
+                        const mgDeduct = mg.totalSettlement - mg.totalServiceFee - mgNetCarry - mg.totalFinal;
+                        return (
+                          <>
+                            <td className="right" style={{ fontWeight: 600, color: 'var(--text-secondary)', ...nums, ...tdPad }}>
+                              {formatKRW(mg.totalSettlement)}
+                            </td>
+                            <td className="right" style={{ color: '#9AA2AA', ...nums, ...tdPad }}>
+                              {formatKRW(mg.totalServiceFee)}
+                            </td>
+                            <td className="right" style={{ color: mgDeduct > 0 ? '#D14848' : '#9AA2AA', ...nums, ...tdPad }}>
+                              {mgDeduct > 0 ? formatKRW(mgDeduct) : '-'}
+                            </td>
+                            <td className="right" style={{ color: '#9AA2AA', ...nums, ...tdPad }}>
+                              {mgNetCarry > 0 ? formatKRW(mgNetCarry) : mgNetCarry < 0 ? `+${formatKRW(Math.abs(mgNetCarry))}` : '-'}
+                            </td>
+                            <td className="right" style={{ fontWeight: 600, color: 'var(--text-primary)', ...nums, ...tdPad }}>
+                              {formatKRW(mg.totalFinal)}
+                            </td>
+                            <td style={tdPad} />
+                          </>
+                        );
+                      })()}
                     </tr>
 
                     {/* Individual settlement rows */}
@@ -595,24 +616,35 @@ export default function SettlementsClient({
                                 </span>
                               )}
                             </td>
-                            <td className="right" style={{ color: 'var(--text-secondary)', ...nums, ...tdPad }}>
-                              {formatKRW(s.settlementAmount)}
-                            </td>
-                            <td className="right" style={{ color: '#9AA2AA', ...nums, ...tdPad }}>
-                              {b.serviceFee > 0 ? formatKRW(b.serviceFee) : '-'}
-                            </td>
-                            <td className="right" style={{ ...nums, ...tdPad }}>
-                              {b.lastAmount > 0 ? (
-                                <span style={{ color: '#9AA2AA' }}>{formatKRW(b.lastAmount)}</span>
-                              ) : b.pendingReleasedAmount > 0 ? (
-                                <span style={{ color: '#4A90D9' }} title="보류 해제">+{formatKRW(b.pendingReleasedAmount)}</span>
-                              ) : (
-                                <span style={{ color: 'var(--text-muted)' }}>-</span>
-                              )}
-                            </td>
-                            <td className="right" style={{ fontWeight: 600, color: 'var(--text-primary)', ...nums, ...tdPad }}>
-                              {formatKRW(s.finalAmount)}
-                            </td>
+                            {(() => {
+                              const rowNetCarry = b.lastAmount - b.debtOfLastWeek - b.pendingReleasedAmount;
+                              const rowDeduct = s.settlementAmount - b.serviceFee - rowNetCarry - s.finalAmount;
+                              return (
+                                <>
+                                  <td className="right" style={{ color: 'var(--text-secondary)', ...nums, ...tdPad }}>
+                                    {formatKRW(s.settlementAmount)}
+                                  </td>
+                                  <td className="right" style={{ color: '#9AA2AA', ...nums, ...tdPad }}>
+                                    {b.serviceFee > 0 ? formatKRW(b.serviceFee) : '-'}
+                                  </td>
+                                  <td className="right" style={{ color: rowDeduct > 0 ? '#D14848' : '#9AA2AA', ...nums, ...tdPad }}>
+                                    {rowDeduct > 0 ? formatKRW(rowDeduct) : '-'}
+                                  </td>
+                                  <td className="right" style={{ ...nums, ...tdPad }}>
+                                    {rowNetCarry > 0 ? (
+                                      <span style={{ color: '#9AA2AA' }}>{formatKRW(rowNetCarry)}</span>
+                                    ) : rowNetCarry < 0 ? (
+                                      <span style={{ color: '#4A90D9' }} title="전주미지급/보류해제 수령">+{formatKRW(Math.abs(rowNetCarry))}</span>
+                                    ) : (
+                                      <span style={{ color: 'var(--text-muted)' }}>-</span>
+                                    )}
+                                  </td>
+                                  <td className="right" style={{ fontWeight: 600, color: 'var(--text-primary)', ...nums, ...tdPad }}>
+                                    {formatKRW(s.finalAmount)}
+                                  </td>
+                                </>
+                              );
+                            })()}
                             <td style={{ ...tdPad, textAlign: 'center' }}>
                               <span style={{
                                 display: 'inline-block',
@@ -649,7 +681,7 @@ export default function SettlementsClient({
 
                             return (
                               <tr>
-                                <td colSpan={7} style={{ padding: 0, background: '#FAFBFC' }}>
+                                <td colSpan={8} style={{ padding: 0, background: '#FAFBFC' }}>
                                   <div style={{ padding: '16px 20px 16px 40px' }}>
                                     <div style={{ display: 'flex', gap: 32 }}>
                                       {/* 실제 비용 */}
@@ -719,8 +751,11 @@ export default function SettlementsClient({
                   <td className="right" style={{ color: '#9AA2AA', ...nums, ...tdPad }}>
                     {formatKRW(grandTotals.totalServiceFee)}
                   </td>
+                  <td className="right" style={{ color: grandTotals.totalDeduction > 0 ? '#D14848' : '#9AA2AA', ...nums, ...tdPad }}>
+                    {grandTotals.totalDeduction > 0 ? formatKRW(grandTotals.totalDeduction) : '-'}
+                  </td>
                   <td className="right" style={{ color: '#9AA2AA', ...nums, ...tdPad }}>
-                    {grandTotals.totalLastAmount > 0 ? formatKRW(grandTotals.totalLastAmount) : '-'}
+                    {grandTotals.netCarryover > 0 ? formatKRW(grandTotals.netCarryover) : grandTotals.netCarryover < 0 ? `+${formatKRW(Math.abs(grandTotals.netCarryover))}` : '-'}
                   </td>
                   <td className="right" style={{ fontWeight: 600, color: 'var(--text-primary)', ...nums, ...tdPad }}>
                     {formatKRW(grandTotals.totalFinal)}
@@ -732,7 +767,7 @@ export default function SettlementsClient({
               {/* Empty state */}
               {totalNonZero === 0 && (
                 <tr>
-                  <td colSpan={7} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: 40 }}>
+                  <td colSpan={8} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: 40 }}>
                     {selectedMonth
                       ? `${formatYearMonth(selectedMonth)} 정산 데이터가 없습니다.`
                       : `${selectedYear}년 정산 데이터가 없습니다.`
@@ -770,18 +805,20 @@ export default function SettlementsClient({
                   <th style={{ color: 'var(--text-muted)' }}>월</th>
                   <th className="right" style={{ color: 'var(--text-muted)' }}>매출액</th>
                   <th className="right" style={{ color: 'var(--text-muted)' }}>수수료</th>
-                  <th className="right" style={{ color: 'var(--text-muted)' }}>이월</th>
+                  <th className="right" style={{ color: 'var(--text-muted)' }}>차감</th>
+                  <th className="right" style={{ color: 'var(--text-muted)' }}>순이월</th>
                   <th className="right" style={{ color: 'var(--text-muted)' }}>지급액</th>
                   <th className="right" style={{ color: 'var(--text-muted)' }}>지급 완료</th>
-                  <th className="right" style={{ color: 'var(--text-muted)' }} title="(지급액 + 이월) / 매출액 — 이월 제외 실질 정산 비율">정산율</th>
-                  <th className="right" style={{ color: 'var(--text-muted)' }} title="지급액 / 매출액 — 실제 현금 회수 비율">회수율</th>
+                  <th className="right" style={{ color: 'var(--text-muted)' }} title="(지급액 + 순이월) / 매출액">정산율</th>
+                  <th className="right" style={{ color: 'var(--text-muted)' }} title="지급액 / 매출액">회수율</th>
                 </tr>
               </thead>
               <tbody>
                 {monthGroups.map((mg) => {
-                  const netCarryover = mg.totalLastAmount - mg.totalDebtOfLastWeek;
+                  const mgNetCarry = mg.totalLastAmount - mg.totalDebtOfLastWeek - mg.totalPendingReleased;
+                  const mgDeduct = mg.totalSettlement - mg.totalServiceFee - mgNetCarry - mg.totalFinal;
                   const settlementRate = mg.totalSettlement > 0
-                    ? ((mg.totalFinal + netCarryover) / mg.totalSettlement * 100).toFixed(1)
+                    ? ((mg.totalFinal + mgNetCarry) / mg.totalSettlement * 100).toFixed(1)
                     : '-';
                   const recoveryRate = mg.totalSettlement > 0
                     ? (mg.totalFinal / mg.totalSettlement * 100).toFixed(1)
@@ -797,8 +834,11 @@ export default function SettlementsClient({
                       <td className="right" style={{ color: '#9AA2AA', ...nums, ...tdPad }}>
                         {formatKRW(mg.totalServiceFee)}
                       </td>
+                      <td className="right" style={{ color: mgDeduct > 0 ? '#D14848' : '#9AA2AA', ...nums, ...tdPad }}>
+                        {mgDeduct > 0 ? formatKRW(mgDeduct) : '-'}
+                      </td>
                       <td className="right" style={{ color: '#9AA2AA', ...nums, ...tdPad }}>
-                        {mg.totalLastAmount > 0 ? formatKRW(mg.totalLastAmount) : '-'}
+                        {mgNetCarry > 0 ? formatKRW(mgNetCarry) : mgNetCarry < 0 ? `+${formatKRW(Math.abs(mgNetCarry))}` : '-'}
                       </td>
                       <td className="right" style={{ fontWeight: 600, color: 'var(--text-primary)', ...nums, ...tdPad }}>
                         {formatKRW(mg.totalFinal)}
@@ -839,13 +879,16 @@ export default function SettlementsClient({
           용어 설명
         </div>
         <div style={{ fontSize: 12, color: '#9AA2AA', lineHeight: 1.6 }}>
-          <strong>정산율</strong> = (지급액 + 순이월) / 매출액. 이월은 비용이 아닌 현금 타이밍 조정이므로, 이월을 제외한 실질 정산 비율입니다.
+          <strong>정산 공식</strong>: 매출액 − 수수료 − 차감 − 순이월 = 지급액. <strong>정산율</strong> = (지급액 + 순이월) / 매출액.
         </div>
         <div style={{ fontSize: 12, color: '#9AA2AA', lineHeight: 1.6, marginTop: 2 }}>
           <strong>회수율</strong> = 지급액 / 매출액. 해당 기간 실제 현금 회수 비율입니다. 이월분 반환 시 100%에 수렴합니다.
         </div>
         <div style={{ fontSize: 12, color: '#9AA2AA', lineHeight: 1.6, marginTop: 2 }}>
-          <strong>이월금</strong>은 주간 정산 시 매출의 30%를 다음 주로 이월하는 금액입니다. 실제 차감이 아닌 현금흐름 조정입니다.
+          <strong>차감</strong> = 반품/취소/쿠폰 차감 + 유보금 보류 등. 매출액에서 수수료·이월·지급액을 뺀 잔여 공제액입니다.
+        </div>
+        <div style={{ fontSize: 12, color: '#9AA2AA', lineHeight: 1.6, marginTop: 2 }}>
+          <strong>순이월</strong> = 이월액 − 전주미지급분 − 보류해제. 주간 정산 시 매출의 30%를 다음 주로 이월하며, 이후 반환됩니다.
         </div>
       </div>
     </AppShell>
