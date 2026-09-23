@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BR-001 — 편한 신발이 예뻐도 됩니다 | DARIMATI</title>
+<meta name="description" content="무지외반증, 평발, 발목이 약한 분도 하루 종일 편한 신발. 현대백화점 판교 팝업 270 완판. A-TPU 미드솔. ₩149,000.">
+<meta property="og:title" content="편한 신발은 못생겼고, 예쁜 신발은 발이 아프다 — 그 공식, 이제 틀렸습니다">
+<meta property="og:description" content="BR-001 시티 러닝화. 하루 종일 신어도 편하고, 백화점에 신고 가도 예쁜 신발.">
+<meta property="og:image" content="https://cdn.shopify.com/s/files/1/0775/5956/2452/files/dariamti_shoe.jpg?v=1776313172">
+<meta property="og:type" content="product">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<!-- ── Meta Pixel ───────────────────────────────────────────────────────────
+     다리마티 픽셀(821311187492862). 페이지를 다시 만들더라도 이 블록은 남길 것.
+
+     보내는 이벤트
+       PageView          페이지 열람
+       ViewContent       BR-001 상세 열람
+       DeepView          절반 이상 스크롤 = 관심 높은 사람 (맞춤타겟 모수용)
+       InitiateCheckout  darimati.us 구매/장바구니로 넘어가는 클릭
+
+     쇼피파이 연결
+       이 페이지(github.io)와 쇼피파이(darimati.us)는 주소가 달라서 추적이 끊긴다.
+       그래서 구매 링크로 넘어갈 때 광고 클릭ID(fbclid)와 utm 값을 주소에 붙여 보낸다.
+       → 쇼피파이 쪽 픽셀이 "이 광고 보고 온 사람"이라고 이어서 인식한다.
+     ───────────────────────────────────────────────────────────────────── -->
+<script>
+!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}
+(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
+
+fbq('init','821311187492862');
+
+(function(){
+  var q = new URLSearchParams(location.search);
+  var P = window.DMTRK = {
+    page : 'S3_KR_COMFORT',
+    value: 149000,
+    currency: 'KRW',
+    src  : q.get('utm_source')   || q.get('nt_source')  || '',
+    cmp  : q.get('utm_campaign') || q.get('nt_medium')  || '',
+    cnt  : q.get('utm_content')  || q.get('nt_keyword') || '',
+    fbc  : q.get('fbclid')       || ''
+  };
+  function base(extra){
+    var o = {page:P.page, src:P.src, cmp:P.cmp, cnt:P.cnt};
+    for (var k in (extra||{})) o[k] = extra[k];
+    return o;
+  }
+
+  fbq('track','PageView', base());
+  fbq('track','ViewContent', base({
+    content_name:'BR-001', content_ids:['BR-001'], content_type:'product',
+    value:P.value, currency:P.currency
+  }));
+
+  /* ── 쇼피파이로 넘어가는 주소에 추적값 이어붙이기 ── */
+  function handoff(url){
+    try {
+      var u = new URL(url, location.href);
+      if (!/(^|\.)darimati\.us$/.test(u.hostname)) return url;
+      if (P.fbc) u.searchParams.set('fbclid', P.fbc);
+      if (P.src) u.searchParams.set('utm_source', P.src);
+      if (P.cmp) u.searchParams.set('utm_campaign', P.cmp);
+      if (P.cnt) u.searchParams.set('utm_content', P.cnt);
+      u.searchParams.set('utm_medium', 'lp-' + P.page);
+      return u.href;
+    } catch (e) { return url; }
+  }
+  function checkout(where){
+    if (typeof fbq !== 'function') return;
+    fbq('track','InitiateCheckout', base({
+      content_name:'BR-001', content_ids:['BR-001'], content_type:'product',
+      value:P.value, currency:P.currency, placement:where
+    }));
+  }
+
+  var openOrig = window.open;
+  window.open = function(url){
+    var args = Array.prototype.slice.call(arguments);
+    if (typeof url === 'string' && /darimati\.us/.test(url)) {
+      checkout('cart-button');
+      args[0] = handoff(url);
+    }
+    return openOrig.apply(window, args);
+  };
+
+  document.addEventListener('DOMContentLoaded', function(){
+    document.addEventListener('click', function(e){
+      var a = e.target.closest && e.target.closest('a[href]');
+      if (!a || !/darimati\.us\/(cart|products|collections|checkout)/.test(a.href)) return;
+      checkout('link');
+      a.href = handoff(a.href);
+    }, true);
+
+    var deep = false;
+    window.addEventListener('scroll', function(){
+      if (deep) return;
+      var h = document.documentElement;
+      if ((h.scrollTop + window.innerHeight) / h.scrollHeight < 0.5) return;
+      deep = true;
+      fbq('trackCustom','DeepView', base());
+    }, {passive:true});
+  });
+})();
+</script>
+<noscript><img height="1" width="1" style="display:none"
+  src="https://www.facebook.com/tr?id=821311187492862&ev=PageView&noscript=1"/></noscript>
+<!-- ── /Meta Pixel ──────────────────────────────────────────────────────── -->
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#faf8f5;
+  --surface:#fff;
+  --surface-warm:#f5f0ea;
+  --border:#e8e2da;
+  --text:#1a1a1a;
+  --text-secondary:#6b6560;
+  --text-light:#9a948e;
+  --accent:#c4956a;
+  --accent-dark:#a67b52;
+  --accent-bg:rgba(196,149,106,0.08);
+  --green:#3d8b5e;
+  --green-bg:#edf5f0;
+  --font:'Noto Sans KR',-apple-system,BlinkMacSystemFont,sans-serif;
+  --max-w:720px;
+  --gap:24px;
+}
+html{scroll-behavior:smooth;font-size:16px}
+body{font-family:var(--font);color:var(--text);background:var(--bg);
+  line-height:1.8;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+img{max-width:100%;height:auto;display:block}
+a{color:inherit;text-decoration:none}
+button{cursor:pointer;font-family:var(--font)}
+
+.container{max-width:var(--max-w);margin:0 auto;padding:0 var(--gap)}
+.section{padding:72px 0}
+.section-warm{background:var(--surface-warm)}
+.section-white{background:var(--surface)}
+
+/* ── NAV ── */
+.nav{background:rgba(250,248,245,0.95);backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);padding:14px 0;
+  position:sticky;top:0;z-index:100}
+.nav .container{display:flex;align-items:center;justify-content:space-between}
+.nav-logo{font-size:16px;font-weight:800;letter-spacing:3px;color:var(--text)}
+.nav-cta{background:var(--text);color:#fff;padding:10px 24px;border-radius:100px;
+  font-size:13px;font-weight:600;border:none;letter-spacing:.5px;
+  transition:all .2s}
+.nav-cta:hover{background:#333;transform:translateY(-1px)}
+
+/* ── HERO ── */
+.hero{padding:80px 0 60px;text-align:center}
+.hero-quote{font-size:clamp(20px,4vw,28px);font-weight:300;color:var(--text-secondary);
+  line-height:1.7;margin-bottom:24px;font-style:italic}
+.hero-punch{font-size:clamp(26px,5vw,40px);font-weight:800;line-height:1.3;
+  letter-spacing:-1px;margin-bottom:32px}
+.hero-img{width:100%;max-width:600px;margin:0 auto;border-radius:16px;overflow:hidden}
+.hero-img img{width:100%;aspect-ratio:4/3;object-fit:cover}
+
+/* ── SECTION TITLES ── */
+.s-label{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;
+  color:var(--accent);margin-bottom:12px}
+.s-title{font-size:clamp(22px,4vw,32px);font-weight:700;line-height:1.35;
+  letter-spacing:-.5px;margin-bottom:16px}
+.s-desc{font-size:16px;color:var(--text-secondary);line-height:1.9;margin-bottom:32px}
+
+/* ── EMPATHY LIST ── */
+.empathy-list{list-style:none;margin-bottom:32px}
+.empathy-list li{padding:16px 20px;border-left:3px solid var(--accent);
+  margin-bottom:12px;background:var(--surface);border-radius:0 12px 12px 0;
+  font-size:15px;line-height:1.7;color:var(--text)}
+.empathy-list li strong{color:var(--accent-dark)}
+.empathy-bottom{font-size:15px;color:var(--text-secondary);line-height:1.9;
+  padding:20px 24px;background:var(--accent-bg);border-radius:12px}
+
+/* ── FEATURE BLOCKS ── */
+.feature-block{margin-bottom:48px}
+.feature-block h3{font-size:clamp(18px,3vw,22px);font-weight:700;margin-bottom:12px;
+  line-height:1.4}
+.feature-block h3 span{color:var(--accent-dark)}
+.feature-block p{font-size:15px;color:var(--text-secondary);line-height:1.9}
+.feature-img{width:100%;border-radius:12px;overflow:hidden;margin:20px 0}
+.feature-img img{width:100%;aspect-ratio:16/9;object-fit:cover}
+
+/* ── SPEC PILLS ── */
+.spec-list{list-style:none;display:flex;flex-direction:column;gap:12px;margin-bottom:32px}
+.spec-list li{display:flex;align-items:flex-start;gap:12px;font-size:15px;
+  line-height:1.7;padding:16px 20px;background:var(--surface);
+  border-radius:12px;border:1px solid var(--border)}
+.spec-list li .spec-icon{width:40px;height:40px;background:var(--accent-bg);
+  border-radius:10px;display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;font-size:18px}
+.spec-list li .spec-text strong{color:var(--text);display:block;font-size:14px;margin-bottom:2px}
+.spec-list li .spec-text span{color:var(--text-secondary);font-size:14px}
+
+/* ── SOCIAL PROOF ── */
+.proof-card{background:var(--surface);border:1px solid var(--border);
+  border-radius:16px;padding:28px;margin-bottom:20px}
+.proof-card h3{font-size:18px;font-weight:700;margin-bottom:10px;line-height:1.4}
+.proof-card p{font-size:14px;color:var(--text-secondary);line-height:1.8}
+.proof-img{width:100%;border-radius:12px;overflow:hidden;margin:16px 0 0}
+.proof-img img{width:100%;aspect-ratio:16/9;object-fit:cover}
+
+.proof-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:20px}
+.proof-stat{text-align:center;padding:20px 12px;background:var(--surface-warm);border-radius:12px}
+.proof-stat .num{font-size:clamp(22px,4vw,28px);font-weight:800;color:var(--accent-dark);
+  display:block;margin-bottom:4px}
+.proof-stat .label{font-size:12px;color:var(--text-secondary);line-height:1.4}
+
+/* ── STYLE SECTION ── */
+.style-gallery{display:grid;grid-template-columns:1fr;gap:16px;margin-top:24px}
+.style-gallery img{width:100%;border-radius:12px;aspect-ratio:4/3;object-fit:cover}
+
+/* ── SPEC TABLE ── */
+.spec-table{width:100%;border-collapse:collapse;margin-bottom:32px}
+.spec-table tr{border-bottom:1px solid var(--border)}
+.spec-table td{padding:14px 0;font-size:14px;vertical-align:top}
+.spec-table td:first-child{font-weight:600;color:var(--text);width:35%;padding-right:16px}
+.spec-table td:last-child{color:var(--text-secondary)}
+
+/* ── FAQ ── */
+.faq-item{border-bottom:1px solid var(--border)}
+.faq-q{width:100%;display:flex;justify-content:space-between;align-items:center;
+  padding:20px 0;background:none;border:none;font-size:15px;font-weight:600;
+  color:var(--text);text-align:left;line-height:1.5}
+.faq-q::after{content:'+';font-size:22px;font-weight:300;color:var(--text-light);
+  transition:transform .2s;flex-shrink:0;margin-left:16px}
+.faq-q.open::after{transform:rotate(45deg)}
+.faq-a{max-height:0;overflow:hidden;transition:max-height .3s ease;
+  font-size:14px;color:var(--text-secondary);line-height:1.9}
+.faq-a-inner{padding:0 0 20px}
+
+/* ── CTA ── */
+.cta-section{text-align:center;padding:80px 0}
+.cta-price{font-size:36px;font-weight:800;margin-bottom:8px;letter-spacing:-1px}
+.cta-sub{font-size:14px;color:var(--text-secondary);margin-bottom:28px}
+.cta-btn{display:inline-flex;align-items:center;gap:8px;
+  background:var(--text);color:#fff;padding:18px 48px;border-radius:100px;
+  font-size:16px;font-weight:700;border:none;letter-spacing:.3px;
+  transition:all .2s;text-decoration:none}
+.cta-btn:hover{background:#333;transform:translateY(-2px);
+  box-shadow:0 8px 24px rgba(0,0,0,.15)}
+.cta-trust{display:flex;justify-content:center;gap:24px;margin-top:20px;
+  font-size:12px;color:var(--text-light)}
+
+/* ── BRAND ── */
+.brand-section{text-align:center;padding:60px 0;border-top:1px solid var(--border)}
+.brand-section p{font-size:15px;color:var(--text-secondary);line-height:1.9;
+  max-width:480px;margin:0 auto 16px}
+.brand-links{font-size:13px;color:var(--text-light)}
+.brand-links a{color:var(--accent-dark);text-decoration:underline}
+
+/* ── STICKY CTA ── */
+.sticky-cta{position:fixed;bottom:0;left:0;right:0;background:rgba(255,255,255,.97);
+  backdrop-filter:blur(12px);border-top:1px solid var(--border);
+  padding:12px 24px;z-index:99;transform:translateY(100%);
+  transition:transform .3s ease}
+.sticky-cta.visible{transform:translateY(0)}
+.sticky-cta .container{display:flex;align-items:center;justify-content:space-between;
+  max-width:var(--max-w)}
+.sticky-cta .sticky-info{font-size:13px}
+.sticky-cta .sticky-info .name{font-weight:700}
+.sticky-cta .sticky-info .price{color:var(--accent-dark);font-weight:700}
+.sticky-cta .sticky-btn{background:var(--text);color:#fff;padding:12px 28px;
+  border-radius:100px;font-size:14px;font-weight:700;border:none;
+  text-decoration:none;white-space:nowrap}
+
+/* ── RESPONSIVE ── */
+@media(max-width:640px){
+  :root{--gap:20px}
+  .section{padding:56px 0}
+  .hero{padding:60px 0 40px}
+  .proof-stats{grid-template-columns:1fr 1fr 1fr;gap:8px}
+  .proof-stat{padding:14px 8px}
+  .proof-stat .num{font-size:20px}
+  .proof-stat .label{font-size:11px}
+  .cta-btn{width:100%;justify-content:center}
+  .sticky-cta{padding:10px 16px}
+}
+</style>
+</head>
+<body>
+
+<!-- ── NAV ── -->
+<nav class="nav">
+  <div class="container">
+    <span class="nav-logo">DARIMATI</span>
+    <a href="https://www.darimati.us/products/bridge-001?variant=45917856301116" class="nav-cta" target="_blank">구매하기</a>
+  </div>
+</nav>
+
+<!-- ── SECTION 1: HOOK ── -->
+<section class="hero">
+  <div class="container">
+    <p class="hero-quote">"편한 신발은 못생겼고,<br>예쁜 신발은 발이 아프다."</p>
+    <h1 class="hero-punch">그 공식,<br>이제 틀렸습니다.</h1>
+    <div class="hero-img">
+      <img src="https://cdn.shopify.com/s/files/1/0775/5956/2452/files/dariamti_shoe.jpg?v=1776313172" alt="DARIMATI BR-001 Oyster Grey">
+    </div>
+  </div>
+</section>
+
+<!-- ── SECTION 2: 공감 ── -->
+<section class="section section-warm">
+  <div class="container">
+    <p class="s-label">이런 분을 위해 만들었습니다</p>
+    <h2 class="s-title">포기하지 않아도 됩니다</h2>
+    <ul class="empathy-list">
+      <li>하루 종일 서 있으면 <strong>발바닥이 화끈거리는</strong> 분</li>
+      <li><strong>무지외반증</strong> 때문에 앞코 좁은 신발은 포기한 분</li>
+      <li><strong>평발</strong>이라 어떤 신발을 신어도 금방 피로한 분</li>
+      <li><strong>발목이 약해서</strong> 살짝만 불안정해도 신경 쓰이는 분</li>
+      <li>운동화인데 <strong>백화점에 신고 가도 괜찮은</strong> 신발을 찾는 분</li>
+    </ul>
+    <div class="empathy-bottom">
+      BR-001은 "쿠셔닝을 많이 넣으면 편하겠지"가 아니라,<br>
+      <strong>발에 가해지는 힘을 어떻게 분산할 것인가</strong>에서 시작한 신발입니다.
+    </div>
+  </div>
+</section>
+
+<!-- ── SECTION 3: 왜 편한가 ── -->
+<section class="section section-white">
+  <div class="container">
+    <p class="s-label">왜 하루 종일 신어도 편한가</p>
+    <h2 class="s-title">구조가 다릅니다</h2>
+
+    <div class="feature-block">
+      <h3><span>01</span>&ensp;체중을 한 곳에 모으지 않습니다</h3>
+      <div class="feature-img">
+        <img src="https://cdn.shopify.com/s/files/1/0775/5956/2452/files/04.png?v=1776313172" alt="BR-001 측면 프로필 — 미드솔 구조" loading="lazy">
+      </div>
+      <p><strong>Bridge Mechanics™</strong> — 다리(bridge)의 하중 분산 원리를 신발에 적용했습니다.</p>
+      <p>보통 신발은 뒤꿈치에 충격이 집중됩니다.<br>
+      BR-001은 충격을 미드솔 전체로 분산합니다.<br>
+      발바닥 어느 한 곳도 지치지 않는 이유입니다.</p>
+    </div>
+
+    <div class="feature-block">
+      <h3><span>02</span>&ensp;발이 흔들리지 않습니다</h3>
+      <div class="feature-img">
+        <img src="https://cdn.shopify.com/s/files/1/0775/5956/2452/files/09.png?v=1776313172" alt="BR-001 A-TPU 미드솔" loading="lazy">
+      </div>
+      <p><strong>Stable Core™ A-TPU 미드솔.</strong></p>
+      <p>폭신하기만 한 소재가 아닙니다.<br>
+      A-TPU(Amide Thermoplastic Polyurethane)는 미국과 유럽 프리미엄 러닝화에 쓰이는 엔지니어링 소재입니다.</p>
+      <p>특징은 지지력과 쿠셔닝을 동시에 잡는 것.<br>
+      발목이 약하신 분도 착지할 때 흔들림 없이 안정적입니다.</p>
+    </div>
+
+    <div class="feature-block">
+      <h3><span>03</span>&ensp;앞코가 넓습니다</h3>
+      <div class="feature-img">
+        <img src="https://cdn.shopify.com/s/files/1/0775/5956/2452/files/10.png?v=1776313172" alt="BR-001 넓은 앞코 디자인" loading="lazy">
+      </div>
+      <p>무지외반증이 있으시거나 발볼이 넓으신 분.<br>
+      BR-001은 <strong>넓은 라스트(발 틀)</strong>로 설계되었습니다.</p>
+      <p>앞코를 조이지 않아, 발가락이 자연스럽게 펴진 상태로 걸을 수 있습니다.<br>
+      반 사이즈 크게 신으시면 더 여유 있는 착용감을 느끼실 수 있어요.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ── SECTION 4: 소재 ── -->
+<section class="section section-warm">
+  <div class="container">
+    <p class="s-label">소재가 다릅니다</p>
+    <h2 class="s-title">프리미엄 엔지니어링 소재</h2>
+
+    <ul class="spec-list">
+      <li>
+        <div class="spec-icon">💎</div>
+        <div class="spec-text">
+          <strong>A-TPU 미드솔 100%</strong>
+          <span>EVA 폼과 달리 장기간 사용해도 쿠셔닝이 꺼지지 않습니다</span>
+        </div>
+      </li>
+      <li>
+        <div class="spec-icon">⚡</div>
+        <div class="spec-text">
+          <strong>에너지 리턴 67.5%</strong>
+          <span>걸을 때 반발력이 발을 밀어줍니다 (미국 RunRepeat 실측)</span>
+        </div>
+      </li>
+      <li>
+        <div class="spec-icon">🛡️</div>
+        <div class="spec-text">
+          <strong>아웃솔 내구성 150km+</strong>
+          <span>매일 신어도 밑창이 쉽게 닳지 않습니다</span>
+        </div>
+      </li>
+      <li>
+        <div class="spec-icon">❄️</div>
+        <div class="spec-text">
+          <strong>영하에서도 경화 없음</strong>
+          <span>겨울에도 같은 쿠셔닝을 유지합니다</span>
+        </div>
+      </li>
+    </ul>
+
+    <div class="feature-img">
+      <img src="https://cdn.shopify.com/s/files/1/0775/5956/2452/files/08.png?v=1776313172" alt="BR-001 아웃솔 그립 — 비 온 뒤 보도블럭에서도 미끄럽지 않습니다" loading="lazy">
+    </div>
+  </div>
+</section>
+
+<!-- ── SECTION 5: 사회적 증거 ── -->
+<section class="section section-white">
+  <div class="container">
+    <p class="s-label">누가 이 신발을 신나요</p>
+    <h2 class="s-title">먼저 신어본 사람들</h2>
+
+    <div class="proof-card">
+      <h3>현대백화점 판교 팝업에서<br>먼저 만났습니다</h3>
+      <p>2026년 9월 현대백화점 판교점 팝업에서 270 사이즈가 가장 먼저 완판되었습니다.<br>
+      판교의 3040 여성 고객분들이 가장 많이 찾아주셨어요.</p>
+    </div>
+
+    <div class="proof-card">
+      <h3>크로스핏, 하이록스 선수도 신습니다</h3>
+      <p>"편한 신발"이라고 하면 기능성이 떨어질 거라 생각하시죠?</p>
+      <p>BR-001은 크로스핏 선수 하수현, HYROX 이상학 코치가 대회에서 실제로 착용하는 신발입니다.</p>
+      <p>155kg 썰매를 밀어도 발이 밀리지 않을 만큼 안정적이면서, 8km를 달려도 가벼운 신발.<br>
+      그 안정성이 하루 종일 걸어야 하는 당신의 발도 편하게 만듭니다.</p>
+    </div>
+
+    <div class="proof-stats">
+      <div class="proof-stat">
+        <span class="num">86<small>/100</small></span>
+        <span class="label">RunRepeat<br>전문 평가</span>
+      </div>
+      <div class="proof-stat">
+        <span class="num">218%</span>
+        <span class="label">Kickstarter<br>목표 달성</span>
+      </div>
+      <div class="proof-stat">
+        <span class="num">5+</span>
+        <span class="label">미국 전문<br>매체 리뷰</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── SECTION 6: 세련됨 ── -->
+<section class="section section-warm">
+  <div class="container">
+    <p class="s-label">편한 신발이 예뻐도 됩니다</p>
+    <h2 class="s-title">어디에나 어울리는<br>Oyster Grey</h2>
+    <p class="s-desc">
+      베이지, 화이트, 그레이 사이 어딘가.<br>
+      운동복에도, 슬랙스에도, 원피스에도.<br>
+      백화점에 신고 가도, 공원을 산책해도, 마트를 돌아도.<br><br>
+      신발이 튀지 않으면서 발은 편한.<br>
+      그게 BR-001의 자리입니다.
+    </p>
+    <div class="style-gallery">
+      <img src="https://cdn.shopify.com/s/files/1/0775/5956/2452/files/darimati_shoes.jpg?v=1776313172" alt="BR-001 일상의 모든 순간에" loading="lazy">
+      <img src="https://cdn.shopify.com/s/files/1/0775/5956/2452/files/11.png?v=1776313172" alt="BR-001 퍼포먼스 테스트" loading="lazy">
+    </div>
+  </div>
+</section>
+
+<!-- ── SECTION 7: 스펙 ── -->
+<section class="section section-white">
+  <div class="container">
+    <p class="s-label">스펙</p>
+    <h2 class="s-title">제품 상세</h2>
+    <table class="spec-table">
+      <tr><td>무게</td><td>285g (270mm 기준) — 가벼워서 오래 신어도 부담 없음</td></tr>
+      <tr><td>미드솔</td><td>A-TPU 100%</td></tr>
+      <tr><td>아웃솔</td><td>내마모 러버 컴파운드</td></tr>
+      <tr><td>에너지 리턴</td><td>Heel 67.5% / Forefoot 68.7%</td></tr>
+      <tr><td>사이즈</td><td>230~280mm (반 사이즈 업 추천)</td></tr>
+      <tr><td>컬러</td><td>Oyster Grey / Sand Beige</td></tr>
+    </table>
+    <div style="text-align:center">
+      <a href="https://www.darimati.us/products/bridge-001?variant=45917856301116" class="cta-btn" target="_blank">₩149,000 — 구매하기</a>
+    </div>
+  </div>
+</section>
+
+<!-- ── SECTION 8: FAQ ── -->
+<section class="section section-warm">
+  <div class="container">
+    <p class="s-label">자주 묻는 질문</p>
+    <h2 class="s-title" style="margin-bottom:32px">궁금한 점</h2>
+
+    <div class="faq-item">
+      <button class="faq-q" onclick="this.classList.toggle('open');var a=this.nextElementSibling;a.style.maxHeight=a.style.maxHeight?null:a.scrollHeight+'px'">
+        무지외반증인데 신어도 될까요?
+      </button>
+      <div class="faq-a"><div class="faq-a-inner">
+        네. BR-001은 넓은 라스트로 설계되어 앞코가 넓습니다. 무지외반증이 있으신 분들도 발가락이 조이지 않게 착용하실 수 있어요. 반 사이즈 업을 추천드립니다.
+      </div></div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" onclick="this.classList.toggle('open');var a=this.nextElementSibling;a.style.maxHeight=a.style.maxHeight?null:a.scrollHeight+'px'">
+        평발인데 괜찮을까요?
+      </button>
+      <div class="faq-a"><div class="faq-a-inner">
+        BR-001은 쿠셔닝보다 구조적 안정성에 중점을 둔 신발입니다. A-TPU 미드솔이 아치를 무너뜨리지 않고 지지하며, 플랫한 프로파일이 발 전체를 안정적으로 잡아줍니다. 평발로 인한 피로감이 확실히 줄어듭니다.
+      </div></div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" onclick="this.classList.toggle('open');var a=this.nextElementSibling;a.style.maxHeight=a.style.maxHeight?null:a.scrollHeight+'px'">
+        발목이 약한데 안정적인가요?
+      </button>
+      <div class="faq-a"><div class="faq-a-inner">
+        Stable Core™ 기술이 착지 시 비틀림을 방지합니다. 미국 RunRepeat 평가에서 Brooks Adrenaline GTS24와 동급의 안정성 점수를 받았습니다. 발목이 약하신 분들에게 특히 좋은 구조입니다.
+      </div></div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" onclick="this.classList.toggle('open');var a=this.nextElementSibling;a.style.maxHeight=a.style.maxHeight?null:a.scrollHeight+'px'">
+        사이즈는 어떻게 골라야 하나요?
+      </button>
+      <div class="faq-a"><div class="faq-a-inner">
+        평소 신는 사이즈보다 반 사이즈(5mm) 크게 추천드립니다. 예를 들어 250mm를 신으시면 255mm를 선택해 주세요. 발볼이 넓으신 분은 한 사이즈 업도 좋습니다.
+      </div></div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" onclick="this.classList.toggle('open');var a=this.nextElementSibling;a.style.maxHeight=a.style.maxHeight?null:a.scrollHeight+'px'">
+        러닝화인데 일상용으로 신어도 되나요?
+      </button>
+      <div class="faq-a"><div class="faq-a-inner">
+        BR-001은 "시티 러닝화"입니다. 일상 이동과 러닝을 겸하도록 설계되었어요. 출근길, 장보기, 산책, 여행 — 어디에 신어도 발이 편합니다. 크로스핏 선수들이 대회에서 신을 만큼 기능적이면서, 백화점에 신고 가도 어울리는 디자인입니다.
+      </div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ── CTA FINAL ── -->
+<section class="cta-section">
+  <div class="container">
+    <p class="s-label">BR-001 Hybrid Training Shoe</p>
+    <p class="cta-price">₩149,000</p>
+    <p class="cta-sub">무료배송 · 교환/반품 무료</p>
+    <a href="https://www.darimati.us/products/bridge-001?variant=45917856301116" class="cta-btn" target="_blank">
+      지금 구매하기
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    </a>
+    <div class="cta-trust">
+      <span>✓ Shopify 안전 결제</span>
+      <span>✓ 무료 배송</span>
+      <span>✓ 교환/반품 무료</span>
+    </div>
+  </div>
+</section>
+
+<!-- ── SECTION 9: BRAND ── -->
+<section class="brand-section">
+  <div class="container">
+    <p class="nav-logo" style="margin-bottom:20px">DARIMATI</p>
+    <p>다리마티는 서울 기반의 퍼포먼스 풋웨어 브랜드입니다.</p>
+    <p><em>City ≠ Track.</em> 도시는 트랙이 아닙니다.<br>
+    불규칙한 도시 위를 매일 걷는 당신의 발을 위해,<br>
+    구조적으로 설계된 안정성을 만듭니다.</p>
+    <p class="brand-links">
+      <a href="https://www.instagram.com/darimati_us/" target="_blank">Instagram @darimati_us</a>
+      &ensp;|&ensp;
+      <a href="https://www.darimati.us" target="_blank">darimati.us</a>
+    </p>
+  </div>
+</section>
+
+<!-- ── STICKY CTA ── -->
+<div class="sticky-cta" id="stickyCta">
+  <div class="container">
+    <div class="sticky-info">
+      <span class="name">BR-001</span><br>
+      <span class="price">₩149,000</span>
+    </div>
+    <a href="https://www.darimati.us/products/bridge-001?variant=45917856301116" class="sticky-btn" target="_blank">구매하기</a>
+  </div>
+</div>
+
+<script>
+/* Sticky CTA 표시 */
+(function(){
+  var sticky = document.getElementById('stickyCta');
+  var hero = document.querySelector('.hero');
+  if (!sticky || !hero) return;
+  var observer = new IntersectionObserver(function(entries){
+    sticky.classList.toggle('visible', !entries[0].isIntersecting);
+  }, {threshold:0});
+  observer.observe(hero);
+})();
+</script>
+</body>
+</html>
