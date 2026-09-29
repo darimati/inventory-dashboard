@@ -15,7 +15,7 @@ type Workspace = 'commerce' | 'influencer';
 const COMMERCE_NAV = [
   { href: '/commerce', label: '홈' },
   { href: '/commerce/sales', label: '매출' },
-  { href: '/commerce/inventory', label: '재고·입고' },
+  { href: '/commerce/inventory', label: '재고 / 입고' },
   { href: '/commerce/settlements', label: '정산' },
   { href: '/commerce/settings', label: '설정' },
 ];

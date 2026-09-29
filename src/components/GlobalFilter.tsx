@@ -231,7 +231,7 @@ function SyncButton() {
       setCooldown(60);
       setToast({
         type: 'success',
-        message: `동기화 완료 · 매출 ${ordersData.inserted ?? 0}건${inventoryOk ? ' · 재고 갱신' : ''}`,
+        message: `동기화 완료 | 매출 ${ordersData.inserted ?? 0}건${inventoryOk ? ' | 재고 갱신' : ''}`,
       });
     } catch {
       setToast({ type: 'error', message: '네트워크 오류' });

@@ -162,7 +162,7 @@ export default function InventoryClient({
     <AppShell showFilter={false}>
       {/* Header */}
       <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h1 className="page-title">재고·입고</h1>
+        <h1 className="page-title">재고 / 입고</h1>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {/* EZAdmin freshness */}
           <span
