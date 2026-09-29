@@ -1079,14 +1079,17 @@ export default function ManageClient() {
                       )}
                     </div>
                     <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>
-                      {c.month || ''}{c.month ? ' · ' : ''}참여자 {parts.length}명
-                      {completedCount > 0 && ` · ${completedCount}명 완료`}
-                      {!allUnpaid && totalFee > 0 && ` · 배정 ${totalFee.toLocaleString()}원`}
-                      {!allUnpaid && c.budget > 0 && ` · 예산 ${c.budget.toLocaleString()}원`}
+                      {c.month || ''}{c.month ? <span style={{ margin: '0 5px', color: '#D0D5DC' }}>|</span> : ''}참여자 {parts.length}명
+                      {completedCount > 0 && <><span style={{ margin: '0 5px', color: '#D0D5DC' }}>|</span>{completedCount}명 완료</>}
+                      {!allUnpaid && totalFee > 0 && <><span style={{ margin: '0 5px', color: '#D0D5DC' }}>|</span>배정 {totalFee.toLocaleString()}원</>}
+                      {!allUnpaid && c.budget > 0 && <><span style={{ margin: '0 5px', color: '#D0D5DC' }}>|</span>예산 {c.budget.toLocaleString()}원</>}
                       {!allUnpaid && c.budget > 0 && (
-                        <span style={budgetPct > 100 ? { color: '#D9534F', fontWeight: 600 } : undefined}>
-                          {` · 소진 ${budgetPct}%`}
-                        </span>
+                        <>
+                          <span style={{ margin: '0 5px', color: '#D0D5DC' }}>|</span>
+                          <span style={budgetPct > 100 ? { color: '#D9534F', fontWeight: 600 } : undefined}>
+                            소진 {budgetPct}%
+                          </span>
+                        </>
                       )}
                     </div>
                   </div>

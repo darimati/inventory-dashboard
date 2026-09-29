@@ -281,7 +281,7 @@ export default function InfluencerDashboardClient() {
   /* KPI values */
   const kpi2Sub = overdueCount === 0
     ? '지연 항목 없음'
-    : allTasks.filter(t => t.is_overdue).slice(0, 3).map(t => t.display_name).join(' · ')
+    : allTasks.filter(t => t.is_overdue).slice(0, 3).map(t => t.display_name).join(', ')
       + (overdueCount > 3 ? ` 외 ${overdueCount - 3}건` : '');
 
   /* Payment participants + upload date map */
@@ -405,7 +405,13 @@ export default function InfluencerDashboardClient() {
         <div style={{ marginBottom: SECTION_GAP }}>
           <DashCard
             title="인플루언서 현황"
-            summary={`진행 ${allTasks.length} · 완료 ${completedTotal}`}
+            right={
+              <span style={{ fontSize: 13, color: colors.textSecondary }}>
+                진행 {allTasks.length}
+                <span style={{ margin: '0 6px', color: colors.borderLight }}>|</span>
+                완료 {completedTotal}
+              </span>
+            }
           >
             {allTasks.length === 0 ? (
               <div style={{ padding: '16px 0', fontSize: 13, color: colors.textSecondary }}>
@@ -608,7 +614,10 @@ export default function InfluencerDashboardClient() {
                                 whiteSpace: 'nowrap',
                                 opacity: ev.is_completed ? 0.55 : 1,
                               }}>
-                                {ev.title} · {STEP_LABELS[ev.type] || ev.type}
+                                {ev.title}
+                                <span style={{ opacity: 0.6, marginLeft: 4, fontWeight: 400 }}>
+                                  {STEP_LABELS[ev.type] || ev.type}
+                                </span>
                               </span>
                             );
                           })}
@@ -696,7 +705,7 @@ export default function InfluencerDashboardClient() {
                             fontSize: 12, lineHeight: '16px', color: colors.mint,
                             ...CELL_CLIP,
                           }}>
-                            지급일 · {paymentEvents.length}건
+                            지급일 <span style={{ opacity: 0.7, fontWeight: 400 }}>{paymentEvents.length}건</span>
                           </div>
                         )}
                         {normalEvents.slice(0, isPaymentDay ? 2 : 3).map((ev, j) => {
@@ -723,7 +732,10 @@ export default function InfluencerDashboardClient() {
                               opacity: ev.is_completed ? 0.55 : 1,
                               ...CELL_CLIP,
                             }}>
-                              {ev.title} · {STEP_LABELS[ev.type] || ev.type}
+                              {ev.title}
+                              <span style={{ opacity: 0.6, marginLeft: 3, fontWeight: 400 }}>
+                                {STEP_LABELS[ev.type] || ev.type}
+                              </span>
                             </div>
                           );
                         })}
