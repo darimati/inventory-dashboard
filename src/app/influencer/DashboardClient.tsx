@@ -300,12 +300,6 @@ export default function InfluencerDashboardClient() {
     ? (() => { const d = new Date(paymentDays[0].date + 'T00:00:00'); return `지급일 ${d.getMonth() + 1}/${d.getDate()}`; })()
     : '';
 
-  /* This week's events */
-  const weekEvents = calEvents
-    .filter(e => e.date >= weekStartStr && e.date <= weekEndStr)
-    .sort((a, b) => a.date.localeCompare(b.date));
-  const weekRangeLabel = `${weekStartD.getMonth() + 1}/${weekStartD.getDate()} – ${weekEndD.getMonth() + 1}/${weekEndD.getDate()}`;
-
   /* ── Row click navigation ──────────── */
 
   function handleRowClick(t: WeeklyTaskItem) {
@@ -446,64 +440,42 @@ export default function InfluencerDashboardClient() {
             )}
           </DashCard>
 
-          {/* ── 이번 주 일정 ────────────── */}
-          <DashCard
-            title="이번 주 일정"
-            right={<span style={{ fontSize: 13, color: colors.textSecondary, fontVariantNumeric: 'tabular-nums' }}>{weekRangeLabel}</span>}
-          >
-            {weekEvents.length === 0 ? (
-              <div style={{ padding: '16px 0', fontSize: 13, color: colors.textSecondary }}>
-                이번 주 일정 없음
-              </div>
-            ) : (() => {
-              const grouped = new Map<string, typeof weekEvents>();
-              for (const ev of weekEvents) {
-                const list = grouped.get(ev.date) || [];
-                list.push(ev);
-                grouped.set(ev.date, list);
+          {/* ── 업로드 일정 ────────────── */}
+          <DashCard title="업로드 일정">
+            {(() => {
+              const uploadEvents = calEvents
+                .filter(e => e.type === 'upload' && !e.is_completed)
+                .sort((a, b) => a.date.localeCompare(b.date));
+              if (uploadEvents.length === 0) {
+                return (
+                  <div style={{ padding: '16px 0', fontSize: 13, color: colors.textSecondary }}>
+                    예정된 업로드 일정이 없습니다
+                  </div>
+                );
               }
-              const sortedDates = [...grouped.keys()].sort();
               return (
                 <div>
-                  {sortedDates.map((dateKey, di) => {
-                    const evs = grouped.get(dateKey)!;
-                    const evD = new Date(dateKey + 'T00:00:00');
-                    const diff = Math.round((evD.getTime() - todayD.getTime()) / 86400000);
-                    const isToday = diff === 0;
+                  {uploadEvents.map((ev, i) => {
+                    const isLast = i === uploadEvents.length - 1;
+                    const evD = new Date(ev.date + 'T00:00:00');
+                    const dateLabel = ev.date
+                      ? `${evD.getMonth() + 1}/${evD.getDate()}(${DAY_NAMES[evD.getDay()]})`
+                      : '—';
                     return (
-                      <div key={dateKey} style={{
-                        display: 'flex', alignItems: 'flex-start', gap: 12,
-                        padding: '8px 0',
-                        borderBottom: di < sortedDates.length - 1 ? `0.5px solid ${colors.borderLight}` : 'none',
+                      <div key={`${ev.id}-${i}`} style={{
+                        display: 'grid', gridTemplateColumns: '0.8fr 3fr',
+                        gap: 14, height: 38, alignItems: 'center',
+                        borderBottom: isLast ? 'none' : `0.5px solid ${colors.borderLight}`,
                       }}>
                         <span style={{
-                          fontSize: 13, color: isToday ? colors.textPrimary : colors.textSecondary,
-                          fontWeight: isToday ? 600 : 400,
+                          fontSize: 13, color: colors.textSecondary,
                           fontVariantNumeric: 'tabular-nums',
-                          minWidth: 56, flexShrink: 0,
-                          lineHeight: '22px',
                         }}>
-                          {DAY_NAMES[evD.getDay()]} {evD.getMonth() + 1}/{evD.getDate()}
+                          {dateLabel}
                         </span>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 }}>
-                          {evs.map((ev, j) => {
-                            const isOverdue = ev.is_overdue || (diff < 0 && !ev.is_completed);
-                            const textColor = isOverdue ? colors.coralDark
-                              : ev.is_completed ? colors.textDisabled
-                              : colors.textSecondary;
-                            return (
-                              <span key={`${ev.id}-${j}`} style={{
-                                fontSize: 12,
-                                fontWeight: isOverdue ? 600 : 400,
-                                color: textColor,
-                                lineHeight: '20px',
-                                ...CELL_CLIP,
-                              }}>
-                                {ev.title}, {STEP_LABELS[ev.type] || ev.type}
-                              </span>
-                            );
-                          })}
-                        </div>
+                        <span style={{ ...CELL_CLIP, fontSize: 13, color: colors.textSecondary }}>
+                          {ev.title}
+                        </span>
                       </div>
                     );
                   })}
