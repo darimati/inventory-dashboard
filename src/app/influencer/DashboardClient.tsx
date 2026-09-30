@@ -541,7 +541,7 @@ export default function InfluencerDashboardClient() {
                       onMouseEnter={e => { e.currentTarget.style.background = colors.surfaceHover; }}
                       onMouseLeave={e => { e.currentTarget.style.background = ''; }}
                     >
-                      <span style={{ ...CELL_CLIP, fontSize: 14, fontWeight: 600, color: colors.textPrimary }}>
+                      <span style={{ ...CELL_CLIP, fontSize: 14, fontWeight: 400, color: colors.textPrimary }}>
                         {t.display_name}
                       </span>
                       <span style={{ ...CELL_CLIP, fontSize: 12, color: colors.textSecondary }}>
@@ -640,7 +640,7 @@ export default function InfluencerDashboardClient() {
                       onMouseEnter={e => { e.currentTarget.style.background = colors.surfaceHover; }}
                       onMouseLeave={e => { e.currentTarget.style.background = ''; }}
                     >
-                      <span style={{ ...CELL_CLIP, fontSize: 14, fontWeight: 600, color: colors.textPrimary }}>
+                      <span style={{ ...CELL_CLIP, fontSize: 14, fontWeight: 400, color: colors.textPrimary }}>
                         {t.display_name}
                       </span>
                       <span style={{ ...CELL_CLIP, fontSize: 12, color: colors.textSecondary }}>
