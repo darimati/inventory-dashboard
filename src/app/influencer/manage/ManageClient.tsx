@@ -551,7 +551,7 @@ export default function ManageClient() {
     }
     fetchCampaigns();
     if (detailPart?.id === id && updated && !updated.error) {
-      setDetailPart(updated);
+      setDetailPart({ ...updated, _deliverables: detailPart._deliverables || {} });
     }
   };
 
@@ -788,24 +788,33 @@ export default function ManageClient() {
     setUploadSaving(true);
     setUploadError('');
     try {
-      const res = await fetch('/api/influencer/participants', {
-        method: 'PUT',
+      // Use check-step API so uploaded_at + deliverable are properly set
+      const receivedDate = uploadForm.upload_date || new Date().toISOString().slice(0, 10);
+      const res = await fetch('/api/influencer/participants/check-step', {
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          id: uploadPartId,
-          published_url: uploadForm.content_url,
-          planned_upload_date: uploadForm.upload_date || new Date().toISOString().slice(0, 10),
-          status: 'published',
+          participant_id: uploadPartId,
+          step: 'upload',
+          link: uploadForm.content_url.trim(),
+          received_at: new Date(receivedDate + 'T00:00:00+09:00').toISOString(),
         }),
       });
-      const data = await res.json().catch(() => ({}));
+      const result = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setUploadError(data.error || '저장에 실패했습니다. 다시 시도해주세요.');
+        setUploadError(result.error || '저장에 실패했습니다. 다시 시도해주세요.');
         setUploadSaving(false);
         return;
       }
-      if (detailPart?.id === uploadPartId && data && !data.error) {
-        setDetailPart(data);
+      if (detailPart?.id === uploadPartId) {
+        const updated = { ...detailPart };
+        updated.uploaded_at = result.value;
+        updated.published_url = uploadForm.content_url.trim();
+        updated.status = 'published';
+        const newDlv = { ...(detailPart._deliverables || {}) };
+        if (result.deliverable) newDlv.upload = result.deliverable;
+        updated._deliverables = newDlv;
+        setDetailPart(updated);
       }
       setShowUploadModal(false);
       setUploadPartId(null);
@@ -1816,8 +1825,24 @@ export default function ManageClient() {
               </div>
               <div style={{ marginBottom: 16 }}>
                 <label style={labelStyle}>게시 URL</label>
-                <input style={inputStyle} defaultValue={detailPart.published_url || ''} onBlur={(e) => {
-                  if (e.target.value !== (detailPart.published_url || '')) handleUpdateParticipant(detailPart.id, { published_url: e.target.value || null });
+                <input style={inputStyle} key={detailPart.id + '-url'} defaultValue={detailPart.published_url || ''} onBlur={(e) => {
+                  const newUrl = e.target.value.trim();
+                  if (newUrl !== (detailPart.published_url || '')) {
+                    handleUpdateParticipant(detailPart.id, { published_url: newUrl || null });
+                    // Also sync deliverable link_url via check-step
+                    if (detailPart.uploaded_at) {
+                      fetch('/api/influencer/participants/check-step', {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          participant_id: detailPart.id,
+                          step: 'upload',
+                          link: newUrl,
+                          received_at: detailPart.uploaded_at,
+                        }),
+                      }).then(() => fetchCampaigns());
+                    }
+                  }
                 }} placeholder="https://..." />
               </div>
               <div style={{ borderTop: '1px solid var(--border)', paddingTop: 16, marginBottom: 16 }}>
