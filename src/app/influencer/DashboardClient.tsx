@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import AppShell from '@/components/AppShell';
 import { formatKRW } from '@/lib/helpers';
+import { isPaidCollab, formatCampaignName } from '@/lib/types/influencer';
 import type { DashboardData, WeeklyTaskItem } from '@/lib/types/influencer';
 import { colors, radii, STEP_LABELS } from '@/lib/influencer/styles';
 import { Empty } from '@/lib/influencer/ui';
@@ -29,16 +30,17 @@ interface CalendarEvent {
 /* ── Constants ───────────────────────────────────────── */
 
 const DAY_NAMES = ['일', '월', '화', '수', '목', '금', '토'] as const;
-const STEP_ORDER = ['consent', 'draft', 'edit', 'upload', 'payment'] as const;
-const TOTAL_STEPS = STEP_ORDER.length;
 const ROW_H = 44;
 const VISIBLE_COUNT = 10;
 const SECTION_GAP = 24;
 
-/* §1 — 인플루언서 현황 5-column grid */
-const TABLE_GRID = 'minmax(0,120px) minmax(0,140px) minmax(0,1fr) minmax(0,80px) minmax(0,110px)';
+/* 유가 6-column grid: 인플루언서|채널|캠페인|단계|마감|고료 */
+const PAID_GRID = '1.4fr 0.8fr 1.6fr 0.9fr 0.7fr 1fr';
 
-/* §4 — 지급 예정 4-column grid */
+/* 무가 5-column grid: 인플루언서|채널|캠페인|단계|마감 */
+const FREE_GRID = '1.6fr 0.9fr 1.8fr 1fr 0.8fr';
+
+/* 지급 예정 4-column grid */
 const PAYMENT_GRID = 'minmax(0,1fr) minmax(0,120px) minmax(0,120px) minmax(0,140px)';
 
 const COL_HDR: React.CSSProperties = {
@@ -51,16 +53,7 @@ const KPI_NUM: React.CSSProperties = {
   fontVariantNumeric: 'tabular-nums',
 };
 
-/* §2 — 6-label visual stepper */
-const VISUAL_LABELS = ['섭외', '동의서', '기획안', '가편집본', '업로드', '정산'] as const;
-const STEP_TO_VISUAL: Record<string, number> = {
-  consent: 0, draft: 2, edit: 3, upload: 4, payment: 5,
-};
-
-/* Weekly schedule grid — [3] */
-const WEEK_GRID = 'minmax(0,56px) 1fr';
-
-/* §8 — card base */
+/* card base */
 const CARD_BASE: React.CSSProperties = {
   background: colors.surface,
   border: `0.5px solid ${colors.border}`,
@@ -68,12 +61,12 @@ const CARD_BASE: React.CSSProperties = {
   padding: '20px 24px',
 };
 
-/* §8 — text cell overflow guard for §9 layout stability */
+/* text cell overflow guard */
 const CELL_CLIP: React.CSSProperties = {
   overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
 };
 
-/* ── Card wrapper (dashboard-only, §8) ──────────────── */
+/* ── Card wrapper ──────────────────────────────────── */
 
 function DashCard({ title, summary, right, children, style }: {
   title: string;
@@ -103,7 +96,7 @@ function DashCard({ title, summary, right, children, style }: {
 
 /* ── Helpers ──────────────────────────────────────────── */
 
-/** §5 — D-day text */
+/** D-day text */
 function dDayText(daysUntil: number | null | undefined): string {
   if (daysUntil === null || daysUntil === undefined) return '—';
   if (daysUntil === 0) return 'D-day';
@@ -111,7 +104,7 @@ function dDayText(daysUntil: number | null | undefined): string {
   return `D-${daysUntil}`;
 }
 
-/** §5 — D-day style */
+/** D-day style — urgency-based colors only */
 function dDayStyle(daysUntil: number | null | undefined): React.CSSProperties {
   if (daysUntil === null || daysUntil === undefined)
     return { color: colors.textSecondary, fontWeight: 400 };
@@ -120,40 +113,25 @@ function dDayStyle(daysUntil: number | null | undefined): React.CSSProperties {
   return { color: colors.textPrimary, fontWeight: 400 };
 }
 
-/** Format date as MM/DD */
+/** Format date as MM/DD — handles both YYYY-MM-DD and ISO datetime */
 function fmtDate(d: string | null | undefined): string {
   if (!d) return '—';
-  const dt = new Date(d + 'T00:00:00');
+  const dateStr = d.includes('T') ? d.slice(0, 10) : d;
+  const dt = new Date(dateStr + 'T00:00:00');
   return `${dt.getMonth() + 1}/${dt.getDate()}`;
 }
 
-/** §2 — step cell (6-label visual stepper with connecting lines) */
-function renderStepCell(step: string) {
-  const cur = STEP_TO_VISUAL[step] ?? -1;
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, minWidth: 0 }}>
-      {VISUAL_LABELS.map((label, i) => {
-        const clr = i < cur ? colors.textSecondary
-          : i === cur ? colors.seg1
-          : colors.textDisabled;
-        return (
-          <span key={i} style={{ display: 'contents' }}>
-            {i > 0 && (
-              <span style={{ width: 6, height: 1, flex: 'none', background: colors.border }} />
-            )}
-            <span style={{ fontSize: 12, fontWeight: i === cur ? 600 : 400, color: clr, flex: 'none' }}>
-              {label}
-            </span>
-          </span>
-        );
-      })}
-    </div>
-  );
-}
-
-/** §3 — strip "캠페인" suffix from campaign name */
-function shortCampName(name: string): string {
-  return name.replace(/\s*캠페인\s*$/g, '').trim();
+/** Fallback payment date: upload ≤15th → same month 15, >15th → next month 15 */
+function calcFallbackPaymentDate(uploadedAt: string | null | undefined): string | null {
+  if (!uploadedAt) return null;
+  const d = new Date(uploadedAt);
+  if (isNaN(d.getTime())) return null;
+  const day = d.getDate();
+  if (day <= 15) {
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-15`;
+  }
+  const next = new Date(d.getFullYear(), d.getMonth() + 1, 15);
+  return `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, '0')}-15`;
 }
 
 /* ── Calendar grid builder ───────────────────────────── */
@@ -195,7 +173,8 @@ export default function InfluencerDashboardClient() {
   const router = useRouter();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [showAll, setShowAll] = useState(false);
+  const [showAllPaid, setShowAllPaid] = useState(false);
+  const [showAllFree, setShowAllFree] = useState(false);
 
   /* calendar state */
   const [calMonth, setCalMonth] = useState(() => {
@@ -238,7 +217,7 @@ export default function InfluencerDashboardClient() {
       .catch(() => {});
   }, [calMonth]);
 
-  /* ── Calendar derived (must be before early returns — Rules of Hooks) */
+  /* ── Calendar derived (before early returns — Rules of Hooks) */
   const [calY, calM] = calMonth.split('-').map(Number);
   const calGrid = useMemo(() => buildCalGrid(calY, calM, calEvents), [calY, calM, calEvents]);
   const todayStr = useMemo(() => {
@@ -271,31 +250,19 @@ export default function InfluencerDashboardClient() {
     if (a.is_overdue !== b.is_overdue) return a.is_overdue ? -1 : 1;
     return (a.days_until ?? 999) - (b.days_until ?? 999);
   });
-  const visibleTasks = showAll ? sortedTasks : sortedTasks.slice(0, VISIBLE_COUNT);
-  const hiddenCount = sortedTasks.length - VISIBLE_COUNT;
 
-  const allCampaigns = data.campaigns ?? [];
+  /* Split into paid / free */
+  const paidTasks = sortedTasks.filter(t => isPaidCollab(t.collab_type));
+  const freeTasks = sortedTasks.filter(t => !isPaidCollab(t.collab_type));
+
+  const visiblePaidTasks = showAllPaid ? paidTasks : paidTasks.slice(0, VISIBLE_COUNT);
+  const hiddenPaidCount = paidTasks.length - VISIBLE_COUNT;
+  const visibleFreeTasks = showAllFree ? freeTasks : freeTasks.slice(0, VISIBLE_COUNT);
+  const hiddenFreeCount = freeTasks.length - VISIBLE_COUNT;
+
   const overdueCount = allTasks.filter(t => t.is_overdue).length;
-  const completedTotal = allCampaigns.reduce((s, c) => s + (c.completedCount ?? 0), 0);
 
-  /* KPI values */
-  const kpi2Sub = overdueCount === 0
-    ? '지연 항목 없음'
-    : allTasks.filter(t => t.is_overdue).slice(0, 3).map(t => t.display_name).join(', ')
-      + (overdueCount > 3 ? ` 외 ${overdueCount - 3}건` : '');
-
-  /* Payment participants + upload date map */
-  const paymentTasks = allTasks.filter(t => t.step === 'payment');
-  const uploadDateMap = new Map<string, string>();
-  for (const e of calEvents) {
-    if (e.type === 'upload') uploadDateMap.set(e.participant_id, e.date);
-  }
-  const paymentDays = calEvents.filter(e => e.type === 'payment');
-  const paymentDateLabel = paymentDays.length > 0
-    ? (() => { const d = new Date(paymentDays[0].date + 'T00:00:00'); return `지급일 ${d.getMonth() + 1}/${d.getDate()}`; })()
-    : '';
-
-  /* This week's events (Mon–Sun) */
+  /* This week range (Mon–Sun) */
   const todayD = new Date();
   const dow = todayD.getDay();
   const monOff = dow === 0 ? -6 : 1 - dow;
@@ -306,12 +273,37 @@ export default function InfluencerDashboardClient() {
   const pad2 = (n: number) => String(n).padStart(2, '0');
   const weekStartStr = `${weekStartD.getFullYear()}-${pad2(weekStartD.getMonth() + 1)}-${pad2(weekStartD.getDate())}`;
   const weekEndStr = `${weekEndD.getFullYear()}-${pad2(weekEndD.getMonth() + 1)}-${pad2(weekEndD.getDate())}`;
+
+  /* KPI "이번 주 마감" — this week only */
+  const thisWeekTasks = allTasks.filter(t =>
+    t.scheduled_date && t.scheduled_date >= weekStartStr && t.scheduled_date <= weekEndStr
+  );
+
+  /* KPI "지연" sub-text: "유가 n건, 무가 n건" */
+  const paidOverdue = allTasks.filter(t => t.is_overdue && isPaidCollab(t.collab_type)).length;
+  const freeOverdue = allTasks.filter(t => t.is_overdue && !isPaidCollab(t.collab_type)).length;
+  const kpi2Sub = overdueCount === 0
+    ? '지연 항목 없음'
+    : `유가 ${paidOverdue}건, 무가 ${freeOverdue}건`;
+
+  /* Payment tasks + upload date map */
+  const paymentTasks = allTasks.filter(t => t.step === 'payment');
+  const uploadDateMap = new Map<string, string>();
+  for (const e of calEvents) {
+    if (e.type === 'upload') uploadDateMap.set(e.participant_id, e.date);
+  }
+  const paymentDays = calEvents.filter(e => e.type === 'payment');
+  const paymentDateLabel = paymentDays.length > 0
+    ? (() => { const d = new Date(paymentDays[0].date + 'T00:00:00'); return `지급일 ${d.getMonth() + 1}/${d.getDate()}`; })()
+    : '';
+
+  /* This week's events */
   const weekEvents = calEvents
     .filter(e => e.date >= weekStartStr && e.date <= weekEndStr)
     .sort((a, b) => a.date.localeCompare(b.date));
   const weekRangeLabel = `${weekStartD.getMonth() + 1}/${weekStartD.getDate()} – ${weekEndD.getMonth() + 1}/${weekEndD.getDate()}`;
 
-  /* ── Row click navigation (§6) ──────────── */
+  /* ── Row click navigation ──────────── */
 
   function handleRowClick(t: WeeklyTaskItem) {
     if (t.step === 'payment') {
@@ -325,13 +317,12 @@ export default function InfluencerDashboardClient() {
 
   return (
     <AppShell showFilter={false}>
-      {/* §9 — responsive breakpoints */}
       <style>{`
         .dash-row2 {
           display: grid;
           grid-template-columns: 1fr 1fr;
           gap: 16px;
-          align-items: stretch;
+          align-items: start;
         }
         @media (max-width: 860px) {
           .dash-row2 {
@@ -349,19 +340,19 @@ export default function InfluencerDashboardClient() {
           인플루언서 운영
         </h1>
 
-        {/* ══ 1단: KPI row (§1, §0-1) ═══════════ */}
+        {/* ══ 1단: KPI row (3개) ═══════════ */}
         <div style={{
           display: 'grid', gridTemplateColumns: '1fr 1fr 1fr',
           gap: 16, marginBottom: SECTION_GAP,
         }}>
-          {/* 이번 주 마감 */}
+          {/* 이번 주 마감 — this week dates only */}
           <div style={CARD_BASE}>
             <div style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 4 }}>
               이번 주 마감
             </div>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 6 }}>
               <span style={{ ...KPI_NUM, color: colors.textPrimary }}>
-                {allTasks.length}
+                {thisWeekTasks.length}
               </span>
               <span style={{ fontSize: 13, color: colors.textSecondary }}>건</span>
             </div>
@@ -396,113 +387,15 @@ export default function InfluencerDashboardClient() {
               <span style={{ fontSize: 13, color: colors.textSecondary }}>원</span>
             </div>
             <div style={{ fontSize: 13, color: colors.textSecondary }}>
-              이번 달 예정 {formatKRW(data.settlementWaitingAmount ?? 0)}
+              미지급 합계 {formatKRW(data.settlementWaitingAmount ?? 0)}
             </div>
           </div>
         </div>
 
-        {/* ══ 2단: 인플루언서 현황 — 풀폭 (§2) ══ */}
-        <div style={{ marginBottom: SECTION_GAP }}>
-          <DashCard
-            title="인플루언서 현황"
-            right={
-              <span style={{ fontSize: 13, color: colors.textSecondary }}>
-                진행 {allTasks.length}
-                <span style={{ margin: '0 6px', color: colors.borderLight }}>|</span>
-                완료 {completedTotal}
-              </span>
-            }
-          >
-            {allTasks.length === 0 ? (
-              <div style={{ padding: '16px 0', fontSize: 13, color: colors.textSecondary }}>
-                진행 중인 인플루언서가 없습니다
-              </div>
-            ) : (
-              <>
-                {/* Column header — 5 cols */}
-                <div style={{
-                  display: 'grid', gridTemplateColumns: TABLE_GRID, gap: 24,
-                  height: 36, alignItems: 'center',
-                  borderBottom: `0.5px solid ${colors.borderLight}`,
-                  minWidth: 0,
-                }}>
-                  <span style={COL_HDR}>인플루언서</span>
-                  <span style={COL_HDR}>캠페인</span>
-                  <span style={{ ...COL_HDR, textAlign: 'center' }}>단계</span>
-                  <span style={{ ...COL_HDR, textAlign: 'center' }}>마감</span>
-                  <span style={{ ...COL_HDR, textAlign: 'center' }}>고료</span>
-                </div>
-
-                {/* Data rows — 5 cols */}
-                {visibleTasks.map((t, i) => {
-                  const isLast = i === visibleTasks.length - 1 && hiddenCount <= 0;
-                  const hasFee = (t.fee ?? 0) > 0;
-                  return (
-                    <div
-                      key={`${t.participant_id}-${t.step}-${i}`}
-                      onClick={() => handleRowClick(t)}
-                      style={{
-                        display: 'grid', gridTemplateColumns: TABLE_GRID, gap: 24,
-                        height: ROW_H, alignItems: 'center',
-                        borderBottom: isLast ? 'none' : `0.5px solid ${colors.borderLight}`,
-                        cursor: 'pointer',
-                        minWidth: 0,
-                      }}
-                      onMouseEnter={e => { e.currentTarget.style.background = colors.surfaceHover; }}
-                      onMouseLeave={e => { e.currentTarget.style.background = ''; }}
-                    >
-                      <span style={{ ...CELL_CLIP, fontSize: 14, fontWeight: 600, color: colors.textPrimary }}>
-                        {t.display_name}
-                      </span>
-                      <span style={{ ...CELL_CLIP, fontSize: 13, color: colors.textSecondary }}>
-                        {shortCampName(t.campaign_name)}
-                      </span>
-                      {renderStepCell(t.step)}
-                      <span style={{
-                        fontSize: 13, textAlign: 'center',
-                        fontVariantNumeric: 'tabular-nums',
-                        ...dDayStyle(t.days_until),
-                      }}>
-                        {dDayText(t.days_until)}
-                      </span>
-                      <span style={{
-                        fontSize: 13, textAlign: 'center',
-                        fontVariantNumeric: 'tabular-nums',
-                        color: hasFee ? colors.textPrimary : colors.textSecondary,
-                      }}>
-                        {hasFee ? formatKRW(t.fee!) : '무가'}
-                      </span>
-                    </div>
-                  );
-                })}
-
-                {/* 더 보기 */}
-                {!showAll && hiddenCount > 0 && (
-                  <div style={{
-                    paddingTop: 12, textAlign: 'center',
-                    borderTop: `0.5px solid ${colors.borderLight}`,
-                  }}>
-                    <button
-                      onClick={() => setShowAll(true)}
-                      style={{
-                        background: 'none', border: 'none',
-                        color: colors.textSecondary, fontSize: 13, fontWeight: 500,
-                        cursor: 'pointer', fontFamily: 'var(--font)',
-                      }}
-                    >
-                      더 보기 ({hiddenCount}명)
-                    </button>
-                  </div>
-                )}
-              </>
-            )}
-          </DashCard>
-        </div>
-
-        {/* ══ 3단: 지급 예정 / 이번 주 일정 (1fr 1fr) ══ */}
+        {/* ══ 2단: 지급 예정 / 이번 주 일정 (1fr 1fr, align-items: start) ══ */}
         <div className="dash-row2" style={{ marginBottom: SECTION_GAP }}>
-          {/* ── 이번 달 지급 예정 ────────────── */}
-          <DashCard title="이번 달 지급 예정" summary={paymentDateLabel}>
+          {/* ── 지급 예정 ────────────── */}
+          <DashCard title="지급 예정" summary={paymentDateLabel}>
             {paymentTasks.length === 0 ? (
               <div style={{ padding: '16px 0', fontSize: 13, color: colors.textSecondary }}>
                 지급 예정 인플루언서가 없습니다
@@ -518,11 +411,12 @@ export default function InfluencerDashboardClient() {
                   <span style={COL_HDR}>인플루언서</span>
                   <span style={{ ...COL_HDR, textAlign: 'center' }}>업로드일</span>
                   <span style={{ ...COL_HDR, textAlign: 'center' }}>지급일</span>
-                  <span style={{ ...COL_HDR, textAlign: 'center' }}>금액</span>
+                  <span style={{ ...COL_HDR, textAlign: 'right' }}>금액</span>
                 </div>
                 {paymentTasks.map((t, i) => {
                   const isLast = i === paymentTasks.length - 1;
-                  const upDate = uploadDateMap.get(t.participant_id);
+                  const upDate = uploadDateMap.get(t.participant_id) || t.uploaded_at || null;
+                  const payDate = t.scheduled_date || calcFallbackPaymentDate(upDate);
                   return (
                     <div key={t.participant_id} style={{
                       display: 'grid', gridTemplateColumns: PAYMENT_GRID, gap: 24,
@@ -537,9 +431,9 @@ export default function InfluencerDashboardClient() {
                         {fmtDate(upDate)}
                       </span>
                       <span style={{ fontSize: 13, color: colors.textPrimary, textAlign: 'center', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
-                        {fmtDate(t.scheduled_date)}
+                        {fmtDate(payDate)}
                       </span>
-                      <span style={{ fontSize: 13, color: colors.textPrimary, textAlign: 'center', fontVariantNumeric: 'tabular-nums' }}>
+                      <span style={{ fontSize: 13, color: colors.textPrimary, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
                         {formatKRW(t.fee ?? 0)}
                       </span>
                     </div>
@@ -549,7 +443,7 @@ export default function InfluencerDashboardClient() {
             )}
           </DashCard>
 
-          {/* ── 이번 주 일정 [3] ────────────── */}
+          {/* ── 이번 주 일정 ────────────── */}
           <DashCard
             title="이번 주 일정"
             right={<span style={{ fontSize: 13, color: colors.textSecondary, fontVariantNumeric: 'tabular-nums' }}>{weekRangeLabel}</span>}
@@ -559,13 +453,6 @@ export default function InfluencerDashboardClient() {
                 이번 주 일정 없음
               </div>
             ) : (() => {
-              const WEEK_TYPE_COLORS: Record<string, { bar: string; bg: string; text: string }> = {
-                draft:   { bar: '#7BAEDB', bg: '#E8F2FB', text: '#2E5A80' },
-                edit:    { bar: '#6BC0AC', bg: '#E4F5F0', text: '#2A6B5C' },
-                upload:  { bar: '#4A7DB5', bg: '#E6EEF9', text: '#244C77' },
-                payment: { bar: colors.mint, bg: '#E6F5ED', text: '#2A6B4A' },
-                custom:  { bar: '#9AA2AA', bg: '#F1F3F6', text: '#4A4F55' },
-              };
               const grouped = new Map<string, typeof weekEvents>();
               for (const ev of weekEvents) {
                 const list = grouped.get(ev.date) || [];
@@ -591,33 +478,25 @@ export default function InfluencerDashboardClient() {
                           fontWeight: isToday ? 600 : 400,
                           fontVariantNumeric: 'tabular-nums',
                           minWidth: 56, flexShrink: 0,
-                          lineHeight: '26px',
+                          lineHeight: '22px',
                         }}>
                           {DAY_NAMES[evD.getDay()]} {evD.getMonth() + 1}/{evD.getDate()}
                         </span>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, flex: 1, minWidth: 0 }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 }}>
                           {evs.map((ev, j) => {
-                            const wtc = WEEK_TYPE_COLORS[ev.type] || WEEK_TYPE_COLORS.custom;
-                            const isOverdue = diff <= 0 && ev.type !== 'payment';
-                            const barColor = isOverdue ? '#E85D4A' : wtc.bar;
-                            const bgColor = isOverdue ? '#FFF0EE' : wtc.bg;
-                            const textColor = isOverdue ? '#C0392B' : wtc.text;
+                            const isOverdue = ev.is_overdue || (diff < 0 && !ev.is_completed);
+                            const textColor = isOverdue ? colors.coralDark
+                              : ev.is_completed ? colors.textDisabled
+                              : colors.textSecondary;
                             return (
                               <span key={`${ev.id}-${j}`} style={{
-                                fontSize: 12, fontWeight: isOverdue ? 600 : 400,
-                                borderLeft: `3px solid ${barColor}`,
-                                background: bgColor,
+                                fontSize: 12,
+                                fontWeight: isOverdue ? 600 : 400,
                                 color: textColor,
-                                borderRadius: 4,
-                                padding: '2px 8px 2px 6px',
-                                lineHeight: '22px',
-                                whiteSpace: 'nowrap',
-                                opacity: ev.is_completed ? 0.55 : 1,
+                                lineHeight: '20px',
+                                ...CELL_CLIP,
                               }}>
-                                {ev.title}
-                                <span style={{ opacity: 0.6, marginLeft: 4, fontWeight: 400 }}>
-                                  {STEP_LABELS[ev.type] || ev.type}
-                                </span>
+                                {ev.title}, {STEP_LABELS[ev.type] || ev.type}
                               </span>
                             );
                           })}
@@ -631,7 +510,199 @@ export default function InfluencerDashboardClient() {
           </DashCard>
         </div>
 
-        {/* ══ 4단: 이번 달 일정 — 풀폭 (§1) ═══════ */}
+        {/* ══ 3단: 유가 현황 — 풀폭 ══ */}
+        <div style={{ marginBottom: SECTION_GAP }}>
+          <DashCard
+            title="유가 현황"
+            right={
+              <span style={{ fontSize: 13, color: colors.textSecondary }}>
+                진행 {paidTasks.length}건
+              </span>
+            }
+          >
+            {paidTasks.length === 0 ? (
+              <div style={{ padding: '16px 0', fontSize: 13, color: colors.textSecondary }}>
+                진행 중인 유가 인플루언서가 없습니다
+              </div>
+            ) : (
+              <>
+                {/* Column header — 6 cols */}
+                <div style={{
+                  display: 'grid', gridTemplateColumns: PAID_GRID, gap: 12,
+                  height: 36, alignItems: 'center',
+                  borderBottom: `0.5px solid ${colors.borderLight}`,
+                  minWidth: 0,
+                }}>
+                  <span style={COL_HDR}>인플루언서</span>
+                  <span style={COL_HDR}>채널</span>
+                  <span style={COL_HDR}>캠페인</span>
+                  <span style={COL_HDR}>단계</span>
+                  <span style={{ ...COL_HDR, textAlign: 'center' }}>마감</span>
+                  <span style={{ ...COL_HDR, textAlign: 'right' }}>고료</span>
+                </div>
+
+                {/* Data rows */}
+                {visiblePaidTasks.map((t, i) => {
+                  const isLast = i === visiblePaidTasks.length - 1 && hiddenPaidCount <= 0;
+                  return (
+                    <div
+                      key={`${t.participant_id}-${t.step}-${i}`}
+                      onClick={() => handleRowClick(t)}
+                      style={{
+                        display: 'grid', gridTemplateColumns: PAID_GRID, gap: 12,
+                        height: ROW_H, alignItems: 'center',
+                        borderBottom: isLast ? 'none' : `0.5px solid ${colors.borderLight}`,
+                        cursor: 'pointer', minWidth: 0,
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.background = colors.surfaceHover; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = ''; }}
+                    >
+                      <span style={{ ...CELL_CLIP, fontSize: 14, fontWeight: 600, color: colors.textPrimary }}>
+                        {t.display_name}
+                      </span>
+                      <span style={{ ...CELL_CLIP, fontSize: 12, color: colors.textSecondary }}>
+                        {t.campaign_channel}
+                      </span>
+                      <span style={{ ...CELL_CLIP, fontSize: 13, color: colors.textSecondary }}>
+                        {formatCampaignName(t.campaign_name)}
+                      </span>
+                      <span style={{ ...CELL_CLIP, fontSize: 12, fontWeight: 400, color: colors.textSecondary }}>
+                        {STEP_LABELS[t.step] || t.step}
+                      </span>
+                      <span style={{
+                        fontSize: 13, textAlign: 'center',
+                        fontVariantNumeric: 'tabular-nums',
+                        ...dDayStyle(t.days_until),
+                      }}>
+                        {dDayText(t.days_until)}
+                      </span>
+                      <span style={{
+                        fontSize: 13, textAlign: 'right',
+                        fontVariantNumeric: 'tabular-nums',
+                        color: colors.textPrimary,
+                      }}>
+                        {formatKRW(t.fee ?? 0)}
+                      </span>
+                    </div>
+                  );
+                })}
+
+                {/* 더 보기 */}
+                {!showAllPaid && hiddenPaidCount > 0 && (
+                  <div style={{
+                    paddingTop: 12, textAlign: 'center',
+                    borderTop: `0.5px solid ${colors.borderLight}`,
+                  }}>
+                    <button
+                      onClick={() => setShowAllPaid(true)}
+                      style={{
+                        background: 'none', border: 'none',
+                        color: colors.textSecondary, fontSize: 13, fontWeight: 500,
+                        cursor: 'pointer', fontFamily: 'var(--font)',
+                      }}
+                    >
+                      더 보기 ({hiddenPaidCount}명)
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
+          </DashCard>
+        </div>
+
+        {/* ══ 4단: 무가 현황 — 풀폭 ══ */}
+        <div style={{ marginBottom: SECTION_GAP }}>
+          <DashCard
+            title="무가 현황"
+            right={
+              <span style={{ fontSize: 13, color: colors.textSecondary }}>
+                진행 {freeTasks.length}건
+              </span>
+            }
+          >
+            {freeTasks.length === 0 ? (
+              <div style={{ padding: '16px 0', fontSize: 13, color: colors.textSecondary }}>
+                진행 중인 무가 인플루언서가 없습니다
+              </div>
+            ) : (
+              <>
+                {/* Column header — 5 cols */}
+                <div style={{
+                  display: 'grid', gridTemplateColumns: FREE_GRID, gap: 12,
+                  height: 36, alignItems: 'center',
+                  borderBottom: `0.5px solid ${colors.borderLight}`,
+                  minWidth: 0,
+                }}>
+                  <span style={COL_HDR}>인플루언서</span>
+                  <span style={COL_HDR}>채널</span>
+                  <span style={COL_HDR}>캠페인</span>
+                  <span style={COL_HDR}>단계</span>
+                  <span style={{ ...COL_HDR, textAlign: 'center' }}>마감</span>
+                </div>
+
+                {/* Data rows */}
+                {visibleFreeTasks.map((t, i) => {
+                  const isLast = i === visibleFreeTasks.length - 1 && hiddenFreeCount <= 0;
+                  return (
+                    <div
+                      key={`${t.participant_id}-${t.step}-${i}`}
+                      onClick={() => handleRowClick(t)}
+                      style={{
+                        display: 'grid', gridTemplateColumns: FREE_GRID, gap: 12,
+                        height: ROW_H, alignItems: 'center',
+                        borderBottom: isLast ? 'none' : `0.5px solid ${colors.borderLight}`,
+                        cursor: 'pointer', minWidth: 0,
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.background = colors.surfaceHover; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = ''; }}
+                    >
+                      <span style={{ ...CELL_CLIP, fontSize: 14, fontWeight: 600, color: colors.textPrimary }}>
+                        {t.display_name}
+                      </span>
+                      <span style={{ ...CELL_CLIP, fontSize: 12, color: colors.textSecondary }}>
+                        {t.campaign_channel}
+                      </span>
+                      <span style={{ ...CELL_CLIP, fontSize: 13, color: colors.textSecondary }}>
+                        {formatCampaignName(t.campaign_name)}
+                      </span>
+                      <span style={{ ...CELL_CLIP, fontSize: 12, fontWeight: 400, color: colors.textSecondary }}>
+                        {STEP_LABELS[t.step] || t.step}
+                      </span>
+                      <span style={{
+                        fontSize: 13, textAlign: 'center',
+                        fontVariantNumeric: 'tabular-nums',
+                        ...dDayStyle(t.days_until),
+                      }}>
+                        {dDayText(t.days_until)}
+                      </span>
+                    </div>
+                  );
+                })}
+
+                {/* 더 보기 */}
+                {!showAllFree && hiddenFreeCount > 0 && (
+                  <div style={{
+                    paddingTop: 12, textAlign: 'center',
+                    borderTop: `0.5px solid ${colors.borderLight}`,
+                  }}>
+                    <button
+                      onClick={() => setShowAllFree(true)}
+                      style={{
+                        background: 'none', border: 'none',
+                        color: colors.textSecondary, fontSize: 13, fontWeight: 500,
+                        cursor: 'pointer', fontFamily: 'var(--font)',
+                      }}
+                    >
+                      더 보기 ({hiddenFreeCount}명)
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
+          </DashCard>
+        </div>
+
+        {/* ══ 5단: 이번 달 일정 — 풀폭 ══ */}
         <DashCard
           title="이번 달 일정"
           right={
@@ -705,37 +776,22 @@ export default function InfluencerDashboardClient() {
                             fontSize: 12, lineHeight: '16px', color: colors.mint,
                             ...CELL_CLIP,
                           }}>
-                            지급일 <span style={{ opacity: 0.7, fontWeight: 400 }}>{paymentEvents.length}건</span>
+                            지급일 {paymentEvents.length}건
                           </div>
                         )}
                         {normalEvents.slice(0, isPaymentDay ? 2 : 3).map((ev, j) => {
-                          const CAL_TYPE_COLORS: Record<string, { bar: string; bg: string; text: string }> = {
-                            draft:  { bar: '#7BAEDB', bg: '#E8F2FB', text: '#2E5A80' },
-                            edit:   { bar: '#6BC0AC', bg: '#E4F5F0', text: '#2A6B5C' },
-                            upload: { bar: '#4A7DB5', bg: '#E6EEF9', text: '#244C77' },
-                            custom: { bar: '#9AA2AA', bg: '#F1F3F6', text: '#4A4F55' },
-                          };
-                          const tc = CAL_TYPE_COLORS[ev.type] || CAL_TYPE_COLORS.custom;
-                          const barColor = ev.is_overdue ? '#E85D4A' : tc.bar;
-                          const bgColor = ev.is_overdue ? '#FFF0EE' : tc.bg;
-                          const textColor = ev.is_overdue ? '#C0392B' : tc.text;
-                          const borderStyle = ev.is_confirmed === false ? 'dashed' : 'solid';
+                          const textColor = ev.is_overdue ? colors.coralDark
+                            : ev.is_completed ? colors.textDisabled
+                            : colors.textSecondary;
                           return (
                             <div key={j} style={{
                               fontSize: 12, lineHeight: '20px',
-                              borderLeft: `3px ${borderStyle} ${barColor}`,
-                              background: bgColor,
                               color: textColor,
-                              borderRadius: 4,
-                              paddingLeft: 5, paddingRight: 4,
-                              marginBottom: 1,
+                              fontWeight: ev.is_overdue ? 600 : 400,
                               opacity: ev.is_completed ? 0.55 : 1,
                               ...CELL_CLIP,
                             }}>
-                              {ev.title}
-                              <span style={{ opacity: 0.6, marginLeft: 3, fontWeight: 400 }}>
-                                {STEP_LABELS[ev.type] || ev.type}
-                              </span>
+                              {ev.title}, {STEP_LABELS[ev.type] || ev.type}
                             </div>
                           );
                         })}
