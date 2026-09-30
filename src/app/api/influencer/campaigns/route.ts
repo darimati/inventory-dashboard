@@ -66,6 +66,7 @@ export async function POST(req: NextRequest) {
     memo: body.memo || null,
     created_by: user.id,
   };
+  if (body.channel) insertData.channel = body.channel;
   if (Array.isArray(body.advertised_products) && body.advertised_products.length > 0) {
     insertData.advertised_products = body.advertised_products;
   }
@@ -78,7 +79,7 @@ export async function POST(req: NextRequest) {
 
   // If v3 columns don't exist, strip them and retry
   if (result.error && result.error.message.includes('column')) {
-    const v3Keys = ['collab_type', 'advertised_products', 'target_product'];
+    const v3Keys = ['collab_type', 'advertised_products', 'target_product', 'channel'];
     const safeData = { ...insertData };
     for (const k of v3Keys) delete safeData[k];
     result = await supabaseAdmin
@@ -170,7 +171,7 @@ export async function PUT(req: NextRequest) {
 
   // If v3 columns don't exist, strip them and retry
   if (result.error && result.error.message.includes('column')) {
-    const v3Keys = ['advertised_products'];
+    const v3Keys = ['advertised_products', 'channel'];
     const safeUpdates = { ...updates };
     for (const k of v3Keys) delete safeUpdates[k];
     result = await supabaseAdmin
