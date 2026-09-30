@@ -441,15 +441,18 @@ export default function InfluencerDashboardClient() {
           </DashCard>
 
           {/* ── 업로드 일정 ────────────── */}
-          <DashCard title="업로드 일정">
+          <DashCard
+            title="업로드 일정"
+            right={<span style={{ fontSize: 13, color: colors.textSecondary, fontVariantNumeric: 'tabular-nums' }}>{weekStartD.getMonth() + 1}/{weekStartD.getDate()} – {weekEndD.getMonth() + 1}/{weekEndD.getDate()}</span>}
+          >
             {(() => {
               const uploadEvents = calEvents
-                .filter(e => e.type === 'upload' && !e.is_completed)
+                .filter(e => e.type === 'upload' && !e.is_completed && e.date >= weekStartStr && e.date <= weekEndStr)
                 .sort((a, b) => a.date.localeCompare(b.date));
               if (uploadEvents.length === 0) {
                 return (
                   <div style={{ padding: '16px 0', fontSize: 13, color: colors.textSecondary }}>
-                    예정된 업로드 일정이 없습니다
+                    이번 주 업로드 일정 없음
                   </div>
                 );
               }
