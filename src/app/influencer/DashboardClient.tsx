@@ -453,16 +453,22 @@ export default function InfluencerDashboardClient() {
                   </div>
                 );
               }
+              const byDate = new Map<string, string[]>();
+              for (const ev of uploadEvents) {
+                const list = byDate.get(ev.date) || [];
+                list.push(ev.title);
+                byDate.set(ev.date, list);
+              }
+              const dates = [...byDate.keys()].sort();
               return (
                 <div>
-                  {uploadEvents.map((ev, i) => {
-                    const isLast = i === uploadEvents.length - 1;
-                    const evD = new Date(ev.date + 'T00:00:00');
-                    const dateLabel = ev.date
-                      ? `${evD.getMonth() + 1}/${evD.getDate()}(${DAY_NAMES[evD.getDay()]})`
-                      : '—';
+                  {dates.map((dateKey, i) => {
+                    const evD = new Date(dateKey + 'T00:00:00');
+                    const dateLabel = `${evD.getMonth() + 1}/${evD.getDate()}(${DAY_NAMES[evD.getDay()]})`;
+                    const names = byDate.get(dateKey)!;
+                    const isLast = i === dates.length - 1;
                     return (
-                      <div key={`${ev.id}-${i}`} style={{
+                      <div key={dateKey} style={{
                         display: 'grid', gridTemplateColumns: '0.8fr 3fr',
                         gap: 14, height: 38, alignItems: 'center',
                         borderBottom: isLast ? 'none' : `0.5px solid ${colors.borderLight}`,
@@ -473,8 +479,8 @@ export default function InfluencerDashboardClient() {
                         }}>
                           {dateLabel}
                         </span>
-                        <span style={{ ...CELL_CLIP, fontSize: 13, color: colors.textSecondary }}>
-                          {ev.title}
+                        <span style={{ ...CELL_CLIP, fontSize: 13, color: colors.textPrimary }}>
+                          {names.join(', ')}
                         </span>
                       </div>
                     );
@@ -754,22 +760,43 @@ export default function InfluencerDashboardClient() {
                             지급일 {paymentEvents.length}건
                           </div>
                         )}
-                        {normalEvents.slice(0, isPaymentDay ? 2 : 3).map((ev, j) => (
-                            <div key={j} style={{
-                              fontSize: 12, lineHeight: '20px',
-                              color: ev.is_completed ? colors.textDisabled : colors.textSecondary,
-                              fontWeight: 400,
-                              opacity: ev.is_completed ? 0.55 : 1,
-                              ...CELL_CLIP,
-                            }}>
-                              {ev.title}, {STEP_LABELS[ev.type] || ev.type}
-                            </div>
-                        ))}
-                        {normalEvents.length > (isPaymentDay ? 2 : 3) && (
-                          <div style={{ fontSize: 12, color: colors.textSecondary }}>
-                            +{normalEvents.length - (isPaymentDay ? 2 : 3)}
-                          </div>
-                        )}
+                        {(() => {
+                          const stepOrder = ['draft', 'edit', 'upload', 'payment'];
+                          const grouped = new Map<string, string[]>();
+                          for (const ev of normalEvents) {
+                            const list = grouped.get(ev.type) || [];
+                            list.push(ev.title);
+                            grouped.set(ev.type, list);
+                          }
+                          const sortedTypes = stepOrder.filter(s => grouped.has(s));
+                          for (const key of grouped.keys()) {
+                            if (!sortedTypes.includes(key)) sortedTypes.push(key);
+                          }
+                          const maxLines = isPaymentDay ? 2 : 3;
+                          const visibleTypes = sortedTypes.slice(0, maxLines);
+                          const hiddenCount = sortedTypes.length > maxLines
+                            ? sortedTypes.slice(maxLines).reduce((s, t) => s + (grouped.get(t)?.length || 0), 0)
+                            : 0;
+                          return (
+                            <>
+                              {visibleTypes.map((type, j) => {
+                                const names = grouped.get(type)!;
+                                const display = names.length > 2
+                                  ? `${names.slice(0, 2).join(', ')} 외 ${names.length - 2}`
+                                  : names.join(', ');
+                                return (
+                                  <div key={j} style={{ lineHeight: '18px', ...CELL_CLIP }}>
+                                    <span style={{ fontSize: 11, color: colors.textSecondary }}>{STEP_LABELS[type] || type}</span>
+                                    <span style={{ fontSize: 11, color: colors.textPrimary, marginLeft: 6 }}>{display}</span>
+                                  </div>
+                                );
+                              })}
+                              {hiddenCount > 0 && (
+                                <div style={{ fontSize: 11, color: colors.textSecondary }}>+{hiddenCount}</div>
+                              )}
+                            </>
+                          );
+                        })()}
                       </>
                     )}
                   </div>
