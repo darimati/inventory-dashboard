@@ -104,12 +104,15 @@ function dDayText(daysUntil: number | null | undefined): string {
   return `D-${daysUntil}`;
 }
 
-/** D-day style — urgency-based colors only */
-function dDayStyle(daysUntil: number | null | undefined): React.CSSProperties {
+/** D-day style — urgency-based colors only
+ *  무가: 주황(amber) 까지만, 빨강 없음
+ *  유가: 지연/D-day만 빨강, D-1~3은 주황
+ *  fontWeight: 항상 400 */
+function dDayStyle(daysUntil: number | null | undefined, isPaid = true): React.CSSProperties {
   if (daysUntil === null || daysUntil === undefined)
     return { color: colors.textSecondary, fontWeight: 400 };
-  if (daysUntil <= 0) return { color: colors.coralDark, fontWeight: 600 };
-  if (daysUntil <= 3) return { color: colors.amber, fontWeight: 600 };
+  if (daysUntil <= 0) return { color: isPaid ? colors.coralDark : colors.amber, fontWeight: 400 };
+  if (daysUntil <= 3) return { color: colors.amber, fontWeight: 400 };
   return { color: colors.textPrimary, fontWeight: 400 };
 }
 
@@ -671,7 +674,7 @@ export default function InfluencerDashboardClient() {
                       <span style={{
                         fontSize: 13, textAlign: 'center',
                         fontVariantNumeric: 'tabular-nums',
-                        ...dDayStyle(t.days_until),
+                        ...dDayStyle(t.days_until, false),
                       }}>
                         {dDayText(t.days_until)}
                       </span>
@@ -779,22 +782,17 @@ export default function InfluencerDashboardClient() {
                             지급일 {paymentEvents.length}건
                           </div>
                         )}
-                        {normalEvents.slice(0, isPaymentDay ? 2 : 3).map((ev, j) => {
-                          const textColor = ev.is_overdue ? colors.coralDark
-                            : ev.is_completed ? colors.textDisabled
-                            : colors.textSecondary;
-                          return (
+                        {normalEvents.slice(0, isPaymentDay ? 2 : 3).map((ev, j) => (
                             <div key={j} style={{
                               fontSize: 12, lineHeight: '20px',
-                              color: textColor,
-                              fontWeight: ev.is_overdue ? 600 : 400,
+                              color: ev.is_completed ? colors.textDisabled : colors.textSecondary,
+                              fontWeight: 400,
                               opacity: ev.is_completed ? 0.55 : 1,
                               ...CELL_CLIP,
                             }}>
                               {ev.title}, {STEP_LABELS[ev.type] || ev.type}
                             </div>
-                          );
-                        })}
+                        ))}
                         {normalEvents.length > (isPaymentDay ? 2 : 3) && (
                           <div style={{ fontSize: 12, color: colors.textSecondary }}>
                             +{normalEvents.length - (isPaymentDay ? 2 : 3)}
