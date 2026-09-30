@@ -182,6 +182,28 @@ export const CHANNEL_LABELS: Record<Channel, string> = {
   other: '기타',
 };
 
+/* ---- Campaign Display Helpers ---- */
+
+/**
+ * 캠페인명에서 "캠페인" 접미어와 괄호를 제거하여 표시용 이름을 반환한다.
+ * DB name 원본은 변경하지 않고, 표시할 때만 사용.
+ * "2609 무가협업 캠페인(스레드)" → "2609 무가협업"
+ * "2609 고정고료 캠페인" → "2609 고정고료"
+ */
+export function formatCampaignName(name: string): string {
+  return name.replace(/\([^)]*\)/g, '').replace(/\s*캠페인\s*/g, '').trim();
+}
+
+/**
+ * 캠페인의 채널을 반환한다.
+ * channel 컬럼 값을 우선 사용하고, 없으면 이름 괄호에서 추출, 기본값 '인스타'.
+ */
+export function getCampaignChannel(campaign: { channel?: string | null; name?: string }): string {
+  if (campaign.channel) return campaign.channel;
+  const match = campaign.name?.match(/\(([^)]+)\)/);
+  return match ? match[1] : '인스타';
+}
+
 /* ---- Content Formats (v3) ---- */
 
 export type ContentFormat = 'reels' | 'feed' | 'story' | 'shorts' | 'video' | 'other';
@@ -479,6 +501,8 @@ export interface WeeklyTaskItem {
   display_name: string;
   channel: string | null;
   campaign_name: string;
+  campaign_channel: string;
+  collab_type: string;
   step: WeeklyStep;
   scheduled_date: string | null;
   is_confirmed: boolean;
@@ -490,6 +514,7 @@ export interface WeeklyTaskItem {
   fee?: number;
   settlement_token?: string | null;
   settlement_status?: string | null;
+  uploaded_at?: string | null;
 }
 
 export interface WeeklyTaskSummary {
