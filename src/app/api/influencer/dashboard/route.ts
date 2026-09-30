@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-server';
 import type { DashboardData, DashboardCampaignSummary, CampaignStatus, WeeklyTaskItem, WeeklyTaskSummary, WeeklyStep } from '@/lib/types/influencer';
-import { getScheduleDate } from '@/lib/types/influencer';
+import { getScheduleDate, getCampaignChannel } from '@/lib/types/influencer';
 import { daysBetween } from '@/lib/dday';
 import { getSkipConfig, getParticipantStep, isParticipantCompletedSimple, calcProductExecution, getMonthlyBudget } from '@/lib/influencer/metrics';
+import { isPaidCollab } from '@/lib/types/influencer';
 
 export async function GET() {
   const now = new Date();
@@ -341,6 +342,8 @@ export async function GET() {
   for (const c of campaignsRaw ?? []) {
     const campName = c.name as string;
     const campId = c.id as string;
+    const campChannel = getCampaignChannel(c as { channel?: string; name?: string });
+    const campCollabType = (c.collab_type as string) || 'free_seeding';
     // [FIX] skip 설정 사용
     const skip = getSkipConfig(c as Record<string, unknown>);
     const parts = (c.inf_participants as Record<string, unknown>[]) ?? [];
@@ -394,6 +397,8 @@ export async function GET() {
         display_name: ((p.name || p.display_name || '') as string),
         channel: (p.channel || null) as string | null,
         campaign_name: campName,
+        campaign_channel: campChannel,
+        collab_type: campCollabType,
         step,
         scheduled_date: scheduledDate,
         is_confirmed: isConfirmed,
@@ -405,6 +410,7 @@ export async function GET() {
         fee: Number(p.fee) || 0,
         settlement_token: (p.settlement_token as string) || null,
         settlement_status: (p.settlement_status as string) || null,
+        uploaded_at: (p.uploaded_at as string) || null,
       });
     }
   }
@@ -433,7 +439,7 @@ export async function GET() {
       step,
       count: items.length,
       overdue_count: items.filter(t => t.is_overdue).length,
-      subtitle: items.length > 0 ? subtitleParts.join(' · ') + (items.length > 2 ? ` 외 ${items.length - 2}명` : '') : '—',
+      subtitle: items.length > 0 ? subtitleParts.join(', ') + (items.length > 2 ? ` 외 ${items.length - 2}명` : '') : '—',
     };
   });
 
