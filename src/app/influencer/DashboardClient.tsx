@@ -587,21 +587,21 @@ export default function InfluencerDashboardClient() {
                   );
                 })}
 
-                {/* 더 보기 */}
-                {!showAllPaid && hiddenPaidCount > 0 && (
+                {/* 더 보기 / 접기 */}
+                {hiddenPaidCount > 0 && (
                   <div style={{
                     paddingTop: 12, textAlign: 'center',
                     borderTop: `0.5px solid ${colors.borderLight}`,
                   }}>
                     <button
-                      onClick={() => setShowAllPaid(true)}
+                      onClick={() => setShowAllPaid(!showAllPaid)}
                       style={{
                         background: 'none', border: 'none',
                         color: colors.textSecondary, fontSize: 13, fontWeight: 500,
                         cursor: 'pointer', fontFamily: 'var(--font)',
                       }}
                     >
-                      더 보기 ({hiddenPaidCount}명)
+                      {showAllPaid ? '접기' : `더 보기 (${hiddenPaidCount}명)`}
                     </button>
                   </div>
                 )}
@@ -679,21 +679,21 @@ export default function InfluencerDashboardClient() {
                   );
                 })}
 
-                {/* 더 보기 */}
-                {!showAllFree && hiddenFreeCount > 0 && (
+                {/* 더 보기 / 접기 */}
+                {hiddenFreeCount > 0 && (
                   <div style={{
                     paddingTop: 12, textAlign: 'center',
                     borderTop: `0.5px solid ${colors.borderLight}`,
                   }}>
                     <button
-                      onClick={() => setShowAllFree(true)}
+                      onClick={() => setShowAllFree(!showAllFree)}
                       style={{
                         background: 'none', border: 'none',
                         color: colors.textSecondary, fontSize: 13, fontWeight: 500,
                         cursor: 'pointer', fontFamily: 'var(--font)',
                       }}
                     >
-                      더 보기 ({hiddenFreeCount}명)
+                      {showAllFree ? '접기' : `더 보기 (${hiddenFreeCount}명)`}
                     </button>
                   </div>
                 )}
