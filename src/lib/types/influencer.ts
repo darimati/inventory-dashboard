@@ -50,7 +50,7 @@ export type ConsentStatus = 'not_sent' | 'sent' | 'agreed' | 'expired';
 export const CONSENT_STATUS_LABELS: Record<ConsentStatus, string> = {
   not_sent: '미발송',
   sent: '발송',
-  agreed: '회수완료',
+  agreed: '회신 완료',
   expired: '만료',
 };
 
@@ -265,7 +265,7 @@ export function calcProductCost(products: ProvidedProduct[]): number {
 
 export function formatProvidedProducts(products: ProvidedProduct[], setName?: string | null): string {
   if (!products || products.length === 0) return '-';
-  const items = products.map(p => p.product).join(' · ');
+  const items = products.map(p => p.product).join(', ');
   return setName ? `${setName} (${items})` : items;
 }
 
