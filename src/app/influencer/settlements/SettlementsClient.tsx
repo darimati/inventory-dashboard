@@ -408,13 +408,17 @@ export default function SettlementsClient() {
   };
 
   // Alignment helpers
-  const thRight: React.CSSProperties = { ...thStyle, textAlign: 'right' };
   const thCenter: React.CSSProperties = { ...thStyle, textAlign: 'center' };
-  const tdRight: React.CSSProperties = { ...tdStyle, textAlign: 'right', fontVariantNumeric: 'tabular-nums' };
-  const tdCenter: React.CSSProperties = { ...tdStyle, textAlign: 'center' };
+  const tdCenter: React.CSSProperties = { ...tdStyle, textAlign: 'center', fontVariantNumeric: 'tabular-nums' };
+  const tdEllipsis: React.CSSProperties = { ...tdStyle, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' };
 
-  // Column widths per spec: 48/180/240/110/120/120/150/90/120
-  const COL = { name: 180, campaign: 240, tax: 110, fee: 120, net: 120, payDate: 150, evidence: 90, action: 120, check: 48 };
+  // Column widths — fr 비율 기반 (체크박스 32px만 고정)
+  // Spec: 32px 1.2fr 1.4fr 1fr 1fr 1fr 1.1fr 0.9fr 1fr (sum 8.6fr)
+  const W9 = { check: 32, name: '13.5%', campaign: '15.8%', tax: '11.3%', fee: '11.3%', net: '11.3%', payDate: '12.4%', evidence: '10.2%', action: '11.3%' };
+  // 7-col (no check/action): 1.2+1.4+1+1+1+0.9+1.1 = 7.6fr
+  const W7 = { name: '15.8%', campaign: '18.4%', tax: '13.2%', fee: '13.2%', net: '13.2%', evidence: '11.8%', date: '14.5%' };
+  // 7-col with status (no check/action): 1.2+1.4+1+1+1+1+1.1 = 7.7fr
+  const W7s = { name: '15.6%', campaign: '18.2%', status: '13%', tax: '13%', fee: '13%', net: '13%', date: '14.3%' };
 
   const modalOverlay: React.CSSProperties = {
     position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.3)',
@@ -838,48 +842,46 @@ export default function SettlementsClient() {
           <div style={{ ...cardBg, overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
               <colgroup>
-                <col style={{ width: COL.check }} />
-                <col style={{ width: COL.name }} />
-                <col />
-                <col style={{ width: COL.tax }} />
-                <col style={{ width: COL.fee }} />
-                <col style={{ width: COL.net }} />
-                <col style={{ width: COL.evidence }} />
-                <col style={{ width: COL.payDate }} />
-                <col style={{ width: COL.action }} />
+                <col style={{ width: W9.check }} />
+                <col style={{ width: W9.name }} />
+                <col style={{ width: W9.campaign }} />
+                <col style={{ width: W9.tax }} />
+                <col style={{ width: W9.fee }} />
+                <col style={{ width: W9.net }} />
+                <col style={{ width: W9.evidence }} />
+                <col style={{ width: W9.payDate }} />
+                <col style={{ width: W9.action }} />
               </colgroup>
               <thead>
                 <tr>
-                  <th style={{ ...thStyle, width: COL.check }}>
+                  <th style={thCenter}>
                     <input type="checkbox" checked={allSel} onChange={() => toggleSelectAll(ids)} />
                   </th>
-                  <th style={{ ...thStyle, width: COL.name }}>인플루언서</th>
+                  <th style={thStyle}>인플루언서</th>
                   <th style={thStyle}>캠페인</th>
-                  <th style={{ ...thStyle, width: COL.tax }}>세금방식</th>
-                  <th style={{ ...thRight, width: COL.fee }}>고료</th>
-                  <th style={{ ...thRight, width: COL.net }}>실지급액</th>
-                  <th style={{ ...thCenter, width: COL.evidence }}>증빙</th>
-                  <th style={{ ...thRight, width: COL.payDate }}>제출일</th>
-                  <th style={{ ...thRight, width: COL.action }}>처리</th>
+                  <th style={thCenter}>세금방식</th>
+                  <th style={thCenter}>고료</th>
+                  <th style={thCenter}>실지급액</th>
+                  <th style={thCenter}>증빙</th>
+                  <th style={thCenter}>제출일</th>
+                  <th style={thCenter}>처리</th>
                 </tr>
               </thead>
               <tbody>
                 {rows.map(r => (
                   <tr key={r.id} style={{ cursor: 'pointer' }} onClick={() => setDetailRow(r)}>
-                    <td style={tdStyle} onClick={e => e.stopPropagation()}>
+                    <td style={tdCenter} onClick={e => e.stopPropagation()}>
                       <input type="checkbox" checked={selected.has(r.id)} onChange={() => toggleSelect(r.id)} />
                     </td>
                     <td style={tdStyle}><NameCell name={r.participant_name} handle={r.participant_handle} channel={r.channel} /></td>
-                    <td style={{ ...tdStyle, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.campaign_name}</td>
-                    <td style={tdStyle}>{taxLabel(r.tax_type)}</td>
-                    <td style={tdRight}>{formatKRW(r.gross_amount)}</td>
-                    <td style={{ ...tdRight, fontWeight: 500 }}>{formatKRW(r.net_amount ?? r.gross_amount)}</td>
+                    <td style={tdEllipsis}>{r.campaign_name.replace(/\s*캠페인$/, '')}</td>
+                    <td style={{ ...tdCenter, fontVariantNumeric: undefined }}>{taxLabel(r.tax_type)}</td>
+                    <td style={tdCenter}>{formatKRW(r.gross_amount)}</td>
+                    <td style={{ ...tdCenter, fontWeight: 500 }}>{formatKRW(r.net_amount ?? r.gross_amount)}</td>
                     <td style={tdCenter}><EvidenceCell r={r} /></td>
-                    <td style={tdRight}>{fmtDate(r.submitted_at)}</td>
-                    <td style={{ ...tdStyle, textAlign: 'right' }} onClick={e => e.stopPropagation()}>
-                      <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }}>
-                        <button style={{ ...btnPrimary, height: 28, fontSize: 12, padding: '0 10px' }} onClick={() => handleConfirm(r.id)}>확인</button>
-                      </div>
+                    <td style={tdCenter}>{fmtDate(r.submitted_at)}</td>
+                    <td style={tdCenter} onClick={e => e.stopPropagation()}>
+                      <button style={{ ...btnPrimary, height: 28, fontSize: 12, padding: '0 10px', whiteSpace: 'nowrap' }} onClick={() => handleConfirm(r.id)}>확인</button>
                     </td>
                   </tr>
                 ))}
@@ -915,29 +917,29 @@ export default function SettlementsClient() {
           <div style={{ ...cardBg, overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
               <colgroup>
-                <col style={{ width: COL.check }} />
-                <col style={{ width: COL.name }} />
-                <col />
-                <col style={{ width: COL.tax }} />
-                <col style={{ width: COL.fee }} />
-                <col style={{ width: COL.net }} />
-                <col style={{ width: COL.payDate }} />
-                <col style={{ width: COL.evidence }} />
-                <col style={{ width: COL.action }} />
+                <col style={{ width: W9.check }} />
+                <col style={{ width: W9.name }} />
+                <col style={{ width: W9.campaign }} />
+                <col style={{ width: W9.tax }} />
+                <col style={{ width: W9.fee }} />
+                <col style={{ width: W9.net }} />
+                <col style={{ width: W9.payDate }} />
+                <col style={{ width: W9.evidence }} />
+                <col style={{ width: W9.action }} />
               </colgroup>
               <thead>
                 <tr>
-                  <th style={{ ...thStyle, width: COL.check }}>
+                  <th style={thCenter}>
                     <input type="checkbox" checked={allSel} onChange={() => toggleSelectAll(ids)} />
                   </th>
-                  <th style={{ ...thStyle, width: COL.name }}>인플루언서</th>
+                  <th style={thStyle}>인플루언서</th>
                   <th style={thStyle}>캠페인</th>
-                  <th style={{ ...thStyle, width: COL.tax }}>세금방식</th>
-                  <th style={{ ...thRight, width: COL.fee }}>고료</th>
-                  <th style={{ ...thRight, width: COL.net }}>실지급액</th>
-                  <th style={{ ...thRight, width: COL.payDate }}>지급예정일</th>
-                  <th style={{ ...thCenter, width: COL.evidence }}>증빙</th>
-                  <th style={{ ...thRight, width: COL.action }}>처리</th>
+                  <th style={thCenter}>세금방식</th>
+                  <th style={thCenter}>고료</th>
+                  <th style={thCenter}>실지급액</th>
+                  <th style={thCenter}>지급예정일</th>
+                  <th style={thCenter}>증빙</th>
+                  <th style={thCenter}>처리</th>
                 </tr>
               </thead>
               <tbody>
@@ -945,19 +947,19 @@ export default function SettlementsClient() {
                   const missingDoc = r.tax_type === 'business_income' && !r.has_identity_doc;
                   return (
                     <tr key={r.id} style={{ cursor: 'pointer' }} onClick={() => setDetailRow(r)}>
-                      <td style={tdStyle} onClick={e => e.stopPropagation()}>
+                      <td style={tdCenter} onClick={e => e.stopPropagation()}>
                         <input type="checkbox" checked={selected.has(r.id)} onChange={() => toggleSelect(r.id)} />
                       </td>
                       <td style={tdStyle}><NameCell name={r.participant_name} handle={r.participant_handle} channel={r.channel} /></td>
-                      <td style={{ ...tdStyle, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.campaign_name}</td>
-                      <td style={tdStyle}>{taxLabel(r.tax_type)}</td>
-                      <td style={tdRight}>{formatKRW(r.gross_amount)}</td>
-                      <td style={{ ...tdRight, fontWeight: 500 }}>{formatKRW(r.net_amount ?? r.gross_amount)}</td>
-                      <td style={tdRight}><PayDateCell date={r.planned_payment_date} /></td>
+                      <td style={tdEllipsis}>{r.campaign_name.replace(/\s*캠페인$/, '')}</td>
+                      <td style={{ ...tdCenter, fontVariantNumeric: undefined }}>{taxLabel(r.tax_type)}</td>
+                      <td style={tdCenter}>{formatKRW(r.gross_amount)}</td>
+                      <td style={{ ...tdCenter, fontWeight: 500 }}>{formatKRW(r.net_amount ?? r.gross_amount)}</td>
+                      <td style={tdCenter}><PayDateCell date={r.planned_payment_date} /></td>
                       <td style={tdCenter}><EvidenceCell r={r} /></td>
-                      <td style={{ ...tdStyle, textAlign: 'right' }} onClick={e => e.stopPropagation()}>
+                      <td style={tdCenter} onClick={e => e.stopPropagation()}>
                         <button
-                          style={{ ...btnPrimary, height: 28, fontSize: 12, padding: '0 10px', ...(missingDoc ? { opacity: 0.4, cursor: 'not-allowed' } : {}) }}
+                          style={{ ...btnPrimary, height: 28, fontSize: 12, padding: '0 10px', whiteSpace: 'nowrap', ...(missingDoc ? { opacity: 0.4, cursor: 'not-allowed' } : {}) }}
                           disabled={missingDoc}
                           title={missingDoc ? '신분증 미제출 — 지급 불가' : undefined}
                           onClick={() => {
@@ -996,35 +998,35 @@ export default function SettlementsClient() {
           <div style={{ ...cardBg, overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
               <colgroup>
-                <col style={{ width: COL.name }} />
-                <col />
-                <col style={{ width: COL.tax }} />
-                <col style={{ width: COL.fee }} />
-                <col style={{ width: COL.net }} />
-                <col style={{ width: COL.evidence }} />
-                <col style={{ width: COL.payDate }} />
+                <col style={{ width: W7.name }} />
+                <col style={{ width: W7.campaign }} />
+                <col style={{ width: W7.tax }} />
+                <col style={{ width: W7.fee }} />
+                <col style={{ width: W7.net }} />
+                <col style={{ width: W7.evidence }} />
+                <col style={{ width: W7.date }} />
               </colgroup>
               <thead>
                 <tr>
-                  <th style={{ ...thStyle, width: COL.name }}>인플루언서</th>
+                  <th style={thStyle}>인플루언서</th>
                   <th style={thStyle}>캠페인</th>
-                  <th style={{ ...thStyle, width: COL.tax }}>세금방식</th>
-                  <th style={{ ...thRight, width: COL.fee }}>고료</th>
-                  <th style={{ ...thRight, width: COL.net }}>실지급액</th>
-                  <th style={{ ...thCenter, width: COL.evidence }}>증빙</th>
-                  <th style={{ ...thRight, width: COL.payDate }}>지급일</th>
+                  <th style={thCenter}>세금방식</th>
+                  <th style={thCenter}>고료</th>
+                  <th style={thCenter}>실지급액</th>
+                  <th style={thCenter}>증빙</th>
+                  <th style={thCenter}>지급일</th>
                 </tr>
               </thead>
               <tbody>
                 {rows.map(r => (
                   <tr key={r.id} style={{ cursor: 'pointer' }} onClick={() => setDetailRow(r)}>
                     <td style={tdStyle}><NameCell name={r.participant_name} handle={r.participant_handle} channel={r.channel} /></td>
-                    <td style={{ ...tdStyle, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.campaign_name}</td>
-                    <td style={tdStyle}>{taxLabel(r.tax_type)}</td>
-                    <td style={tdRight}>{formatKRW(r.gross_amount)}</td>
-                    <td style={{ ...tdRight, fontWeight: 500 }}>{formatKRW(r.net_amount ?? r.gross_amount)}</td>
+                    <td style={tdEllipsis}>{r.campaign_name.replace(/\s*캠페인$/, '')}</td>
+                    <td style={{ ...tdCenter, fontVariantNumeric: undefined }}>{taxLabel(r.tax_type)}</td>
+                    <td style={tdCenter}>{formatKRW(r.gross_amount)}</td>
+                    <td style={{ ...tdCenter, fontWeight: 500 }}>{formatKRW(r.net_amount ?? r.gross_amount)}</td>
                     <td style={tdCenter}><EvidenceCell r={r} /></td>
-                    <td style={tdRight}>{fmtDate(r.actual_paid_date || r.paid_date)}</td>
+                    <td style={tdCenter}>{fmtDate(r.actual_paid_date || r.paid_date)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -1053,35 +1055,35 @@ export default function SettlementsClient() {
           <div style={{ ...cardBg, overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
               <colgroup>
-                <col style={{ width: COL.name }} />
-                <col />
-                <col style={{ width: COL.tax }} />
-                <col style={{ width: COL.tax }} />
-                <col style={{ width: COL.fee }} />
-                <col style={{ width: COL.net }} />
-                <col style={{ width: COL.payDate }} />
+                <col style={{ width: W7s.name }} />
+                <col style={{ width: W7s.campaign }} />
+                <col style={{ width: W7s.status }} />
+                <col style={{ width: W7s.tax }} />
+                <col style={{ width: W7s.fee }} />
+                <col style={{ width: W7s.net }} />
+                <col style={{ width: W7s.date }} />
               </colgroup>
               <thead>
                 <tr>
-                  <th style={{ ...thStyle, width: COL.name }}>인플루언서</th>
+                  <th style={thStyle}>인플루언서</th>
                   <th style={thStyle}>캠페인</th>
-                  <th style={{ ...thCenter, width: COL.tax }}>상태</th>
-                  <th style={{ ...thStyle, width: COL.tax }}>세금방식</th>
-                  <th style={{ ...thRight, width: COL.fee }}>고료</th>
-                  <th style={{ ...thRight, width: COL.net }}>실지급액</th>
-                  <th style={{ ...thRight, width: COL.payDate }}>날짜</th>
+                  <th style={thCenter}>상태</th>
+                  <th style={thCenter}>세금방식</th>
+                  <th style={thCenter}>고료</th>
+                  <th style={thCenter}>실지급액</th>
+                  <th style={thCenter}>날짜</th>
                 </tr>
               </thead>
               <tbody>
                 {rows.map(r => (
                   <tr key={r.id} style={{ cursor: 'pointer' }} onClick={() => setDetailRow(r)}>
                     <td style={tdStyle}><NameCell name={r.participant_name} handle={r.participant_handle} channel={r.channel} /></td>
-                    <td style={{ ...tdStyle, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.campaign_name}</td>
+                    <td style={tdEllipsis}>{r.campaign_name.replace(/\s*캠페인$/, '')}</td>
                     <td style={tdCenter}><StatusBadge status={r.payment_status} /></td>
-                    <td style={tdStyle}>{taxLabel(r.tax_type)}</td>
-                    <td style={tdRight}>{formatKRW(r.gross_amount)}</td>
-                    <td style={{ ...tdRight, fontWeight: 500 }}>{formatKRW(r.net_amount ?? r.gross_amount)}</td>
-                    <td style={tdRight}>
+                    <td style={{ ...tdCenter, fontVariantNumeric: undefined }}>{taxLabel(r.tax_type)}</td>
+                    <td style={tdCenter}>{formatKRW(r.gross_amount)}</td>
+                    <td style={{ ...tdCenter, fontWeight: 500 }}>{formatKRW(r.net_amount ?? r.gross_amount)}</td>
+                    <td style={tdCenter}>
                       {r.payment_status === 'paid' ? fmtDate(r.actual_paid_date || r.paid_date) : fmtDate(r.submitted_at)}
                     </td>
                   </tr>
