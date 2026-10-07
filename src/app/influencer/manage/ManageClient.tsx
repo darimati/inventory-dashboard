@@ -849,6 +849,14 @@ export default function ManageClient() {
 
   const fmtKRW = (n: number) => n > 0 ? formatKRW(n) : '-';
 
+  // 상태 칩 스타일 (정산/동의서 공용)
+  const sChip = (bg: string, fg: string): React.CSSProperties => ({
+    display: 'inline-flex', alignItems: 'center',
+    padding: '4px 10px', borderRadius: 6,
+    fontSize: 12, fontWeight: 400, whiteSpace: 'nowrap',
+    background: bg, color: fg,
+  });
+
   /* ── Memo helpers ─────────────────────────────────────── */
 
   const MemoIcon = ({ hasMemo, size = 12 }: { hasMemo: boolean; size?: number }) => (
@@ -1307,12 +1315,12 @@ export default function ManageClient() {
 
                                   // Consent cell
                                   const consentLabel = p.consent_status === 'agreed'
-                                    ? <span style={{ color: '#22C55E', fontWeight: 500 }}>✓</span>
+                                    ? <span style={sChip(colors.mintLight, colors.mint)}>회신 완료</span>
                                     : p.consent_status === 'sent'
-                                    ? <Chip variant="blue">발송</Chip>
+                                    ? <span style={sChip(colors.amberLight, colors.amber)}>발송</span>
                                     : p.consent_status === 'expired'
-                                    ? <Chip variant="coral">만료</Chip>
-                                    : <span style={{ fontSize: 11, color: '#C4CAD1' }}>—</span>;
+                                    ? <span style={sChip(colors.amberLight, colors.amber)}>만료</span>
+                                    : <span style={sChip(colors.grayBadgeBg, colors.textSecondary)}>미발송</span>;
                                   const isConsentCurrent = progress.currentStage === 'consent';
                                   const consentCell = (
                                     <>
@@ -1338,13 +1346,20 @@ export default function ManageClient() {
                                     const sd = getSettlementDisplayStatus(p.settlement_status, !!p.published_url);
                                     const isPaid = p.settlement_status === 'paid';
                                     const isSettlementCurrent = progress.currentStage === 'settlement';
-                                    // 7일 초과 미제출 → 빨강
-                                    const isOverdue7 = p.settlement_status === 'docs_requested' && p.settlement_token_expires_at
-                                      && (Date.now() - (new Date(p.settlement_token_expires_at).getTime() - 30 * 86400000)) > 7 * 86400000;
-                                    const settlementColor = isOverdue7 ? '#B03F3B' : sd.color;
+                                    const sChipColors: Record<string, { bg: string; fg: string }> = {
+                                      paid: { bg: colors.mintLight, fg: colors.mint },
+                                      payment_waiting: { bg: colors.grayBadgeBg, fg: colors.textPrimary },
+                                      payment_requested: { bg: colors.grayBadgeBg, fg: colors.textPrimary },
+                                      docs_submitted: { bg: colors.grayBadgeBg, fg: colors.textPrimary },
+                                      docs_requested: { bg: colors.amberLight, fg: colors.amber },
+                                      expired: { bg: colors.amberLight, fg: colors.amber },
+                                    };
+                                    const cc = sChipColors[p.settlement_status || ''];
                                     return (
                                       <>
-                                        <span style={{ fontSize: 12, color: settlementColor, fontWeight: 400 }}>{sd.label}</span>
+                                        {cc
+                                          ? <span style={sChip(cc.bg, cc.fg)}>{sd.label}</span>
+                                          : <span style={{ fontSize: 12, color: colors.textSecondary, fontWeight: 400 }}>{sd.label}</span>}
                                         <div className="ua" style={{ display: 'none', position: 'absolute', top: 2, right: 2, gap: 3, zIndex: 5 }}>
                                           {p.settlement_token ? (
                                             <>
@@ -1735,15 +1750,23 @@ export default function ManageClient() {
                   if (key === 'settlement') {
                     const isPaid = progress.settlement.status === 'paid';
                     const sd = getSettlementDisplayStatus(detailPart.settlement_status, !!detailPart.published_url);
-                    const isOverdue7 = detailPart.settlement_status === 'docs_requested' && detailPart.settlement_token_expires_at
-                      && (Date.now() - (new Date(detailPart.settlement_token_expires_at).getTime() - 30 * 86400000)) > 7 * 86400000;
-                    const sColor = isOverdue7 ? '#B03F3B' : sd.color;
+                    const scMap: Record<string, { bg: string; fg: string }> = {
+                      paid: { bg: colors.mintLight, fg: colors.mint },
+                      payment_waiting: { bg: colors.grayBadgeBg, fg: colors.textPrimary },
+                      payment_requested: { bg: colors.grayBadgeBg, fg: colors.textPrimary },
+                      docs_submitted: { bg: colors.grayBadgeBg, fg: colors.textPrimary },
+                      docs_requested: { bg: colors.amberLight, fg: colors.amber },
+                      expired: { bg: colors.amberLight, fg: colors.amber },
+                    };
+                    const sc = scMap[detailPart.settlement_status || ''];
                     return (
                       <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 8, minHeight: 32, padding: '4px 0', borderRadius: 6 }}>
-                        <span style={{ width: 16, textAlign: 'center', fontSize: 13 }}>{isPaid ? <span style={{ color: '#22C55E' }}>✓</span> : <span style={{ color: '#C4CAD1' }}>○</span>}</span>
+                        <span style={{ width: 16, textAlign: 'center', fontSize: 13 }}>{isPaid ? <span style={{ color: colors.mint }}>✓</span> : <span style={{ color: '#C4CAD1' }}>○</span>}</span>
                         <span style={{ flex: 1, color: isPaid ? 'var(--text-secondary)' : 'var(--text-muted)' }}>
                           {label}
-                          <span style={{ marginLeft: 6, fontSize: 12, color: sColor, fontWeight: 400 }}>{sd.label}</span>
+                          {sc
+                            ? <span style={{ ...sChip(sc.bg, sc.fg), marginLeft: 6 }}>{sd.label}</span>
+                            : <span style={{ marginLeft: 6, fontSize: 12, color: colors.textSecondary, fontWeight: 400 }}>{sd.label}</span>}
                         </span>
                         {detailPart.settlement_token && (
                           <>
@@ -2091,12 +2114,18 @@ export default function ManageClient() {
 
                 {progressPanel.type === 'payment' && (() => {
                   const sd = getSettlementDisplayStatus(pp.settlement_status, !!pp.published_url);
-                  const isOverdue7 = pp.settlement_status === 'docs_requested' && pp.settlement_token_expires_at
-                    && (Date.now() - (new Date(pp.settlement_token_expires_at).getTime() - 30 * 86400000)) > 7 * 86400000;
-                  const pColor = isOverdue7 ? '#B03F3B' : sd.color;
+                  const pcMap: Record<string, { bg: string; fg: string }> = {
+                    paid: { bg: colors.mintLight, fg: colors.mint },
+                    payment_waiting: { bg: colors.grayBadgeBg, fg: colors.textPrimary },
+                    payment_requested: { bg: colors.grayBadgeBg, fg: colors.textPrimary },
+                    docs_submitted: { bg: colors.grayBadgeBg, fg: colors.textPrimary },
+                    docs_requested: { bg: colors.amberLight, fg: colors.amber },
+                    expired: { bg: colors.amberLight, fg: colors.amber },
+                  };
+                  const pc = pcMap[pp.settlement_status || ''];
                   return (
                     <div>
-                      <div style={rowStyle}><span style={rlabel}>정산 상태</span><span style={{ ...rvalue, color: pColor, fontWeight: 400 }}>{sd.label}</span></div>
+                      <div style={rowStyle}><span style={rlabel}>정산 상태</span>{pc ? <span style={sChip(pc.bg, pc.fg)}>{sd.label}</span> : <span style={{ ...rvalue, color: colors.textSecondary, fontWeight: 400 }}>{sd.label}</span>}</div>
                       <div style={rowStyle}><span style={rlabel}>고료 (세전)</span><span style={rvalue}>{fmtKRW(pp.fee)}</span></div>
                       <div style={rowStyle}><span style={rlabel}>정산 정보</span><span style={rvalue}>{pp.settlement_status === 'docs_submitted' ? '회수 완료' : pp.settlement_status === 'docs_requested' ? '발송됨' : '미발송'}</span></div>
                       {pp.planned_payment_date && (() => {

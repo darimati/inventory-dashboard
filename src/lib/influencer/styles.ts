@@ -42,6 +42,7 @@ export const colors = {
 
   // Amber (from commerce --amber / daysColor 22-31일)
   amber: '#E09B3D',
+  amberLight: '#FDF6EC',   // globals.css --amber-light
 
   blue: '#4A7DB5',
   blueLight: '#EDF3FA',
