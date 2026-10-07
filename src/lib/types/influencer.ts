@@ -77,19 +77,19 @@ export function getSettlementDisplayStatus(
 ): { label: string; color: string; nextAction: string | null } {
   switch (settlementStatus) {
     case 'paid':
-      return { label: '지급 완료', color: '#22C55E', nextAction: null };
+      return { label: '지급 완료', color: '#61686F', nextAction: null };
     case 'payment_waiting':
     case 'payment_requested':
-      return { label: '지급 대기', color: '#A8712A', nextAction: 'mark_paid' };
+      return { label: '지급 대기', color: '#1A1D21', nextAction: 'mark_paid' };
     case 'docs_submitted':
-      return { label: '확인 필요', color: '#D97706', nextAction: 'confirm' };
+      return { label: '제출 완료', color: '#1A1D21', nextAction: 'confirm' };
     case 'docs_requested':
-      return { label: '정보 대기', color: '#9AA2AA', nextAction: null };
+      return { label: '정보 대기', color: '#1A1D21', nextAction: null };
     case 'expired':
-      return { label: '만료', color: '#DC2626', nextAction: 'resend' };
+      return { label: '만료', color: '#1A1D21', nextAction: 'resend' };
     default:
-      if (!hasPublishedUrl) return { label: '—', color: '#C4CAD1', nextAction: null };
-      return { label: '미발송', color: '#9AA2AA', nextAction: 'send_link' };
+      if (!hasPublishedUrl) return { label: '—', color: '#61686F', nextAction: null };
+      return { label: '미발송', color: '#1A1D21', nextAction: 'send_link' };
   }
 }
 
