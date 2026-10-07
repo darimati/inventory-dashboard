@@ -4,8 +4,8 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import AppShell from '@/components/AppShell';
 import { formatKRW } from '@/lib/helpers';
-import { isPaidCollab, formatCampaignName } from '@/lib/types/influencer';
-import type { DashboardData, WeeklyTaskItem } from '@/lib/types/influencer';
+import { isPaidCollab, formatCampaignName, CHANNEL_LABELS } from '@/lib/types/influencer';
+import type { DashboardData, WeeklyTaskItem, DashboardCampaignSummary, RecentUploadItem } from '@/lib/types/influencer';
 import { colors, radii, STEP_LABELS } from '@/lib/influencer/styles';
 import { Empty } from '@/lib/influencer/ui';
 
@@ -30,18 +30,72 @@ interface CalendarEvent {
 /* ── Constants ───────────────────────────────────────── */
 
 const DAY_NAMES = ['일', '월', '화', '수', '목', '금', '토'] as const;
-const ROW_H = 44;
-const VISIBLE_COUNT = 10;
+const ROW_H = 38;
 const SECTION_GAP = 24;
+const CARD_GAP = 16;
 
-/* 유가 6-column grid: 인플루언서|채널|캠페인|단계|마감|고료 */
-const PAID_GRID = '1.4fr 0.8fr 1.6fr 0.9fr 0.7fr 1fr';
+/* ── Color system [G] ─────────────────────────────────── */
 
-/* 무가 5-column grid: 인플루언서|채널|캠페인|단계|마감 */
-const FREE_GRID = '1.6fr 0.9fr 1.8fr 1fr 0.8fr';
+const STEP_DOT: Record<string, string> = {
+  consent: '#B8D4E8',
+  draft: '#8FAEE0',
+  edit: '#7FC4CE',
+  upload: '#86C9A8',
+  payment: '#F0B86E',
+};
 
-/* 지급 예정 4-column grid */
-const PAYMENT_GRID = 'minmax(0,1fr) minmax(0,120px) minmax(0,120px) minmax(0,140px)';
+const SETTLE_DOT: Record<string, string> = {
+  docs_requested: '#F0B86E',
+  docs_submitted: '#7FC4CE',
+  payment_waiting: '#8FAEE0',
+  payment_requested: '#8FAEE0',
+  paid: '#86C9A8',
+};
+
+const CHANNEL_DOT: Record<string, string> = {
+  instagram: '#E8A0B4',
+  threads: '#C3A9DE',
+  tiktok: '#8FAEE0',
+  youtube: '#F0B86E',
+  blog: '#CDD2D8',
+  other: '#CDD2D8',
+};
+
+/* Calendar event colors */
+const CAL_COLORS: Record<string, { bar: string; bg: string }> = {
+  draft: { bar: '#8FAEE0', bg: '#EAF0FA' },
+  edit: { bar: '#7FC4CE', bg: '#E8F4F6' },
+  upload: { bar: '#86C9A8', bg: '#E9F6EF' },
+  payment: { bar: '#F0B86E', bg: '#FBF1E3' },
+  consent: { bar: '#CDD2D8', bg: '#F4F5F7' },
+};
+
+/* Campaign progress bar colors (same as step dots) */
+const BAR_COLORS: Record<string, string> = {
+  consent: '#CDD2D8',
+  draft: '#8FAEE0',
+  edit: '#7FC4CE',
+  upload: '#86C9A8',
+  payment: '#F0B86E',
+};
+
+/* Settlement status labels */
+const SETTLE_LABELS: Record<string, string> = {
+  docs_requested: '정보 대기',
+  docs_submitted: '확인 필요',
+  payment_waiting: '지급 대기',
+  payment_requested: '지급 대기',
+  paid: '지급 완료',
+};
+
+/* ── Styles ──────────────────────────────────────────── */
+
+const CARD_BASE: React.CSSProperties = {
+  background: colors.surface,
+  border: `0.5px solid ${colors.border}`,
+  borderRadius: radii.card,
+  padding: '20px 24px',
+};
 
 const COL_HDR: React.CSSProperties = {
   fontSize: 13, color: colors.textSecondary,
@@ -53,40 +107,32 @@ const KPI_NUM: React.CSSProperties = {
   fontVariantNumeric: 'tabular-nums',
 };
 
-/* card base */
-const CARD_BASE: React.CSSProperties = {
-  background: colors.surface,
-  border: `0.5px solid ${colors.border}`,
-  borderRadius: radii.card,
-  padding: '20px 24px',
-};
-
-/* text cell overflow guard */
 const CELL_CLIP: React.CSSProperties = {
   overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
 };
 
+/* dot + text helpers */
+const dotWrap: React.CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: 7 };
+const dotS = (c: string): React.CSSProperties => ({ width: 7, height: 7, borderRadius: '50%', background: c, flex: 'none' });
+const dotTxt: React.CSSProperties = { fontSize: 12, fontWeight: 400, color: colors.textPrimary, whiteSpace: 'nowrap' };
+
 /* ── Card wrapper ──────────────────────────────────── */
 
-function DashCard({ title, summary, right, children, style }: {
+function DashCard({ title, right, children, style }: {
   title: string;
-  summary?: string;
   right?: React.ReactNode;
   children: React.ReactNode;
   style?: React.CSSProperties;
 }) {
   return (
-    <div style={{ ...CARD_BASE, minHeight: 120, ...style }}>
+    <div style={{ ...CARD_BASE, ...style }}>
       <div style={{
-        display: 'grid', gridTemplateColumns: '1fr auto',
+        display: 'flex', justifyContent: 'space-between',
         alignItems: 'baseline', marginBottom: 16,
       }}>
         <span style={{ fontSize: 15, fontWeight: 600, color: colors.textPrimary }}>
           {title}
         </span>
-        {summary != null && (
-          <span style={{ fontSize: 13, color: colors.textSecondary }}>{summary}</span>
-        )}
         {right}
       </div>
       {children}
@@ -96,27 +142,6 @@ function DashCard({ title, summary, right, children, style }: {
 
 /* ── Helpers ──────────────────────────────────────────── */
 
-/** D-day text */
-function dDayText(daysUntil: number | null | undefined): string {
-  if (daysUntil === null || daysUntil === undefined) return '—';
-  if (daysUntil === 0) return 'D-day';
-  if (daysUntil < 0) return `D+${Math.abs(daysUntil)}`;
-  return `D-${daysUntil}`;
-}
-
-/** D-day style — urgency-based colors only
- *  무가: 주황(amber) 까지만, 빨강 없음
- *  유가: 지연/D-day만 빨강, D-1~3은 주황
- *  fontWeight: 항상 400 */
-function dDayStyle(daysUntil: number | null | undefined, isPaid = true): React.CSSProperties {
-  if (daysUntil === null || daysUntil === undefined)
-    return { color: colors.textSecondary, fontWeight: 400 };
-  if (daysUntil <= 0) return { color: isPaid ? colors.coralDark : colors.amber, fontWeight: 400 };
-  if (daysUntil <= 3) return { color: colors.amber, fontWeight: 400 };
-  return { color: colors.textPrimary, fontWeight: 400 };
-}
-
-/** Format date as MM/DD — handles both YYYY-MM-DD and ISO datetime */
 function fmtDate(d: string | null | undefined): string {
   if (!d) return '—';
   const dateStr = d.includes('T') ? d.slice(0, 10) : d;
@@ -124,17 +149,11 @@ function fmtDate(d: string | null | undefined): string {
   return `${dt.getMonth() + 1}/${dt.getDate()}`;
 }
 
-/** Fallback payment date: upload ≤15th → same month 15, >15th → next month 15 */
-function calcFallbackPaymentDate(uploadedAt: string | null | undefined): string | null {
-  if (!uploadedAt) return null;
-  const d = new Date(uploadedAt);
-  if (isNaN(d.getTime())) return null;
-  const day = d.getDate();
-  if (day <= 15) {
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-15`;
-  }
-  const next = new Date(d.getFullYear(), d.getMonth() + 1, 15);
-  return `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, '0')}-15`;
+function dDayText(daysUntil: number | null | undefined): string {
+  if (daysUntil === null || daysUntil === undefined) return '—';
+  if (daysUntil === 0) return 'D-day';
+  if (daysUntil < 0) return `D+${Math.abs(daysUntil)}`;
+  return `D-${daysUntil}`;
 }
 
 /* ── Calendar grid builder ───────────────────────────── */
@@ -176,8 +195,15 @@ export default function InfluencerDashboardClient() {
   const router = useRouter();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [showAllPaid, setShowAllPaid] = useState(false);
-  const [showAllFree, setShowAllFree] = useState(false);
+
+  /* expand toggles */
+  const [showAllTasks, setShowAllTasks] = useState(false);
+  const [showAllPayment, setShowAllPayment] = useState(false);
+  const [showAllUploads, setShowAllUploads] = useState(false);
+  const [showAllCampaigns, setShowAllCampaigns] = useState(false);
+
+  /* task filter */
+  const [taskFilter, setTaskFilter] = useState('전체');
 
   /* calendar state */
   const [calMonth, setCalMonth] = useState(() => {
@@ -220,7 +246,7 @@ export default function InfluencerDashboardClient() {
       .catch(() => {});
   }, [calMonth]);
 
-  /* ── Calendar derived (before early returns — Rules of Hooks) */
+  /* ── Calendar derived ─────────────────── */
   const [calY, calM] = calMonth.split('-').map(Number);
   const calGrid = useMemo(() => buildCalGrid(calY, calM, calEvents), [calY, calM, calEvents]);
   const todayStr = useMemo(() => {
@@ -249,21 +275,6 @@ export default function InfluencerDashboardClient() {
   /* ── Derived data ───────────────────────── */
 
   const allTasks = data.weeklyTasks ?? [];
-  const sortedTasks = [...allTasks].sort((a, b) => {
-    if (a.is_overdue !== b.is_overdue) return a.is_overdue ? -1 : 1;
-    return (a.days_until ?? 999) - (b.days_until ?? 999);
-  });
-
-  /* Split into paid / free */
-  const paidTasks = sortedTasks.filter(t => isPaidCollab(t.collab_type));
-  const freeTasks = sortedTasks.filter(t => !isPaidCollab(t.collab_type));
-
-  const visiblePaidTasks = showAllPaid ? paidTasks : paidTasks.slice(0, VISIBLE_COUNT);
-  const hiddenPaidCount = paidTasks.length - VISIBLE_COUNT;
-  const visibleFreeTasks = showAllFree ? freeTasks : freeTasks.slice(0, VISIBLE_COUNT);
-  const hiddenFreeCount = freeTasks.length - VISIBLE_COUNT;
-
-  const overdueCount = allTasks.filter(t => t.is_overdue).length;
 
   /* This week range (Mon–Sun) */
   const todayD = new Date();
@@ -277,28 +288,101 @@ export default function InfluencerDashboardClient() {
   const weekStartStr = `${weekStartD.getFullYear()}-${pad2(weekStartD.getMonth() + 1)}-${pad2(weekStartD.getDate())}`;
   const weekEndStr = `${weekEndD.getFullYear()}-${pad2(weekEndD.getMonth() + 1)}-${pad2(weekEndD.getDate())}`;
 
-  /* KPI "이번 주 마감" — this week only */
+  /* KPI: 이번 주 마감 */
   const thisWeekTasks = allTasks.filter(t =>
+    t.step !== 'payment' &&
     t.scheduled_date && t.scheduled_date >= weekStartStr && t.scheduled_date <= weekEndStr
   );
+  const draftCount = thisWeekTasks.filter(t => t.step === 'draft').length;
+  const editCount = thisWeekTasks.filter(t => t.step === 'edit').length;
+  const uploadCount = thisWeekTasks.filter(t => t.step === 'upload').length;
+  const kpi1Sub = [
+    draftCount > 0 ? `기획안 ${draftCount}건` : '',
+    editCount > 0 ? `가편집본 ${editCount}건` : '',
+    uploadCount > 0 ? `업로드 ${uploadCount}건` : '',
+  ].filter(Boolean).join(', ') || '마감 항목 없음';
 
-  /* KPI "지연" sub-text: "유가 n건, 무가 n건" */
-  const paidOverdue = allTasks.filter(t => t.is_overdue && isPaidCollab(t.collab_type)).length;
-  const freeOverdue = allTasks.filter(t => t.is_overdue && !isPaidCollab(t.collab_type)).length;
-  const kpi2Sub = overdueCount === 0
-    ? '지연 항목 없음'
-    : `유가 ${paidOverdue}건, 무가 ${freeOverdue}건`;
+  /* KPI: 지연 */
+  const overdueCount = allTasks.filter(t => t.is_overdue && t.step !== 'payment').length;
+  const kpi2Sub = overdueCount === 0 ? '지연 항목 없음' : '';
 
-  /* Payment tasks + upload date map */
-  const paymentTasks = allTasks.filter(t => t.step === 'payment');
-  const uploadDateMap = new Map<string, string>();
-  for (const e of calEvents) {
-    if (e.type === 'upload') uploadDateMap.set(e.participant_id, e.date);
+  /* KPI: 누적 지급액 — 미지급 금액은 지급 예정 합계와 일치 */
+
+  /* ── [C] 이번 주 할 일 ─────────────────── */
+  const weekTasksAll = allTasks.filter(t =>
+    t.step !== 'payment' && (
+      t.is_overdue ||
+      (t.scheduled_date && t.scheduled_date >= weekStartStr && t.scheduled_date <= weekEndStr)
+    )
+  ).sort((a, b) => {
+    if (a.is_overdue !== b.is_overdue) return a.is_overdue ? -1 : 1;
+    return (a.scheduled_date || '9999').localeCompare(b.scheduled_date || '9999');
+  });
+
+  const taskFilterOptions = ['upload', 'edit', 'draft'] as const;
+  const taskCounts: Record<string, number> = { '전체': weekTasksAll.length };
+  for (const s of taskFilterOptions) taskCounts[STEP_LABELS[s]] = weekTasksAll.filter(t => t.step === s).length;
+
+  const filteredTasks = taskFilter === '전체'
+    ? weekTasksAll
+    : weekTasksAll.filter(t => STEP_LABELS[t.step] === taskFilter);
+  const TASK_VISIBLE = 6;
+  const visibleTasks = showAllTasks ? filteredTasks : filteredTasks.slice(0, TASK_VISIBLE);
+  const hiddenTaskCount = filteredTasks.length - TASK_VISIBLE;
+  const afterWeekCount = allTasks.filter(t =>
+    t.step !== 'payment' && !t.is_overdue &&
+    t.scheduled_date && t.scheduled_date > weekEndStr
+  ).length;
+
+  /* ── [D] 캠페인 진행 ─────────────────── */
+  const activeCampaigns = (data.campaigns ?? []).filter(c => c.status === 'active');
+
+  /* Find nearest deadline per campaign from weeklyTasks */
+  const campaignDeadlines = new Map<string, string>();
+  for (const t of allTasks) {
+    if (t.scheduled_date && t.step !== 'payment') {
+      const cur = campaignDeadlines.get(t.campaign_id);
+      if (!cur || t.scheduled_date < cur) campaignDeadlines.set(t.campaign_id, t.scheduled_date);
+    }
   }
-  const paymentDays = calEvents.filter(e => e.type === 'payment');
-  const paymentDateLabel = paymentDays.length > 0
-    ? (() => { const d = new Date(paymentDays[0].date + 'T00:00:00'); return `지급일 ${d.getMonth() + 1}/${d.getDate()}`; })()
-    : '';
+
+  const sortedCampaigns = [...activeCampaigns].sort((a, b) => {
+    const da = campaignDeadlines.get(a.id) || '9999';
+    const db = campaignDeadlines.get(b.id) || '9999';
+    return da.localeCompare(db);
+  });
+
+  const CAMPAIGN_VISIBLE = 5;
+  const visibleCampaigns = showAllCampaigns ? sortedCampaigns : sortedCampaigns.slice(0, CAMPAIGN_VISIBLE);
+  const hiddenCampaignCount = sortedCampaigns.length - CAMPAIGN_VISIBLE;
+
+  const barStepOrder: Array<'consent' | 'draft' | 'edit' | 'upload' | 'payment'> = ['consent', 'draft', 'edit', 'upload', 'payment'];
+
+  /* ── [E] 지급 예정 ─────────────────── */
+  const paymentPending = allTasks.filter(t =>
+    isPaidCollab(t.collab_type) &&
+    ['docs_requested', 'docs_submitted', 'payment_waiting', 'payment_requested'].includes(t.settlement_status || '')
+  );
+  const paymentTotal = paymentPending.reduce((s, t) => s + (t.fee ?? 0), 0);
+
+  /* Status breakdown for stacked bar */
+  const statusGroups = ['docs_requested', 'docs_submitted', 'payment_waiting'] as const;
+  const statusAmounts: Record<string, number> = {};
+  for (const s of statusGroups) {
+    statusAmounts[s] = paymentPending.filter(t => t.settlement_status === s || (s === 'payment_waiting' && t.settlement_status === 'payment_requested')).reduce((sum, t) => sum + (t.fee ?? 0), 0);
+  }
+
+  const PAYMENT_VISIBLE = 4;
+  const visiblePayments = showAllPayment ? paymentPending : paymentPending.slice(0, PAYMENT_VISIBLE);
+  const hiddenPaymentCount = paymentPending.length - PAYMENT_VISIBLE;
+
+  /* ── [F] 최근 업로드 콘텐츠 ─────────── */
+  const recentUploads = data.recentUploads ?? [];
+  const thisMonthStart = `${todayD.getFullYear()}-${pad2(todayD.getMonth() + 1)}-01`;
+  const thisMonthUploads = recentUploads.filter(u => u.uploaded_at >= thisMonthStart).length;
+  const UPLOAD_VISIBLE = 6;
+  const visibleUploads = showAllUploads ? recentUploads : recentUploads.slice(0, UPLOAD_VISIBLE);
+  const hiddenUploadCount = recentUploads.length - UPLOAD_VISIBLE;
 
   /* ── Row click navigation ──────────── */
 
@@ -310,6 +394,24 @@ export default function InfluencerDashboardClient() {
     }
   }
 
+  /* toggle button helper */
+  const toggleBtn = (show: boolean, count: number, onToggle: () => void, unit = '명') => (
+    count > 0 ? (
+      <div style={{ paddingTop: 8, textAlign: 'center' }}>
+        <button
+          onClick={onToggle}
+          style={{
+            background: 'none', border: 'none',
+            color: colors.textSecondary, fontSize: 13, fontWeight: 500,
+            cursor: 'pointer', fontFamily: 'var(--font)',
+          }}
+        >
+          {show ? '접기' : `더 보기 (${count}${unit})`}
+        </button>
+      </div>
+    ) : null
+  );
+
   /* ── Render ─────────────────────────────── */
 
   return (
@@ -318,13 +420,11 @@ export default function InfluencerDashboardClient() {
         .dash-row2 {
           display: grid;
           grid-template-columns: 1fr 1fr;
-          gap: 16px;
+          gap: ${CARD_GAP}px;
           align-items: stretch;
         }
         @media (max-width: 860px) {
-          .dash-row2 {
-            grid-template-columns: 1fr;
-          }
+          .dash-row2 { grid-template-columns: 1fr; }
         }
       `}</style>
 
@@ -340,19 +440,20 @@ export default function InfluencerDashboardClient() {
         {/* ══ 1단: KPI row (3개) ═══════════ */}
         <div style={{
           display: 'grid', gridTemplateColumns: '1fr 1fr 1fr',
-          gap: 16, marginBottom: SECTION_GAP,
+          gap: CARD_GAP, marginBottom: SECTION_GAP,
         }}>
-          {/* 이번 주 마감 — this week dates only */}
+          {/* 이번 주 마감 */}
           <div style={CARD_BASE}>
             <div style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 4 }}>
               이번 주 마감
             </div>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 6 }}>
-              <span style={{ ...KPI_NUM, color: colors.textPrimary }}>
+              <span style={{ ...KPI_NUM, color: '#4A7BC4' }}>
                 {thisWeekTasks.length}
               </span>
-              <span style={{ fontSize: 13, color: colors.textSecondary }}>건</span>
+              <span style={{ fontSize: 13, color: colors.textSecondary, fontWeight: 400 }}>건</span>
             </div>
+            <div style={{ fontSize: 13, color: colors.textSecondary }}>{kpi1Sub}</div>
           </div>
 
           {/* 지연 */}
@@ -363,13 +464,15 @@ export default function InfluencerDashboardClient() {
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 6 }}>
               <span style={{
                 ...KPI_NUM,
-                color: overdueCount > 0 ? colors.coralDark : colors.textPrimary,
+                color: overdueCount > 0 ? '#C08030' : colors.textPrimary,
               }}>
                 {overdueCount}
               </span>
-              <span style={{ fontSize: 13, color: colors.textSecondary }}>건</span>
+              <span style={{ fontSize: 13, color: colors.textSecondary, fontWeight: 400 }}>건</span>
             </div>
-            <div style={{ fontSize: 13, color: colors.textSecondary }}>{kpi2Sub}</div>
+            <div style={{ fontSize: 13, color: colors.textSecondary }}>
+              {kpi2Sub || `지연 항목 없음`}
+            </div>
           </div>
 
           {/* 누적 지급액 */}
@@ -378,57 +481,274 @@ export default function InfluencerDashboardClient() {
               누적 지급액
             </div>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 6 }}>
-              <span style={{ ...KPI_NUM, color: colors.textPrimary }}>
+              <span style={{ ...KPI_NUM, color: '#3F8F6C' }}>
                 {new Intl.NumberFormat('ko-KR', { maximumFractionDigits: 0 }).format(Math.round(data.annualPaidAmount ?? 0))}
               </span>
-              <span style={{ fontSize: 13, color: colors.textSecondary }}>원</span>
+              <span style={{ fontSize: 13, color: colors.textSecondary, fontWeight: 400 }}>원</span>
             </div>
             <div style={{ fontSize: 13, color: colors.textSecondary }}>
-              미지급 합계 {formatKRW(data.settlementWaitingAmount ?? 0)}
+              미지급 {formatKRW(paymentTotal)}
             </div>
           </div>
         </div>
 
-        {/* ══ 2단: 지급 예정 / 이번 주 일정 (1fr 1fr, align-items: start) ══ */}
+        {/* ══ 2단: 이번 주 할 일 / 캠페인 진행 ═══════════ */}
         <div className="dash-row2" style={{ marginBottom: SECTION_GAP }}>
-          {/* ── 지급 예정 ────────────── */}
-          <DashCard title="지급 예정" summary={paymentDateLabel}>
-            {paymentTasks.length === 0 ? (
-              <div style={{ padding: '16px 0', fontSize: 13, color: colors.textSecondary }}>
+
+          {/* ── [C] 이번 주 할 일 ────────────── */}
+          <DashCard
+            title="이번 주 할 일"
+            right={
+              <span style={{ fontSize: 13, color: colors.textSecondary, fontVariantNumeric: 'tabular-nums' }}>
+                {weekStartD.getMonth() + 1}/{weekStartD.getDate()} – {weekEndD.getMonth() + 1}/{weekEndD.getDate()}, {weekTasksAll.length}건
+              </span>
+            }
+          >
+            {/* Filter chips */}
+            <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
+              {[...taskFilterOptions.map(s => STEP_LABELS[s]), '전체'].map(label => {
+                const isActive = taskFilter === label;
+                const cnt = taskCounts[label] ?? 0;
+                return (
+                  <button
+                    key={label}
+                    onClick={() => setTaskFilter(label)}
+                    style={{
+                      padding: '4px 12px', borderRadius: 999, border: 'none',
+                      fontSize: 12, fontWeight: 400, cursor: 'pointer',
+                      fontFamily: 'var(--font)',
+                      background: isActive ? colors.borderLight : 'transparent',
+                      color: isActive ? colors.textPrimary : colors.textSecondary,
+                    }}
+                  >
+                    {label} {cnt}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Column header */}
+            <div style={{
+              display: 'grid', gridTemplateColumns: '1.3fr 1.4fr 1fr 0.7fr', gap: 12,
+              height: ROW_H, alignItems: 'center',
+              borderBottom: `0.5px solid ${colors.borderLight}`,
+            }}>
+              <span style={COL_HDR}>인플루언서</span>
+              <span style={COL_HDR}>캠페인</span>
+              <span style={COL_HDR}>단계</span>
+              <span style={{ ...COL_HDR, textAlign: 'center' }}>마감</span>
+            </div>
+
+            {filteredTasks.length === 0 ? (
+              <div style={{ height: ROW_H * 3, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, color: colors.textSecondary }}>
+                이번 주 할 일이 없습니다
+              </div>
+            ) : (
+              <>
+                {visibleTasks.map((t, i) => {
+                  const isLast = i === visibleTasks.length - 1 && hiddenTaskCount <= 0;
+                  return (
+                    <div
+                      key={`${t.participant_id}-${t.step}-${i}`}
+                      onClick={() => handleRowClick(t)}
+                      style={{
+                        display: 'grid', gridTemplateColumns: '1.3fr 1.4fr 1fr 0.7fr', gap: 12,
+                        height: ROW_H, alignItems: 'center',
+                        borderBottom: isLast ? 'none' : `0.5px solid ${colors.borderLight}`,
+                        cursor: 'pointer',
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.background = colors.surfaceHover; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = ''; }}
+                    >
+                      <span style={{ ...CELL_CLIP, fontSize: 13, color: colors.textPrimary }}>{t.display_name}</span>
+                      <span style={{ ...CELL_CLIP, fontSize: 13, color: colors.textSecondary }}>{formatCampaignName(t.campaign_name)}</span>
+                      <span style={dotWrap}>
+                        <span style={dotS(STEP_DOT[t.step] || '#CDD2D8')} />
+                        <span style={dotTxt}>{STEP_LABELS[t.step] || t.step}</span>
+                      </span>
+                      <span style={{
+                        fontSize: 13, textAlign: 'center', fontVariantNumeric: 'tabular-nums',
+                        color: t.is_overdue ? '#C08030' : colors.textPrimary, fontWeight: 400,
+                      }}>
+                        {t.scheduled_date ? fmtDate(t.scheduled_date) : '—'}
+                      </span>
+                    </div>
+                  );
+                })}
+                {toggleBtn(showAllTasks, hiddenTaskCount, () => setShowAllTasks(!showAllTasks), '건')}
+              </>
+            )}
+
+            {afterWeekCount > 0 && (
+              <div style={{ paddingTop: 8, fontSize: 12, color: colors.textSecondary, textAlign: 'center' }}>
+                이번 주 이후 {afterWeekCount}건
+              </div>
+            )}
+          </DashCard>
+
+          {/* ── [D] 캠페인 진행 ────────────── */}
+          <DashCard title="캠페인 진행">
+            {sortedCampaigns.length === 0 ? (
+              <div style={{ height: ROW_H * 3, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, color: colors.textSecondary }}>
+                진행 중인 캠페인이 없습니다
+              </div>
+            ) : (
+              <>
+                {visibleCampaigns.map((c, ci) => {
+                  const totalActive = barStepOrder.reduce((s, step) => s + (c.stepCounts[step] || 0), 0) + c.completedCount;
+                  const nearestDate = campaignDeadlines.get(c.id);
+                  return (
+                    <div key={c.id} style={{
+                      marginBottom: ci < visibleCampaigns.length - 1 ? 16 : 0,
+                    }}>
+                      {/* Campaign name + meta */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
+                        <span style={{ fontSize: 13, fontWeight: 500, color: colors.textPrimary, ...CELL_CLIP, maxWidth: '60%' }}>
+                          {formatCampaignName(c.name)}
+                        </span>
+                        <span style={{ fontSize: 12, color: colors.textSecondary, whiteSpace: 'nowrap' }}>
+                          {c.participantCount}명{nearestDate ? `, 마감 ${fmtDate(nearestDate)}` : ''}
+                        </span>
+                      </div>
+
+                      {/* Stacked bar */}
+                      {totalActive > 0 && (
+                        <div style={{ display: 'flex', gap: 2, height: 8, borderRadius: 4, overflow: 'hidden' }}>
+                          {barStepOrder.map(step => {
+                            const cnt = c.stepCounts[step] || 0;
+                            if (cnt === 0) return null;
+                            const pct = (cnt / totalActive) * 100;
+                            return (
+                              <div key={step} style={{
+                                width: `${pct}%`, minWidth: 4,
+                                background: BAR_COLORS[step],
+                                borderRadius: 4,
+                              }} />
+                            );
+                          })}
+                          {c.completedCount > 0 && (
+                            <div style={{
+                              width: `${(c.completedCount / totalActive) * 100}%`, minWidth: 4,
+                              background: colors.borderLight,
+                              borderRadius: 4,
+                            }} />
+                          )}
+                        </div>
+                      )}
+
+                      {/* Step count caption */}
+                      <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
+                        {barStepOrder.map(step => {
+                          const cnt = c.stepCounts[step] || 0;
+                          if (cnt === 0) return null;
+                          return (
+                            <span key={step} style={{ fontSize: 11, color: colors.textSecondary }}>
+                              {STEP_LABELS[step]} {cnt}
+                            </span>
+                          );
+                        })}
+                        {c.completedCount > 0 && (
+                          <span style={{ fontSize: 11, color: colors.textSecondary }}>완료 {c.completedCount}</span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {toggleBtn(showAllCampaigns, hiddenCampaignCount, () => setShowAllCampaigns(!showAllCampaigns), '개')}
+
+                {/* Legend */}
+                <div style={{
+                  display: 'flex', gap: 12, marginTop: 16,
+                  paddingTop: 12, borderTop: `0.5px solid ${colors.borderLight}`,
+                }}>
+                  {barStepOrder.map(step => (
+                    <span key={step} style={dotWrap}>
+                      <span style={dotS(BAR_COLORS[step])} />
+                      <span style={{ fontSize: 11, color: colors.textSecondary }}>{STEP_LABELS[step]}</span>
+                    </span>
+                  ))}
+                  <span style={dotWrap}>
+                    <span style={dotS(colors.borderLight)} />
+                    <span style={{ fontSize: 11, color: colors.textSecondary }}>완료</span>
+                  </span>
+                </div>
+              </>
+            )}
+          </DashCard>
+        </div>
+
+        {/* ══ 3단: 지급 예정 / 최근 업로드 콘텐츠 ═══════════ */}
+        <div className="dash-row2" style={{ marginBottom: SECTION_GAP }}>
+
+          {/* ── [E] 지급 예정 ────────────── */}
+          <DashCard title="지급 예정">
+            {paymentPending.length === 0 ? (
+              <div style={{ height: ROW_H * 3, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, color: colors.textSecondary }}>
                 지급 예정 인플루언서가 없습니다
               </div>
             ) : (
               <>
+                {/* Summary: total amount */}
+                <div style={{ fontSize: 22, fontWeight: 500, color: colors.textPrimary, marginBottom: 8, fontVariantNumeric: 'tabular-nums' }}>
+                  {formatKRW(paymentTotal)}
+                </div>
+
+                {/* Stacked bar */}
+                {paymentTotal > 0 && (
+                  <div style={{ display: 'flex', gap: 2, height: 8, borderRadius: 4, overflow: 'hidden', marginBottom: 8 }}>
+                    {statusGroups.map(s => {
+                      const amt = statusAmounts[s] || 0;
+                      if (amt === 0) return null;
+                      const pct = (amt / paymentTotal) * 100;
+                      return (
+                        <div key={s} style={{
+                          width: `${pct}%`, minWidth: 4,
+                          background: SETTLE_DOT[s],
+                          borderRadius: 4,
+                        }} />
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Legend */}
+                <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
+                  {statusGroups.map(s => {
+                    const amt = statusAmounts[s] || 0;
+                    if (amt === 0) return null;
+                    return (
+                      <span key={s} style={dotWrap}>
+                        <span style={dotS(SETTLE_DOT[s])} />
+                        <span style={{ fontSize: 11, color: colors.textSecondary }}>{SETTLE_LABELS[s]} {formatKRW(amt)}</span>
+                      </span>
+                    );
+                  })}
+                </div>
+
+                {/* Column header */}
                 <div style={{
-                  display: 'grid', gridTemplateColumns: PAYMENT_GRID, gap: 24,
-                  height: 36, alignItems: 'center',
+                  display: 'grid', gridTemplateColumns: '1.3fr 1.2fr 1.1fr', gap: 12,
+                  height: ROW_H, alignItems: 'center',
                   borderBottom: `0.5px solid ${colors.borderLight}`,
-                  minWidth: 0,
                 }}>
                   <span style={COL_HDR}>인플루언서</span>
-                  <span style={{ ...COL_HDR, textAlign: 'center' }}>업로드일</span>
-                  <span style={{ ...COL_HDR, textAlign: 'center' }}>지급일</span>
+                  <span style={COL_HDR}>정산 상태</span>
                   <span style={{ ...COL_HDR, textAlign: 'right' }}>금액</span>
                 </div>
-                {paymentTasks.map((t, i) => {
-                  const isLast = i === paymentTasks.length - 1;
-                  const upDate = uploadDateMap.get(t.participant_id) || t.uploaded_at || null;
-                  const payDate = t.scheduled_date || calcFallbackPaymentDate(upDate);
+
+                {visiblePayments.map((t, i) => {
+                  const isLast = i === visiblePayments.length - 1 && hiddenPaymentCount <= 0;
                   return (
-                    <div key={t.participant_id} style={{
-                      display: 'grid', gridTemplateColumns: PAYMENT_GRID, gap: 24,
+                    <div key={`${t.participant_id}-${i}`} style={{
+                      display: 'grid', gridTemplateColumns: '1.3fr 1.2fr 1.1fr', gap: 12,
                       height: ROW_H, alignItems: 'center',
                       borderBottom: isLast ? 'none' : `0.5px solid ${colors.borderLight}`,
-                      minWidth: 0,
                     }}>
-                      <span style={{ ...CELL_CLIP, fontSize: 13, color: colors.textPrimary }}>
-                        {t.display_name}
-                      </span>
-                      <span style={{ fontSize: 13, color: colors.textSecondary, textAlign: 'center', fontVariantNumeric: 'tabular-nums' }}>
-                        {fmtDate(upDate)}
-                      </span>
-                      <span style={{ fontSize: 13, color: colors.textPrimary, textAlign: 'center', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
-                        {fmtDate(payDate)}
+                      <span style={{ ...CELL_CLIP, fontSize: 13, color: colors.textPrimary }}>{t.display_name}</span>
+                      <span style={dotWrap}>
+                        <span style={dotS(SETTLE_DOT[t.settlement_status || ''] || '#CDD2D8')} />
+                        <span style={dotTxt}>{SETTLE_LABELS[t.settlement_status || ''] || t.settlement_status || '—'}</span>
                       </span>
                       <span style={{ fontSize: 13, color: colors.textPrimary, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
                         {formatKRW(t.fee ?? 0)}
@@ -436,257 +756,82 @@ export default function InfluencerDashboardClient() {
                     </div>
                   );
                 })}
+
+                {toggleBtn(showAllPayment, hiddenPaymentCount, () => setShowAllPayment(!showAllPayment))}
               </>
             )}
           </DashCard>
 
-          {/* ── 업로드 일정 ────────────── */}
+          {/* ── [F] 최근 업로드 콘텐츠 ────────────── */}
           <DashCard
-            title="업로드 일정"
-            right={<span style={{ fontSize: 13, color: colors.textSecondary, fontVariantNumeric: 'tabular-nums' }}>{weekStartD.getMonth() + 1}/{weekStartD.getDate()} – {weekEndD.getMonth() + 1}/{weekEndD.getDate()}</span>}
-          >
-            {(() => {
-              const uploadEvents = calEvents
-                .filter(e => e.type === 'upload' && !e.is_completed && e.date >= weekStartStr && e.date <= weekEndStr)
-                .sort((a, b) => a.date.localeCompare(b.date));
-              if (uploadEvents.length === 0) {
-                return (
-                  <div style={{ padding: '16px 0', fontSize: 13, color: colors.textSecondary }}>
-                    이번 주 업로드 일정 없음
-                  </div>
-                );
-              }
-              const byDate = new Map<string, string[]>();
-              for (const ev of uploadEvents) {
-                const list = byDate.get(ev.date) || [];
-                list.push(ev.title);
-                byDate.set(ev.date, list);
-              }
-              const dates = [...byDate.keys()].sort();
-              return (
-                <div>
-                  {dates.map((dateKey, i) => {
-                    const evD = new Date(dateKey + 'T00:00:00');
-                    const dateLabel = `${evD.getMonth() + 1}/${evD.getDate()}(${DAY_NAMES[evD.getDay()]})`;
-                    const names = byDate.get(dateKey)!;
-                    const isLast = i === dates.length - 1;
-                    return (
-                      <div key={dateKey} style={{
-                        display: 'grid', gridTemplateColumns: '0.8fr 3fr',
-                        gap: 14, height: 38, alignItems: 'center',
-                        borderBottom: isLast ? 'none' : `0.5px solid ${colors.borderLight}`,
-                      }}>
-                        <span style={{
-                          fontSize: 13, color: colors.textSecondary,
-                          fontVariantNumeric: 'tabular-nums',
-                        }}>
-                          {dateLabel}
-                        </span>
-                        <span style={{ ...CELL_CLIP, fontSize: 13, color: colors.textPrimary }}>
-                          {names.join(', ')}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              );
-            })()}
-          </DashCard>
-        </div>
-
-        {/* ══ 3단: 유가 현황 — 풀폭 ══ */}
-        <div style={{ marginBottom: SECTION_GAP }}>
-          <DashCard
-            title="유가 현황"
+            title="최근 업로드 콘텐츠"
             right={
               <span style={{ fontSize: 13, color: colors.textSecondary }}>
-                진행 {paidTasks.length}건
+                이번 달 {thisMonthUploads}건
               </span>
             }
           >
-            {paidTasks.length === 0 ? (
-              <div style={{ padding: '16px 0', fontSize: 13, color: colors.textSecondary }}>
-                진행 중인 유가 인플루언서가 없습니다
+            {recentUploads.length === 0 ? (
+              <div style={{ height: ROW_H * 3, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, color: colors.textSecondary }}>
+                업로드된 콘텐츠가 없습니다
               </div>
             ) : (
               <>
-                {/* Column header — 6 cols */}
+                {/* Column header */}
                 <div style={{
-                  display: 'grid', gridTemplateColumns: PAID_GRID, gap: 12,
-                  height: 36, alignItems: 'center',
+                  display: 'grid', gridTemplateColumns: '1.6fr 1.2fr 0.9fr 0.8fr', gap: 12,
+                  height: ROW_H, alignItems: 'center',
                   borderBottom: `0.5px solid ${colors.borderLight}`,
-                  minWidth: 0,
                 }}>
                   <span style={COL_HDR}>인플루언서</span>
                   <span style={COL_HDR}>채널</span>
-                  <span style={COL_HDR}>캠페인</span>
-                  <span style={COL_HDR}>단계</span>
-                  <span style={{ ...COL_HDR, textAlign: 'center' }}>마감</span>
-                  <span style={{ ...COL_HDR, textAlign: 'right' }}>고료</span>
+                  <span style={{ ...COL_HDR, textAlign: 'center' }}>업로드일</span>
+                  <span style={{ ...COL_HDR, textAlign: 'center' }}>콘텐츠</span>
                 </div>
 
-                {/* Data rows */}
-                {visiblePaidTasks.map((t, i) => {
-                  const isLast = i === visiblePaidTasks.length - 1 && hiddenPaidCount <= 0;
+                {visibleUploads.map((u, i) => {
+                  const isLast = i === visibleUploads.length - 1 && hiddenUploadCount <= 0;
+                  const chLabel = CHANNEL_LABELS[u.channel as keyof typeof CHANNEL_LABELS] || u.channel || '—';
+                  const chDot = CHANNEL_DOT[u.channel || ''] || '#CDD2D8';
                   return (
-                    <div
-                      key={`${t.participant_id}-${t.step}-${i}`}
-                      onClick={() => handleRowClick(t)}
-                      style={{
-                        display: 'grid', gridTemplateColumns: PAID_GRID, gap: 12,
-                        height: ROW_H, alignItems: 'center',
-                        borderBottom: isLast ? 'none' : `0.5px solid ${colors.borderLight}`,
-                        cursor: 'pointer', minWidth: 0,
-                      }}
-                      onMouseEnter={e => { e.currentTarget.style.background = colors.surfaceHover; }}
-                      onMouseLeave={e => { e.currentTarget.style.background = ''; }}
-                    >
-                      <span style={{ ...CELL_CLIP, fontSize: 14, fontWeight: 400, color: colors.textPrimary }}>
-                        {t.display_name}
+                    <div key={`${u.participant_id}-${i}`} style={{
+                      display: 'grid', gridTemplateColumns: '1.6fr 1.2fr 0.9fr 0.8fr', gap: 12,
+                      height: ROW_H, alignItems: 'center',
+                      borderBottom: isLast ? 'none' : `0.5px solid ${colors.borderLight}`,
+                    }}>
+                      <span style={{ ...CELL_CLIP, fontSize: 13, color: colors.textPrimary }}>{u.display_name}</span>
+                      <span style={dotWrap}>
+                        <span style={dotS(chDot)} />
+                        <span style={dotTxt}>{chLabel}</span>
                       </span>
-                      <span style={{ ...CELL_CLIP, fontSize: 12, color: colors.textSecondary }}>
-                        {t.campaign_channel}
+                      <span style={{ fontSize: 13, color: colors.textSecondary, textAlign: 'center', fontVariantNumeric: 'tabular-nums' }}>
+                        {fmtDate(u.uploaded_at)}
                       </span>
-                      <span style={{ ...CELL_CLIP, fontSize: 13, color: colors.textSecondary }}>
-                        {formatCampaignName(t.campaign_name)}
-                      </span>
-                      <span style={{ ...CELL_CLIP, fontSize: 12, fontWeight: 400, color: colors.textSecondary }}>
-                        {STEP_LABELS[t.step] || t.step}
-                      </span>
-                      <span style={{
-                        fontSize: 13, textAlign: 'center',
-                        fontVariantNumeric: 'tabular-nums',
-                        ...dDayStyle(t.days_until),
-                      }}>
-                        {dDayText(t.days_until)}
-                      </span>
-                      <span style={{
-                        fontSize: 13, textAlign: 'right',
-                        fontVariantNumeric: 'tabular-nums',
-                        color: colors.textPrimary,
-                      }}>
-                        {formatKRW(t.fee ?? 0)}
+                      <span style={{ textAlign: 'center' }}>
+                        {u.published_url ? (
+                          <a
+                            href={u.published_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{ color: colors.textPrimary, textDecoration: 'none', fontSize: 12, borderBottom: '1px solid #C9CED4', paddingBottom: 1 }}
+                          >
+                            보기
+                          </a>
+                        ) : (
+                          <span style={{ fontSize: 12, color: colors.textSecondary }}>—</span>
+                        )}
                       </span>
                     </div>
                   );
                 })}
 
-                {/* 더 보기 / 접기 */}
-                {hiddenPaidCount > 0 && (
-                  <div style={{
-                    paddingTop: 12, textAlign: 'center',
-                    borderTop: `0.5px solid ${colors.borderLight}`,
-                  }}>
-                    <button
-                      onClick={() => setShowAllPaid(!showAllPaid)}
-                      style={{
-                        background: 'none', border: 'none',
-                        color: colors.textSecondary, fontSize: 13, fontWeight: 500,
-                        cursor: 'pointer', fontFamily: 'var(--font)',
-                      }}
-                    >
-                      {showAllPaid ? '접기' : `더 보기 (${hiddenPaidCount}명)`}
-                    </button>
-                  </div>
-                )}
+                {toggleBtn(showAllUploads, hiddenUploadCount, () => setShowAllUploads(!showAllUploads), '건')}
               </>
             )}
           </DashCard>
         </div>
 
-        {/* ══ 4단: 무가 현황 — 풀폭 ══ */}
-        <div style={{ marginBottom: SECTION_GAP }}>
-          <DashCard
-            title="무가 현황"
-            right={
-              <span style={{ fontSize: 13, color: colors.textSecondary }}>
-                진행 {freeTasks.length}건
-              </span>
-            }
-          >
-            {freeTasks.length === 0 ? (
-              <div style={{ padding: '16px 0', fontSize: 13, color: colors.textSecondary }}>
-                진행 중인 무가 인플루언서가 없습니다
-              </div>
-            ) : (
-              <>
-                {/* Column header — 5 cols */}
-                <div style={{
-                  display: 'grid', gridTemplateColumns: FREE_GRID, gap: 12,
-                  height: 36, alignItems: 'center',
-                  borderBottom: `0.5px solid ${colors.borderLight}`,
-                  minWidth: 0,
-                }}>
-                  <span style={COL_HDR}>인플루언서</span>
-                  <span style={COL_HDR}>채널</span>
-                  <span style={COL_HDR}>캠페인</span>
-                  <span style={COL_HDR}>단계</span>
-                  <span style={{ ...COL_HDR, textAlign: 'center' }}>마감</span>
-                </div>
-
-                {/* Data rows */}
-                {visibleFreeTasks.map((t, i) => {
-                  const isLast = i === visibleFreeTasks.length - 1 && hiddenFreeCount <= 0;
-                  return (
-                    <div
-                      key={`${t.participant_id}-${t.step}-${i}`}
-                      onClick={() => handleRowClick(t)}
-                      style={{
-                        display: 'grid', gridTemplateColumns: FREE_GRID, gap: 12,
-                        height: ROW_H, alignItems: 'center',
-                        borderBottom: isLast ? 'none' : `0.5px solid ${colors.borderLight}`,
-                        cursor: 'pointer', minWidth: 0,
-                      }}
-                      onMouseEnter={e => { e.currentTarget.style.background = colors.surfaceHover; }}
-                      onMouseLeave={e => { e.currentTarget.style.background = ''; }}
-                    >
-                      <span style={{ ...CELL_CLIP, fontSize: 14, fontWeight: 400, color: colors.textPrimary }}>
-                        {t.display_name}
-                      </span>
-                      <span style={{ ...CELL_CLIP, fontSize: 12, color: colors.textSecondary }}>
-                        {t.campaign_channel}
-                      </span>
-                      <span style={{ ...CELL_CLIP, fontSize: 13, color: colors.textSecondary }}>
-                        {formatCampaignName(t.campaign_name)}
-                      </span>
-                      <span style={{ ...CELL_CLIP, fontSize: 12, fontWeight: 400, color: colors.textSecondary }}>
-                        {STEP_LABELS[t.step] || t.step}
-                      </span>
-                      <span style={{
-                        fontSize: 13, textAlign: 'center',
-                        fontVariantNumeric: 'tabular-nums',
-                        ...dDayStyle(t.days_until, false),
-                      }}>
-                        {dDayText(t.days_until)}
-                      </span>
-                    </div>
-                  );
-                })}
-
-                {/* 더 보기 / 접기 */}
-                {hiddenFreeCount > 0 && (
-                  <div style={{
-                    paddingTop: 12, textAlign: 'center',
-                    borderTop: `0.5px solid ${colors.borderLight}`,
-                  }}>
-                    <button
-                      onClick={() => setShowAllFree(!showAllFree)}
-                      style={{
-                        background: 'none', border: 'none',
-                        color: colors.textSecondary, fontSize: 13, fontWeight: 500,
-                        cursor: 'pointer', fontFamily: 'var(--font)',
-                      }}
-                    >
-                      {showAllFree ? '접기' : `더 보기 (${hiddenFreeCount}명)`}
-                    </button>
-                  </div>
-                )}
-              </>
-            )}
-          </DashCard>
-        </div>
-
-        {/* ══ 5단: 이번 달 일정 — 풀폭 ══ */}
+        {/* ══ 4단: 이번 달 일정 — 풀폭 ══ */}
         <DashCard
           title="이번 달 일정"
           right={
@@ -736,12 +881,9 @@ export default function InfluencerDashboardClient() {
             }}>
               {week.map((cell, ci) => {
                 const isToday = cell.dateStr === todayStr;
-                const isPaymentDay = cell.events.some(e => e.type === 'payment');
-                const normalEvents = cell.events.filter(e => e.type !== 'payment');
-                const paymentEvents = cell.events.filter(e => e.type === 'payment');
                 return (
                   <div key={ci} style={{
-                    height: 88, padding: '4px 6px',
+                    height: 58, padding: '3px 4px',
                     background: isToday ? colors.borderLight : 'transparent',
                     borderRight: ci < 6 ? `0.5px solid ${colors.borderLight}` : 'none',
                     overflow: 'hidden',
@@ -749,53 +891,46 @@ export default function InfluencerDashboardClient() {
                     {cell.day !== null && (
                       <>
                         <div style={{
-                          fontSize: 13, fontWeight: isToday ? 600 : 400,
+                          fontSize: 12, fontWeight: isToday ? 600 : 400,
                           color: isToday ? colors.textPrimary : colors.textSecondary,
-                          marginBottom: 2,
+                          marginBottom: 1,
                         }}>
                           {cell.day}
                         </div>
-                        {isPaymentDay && (
-                          <div style={{
-                            fontSize: 12, lineHeight: '16px', color: colors.mint,
-                            ...CELL_CLIP,
-                          }}>
-                            지급일 {paymentEvents.length}건
-                          </div>
-                        )}
                         {(() => {
-                          const stepOrder = ['draft', 'edit', 'upload', 'payment'];
                           const grouped = new Map<string, string[]>();
-                          for (const ev of normalEvents) {
+                          for (const ev of cell.events) {
                             const list = grouped.get(ev.type) || [];
                             list.push(ev.title);
                             grouped.set(ev.type, list);
                           }
-                          const sortedTypes = stepOrder.filter(s => grouped.has(s));
-                          for (const key of grouped.keys()) {
-                            if (!sortedTypes.includes(key)) sortedTypes.push(key);
-                          }
-                          const maxLines = isPaymentDay ? 2 : 3;
-                          const visibleTypes = sortedTypes.slice(0, maxLines);
-                          const hiddenCount = sortedTypes.length > maxLines
-                            ? sortedTypes.slice(maxLines).reduce((s, t) => s + (grouped.get(t)?.length || 0), 0)
-                            : 0;
+                          const types = [...grouped.keys()];
+                          const maxShow = 3;
+                          const visible = types.slice(0, maxShow);
+                          const hiddenEvents = types.slice(maxShow).reduce((s, t) => s + (grouped.get(t)?.length || 0), 0);
                           return (
                             <>
-                              {visibleTypes.map((type, j) => {
+                              {visible.map((type, j) => {
                                 const names = grouped.get(type)!;
-                                const display = names.length > 2
-                                  ? `${names.slice(0, 2).join(', ')} 외 ${names.length - 2}`
-                                  : names.join(', ');
+                                const cal = CAL_COLORS[type] || { bar: '#CDD2D8', bg: '#F4F5F7' };
+                                const display = names.length > 1 ? `${names[0]} 외 ${names.length - 1}` : names[0];
                                 return (
-                                  <div key={j} style={{ lineHeight: '18px', ...CELL_CLIP }}>
-                                    <span style={{ fontSize: 11, color: colors.textSecondary }}>{STEP_LABELS[type] || type}</span>
-                                    <span style={{ fontSize: 11, color: colors.textPrimary, marginLeft: 6 }}>{display}</span>
+                                  <div key={j} style={{
+                                    fontSize: 10, lineHeight: '14px',
+                                    borderLeft: `2px solid ${cal.bar}`,
+                                    background: cal.bg,
+                                    padding: '0 3px',
+                                    marginBottom: 1,
+                                    borderRadius: 2,
+                                    ...CELL_CLIP,
+                                    color: colors.textPrimary,
+                                  }}>
+                                    {display}
                                   </div>
                                 );
                               })}
-                              {hiddenCount > 0 && (
-                                <div style={{ fontSize: 11, color: colors.textSecondary }}>+{hiddenCount}</div>
+                              {hiddenEvents > 0 && (
+                                <div style={{ fontSize: 10, color: colors.textSecondary }}>외 {hiddenEvents}</div>
                               )}
                             </>
                           );

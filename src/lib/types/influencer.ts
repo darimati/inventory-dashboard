@@ -555,4 +555,14 @@ export interface DashboardData {
   todayChecklist: DashboardChecklist[];
   weeklyTasks: WeeklyTaskItem[];
   weeklyTaskSummary: WeeklyTaskSummary[];
+  recentUploads: RecentUploadItem[];
+}
+
+export interface RecentUploadItem {
+  participant_id: string;
+  display_name: string;
+  channel: string | null;
+  uploaded_at: string;
+  published_url: string | null;
+  campaign_name: string;
 }

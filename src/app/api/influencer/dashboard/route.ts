@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-server';
-import type { DashboardData, DashboardCampaignSummary, CampaignStatus, WeeklyTaskItem, WeeklyTaskSummary, WeeklyStep } from '@/lib/types/influencer';
+import type { DashboardData, DashboardCampaignSummary, CampaignStatus, WeeklyTaskItem, WeeklyTaskSummary, WeeklyStep, RecentUploadItem } from '@/lib/types/influencer';
 import { getScheduleDate, getCampaignChannel } from '@/lib/types/influencer';
 import { daysBetween } from '@/lib/dday';
 import { getSkipConfig, getParticipantStep, isParticipantCompletedSimple, calcProductExecution, getMonthlyBudget } from '@/lib/influencer/metrics';
@@ -443,6 +443,24 @@ export async function GET() {
     };
   });
 
+  // Recent uploads — participants with uploaded_at, sorted desc
+  const recentUploads: RecentUploadItem[] = [];
+  for (const c of (campaignsRaw ?? [])) {
+    const parts = ((c as Record<string, unknown>).inf_participants as Record<string, unknown>[]) ?? [];
+    for (const p of parts) {
+      if (!p.uploaded_at) continue;
+      recentUploads.push({
+        participant_id: p.id as string,
+        display_name: (p.name || p.display_name || '') as string,
+        channel: (p.channel || null) as string | null,
+        uploaded_at: p.uploaded_at as string,
+        published_url: (p.published_url || null) as string | null,
+        campaign_name: (c as Record<string, unknown>).name as string,
+      });
+    }
+  }
+  recentUploads.sort((a, b) => b.uploaded_at.localeCompare(a.uploaded_at));
+
   const data: DashboardData = {
     activeCampaigns: activeCampaigns ?? 0,
     totalParticipants,
@@ -473,6 +491,7 @@ export async function GET() {
     todayChecklist,
     weeklyTasks,
     weeklyTaskSummary,
+    recentUploads,
   };
 
   return NextResponse.json(data);
