@@ -60,7 +60,7 @@ export const SETTLEMENT_DOC_STATUS_LABELS: Record<string, string> = {
   none: '미발송',
   not_sent: '미발송',
   docs_requested: '제출 대기',
-  docs_submitted: '확인 필요',
+  docs_submitted: '제출 완료',
   payment_waiting: '지급 대기',
   payment_requested: '지급 대기',
   paid: '지급 완료',
