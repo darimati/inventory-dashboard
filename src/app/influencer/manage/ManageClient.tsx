@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import AppShell from '@/components/AppShell';
 import CustomSelect from '@/components/CustomSelect';
 import DatePicker from '@/components/DatePicker';
@@ -27,9 +27,9 @@ import {
   type SettlementStage,
 } from '@/lib/types/influencer';
 import { formatFileSize, formatKRW } from '@/lib/helpers';
-import { isParticipantCompletedSimple, getParticipantProgress, getSkipConfig, type ParticipantProgress } from '@/lib/influencer/metrics';
+import { isParticipantCompletedSimple, getParticipantProgress, getParticipantStep, getSkipConfig, type ParticipantProgress } from '@/lib/influencer/metrics';
 import { daysBetween, formatDDay, getDDayStyle } from '@/lib/dday';
-import { colors, typo, spacing, radii } from '@/lib/influencer/styles';
+import { colors, typo, spacing, radii, STEP_LABELS } from '@/lib/influencer/styles';
 import { Chip, Btn, Card, Drawer, Toast, MoreButton, Menu } from '@/lib/influencer/ui';
 
 /* ── Types ─────────────────────────────────────────────── */
@@ -123,8 +123,11 @@ interface Campaign {
 export default function ManageClient() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<string>('all');
-  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [segment, setSegment] = useState<'active' | 'completed'>('active');
+  const [typeFilter, setTypeFilter] = useState<'all' | 'paid' | 'free'>('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [completedYear, setCompletedYear] = useState<number | null>(null);
 
   // Settings data
   const [settingsProducts, setSettingsProducts] = useState<InfluencerProduct[]>([]);
@@ -281,8 +284,7 @@ export default function ManageClient() {
 
   const fetchCampaigns = async () => {
     try {
-      const url = filter === 'all' ? '/api/influencer/campaigns' : `/api/influencer/campaigns?status=${filter}`;
-      const res = await fetch(url);
+      const res = await fetch('/api/influencer/campaigns');
       if (!res.ok) { console.error('[fetchCampaigns] HTTP', res.status); }
       const data = await res.json();
       setCampaigns(Array.isArray(data) ? data : []);
@@ -294,15 +296,7 @@ export default function ManageClient() {
     }
   };
 
-  useEffect(() => { fetchCampaigns(); }, [filter]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const toggleExpand = (id: string) => {
-    setExpanded((prev) => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
-  };
+  useEffect(() => { fetchCampaigns(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ── Campaign Handlers ─────────────────────────────────── */
 
@@ -884,92 +878,6 @@ export default function ManageClient() {
     fetchCampaigns();
   };
 
-  /* ── Progress dots (3-stage: 동의서·업로드·지급) ───────── */
-
-  const ProgressDots = ({ p }: { p: Participant }) => {
-    const consentDone = p.consent_status === 'agreed';
-    const uploadDone = !!p.uploaded_at;
-    const stage = getSettlementStatus(p);
-    const paidDone = p.settlement_status === 'paid';
-    const paymentWaiting = stage === 'payment_waiting';
-    const hasFee = (p.fee || 0) > 0;
-
-    const dotStyle = (done: boolean, active?: boolean): React.CSSProperties => ({
-      width: 8,
-      height: 8,
-      borderRadius: '50%',
-      background: done ? '#4A7DB5' : active ? '#1A1D21' : 'transparent',
-      border: done ? 'none' : '1.5px solid #E4E8EC',
-      flexShrink: 0,
-      cursor: done ? 'pointer' : 'default',
-    });
-
-    const labelStyle = (done: boolean): React.CSSProperties => ({
-      fontSize: 10,
-      color: done ? '#4A7DB5' : '#9AA2AA',
-      whiteSpace: 'nowrap',
-      cursor: done ? 'pointer' : 'default',
-    });
-
-    const handleDotClick = (type: 'consent' | 'upload' | 'payment', done: boolean) => {
-      if (done) setProgressPanel({ type, participant: p });
-    };
-
-    return (
-      <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}
-          onClick={(e) => { e.stopPropagation(); handleDotClick('consent', consentDone); }}>
-          <div style={dotStyle(consentDone, p.consent_status === 'sent')} />
-          <span style={labelStyle(consentDone)}>동의서</span>
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}
-          onClick={(e) => { e.stopPropagation(); handleDotClick('upload', uploadDone); }}>
-          <div style={dotStyle(uploadDone)} />
-          <span style={labelStyle(uploadDone)}>업로드</span>
-        </div>
-        {hasFee && (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}
-            onClick={(e) => { e.stopPropagation(); handleDotClick('payment', paidDone || paymentWaiting); }}>
-            <div style={dotStyle(paidDone, paymentWaiting)} />
-            <span style={labelStyle(paidDone)}>지급</span>
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  /* ── Next action button ──────────────────────────────── */
-
-  const getNextAction = (p: Participant, c: Campaign): { label: string; onClick: () => void } | null => {
-    const hasFee = isPaidCollab(p.collab_type) || (p.fee || 0) > 0;
-
-    // 1. Consent not sent → generate
-    if (p.consent_status === 'not_sent') {
-      return { label: '동의서', onClick: () => handleUpdateParticipant(p.id, { generate_consent_token: true }) };
-    }
-    // 2. Consent sent → copy link
-    if (p.consent_status === 'sent' && p.consent_token) {
-      return { label: '링크 복사', onClick: () => copyToClipboard(getLinkUrl(p.consent_token!, 'consent')) };
-    }
-    // 3. Consent agreed, no upload → upload confirm
-    if (p.consent_status === 'agreed' && !p.published_url) {
-      return { label: '업로드', onClick: () => openUploadModal(p) };
-    }
-    // 4. Upload done, no settlement link, has fee → generate settlement
-    if (p.published_url && hasFee && p.settlement_status === 'none') {
-      return { label: '정산링크', onClick: () => handleUpdateParticipant(p.id, { generate_settlement_token: true }) };
-    }
-    // 5. Settlement link sent → copy
-    if (p.settlement_status === 'docs_requested' && p.settlement_token) {
-      return { label: '링크 복사', onClick: () => copyToClipboard(getLinkUrl(p.settlement_token!, 'settlement')) };
-    }
-    // 6. Settlement docs submitted → payment
-    if (p.settlement_status === 'docs_submitted') {
-      return { label: '지급', onClick: () => { setDetailPart(p); setDetailCampaign(c); } };
-    }
-
-    return null;
-  };
 
   /* ── Styles (design tokens) ──────────────────────────── */
 
@@ -1021,13 +929,112 @@ export default function ManageClient() {
     color: active ? '#fff' : colors.textSecondary, cursor: 'pointer',
   });
 
-  /* ── Column widths ────────────────────────── */
-  const colW = {
-    name: '18%', product: '12%', fee: '10%',
-    status: '12%', progress: '16%',
-    subProposal: '8%', subRoughCut: '8%', subUpload: '8%',
-    nextAction: '10%', menu: '4%',
-  };
+  /* ── Derived data ──────────────────────────────────────── */
+
+  const displayName = useCallback((name: string) => name.replace(/\s*캠페인\s*$/, ''), []);
+
+  const getNearestDeadline = useCallback((campaign: Campaign): { date: string; days: number } | null => {
+    const skip = getSkipConfig(campaign);
+    let nearest: { date: string; days: number } | null = null;
+    for (const p of campaign.inf_participants) {
+      if (isParticipantCompletedSimple(p)) continue;
+      const step = getParticipantStep(p as unknown as Record<string, unknown>, skip);
+      let dl: string | null = null;
+      if (step === 'consent') dl = null; // consent has no deadline
+      else if (step === 'draft') dl = p.planned_draft_date;
+      else if (step === 'edit') dl = p.planned_edit_date;
+      else if (step === 'upload') dl = p.planned_upload_date || p.content_deadline;
+      else if (step === 'payment') dl = p.planned_payment_date;
+      if (!dl) continue;
+      const d = daysBetween(null, dl);
+      if (!nearest || d < nearest.days) nearest = { date: dl, days: d };
+    }
+    return nearest;
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const activeCampaigns = useMemo(() => campaigns.filter(c => c.status !== 'completed'), [campaigns]);
+  const completedCampaigns = useMemo(() => campaigns.filter(c => c.status === 'completed'), [campaigns]);
+
+  const filterByType = useCallback((list: Campaign[]) => {
+    if (typeFilter === 'all') return list;
+    return list.filter(c => typeFilter === 'paid' ? isPaidCollab(c.collab_type) : !isPaidCollab(c.collab_type));
+  }, [typeFilter]);
+
+  const filterBySearch = useCallback((list: Campaign[]) => {
+    if (!searchQuery.trim()) return list;
+    const q = searchQuery.trim().toLowerCase();
+    return list.filter(c => c.name.toLowerCase().includes(q) ||
+      c.inf_participants.some(p => (p.display_name || p.name).toLowerCase().includes(q)));
+  }, [searchQuery]);
+
+  const activeList = useMemo(() => {
+    const filtered = filterBySearch(filterByType(activeCampaigns));
+    return [...filtered].sort((a, b) => {
+      const da = getNearestDeadline(a);
+      const db = getNearestDeadline(b);
+      if (!da && !db) return 0;
+      if (!da) return 1;
+      if (!db) return -1;
+      return da.days - db.days;
+    });
+  }, [activeCampaigns, filterByType, filterBySearch, getNearestDeadline]);
+
+  const completedYears = useMemo(() => {
+    const years = new Set(completedCampaigns.map(c => new Date(c.created_at).getFullYear()));
+    return Array.from(years).sort((a, b) => b - a);
+  }, [completedCampaigns]);
+
+  useEffect(() => {
+    if (completedYears.length > 0 && completedYear === null) setCompletedYear(completedYears[0]);
+  }, [completedYears, completedYear]);
+
+  const completedList = useMemo(() => {
+    let filtered = filterBySearch(filterByType(completedCampaigns));
+    if (completedYear !== null) filtered = filtered.filter(c => new Date(c.created_at).getFullYear() === completedYear);
+    return [...filtered].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  }, [completedCampaigns, completedYear, filterByType, filterBySearch]);
+
+  const completedMonthGroups = useMemo(() => {
+    const groups = new Map<string, Campaign[]>();
+    for (const c of completedList) {
+      const d = new Date(c.created_at);
+      const key = `${d.getMonth() + 1}월`;
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key)!.push(c);
+    }
+    return Array.from(groups.entries());
+  }, [completedList]);
+
+  const leftList = segment === 'active' ? activeList : completedList;
+  const selectedCampaign = useMemo(() => campaigns.find(c => c.id === selectedId) ?? null, [campaigns, selectedId]);
+
+  // Auto-select first when list changes or selection becomes invalid
+  useEffect(() => {
+    if (leftList.length > 0 && (!selectedId || !leftList.find(c => c.id === selectedId))) {
+      setSelectedId(leftList[0].id);
+    }
+  }, [leftList, selectedId]);
+
+  // URL sync: read on mount
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const cid = params.get('campaign');
+    if (cid) setSelectedId(cid);
+  }, []);
+
+  // URL sync: write on change
+  useEffect(() => {
+    if (selectedId) {
+      const url = new URL(window.location.href);
+      url.searchParams.set('campaign', selectedId);
+      window.history.replaceState({}, '', url.toString());
+    }
+  }, [selectedId]);
+
+  // Step cell helpers
+  const fmtDate = (iso: string) => { const d = new Date(iso); return `${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`; };
+  const stepDlvKey: Record<string, string> = { proposal: 'draft', roughCut: 'edit', upload: 'upload' };
+  const stepCellLabels: Record<string, string> = { proposal: '기획안', roughCut: '가편집본', upload: '업로드' };
 
   /* ── Render ──────────────────────────────────────────── */
   return (
@@ -1036,408 +1043,506 @@ export default function ManageClient() {
         {errorMsg && (
           <div style={{ background: '#FEE2E2', color: '#DC2626', padding: '8px 16px', borderRadius: 8, marginBottom: 12, fontSize: 13 }}>{errorMsg}</div>
         )}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-          <h1 style={{ fontSize: 20, fontWeight: 600 }}>캠페인 관리</h1>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <CustomSelect
-              value={filter}
-              onChange={setFilter}
-              options={[
-                { value: 'all', label: '전체' },
-                { value: 'preparing', label: '준비 중' },
-                { value: 'active', label: '진행 중' },
-                { value: 'completed', label: '완료' },
-                { value: 'cancelled', label: '취소' },
-              ]}
-              size="md"
+
+        {/* Hover action CSS */}
+        <style>{`.uc:hover .ua{display:flex!important}`}</style>
+
+        {/* 2-column split layout */}
+        <div style={{ display: 'grid', gridTemplateColumns: '280px minmax(0, 1fr)', gap: 12, minHeight: 'calc(100vh - 120px)' }}>
+
+          {/* ── Left panel ──────────────────────────── */}
+          <div style={{ borderRight: `1px solid ${colors.border}`, paddingRight: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+              <h1 style={{ fontSize: 20, fontWeight: 600 }}>캠페인 관리</h1>
+              <button style={btnGhost} onClick={() => { setEditCampaignId(null); setCampaignForm({ name: '', month: '', collab_type: 'free_seeding', advertised_products: [], budget: 0, status: 'active', memo: '' }); setShowCampaignModal(true); }}>
+                + 캠페인
+              </button>
+            </div>
+
+            {/* Search */}
+            <input
+              style={{ ...inputStyle, height: 32, fontSize: 13, marginBottom: 8 }}
+              placeholder="캠페인 검색"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
             />
-            <button style={btnPrimary} onClick={openCreateCampaign}>+ 캠페인 생성</button>
-          </div>
-        </div>
-        {loading && <p style={{ color: 'var(--text-muted)' }}>로딩 중...</p>}
-        {!loading && campaigns.length === 0 && filter === 'all' && (
-          <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>데이터를 불러올 수 없습니다. 새로고침을 시도하세요.</p>
-        )}
 
-        {campaigns.map((c) => {
-          const isOpen = expanded.has(c.id);
-          const parts = c.inf_participants ?? [];
-          const totalFee = parts.reduce((s, p) => s + (p.fee || 0), 0);
-          const allUnpaid = parts.length > 0 && parts.every((p) => !isPaidCollab(p.collab_type) && (p.fee || 0) === 0);
-          const consentAgreed = parts.filter((p) => p.consent_status === 'agreed').length;
-          const completedCount = parts.filter((p) =>
-            isParticipantCompletedSimple({
-              fee: Number(p.fee) || 0,
-              uploaded_at: p.uploaded_at,
-              settlement_status: p.settlement_status,
-            }),
-          ).length;
-          const budgetPct = c.budget > 0 ? Math.round((totalFee / c.budget) * 100) : 0;
+            {/* Segment control */}
+            <div style={{ display: 'flex', background: colors.track, borderRadius: 8, padding: 2, marginBottom: 8 }}>
+              {(['active', 'completed'] as const).map(s => (
+                <button
+                  key={s}
+                  onClick={() => setSegment(s)}
+                  style={{
+                    flex: 1, padding: '6px 0', border: 'none', borderRadius: 6, fontSize: 13, fontWeight: 500,
+                    background: segment === s ? colors.surface : 'transparent',
+                    color: segment === s ? colors.textPrimary : colors.textInfo,
+                    cursor: 'pointer', fontFamily: 'var(--font)',
+                    boxShadow: segment === s ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
+                  }}
+                >
+                  {s === 'active' ? '진행 중' : '완료'}
+                </button>
+              ))}
+            </div>
 
-          return (
-            <div key={c.id} style={sectionStyle}>
-              <div
-                onClick={() => toggleExpand(c.id)}
-                style={{ padding: '16px 20px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: isOpen ? '1px solid var(--border)' : 'none' }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1, minWidth: 0 }}>
-                  <span style={{ fontSize: 12, color: 'var(--text-muted)', transform: isOpen ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s', flexShrink: 0 }}>&#9654;</span>
-                  <div style={{ minWidth: 0 }}>
-                    <div style={{ fontWeight: 600, fontSize: 15, display: 'flex', alignItems: 'center', gap: 6 }}>
-                      {c.name}
-                      {campaignStatusBadge(c.status)}
-                      {c.memo && (
-                        <span
-                          style={{ cursor: 'pointer', display: 'inline-flex' }}
-                          onClick={(e) => { e.stopPropagation(); setExpandedMemo(expandedMemo === c.id ? null : c.id); }}
-                          title="메모 보기"
-                        >
-                          <MemoIcon hasMemo size={12} />
+            {/* Type filter chips */}
+            <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
+              {(['all', 'paid', 'free'] as const).map(t => (
+                <button
+                  key={t}
+                  onClick={() => setTypeFilter(t)}
+                  style={{
+                    padding: '3px 10px', borderRadius: 12, fontSize: 12, fontFamily: 'var(--font)',
+                    border: `1px solid ${typeFilter === t ? colors.textSecondary : colors.border}`,
+                    background: typeFilter === t ? colors.textPrimary : 'transparent',
+                    color: typeFilter === t ? '#fff' : colors.textSecondary, cursor: 'pointer',
+                  }}
+                >
+                  {t === 'all' ? '전체' : t === 'paid' ? '유가' : '무가'}
+                </button>
+              ))}
+            </div>
+
+            {/* Year selector (completed segment only) */}
+            {segment === 'completed' && completedYears.length > 0 && (
+              <div style={{ display: 'flex', gap: 6, marginBottom: 8, flexWrap: 'wrap' }}>
+                {completedYears.map(y => (
+                  <button key={y} onClick={() => setCompletedYear(y)} style={{
+                    padding: '3px 10px', borderRadius: 12, fontSize: 12, fontFamily: 'var(--font)',
+                    border: `1px solid ${completedYear === y ? colors.textSecondary : colors.border}`,
+                    background: completedYear === y ? colors.textPrimary : 'transparent',
+                    color: completedYear === y ? '#fff' : colors.textSecondary, cursor: 'pointer',
+                  }}>
+                    {y}년
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Campaign list */}
+            <div style={{ maxHeight: 'calc(100vh - 280px)', overflowY: 'auto' }}>
+              {loading && <p style={{ padding: '20px 12px', fontSize: 13, color: colors.textMuted }}>로딩 중...</p>}
+
+              {/* Active segment: flat list */}
+              {segment === 'active' && activeList.map(c => {
+                const dl = getNearestDeadline(c);
+                const paid = isPaidCollab(c.collab_type);
+                return (
+                  <div
+                    key={c.id}
+                    onClick={() => setSelectedId(c.id)}
+                    style={{
+                      padding: '10px 12px', cursor: 'pointer', borderRadius: 8,
+                      background: selectedId === c.id ? colors.accentLight : 'transparent',
+                      borderBottom: `0.5px solid ${colors.borderLight}`,
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span style={{ width: 6, height: 6, borderRadius: '50%', background: paid ? '#8FAEE0' : '#CDD2D8', flexShrink: 0 }} />
+                      <span style={{ fontSize: 13.5, fontWeight: 500, color: colors.textPrimary, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {displayName(c.name)}
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 4, paddingLeft: 12 }}>
+                      <span style={{ fontSize: 12, color: colors.textMuted }}>{c.inf_participants.length}명</span>
+                      {dl && (
+                        <span style={{ fontSize: 12, fontWeight: dl.days <= 3 ? 600 : 400, color: dl.days <= 3 ? '#C08030' : colors.textInfo }}>
+                          {dl.days <= 0 ? '지연' : formatDDay(dl.days)}
                         </span>
                       )}
                     </div>
-                    <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>
-                      {c.month || ''}{c.month ? <span style={{ margin: '0 5px', color: '#D0D5DC' }}>|</span> : ''}참여자 {parts.length}명
-                      {completedCount > 0 && <><span style={{ margin: '0 5px', color: '#D0D5DC' }}>|</span>{completedCount}명 완료</>}
-                      {!allUnpaid && totalFee > 0 && <><span style={{ margin: '0 5px', color: '#D0D5DC' }}>|</span>배정 {totalFee.toLocaleString()}원</>}
-                      {!allUnpaid && c.budget > 0 && <><span style={{ margin: '0 5px', color: '#D0D5DC' }}>|</span>예산 {c.budget.toLocaleString()}원</>}
-                      {!allUnpaid && c.budget > 0 && (
-                        <>
-                          <span style={{ margin: '0 5px', color: '#D0D5DC' }}>|</span>
-                          <span style={budgetPct > 100 ? { color: '#D9534F', fontWeight: 600 } : undefined}>
-                            소진 {budgetPct}%
+                  </div>
+                );
+              })}
+
+              {/* Completed segment: month groups */}
+              {segment === 'completed' && completedMonthGroups.map(([month, list]) => (
+                <div key={month}>
+                  <div style={{ fontSize: 12, fontWeight: 500, color: colors.textMuted, padding: '8px 12px 4px' }}>{month}</div>
+                  {list.map(c => {
+                    const paid = isPaidCollab(c.collab_type);
+                    return (
+                      <div
+                        key={c.id}
+                        onClick={() => setSelectedId(c.id)}
+                        style={{
+                          padding: '10px 12px', cursor: 'pointer', borderRadius: 8,
+                          background: selectedId === c.id ? colors.accentLight : 'transparent',
+                          borderBottom: `0.5px solid ${colors.borderLight}`,
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <span style={{ width: 6, height: 6, borderRadius: '50%', background: paid ? '#8FAEE0' : '#CDD2D8', flexShrink: 0 }} />
+                          <span style={{ fontSize: 13.5, fontWeight: 500, color: colors.textPrimary, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {displayName(c.name)}
                           </span>
-                        </>
+                        </div>
+                        <div style={{ paddingLeft: 12, marginTop: 4 }}>
+                          <span style={{ fontSize: 12, color: colors.textMuted }}>{c.inf_participants.length}명</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ))}
+
+              {/* Empty state */}
+              {!loading && leftList.length === 0 && (
+                <div style={{ padding: '40px 12px', textAlign: 'center' }}>
+                  <p style={{ fontSize: 13, color: colors.textMuted }}>
+                    {searchQuery ? '검색 결과가 없습니다' : segment === 'active' ? '진행 중인 캠페인이 없습니다' : '완료된 캠페인이 없습니다'}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* ── Right panel ─────────────────────────── */}
+          <div style={{ paddingLeft: 4, minWidth: 0 }}>
+            {selectedCampaign ? (() => {
+              const sc = selectedCampaign;
+              const paid = isPaidCollab(sc.collab_type);
+              const skip = getSkipConfig(sc);
+              const parts = sc.inf_participants ?? [];
+
+              // Budget amounts
+              const budget = sc.budget || 0;
+              const allocated = parts.reduce((s, p) => s + (Number(p.fee) || 0), 0);
+              const paidAmount = parts.filter(p => p.settlement_status === 'paid').reduce((s, p) => s + (Number(p.fee) || 0), 0);
+
+              // Build progress for each participant
+              const progressMap = new Map<string, ParticipantProgress>();
+              for (const p of parts) {
+                progressMap.set(p.id, getParticipantProgress(p as unknown as Record<string, unknown>, p._deliverables || {}, skip));
+              }
+
+              // Sort: in-progress first, completed last
+              const sorted = [...parts].sort((a, b) => {
+                const pa = progressMap.get(a.id)!;
+                const pb = progressMap.get(b.id)!;
+                return (pa.currentStage === 'complete' ? 1 : 0) - (pb.currentStage === 'complete' ? 1 : 0);
+              });
+
+              // Step cell renderer
+              const renderStepCell = (p: Participant, stepKey: 'proposal' | 'roughCut' | 'upload', progress: ParticipantProgress, isSkipped: boolean) => {
+                if (isSkipped) {
+                  return <span style={{ fontSize: 12, color: colors.textMuted, opacity: 0.45 }}>해당 없음</span>;
+                }
+                const info = progress[stepKey];
+                const isCurrentStage = progress.currentStage === stepKey;
+                const dlvKey = stepDlvKey[stepKey];
+                const dlv = (p._deliverables || {})[dlvKey];
+
+                if (info.done) {
+                  const dateStr = info.date ? fmtDate(info.date) : '';
+                  const linkUrl = info.url;
+                  return (
+                    <div className="uc" style={{ position: 'relative' }}>
+                      {linkUrl ? (
+                        <a href={linkUrl} target="_blank" rel="noopener noreferrer" style={dateLink}>{dateStr}</a>
+                      ) : (
+                        <span style={dotWrap}><span style={dot(DOT.green)} /><span style={dotTxt}>{dateStr}</span></span>
                       )}
+                      <div className="ua" style={{ display: 'none', position: 'absolute', top: -2, right: 0, gap: 3, zIndex: 5 }}>
+                        {linkUrl && (
+                          <button style={{ padding: '2px 6px', fontSize: 10, borderRadius: 4, border: '1px solid var(--border)', background: '#fff', cursor: 'pointer' }}
+                            onClick={(e) => { e.stopPropagation(); window.open(linkUrl, '_blank'); }}>열기</button>
+                        )}
+                        <button style={{ padding: '2px 6px', fontSize: 10, borderRadius: 4, border: '1px solid var(--border)', background: '#fff', cursor: 'pointer' }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const kst = new Date(Date.now() + 9 * 3600000);
+                            setEditStepModal({
+                              participantId: p.id, step: dlvKey, stepLabel: stepCellLabels[stepKey],
+                              link: (dlv?.link_url as string) || '', receivedDate: info.date?.slice(0, 10) || kst.toISOString().slice(0, 10),
+                              memo: (dlv?.memo as string) || '', noLink: false,
+                              fileUrl: (dlv?.file_url as string) || '', originalFilename: (dlv?.original_filename as string) || '',
+                              mimeType: (dlv?.mime_type as string) || '', fileSize: (dlv?.file_size as number) || 0,
+                              contentType: (dlv?.content_type as string) || '',
+                            });
+                            setEditStepError('');
+                          }}>수정</button>
+                        <button style={{ padding: '2px 6px', fontSize: 10, borderRadius: 4, border: 'none', background: '#B03F3B', color: '#fff', cursor: 'pointer' }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setUndoConfirmModal({ participantId: p.id, step: dlvKey, stepLabel: stepCellLabels[stepKey] });
+                            setUndoConfirmError('');
+                          }}>삭제</button>
+                      </div>
+                    </div>
+                  );
+                }
+
+                if (isCurrentStage) {
+                  return (
+                    <div className="uc" style={{ position: 'relative' }}>
+                      <span style={dotWrap}><span style={dot(DOT.gray)} /><span style={dotTxt}>대기</span></span>
+                      <div className="ua" style={{ display: 'none', position: 'absolute', top: -2, right: 0, gap: 3, zIndex: 5 }}>
+                        <button style={{ padding: '2px 6px', fontSize: 10, borderRadius: 4, border: 'none', background: '#1A1D21', color: '#fff', cursor: 'pointer' }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const kst = new Date(Date.now() + 9 * 3600000);
+                            setEditStepModal({
+                              participantId: p.id, step: dlvKey, stepLabel: stepCellLabels[stepKey],
+                              link: '', receivedDate: kst.toISOString().slice(0, 10), memo: '', noLink: false,
+                              fileUrl: '', originalFilename: '', mimeType: '', fileSize: 0, contentType: '',
+                            });
+                            setEditStepError('');
+                          }}>등록</button>
+                      </div>
+                    </div>
+                  );
+                }
+
+                return <span style={{ fontSize: 12, color: '#C4CAD1' }}>—</span>;
+              };
+
+              // Settlement cell renderer
+              const renderSettlementCell = (p: Participant, progress: ParticipantProgress) => {
+                if (!paid) {
+                  return <span style={{ fontSize: 12, color: colors.textMuted, opacity: 0.45 }}>해당 없음</span>;
+                }
+                const ss = p.settlement_status;
+                const sd = getSettlementDisplayStatus(ss, !!p.published_url);
+                const isSettlementCurrent = progress.currentStage === 'settlement';
+                const sDotMap: Record<string, string> = {
+                  paid: DOT.green, payment_waiting: DOT.blue, payment_requested: DOT.blue,
+                  docs_submitted: DOT.teal, docs_requested: DOT.orange, expired: DOT.orange,
+                };
+                const dc = sDotMap[ss || ''] || DOT.gray;
+                return (
+                  <div className="uc" style={{ position: 'relative' }}>
+                    <span style={dotWrap}><span style={dot(dc)} /><span style={dotTxt}>{sd.label}</span></span>
+                    <div className="ua" style={{ display: 'none', position: 'absolute', top: -2, right: 0, gap: 3, zIndex: 5 }}>
+                      {p.settlement_token ? (
+                        <>
+                          <button style={{ padding: '2px 6px', fontSize: 10, borderRadius: 4, border: 'none', background: '#1A1D21', color: '#fff', cursor: 'pointer' }}
+                            onClick={(e) => { e.stopPropagation(); copyToClipboard(getLinkUrl(p.settlement_token!, 'settlement')); }}>복사</button>
+                          <button style={{ padding: '2px 6px', fontSize: 10, borderRadius: 4, border: '1px solid var(--border)', background: '#fff', cursor: 'pointer' }}
+                            onClick={(e) => { e.stopPropagation(); window.open(getLinkUrl(p.settlement_token!, 'settlement'), '_blank'); }}>열기</button>
+                        </>
+                      ) : isSettlementCurrent && p.published_url && ss !== 'paid' && ss !== 'docs_submitted' && ss !== 'payment_requested' ? (
+                        <button style={{ padding: '2px 6px', fontSize: 10, borderRadius: 4, border: 'none', background: '#1A1D21', color: '#fff', cursor: 'pointer' }}
+                          onClick={(e) => { e.stopPropagation(); handleUpdateParticipant(p.id, { generate_settlement_token: true }); }}>발급</button>
+                      ) : null}
                     </div>
                   </div>
-                </div>
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexShrink: 0, position: 'relative' }}>
-                  <div style={{ position: 'relative' }}>
-                    <MoreButton onClick={() => setCampaignMenuId(campaignMenuId === c.id ? null : c.id)} />
-                    {campaignMenuId === c.id && (
-                      <Menu
-                        onClose={() => setCampaignMenuId(null)}
-                        items={[
-                          { label: '캠페인 수정', onClick: () => openEditCampaign(c) },
-                          { label: '모든 참여자 진행 초기화', onClick: () => { setResetModal({ type: 'campaign', id: c.id, name: c.name, confirmName: c.name }); setResetConfirmInput(''); setResetError(''); } },
-                          { label: '캠페인 삭제', onClick: () => openDeleteCampaign(c), danger: true },
-                        ]}
-                      />
-                    )}
-                  </div>
-                </div>
-              </div>
+                );
+              };
 
-              {isOpen && (
-                <div style={{ padding: '12px 20px 16px' }}>
-                  {/* Campaign memo inline edit */}
-                  {expandedMemo === c.id && (
-                    <div style={{ marginBottom: 12, padding: '10px 12px', background: 'var(--gray-badge-bg)', borderRadius: 8 }}>
+              return (
+                <>
+                  {/* Header */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
+                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: paid ? '#8FAEE0' : '#CDD2D8' }} />
+                    <h2 style={{ fontSize: 18, fontWeight: 600, margin: 0 }}>{displayName(sc.name)}</h2>
+                    {campaignStatusBadge(sc.status)}
+                    <span style={{ cursor: 'pointer', display: 'inline-flex' }} onClick={() => openMemoPopover('campaign', sc.id, sc.memo)}>
+                      <MemoIcon hasMemo={!!sc.memo} />
+                    </span>
+                    <div style={{ marginLeft: 'auto', display: 'flex', gap: 6, alignItems: 'center' }}>
+                      <button style={btnGhost} onClick={() => openAddParticipant(sc.id)}>+ 참여자 추가</button>
+                      <div style={{ position: 'relative' }}>
+                        <MoreButton onClick={() => setCampaignMenuId(campaignMenuId === sc.id ? null : sc.id)} />
+                        {campaignMenuId === sc.id && (
+                          <Menu
+                            onClose={() => setCampaignMenuId(null)}
+                            items={[
+                              { label: '캠페인 수정', onClick: () => openEditCampaign(sc) },
+                              ...(sc.status !== 'completed' ? [{
+                                label: '캠페인 완료', onClick: async () => {
+                                  await fetch('/api/influencer/campaigns', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: sc.id, status: 'completed' }) });
+                                  setCampaignMenuId(null); fetchCampaigns();
+                                },
+                              }] : [{
+                                label: '캠페인 재개', onClick: async () => {
+                                  await fetch('/api/influencer/campaigns', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: sc.id, status: 'active' }) });
+                                  setCampaignMenuId(null); fetchCampaigns();
+                                },
+                              }]),
+                              { label: '모든 참여자 진행 초기화', onClick: () => { setResetModal({ type: 'campaign', id: sc.id, name: sc.name, confirmName: sc.name }); setResetConfirmInput(''); setResetError(''); setCampaignMenuId(null); } },
+                              { label: '캠페인 삭제', onClick: () => { openDeleteCampaign(sc); setCampaignMenuId(null); }, danger: true },
+                            ]}
+                          />
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Budget cards (paid campaigns only) */}
+                  {paid && (
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginBottom: 16, maxWidth: 620 }}>
+                      {[
+                        { label: '예산', value: budget },
+                        { label: '배정', value: allocated },
+                        { label: '소진', value: paidAmount },
+                      ].map(item => (
+                        <div key={item.label} style={{ ...sectionStyle, padding: '14px 16px', marginBottom: 0 }}>
+                          <div style={{ fontSize: 12, color: colors.textInfo, marginBottom: 6 }}>{item.label}</div>
+                          <div style={{ fontSize: 18, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>{formatKRW(item.value)}</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Campaign memo */}
+                  {expandedMemo === sc.id && (
+                    <div style={{ marginBottom: 12, padding: '10px 12px', background: colors.grayBadgeBg, borderRadius: 8 }}>
                       <textarea
-                        style={{ ...inputStyle, minHeight: 48, fontSize: 13, background: 'var(--surface)' }}
-                        value={campaignMemoEdit ?? c.memo ?? ''}
+                        style={{ ...inputStyle, minHeight: 48, fontSize: 13, background: colors.surface }}
+                        value={campaignMemoEdit ?? sc.memo ?? ''}
                         onChange={(e) => setCampaignMemoEdit(e.target.value)}
-                        onFocus={() => { if (campaignMemoEdit === null) setCampaignMemoEdit(c.memo || ''); }}
+                        onFocus={() => { if (campaignMemoEdit === null) setCampaignMemoEdit(sc.memo || ''); }}
                         placeholder="캠페인 메모"
                       />
                       <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end', marginTop: 6 }}>
                         <button style={{ ...btnSmall, fontSize: 11 }} onClick={() => { setExpandedMemo(null); setCampaignMemoEdit(null); }}>닫기</button>
                         <button style={{ ...btnSmall, fontSize: 11 }} onClick={async () => {
-                          await fetch('/api/influencer/campaigns', {
-                            method: 'PUT',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ id: c.id, memo: campaignMemoEdit || null }),
-                          });
-                          setExpandedMemo(null);
-                          setCampaignMemoEdit(null);
-                          fetchCampaigns();
+                          await fetch('/api/influencer/campaigns', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: sc.id, memo: campaignMemoEdit || null }) });
+                          setExpandedMemo(null); setCampaignMemoEdit(null); fetchCampaigns();
                         }}>저장</button>
                       </div>
                     </div>
                   )}
 
-                  <>
-                  {/* Hover action CSS */}
-                  <style>{`.uc:hover .ua{display:flex!important}`}</style>
+                  {/* Participant table */}
+                  <div style={{ maxWidth: 1100 }}>
+                    {/* Table header */}
+                    <div style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'minmax(0,1.5fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) 24px',
+                      padding: '0 12px', height: 36, alignItems: 'center',
+                      borderBottom: `0.5px solid ${colors.borderLight}`,
+                    }}>
+                      {['인플루언서', '단계', '기획안', '가편집본', '업로드', '정산'].map(h => (
+                        <span key={h} style={{ fontSize: 12, color: colors.textInfo, fontWeight: 450 }}>{h}</span>
+                      ))}
+                      <span />
+                    </div>
 
-                  {(() => {
-                    const campCollab = c.collab_type || 'fixed_fee';
-                    const skip = getSkipConfig(c);
-                    const showProposal = !skip.skipDraft;
-                    const showRoughCut = !skip.skipEdit;
-                    const showSettlement = isPaidCollab(campCollab);
-                    const isFreeSeed = campCollab === 'free_seeding';
+                    {/* Table rows */}
+                    {sorted.map((p, rowIdx) => {
+                      const pName = p.display_name || p.name || '(채널명 미입력)';
+                      const progress = progressMap.get(p.id)!;
+                      const step = getParticipantStep(p as unknown as Record<string, unknown>, skip);
+                      const isCompleted = progress.currentStage === 'complete';
+                      const hasFee = (p.fee || 0) > 0;
 
-                    // Build progress for each participant
-                    const progressMap = new Map<string, ParticipantProgress>();
-                    for (const p of parts) {
-                      progressMap.set(p.id, getParticipantProgress(p as unknown as Record<string, unknown>, p._deliverables || {}, skip));
-                    }
-
-                    // Sort: in-progress first, then completed last
-                    const sorted = [...parts].sort((a, b) => {
-                      const pa = progressMap.get(a.id)!;
-                      const pb = progressMap.get(b.id)!;
-                      const aComplete = pa.currentStage === 'complete' ? 1 : 0;
-                      const bComplete = pb.currentStage === 'complete' ? 1 : 0;
-                      return aComplete - bComplete;
-                    });
-
-                    // Step cell renderer using _deliverables + getParticipantProgress
-                    const fmtDate = (iso: string) => { const d = new Date(iso); return `${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`; };
-                    const stepDlvKey: Record<string, string> = { proposal: 'draft', roughCut: 'edit', upload: 'upload' };
-                    const stepLabels: Record<string, string> = { proposal: '기획안', roughCut: '가편집본', upload: '업로드' };
-
-                    const renderStepCell = (p: Participant, stepKey: 'proposal' | 'roughCut' | 'upload', progress: ParticipantProgress) => {
-                      const info = progress[stepKey];
-                      const isCurrentStage = progress.currentStage === stepKey;
-                      const dlvKey = stepDlvKey[stepKey];
-                      const dlv = (p._deliverables || {})[dlvKey];
-
-                      if (info.done) {
-                        const dateStr = info.date ? fmtDate(info.date) : '';
-                        const linkUrl = info.url;
-                        return (
-                          <td key={stepKey} className="uc" style={{ textAlign: 'center', verticalAlign: 'middle', position: 'relative' }}>
-                            {linkUrl ? (
-                              <a href={linkUrl} target="_blank" rel="noopener noreferrer" style={dateLink}>
-                                {dateStr}
-                              </a>
-                            ) : (
-                              <span style={dotWrap}><span style={dot(DOT.green)} /><span style={dotTxt}>{dateStr}</span></span>
-                            )}
-                            {/* Hover actions: 열기/수정/삭제 */}
-                            <div className="ua" style={{ display: 'none', position: 'absolute', top: 2, right: 2, gap: 3, zIndex: 5 }}>
-                              {linkUrl && (
-                                <button style={{ padding: '2px 6px', fontSize: 10, borderRadius: 4, border: '1px solid var(--border)', background: '#fff', cursor: 'pointer' }}
-                                  onClick={(e) => { e.stopPropagation(); window.open(linkUrl, '_blank'); }}>열기</button>
-                              )}
-                              <button style={{ padding: '2px 6px', fontSize: 10, borderRadius: 4, border: '1px solid var(--border)', background: '#fff', cursor: 'pointer' }}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  const kst = new Date(Date.now() + 9 * 3600000);
-                                  setEditStepModal({
-                                    participantId: p.id, step: dlvKey, stepLabel: stepLabels[stepKey],
-                                    link: (dlv?.link_url as string) || '', receivedDate: info.date?.slice(0, 10) || kst.toISOString().slice(0, 10),
-                                    memo: (dlv?.memo as string) || '', noLink: false,
-                                    fileUrl: (dlv?.file_url as string) || '', originalFilename: (dlv?.original_filename as string) || '',
-                                    mimeType: (dlv?.mime_type as string) || '', fileSize: (dlv?.file_size as number) || 0,
-                                    contentType: (dlv?.content_type as string) || '',
-                                  });
-                                  setEditStepError('');
-                                }}>수정</button>
-                              <button style={{ padding: '2px 6px', fontSize: 10, borderRadius: 4, border: 'none', background: '#B03F3B', color: '#fff', cursor: 'pointer' }}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setUndoConfirmModal({ participantId: p.id, step: dlvKey, stepLabel: stepLabels[stepKey] });
-                                  setUndoConfirmError('');
-                                }}>삭제</button>
-                            </div>
-                          </td>
-                        );
-                      }
-
-                      if (isCurrentStage) {
-                        return (
-                          <td key={stepKey} className="uc" style={{ textAlign: 'center', verticalAlign: 'middle', position: 'relative' }}>
-                            <span style={dotWrap}><span style={dot(DOT.gray)} /><span style={dotTxt}>대기</span></span>
-                            <div className="ua" style={{ display: 'none', position: 'absolute', top: 2, right: 2, gap: 3, zIndex: 5 }}>
-                              <button style={{ padding: '2px 6px', fontSize: 10, borderRadius: 4, border: 'none', background: '#1A1D21', color: '#fff', cursor: 'pointer' }}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  const kst = new Date(Date.now() + 9 * 3600000);
-                                  setEditStepModal({
-                                    participantId: p.id, step: dlvKey, stepLabel: stepLabels[stepKey],
-                                    link: '', receivedDate: kst.toISOString().slice(0, 10), memo: '', noLink: false,
-                                    fileUrl: '', originalFilename: '', mimeType: '', fileSize: 0, contentType: '',
-                                  });
-                                  setEditStepError('');
-                                }}>등록</button>
-                            </div>
-                          </td>
-                        );
-                      }
+                      // Consent cell in "단계" column
+                      const consentLabel = p.consent_status === 'agreed'
+                        ? <span style={dotWrap}><span style={dot(DOT.green)} /><span style={dotTxt}>동의 완료</span></span>
+                        : p.consent_status === 'sent'
+                        ? <span style={dotWrap}><span style={dot(DOT.orange)} /><span style={dotTxt}>발송 완료</span></span>
+                        : p.consent_status === 'expired'
+                        ? <span style={dotWrap}><span style={dot(DOT.orange)} /><span style={dotTxt}>만료</span></span>
+                        : <span style={dotWrap}><span style={dot(DOT.gray)} /><span style={dotTxt}>미발송</span></span>;
 
                       return (
-                        <td key={stepKey} style={{ textAlign: 'center', verticalAlign: 'middle',  }}>
-                          <span style={{ fontSize: 11, color: '#C4CAD1' }}>—</span>
-                        </td>
-                      );
-                    };
-
-                    return (
-                      <>
-                        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
-                          <button style={btnGhost} onClick={() => openAddParticipant(c.id)}>+ 참여자 추가</button>
-                        </div>
-
-                        {parts.length === 0 ? (
-                          <p style={{ color: 'var(--text-muted)', fontSize: 13, padding: '20px 0', textAlign: 'center' }}>참여자가 없습니다</p>
-                        ) : (
-                          <div style={{ overflowX: 'auto' }}>
-                            <table className="data-table" style={{ width: '100%', tableLayout: 'fixed' }}>
-                              <colgroup>
-                                {(() => {
-                                  const menuW = 36;
-                                  const nameW = '18%';
-                                  const consentW = '8%';
-                                  const stageW = showSettlement ? '16%' : '20%';
-                                  const settlW = '10%';
-                                  return (
-                                    <>
-                                      <col style={{ width: nameW }} />
-                                      <col style={{ width: consentW }} />
-                                      {showProposal && <col style={{ width: stageW }} />}
-                                      {showRoughCut && <col style={{ width: stageW }} />}
-                                      <col style={{ width: stageW }} />
-                                      {showSettlement && <col style={{ width: settlW }} />}
-                                      <col style={{ width: menuW }} />
-                                    </>
-                                  );
-                                })()}
-                              </colgroup>
-                              <thead>
-                                <tr>
-                                  <th style={{ textAlign: 'left' }}>인플루언서</th>
-                                  <th style={{ textAlign: 'center' }}>동의서</th>
-                                  {showProposal && <th style={{ textAlign: 'center' }}>기획안</th>}
-                                  {showRoughCut && <th style={{ textAlign: 'center' }}>가편집본</th>}
-                                  <th style={{ textAlign: 'center' }}>{isFreeSeed ? '업로드 (선택)' : '업로드'}</th>
-                                  {showSettlement && <th style={{ textAlign: 'center' }}>정산</th>}
-                                  <th></th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {sorted.map((p) => {
-                                  const pName = p.name || p.display_name || '(채널명 미입력)';
-                                  const hasFee = isPaidCollab(p.collab_type) || (p.fee || 0) > 0;
-                                  const progress = progressMap.get(p.id)!;
-
-                                  // Consent cell
-                                  const consentLabel = p.consent_status === 'agreed'
-                                    ? <span style={dotWrap}><span style={dot(DOT.green)} /><span style={dotTxt}>동의 완료</span></span>
-                                    : p.consent_status === 'sent'
-                                    ? <span style={dotWrap}><span style={dot(DOT.orange)} /><span style={dotTxt}>발송 완료</span></span>
-                                    : p.consent_status === 'expired'
-                                    ? <span style={dotWrap}><span style={dot(DOT.orange)} /><span style={dotTxt}>만료</span></span>
-                                    : <span style={dotWrap}><span style={dot(DOT.gray)} /><span style={dotTxt}>미발송</span></span>;
-                                  const isConsentCurrent = progress.currentStage === 'consent';
-                                  const consentCell = (
-                                    <>
-                                      {consentLabel}
-                                      <div className="ua" style={{ display: 'none', position: 'absolute', top: 2, right: 2, gap: 3, zIndex: 5 }}>
-                                        {p.consent_token ? (
-                                          <>
-                                            <button style={{ padding: '2px 6px', fontSize: 10, borderRadius: 4, border: 'none', background: '#1A1D21', color: '#fff', cursor: 'pointer' }}
-                                              onClick={(e) => { e.stopPropagation(); copyToClipboard(getLinkUrl(p.consent_token!, 'consent')); }}>복사</button>
-                                            <button style={{ padding: '2px 6px', fontSize: 10, borderRadius: 4, border: '1px solid var(--border)', background: '#fff', cursor: 'pointer' }}
-                                              onClick={(e) => { e.stopPropagation(); window.open(getLinkUrl(p.consent_token!, 'consent'), '_blank'); }}>열기</button>
-                                          </>
-                                        ) : p.consent_status !== 'agreed' ? (
-                                          <button style={{ padding: '2px 6px', fontSize: 10, borderRadius: 4, border: 'none', background: '#1A1D21', color: '#fff', cursor: 'pointer' }}
-                                            onClick={(e) => { e.stopPropagation(); handleUpdateParticipant(p.id, { generate_consent_token: true }); }}>발송</button>
-                                        ) : null}
-                                      </div>
-                                    </>
-                                  );
-
-                                  // Settlement cell
-                                  const settlementCell = showSettlement ? (() => {
-                                    const sd = getSettlementDisplayStatus(p.settlement_status, !!p.published_url);
-                                    const isPaid = p.settlement_status === 'paid';
-                                    const isSettlementCurrent = progress.currentStage === 'settlement';
-                                    const sDotMap: Record<string, string> = {
-                                      paid: DOT.green,
-                                      payment_waiting: DOT.blue,
-                                      payment_requested: DOT.blue,
-                                      docs_submitted: DOT.teal,
-                                      docs_requested: DOT.orange,
-                                      expired: DOT.orange,
-                                    };
-                                    const dc = sDotMap[p.settlement_status || ''] || DOT.gray;
-                                    return (
-                                      <>
-                                        <span style={dotWrap}><span style={dot(dc)} /><span style={dotTxt}>{sd.label}</span></span>
-                                        <div className="ua" style={{ display: 'none', position: 'absolute', top: 2, right: 2, gap: 3, zIndex: 5 }}>
-                                          {p.settlement_token ? (
-                                            <>
-                                              <button style={{ padding: '2px 6px', fontSize: 10, borderRadius: 4, border: 'none', background: '#1A1D21', color: '#fff', cursor: 'pointer' }}
-                                                onClick={(e) => { e.stopPropagation(); copyToClipboard(getLinkUrl(p.settlement_token!, 'settlement')); }}>복사</button>
-                                              <button style={{ padding: '2px 6px', fontSize: 10, borderRadius: 4, border: '1px solid var(--border)', background: '#fff', cursor: 'pointer' }}
-                                                onClick={(e) => { e.stopPropagation(); window.open(getLinkUrl(p.settlement_token!, 'settlement'), '_blank'); }}>열기</button>
-                                            </>
-                                          ) : isSettlementCurrent && p.published_url && p.settlement_status !== 'paid' && p.settlement_status !== 'docs_submitted' && p.settlement_status !== 'payment_requested' ? (
-                                            <button style={{ padding: '2px 6px', fontSize: 10, borderRadius: 4, border: 'none', background: '#1A1D21', color: '#fff', cursor: 'pointer' }}
-                                              onClick={(e) => { e.stopPropagation(); handleUpdateParticipant(p.id, { generate_settlement_token: true }); }}>발급</button>
-                                          ) : null}
-                                        </div>
-                                      </>
-                                    );
-                                  })() : null;
-
-                                  return (
-                                    <tr key={p.id}>
-                                      {/* 인플루언서 + 고료 */}
-                                      <td style={{ verticalAlign: 'middle',  }}>
-                                        <div style={{ fontWeight: 500, color: pName !== '(채널명 미입력)' ? '#1A1D21' : '#9AA2AA', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
-                                          onClick={() => { setDetailPart(p); setDetailCampaign(c); }}>
-                                          {pName}
-                                          {p.memo && <MemoIcon hasMemo size={10} />}
-                                        </div>
-                                        {hasFee && <div style={{ fontSize: 11, color: '#9AA2AA', marginTop: 1 }}>{fmtKRW(p.fee)}</div>}
-                                        {!hasFee && p.handle && <div style={{ fontSize: 11, color: '#9AA2AA', marginTop: 1 }}>@{p.handle}</div>}
-                                      </td>
-                                      {/* 동의서 */}
-                                      <td className="uc" style={{ textAlign: 'center', verticalAlign: 'middle', position: 'relative' }}>{consentCell}</td>
-                                      {/* 기획안 */}
-                                      {showProposal && renderStepCell(p, 'proposal', progress)}
-                                      {/* 가편집본 */}
-                                      {showRoughCut && renderStepCell(p, 'roughCut', progress)}
-                                      {/* 업로드 */}
-                                      {renderStepCell(p, 'upload', progress)}
-                                      {/* 정산 */}
-                                      {showSettlement && <td className="uc" style={{ textAlign: 'center', verticalAlign: 'middle', position: 'relative' }}>{settlementCell}</td>}
-                                      {/* ⋯ menu */}
-                                      <td style={{ textAlign: 'center', position: 'relative', verticalAlign: 'middle',  }}>
-                                        <div style={{ position: 'relative', display: 'inline-block' }}>
-                                          <MoreButton onClick={() => setPartMenuId(partMenuId === p.id ? null : p.id)} />
-                                          {partMenuId === p.id && (
-                                            <Menu
-                                              onClose={() => setPartMenuId(null)}
-                                              items={[
-                                                { label: '참여자 수정', onClick: () => openEditParticipant(p) },
-                                                ...(p.consent_token ? [{ label: '동의서 열기', onClick: () => window.open(getLinkUrl(p.consent_token!, 'consent'), '_blank') }] : []),
-                                                { label: '모든 진행 기록 초기화', onClick: () => { setResetModal({ type: 'participant', id: p.id, name: (p.display_name || p.name || p.channel || ''), confirmName: (p.channel || p.display_name || p.name || '') }); setResetConfirmInput(''); setResetError(''); } },
-                                                { label: '삭제', onClick: () => openDeleteParticipant(p), danger: true },
-                                              ]}
-                                            />
-                                          )}
-                                        </div>
-                                      </td>
-                                    </tr>
-                                  );
-                                })}
-                              </tbody>
-                            </table>
+                        <div
+                          key={p.id}
+                          style={{
+                            display: 'grid',
+                            gridTemplateColumns: 'minmax(0,1.5fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) 24px',
+                            padding: '0 12px', minHeight: spacing.tableRowH, alignItems: 'center',
+                            borderBottom: rowIdx < sorted.length - 1 ? `0.5px solid ${colors.borderLight}` : 'none',
+                            cursor: 'pointer',
+                          }}
+                          onClick={() => { setDetailPart(p); setDetailCampaign(sc); }}
+                          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#F7F9FB'; }}
+                          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = ''; }}
+                        >
+                          {/* 인플루언서 */}
+                          <div style={{ minWidth: 0 }}>
+                            <div style={{ fontWeight: 500, fontSize: 13.5, color: pName !== '(채널명 미입력)' ? colors.textPrimary : colors.textMuted, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 4 }}>
+                              {pName}
+                              {p.memo && <MemoIcon hasMemo size={10} />}
+                            </div>
+                            {hasFee && <div style={{ fontSize: 11, color: colors.textMuted, marginTop: 1 }}>{fmtKRW(p.fee)}</div>}
+                            {!hasFee && p.handle && <div style={{ fontSize: 11, color: colors.textMuted, marginTop: 1 }}>@{p.handle}</div>}
                           </div>
-                        )}
-                      </>
-                    );
-                  })()}
-                  </>
-                </div>
-              )}
-            </div>
-          );
-        })}
 
-        {!loading && campaigns.length === 0 && (
-          <div style={{ ...sectionStyle, textAlign: 'center', padding: '60px 24px' }}>
-            <p style={{ fontSize: 16, color: 'var(--text-secondary)', marginBottom: 8 }}>등록된 캠페인이 없습니다</p>
-            <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>상단의 &quot;+ 캠페인 생성&quot; 버튼으로 시작하세요</p>
+                          {/* 단계 */}
+                          <div className="uc" style={{ position: 'relative' }}>
+                            {isCompleted ? (
+                              <span style={{ fontSize: 12.5, color: colors.mint, fontWeight: 500 }}>완료</span>
+                            ) : step === 'consent' ? (
+                              <>
+                                {consentLabel}
+                                <div className="ua" style={{ display: 'none', position: 'absolute', top: -2, right: 0, gap: 3, zIndex: 5 }}>
+                                  {p.consent_token ? (
+                                    <>
+                                      <button style={{ padding: '2px 6px', fontSize: 10, borderRadius: 4, border: 'none', background: '#1A1D21', color: '#fff', cursor: 'pointer' }}
+                                        onClick={(e) => { e.stopPropagation(); copyToClipboard(getLinkUrl(p.consent_token!, 'consent')); }}>복사</button>
+                                      <button style={{ padding: '2px 6px', fontSize: 10, borderRadius: 4, border: '1px solid var(--border)', background: '#fff', cursor: 'pointer' }}
+                                        onClick={(e) => { e.stopPropagation(); window.open(getLinkUrl(p.consent_token!, 'consent'), '_blank'); }}>열기</button>
+                                    </>
+                                  ) : p.consent_status !== 'agreed' ? (
+                                    <button style={{ padding: '2px 6px', fontSize: 10, borderRadius: 4, border: 'none', background: '#1A1D21', color: '#fff', cursor: 'pointer' }}
+                                      onClick={(e) => { e.stopPropagation(); handleUpdateParticipant(p.id, { generate_consent_token: true }); }}>발송</button>
+                                  ) : null}
+                                </div>
+                              </>
+                            ) : (
+                              <span style={{ fontSize: 12.5, color: colors.textSecondary }}>{STEP_LABELS[step] || step}</span>
+                            )}
+                          </div>
+
+                          {/* 기획안 */}
+                          <div>{renderStepCell(p, 'proposal', progress, skip.skipDraft)}</div>
+
+                          {/* 가편집본 */}
+                          <div>{renderStepCell(p, 'roughCut', progress, skip.skipEdit)}</div>
+
+                          {/* 업로드 */}
+                          <div>{renderStepCell(p, 'upload', progress, false)}</div>
+
+                          {/* 정산 */}
+                          <div>{renderSettlementCell(p, progress)}</div>
+
+                          {/* ⋯ menu */}
+                          <div style={{ position: 'relative' }} onClick={e => e.stopPropagation()}>
+                            <MoreButton onClick={() => setPartMenuId(partMenuId === p.id ? null : p.id)} />
+                            {partMenuId === p.id && (
+                              <Menu
+                                onClose={() => setPartMenuId(null)}
+                                items={[
+                                  { label: '참여자 수정', onClick: () => openEditParticipant(p) },
+                                  ...(p.consent_token ? [{ label: '동의서 열기', onClick: () => window.open(getLinkUrl(p.consent_token!, 'consent'), '_blank') }] : []),
+                                  { label: '모든 진행 기록 초기화', onClick: () => { setResetModal({ type: 'participant', id: p.id, name: (p.display_name || p.name || p.channel || ''), confirmName: (p.channel || p.display_name || p.name || '') }); setResetConfirmInput(''); setResetError(''); } },
+                                  { label: '삭제', onClick: () => openDeleteParticipant(p), danger: true },
+                                ]}
+                              />
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+
+                    {/* Empty state */}
+                    {parts.length === 0 && (
+                      <div style={{ padding: '40px 0', textAlign: 'center' }}>
+                        <p style={{ fontSize: 13, color: colors.textMuted }}>등록된 참여자가 없습니다</p>
+                        <p style={{ fontSize: 12, color: colors.textMuted, marginTop: 4 }}>&quot;+ 참여자 추가&quot; 버튼으로 추가하세요</p>
+                      </div>
+                    )}
+                  </div>
+                </>
+              );
+            })() : (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', minHeight: 400 }}>
+                <div style={{ textAlign: 'center' }}>
+                  <p style={{ fontSize: 15, color: colors.textMuted }}>
+                    {campaigns.length === 0 && !loading ? '등록된 캠페인이 없습니다' : !loading ? '캠페인을 선택하세요' : ''}
+                  </p>
+                  {campaigns.length === 0 && !loading && (
+                    <p style={{ fontSize: 12, color: colors.textMuted, marginTop: 4 }}>&quot;+ 캠페인&quot; 버튼으로 시작하세요</p>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
-        )}
+        </div>
 
         {/* Campaign Create/Edit Modal */}
         {showCampaignModal && (
