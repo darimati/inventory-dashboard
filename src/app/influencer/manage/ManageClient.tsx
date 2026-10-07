@@ -136,6 +136,7 @@ export default function ManageClient() {
   const [campaignForm, setCampaignForm] = useState({
     name: '',
     month: '',
+    collab_type: 'free_seeding' as CollabType,
     advertised_products: [] as string[],
     budget: 0,
     status: 'active' as CampaignStatus,
@@ -307,7 +308,7 @@ export default function ManageClient() {
 
   const openCreateCampaign = () => {
     setEditCampaignId(null);
-    setCampaignForm({ name: '', month: '', advertised_products: [], budget: 0, status: 'active', memo: '' });
+    setCampaignForm({ name: '', month: '', collab_type: 'free_seeding', advertised_products: [], budget: 0, status: 'active', memo: '' });
     setShowCampaignModal(true);
   };
 
@@ -316,6 +317,7 @@ export default function ManageClient() {
     setCampaignForm({
       name: c.name,
       month: c.month || '',
+      collab_type: (c.collab_type as CollabType) || 'free_seeding',
       advertised_products: c.advertised_products ?? [],
       budget: c.budget,
       status: c.status,
@@ -849,13 +851,12 @@ export default function ManageClient() {
 
   const fmtKRW = (n: number) => n > 0 ? formatKRW(n) : '-';
 
-  // 상태 칩 스타일 (정산/동의서 공용)
-  const sChip = (bg: string, fg: string): React.CSSProperties => ({
-    display: 'inline-flex', alignItems: 'center',
-    padding: '4px 10px', borderRadius: 6,
-    fontSize: 12, fontWeight: 400, whiteSpace: 'nowrap',
-    background: bg, color: fg,
-  });
+  // 상태 표시: 점 + 텍스트 (칩 대체)
+  const dotWrap: React.CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: 7 };
+  const dot = (c: string): React.CSSProperties => ({ width: 7, height: 7, borderRadius: '50%', background: c, flex: 'none' });
+  const dotTxt: React.CSSProperties = { fontSize: 12, fontWeight: 400, color: colors.textPrimary, whiteSpace: 'nowrap' };
+  const DOT = { green: '#86C9A8', blue: '#8FAEE0', teal: '#7FC4CE', orange: '#F0B86E', gray: '#CDD2D8' };
+  const dateLink: React.CSSProperties = { color: colors.textPrimary, textDecoration: 'none', fontSize: 12, borderBottom: '1px solid #C9CED4', paddingBottom: 1 };
 
   /* ── Memo helpers ─────────────────────────────────────── */
 
@@ -1200,11 +1201,11 @@ export default function ManageClient() {
                         return (
                           <td key={stepKey} className="uc" style={{ textAlign: 'center', verticalAlign: 'middle', position: 'relative' }}>
                             {linkUrl ? (
-                              <a href={linkUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#2563EB', textDecoration: 'none', fontSize: 12 }}>
-                                🔗 {dateStr}
+                              <a href={linkUrl} target="_blank" rel="noopener noreferrer" style={dateLink}>
+                                {dateStr}
                               </a>
                             ) : (
-                              <span style={{ color: '#22C55E', fontWeight: 500, fontSize: 12 }}>✓ {dateStr}</span>
+                              <span style={dotWrap}><span style={dot(DOT.green)} /><span style={dotTxt}>{dateStr}</span></span>
                             )}
                             {/* Hover actions: 열기/수정/삭제 */}
                             <div className="ua" style={{ display: 'none', position: 'absolute', top: 2, right: 2, gap: 3, zIndex: 5 }}>
@@ -1240,7 +1241,7 @@ export default function ManageClient() {
                       if (isCurrentStage) {
                         return (
                           <td key={stepKey} className="uc" style={{ textAlign: 'center', verticalAlign: 'middle', position: 'relative' }}>
-                            <Chip variant="gray">대기</Chip>
+                            <span style={dotWrap}><span style={dot(DOT.gray)} /><span style={dotTxt}>대기</span></span>
                             <div className="ua" style={{ display: 'none', position: 'absolute', top: 2, right: 2, gap: 3, zIndex: 5 }}>
                               <button style={{ padding: '2px 6px', fontSize: 10, borderRadius: 4, border: 'none', background: '#1A1D21', color: '#fff', cursor: 'pointer' }}
                                 onClick={(e) => {
@@ -1315,12 +1316,12 @@ export default function ManageClient() {
 
                                   // Consent cell
                                   const consentLabel = p.consent_status === 'agreed'
-                                    ? <span style={sChip(colors.mintLight, colors.mint)}>회신 완료</span>
+                                    ? <span style={dotWrap}><span style={dot(DOT.green)} /><span style={dotTxt}>동의 완료</span></span>
                                     : p.consent_status === 'sent'
-                                    ? <span style={sChip(colors.amberLight, colors.amber)}>발송</span>
+                                    ? <span style={dotWrap}><span style={dot(DOT.orange)} /><span style={dotTxt}>발송 완료</span></span>
                                     : p.consent_status === 'expired'
-                                    ? <span style={sChip(colors.amberLight, colors.amber)}>만료</span>
-                                    : <span style={sChip(colors.grayBadgeBg, colors.textSecondary)}>미발송</span>;
+                                    ? <span style={dotWrap}><span style={dot(DOT.orange)} /><span style={dotTxt}>만료</span></span>
+                                    : <span style={dotWrap}><span style={dot(DOT.gray)} /><span style={dotTxt}>미발송</span></span>;
                                   const isConsentCurrent = progress.currentStage === 'consent';
                                   const consentCell = (
                                     <>
@@ -1346,20 +1347,18 @@ export default function ManageClient() {
                                     const sd = getSettlementDisplayStatus(p.settlement_status, !!p.published_url);
                                     const isPaid = p.settlement_status === 'paid';
                                     const isSettlementCurrent = progress.currentStage === 'settlement';
-                                    const sChipColors: Record<string, { bg: string; fg: string }> = {
-                                      paid: { bg: colors.mintLight, fg: colors.mint },
-                                      payment_waiting: { bg: colors.grayBadgeBg, fg: colors.textPrimary },
-                                      payment_requested: { bg: colors.grayBadgeBg, fg: colors.textPrimary },
-                                      docs_submitted: { bg: colors.grayBadgeBg, fg: colors.textPrimary },
-                                      docs_requested: { bg: colors.amberLight, fg: colors.amber },
-                                      expired: { bg: colors.amberLight, fg: colors.amber },
+                                    const sDotMap: Record<string, string> = {
+                                      paid: DOT.green,
+                                      payment_waiting: DOT.blue,
+                                      payment_requested: DOT.blue,
+                                      docs_submitted: DOT.teal,
+                                      docs_requested: DOT.orange,
+                                      expired: DOT.orange,
                                     };
-                                    const cc = sChipColors[p.settlement_status || ''];
+                                    const dc = sDotMap[p.settlement_status || ''] || DOT.gray;
                                     return (
                                       <>
-                                        {cc
-                                          ? <span style={sChip(cc.bg, cc.fg)}>{sd.label}</span>
-                                          : <span style={{ fontSize: 12, color: colors.textSecondary, fontWeight: 400 }}>{sd.label}</span>}
+                                        <span style={dotWrap}><span style={dot(dc)} /><span style={dotTxt}>{sd.label}</span></span>
                                         <div className="ua" style={{ display: 'none', position: 'absolute', top: 2, right: 2, gap: 3, zIndex: 5 }}>
                                           {p.settlement_token ? (
                                             <>
@@ -1449,6 +1448,12 @@ export default function ManageClient() {
                 <div>
                   <label style={labelStyle}>캠페인 이름 *</label>
                   <input style={inputStyle} value={campaignForm.name} onChange={(e) => setCampaignForm({ ...campaignForm, name: e.target.value })} />
+                </div>
+                <div>
+                  <label style={labelStyle}>협업 유형 *</label>
+                  <select style={inputStyle} value={campaignForm.collab_type} onChange={(e) => setCampaignForm({ ...campaignForm, collab_type: e.target.value as CollabType })}>
+                    {(Object.entries(COLLAB_TYPE_LABELS) as [CollabType, string][]).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                  </select>
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                   <div>
@@ -1750,23 +1755,21 @@ export default function ManageClient() {
                   if (key === 'settlement') {
                     const isPaid = progress.settlement.status === 'paid';
                     const sd = getSettlementDisplayStatus(detailPart.settlement_status, !!detailPart.published_url);
-                    const scMap: Record<string, { bg: string; fg: string }> = {
-                      paid: { bg: colors.mintLight, fg: colors.mint },
-                      payment_waiting: { bg: colors.grayBadgeBg, fg: colors.textPrimary },
-                      payment_requested: { bg: colors.grayBadgeBg, fg: colors.textPrimary },
-                      docs_submitted: { bg: colors.grayBadgeBg, fg: colors.textPrimary },
-                      docs_requested: { bg: colors.amberLight, fg: colors.amber },
-                      expired: { bg: colors.amberLight, fg: colors.amber },
+                    const sDotMap2: Record<string, string> = {
+                      paid: DOT.green,
+                      payment_waiting: DOT.blue,
+                      payment_requested: DOT.blue,
+                      docs_submitted: DOT.teal,
+                      docs_requested: DOT.orange,
+                      expired: DOT.orange,
                     };
-                    const sc = scMap[detailPart.settlement_status || ''];
+                    const dc2 = sDotMap2[detailPart.settlement_status || ''] || DOT.gray;
                     return (
                       <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 8, minHeight: 32, padding: '4px 0', borderRadius: 6 }}>
                         <span style={{ width: 16, textAlign: 'center', fontSize: 13 }}>{isPaid ? <span style={{ color: colors.mint }}>✓</span> : <span style={{ color: '#C4CAD1' }}>○</span>}</span>
                         <span style={{ flex: 1, color: isPaid ? 'var(--text-secondary)' : 'var(--text-muted)' }}>
                           {label}
-                          {sc
-                            ? <span style={{ ...sChip(sc.bg, sc.fg), marginLeft: 6 }}>{sd.label}</span>
-                            : <span style={{ marginLeft: 6, fontSize: 12, color: colors.textSecondary, fontWeight: 400 }}>{sd.label}</span>}
+                          <span style={{ ...dotWrap, marginLeft: 6 }}><span style={dot(dc2)} /><span style={dotTxt}>{sd.label}</span></span>
                         </span>
                         {detailPart.settlement_token && (
                           <>
@@ -2114,18 +2117,18 @@ export default function ManageClient() {
 
                 {progressPanel.type === 'payment' && (() => {
                   const sd = getSettlementDisplayStatus(pp.settlement_status, !!pp.published_url);
-                  const pcMap: Record<string, { bg: string; fg: string }> = {
-                    paid: { bg: colors.mintLight, fg: colors.mint },
-                    payment_waiting: { bg: colors.grayBadgeBg, fg: colors.textPrimary },
-                    payment_requested: { bg: colors.grayBadgeBg, fg: colors.textPrimary },
-                    docs_submitted: { bg: colors.grayBadgeBg, fg: colors.textPrimary },
-                    docs_requested: { bg: colors.amberLight, fg: colors.amber },
-                    expired: { bg: colors.amberLight, fg: colors.amber },
+                  const sDotMap3: Record<string, string> = {
+                    paid: DOT.green,
+                    payment_waiting: DOT.blue,
+                    payment_requested: DOT.blue,
+                    docs_submitted: DOT.teal,
+                    docs_requested: DOT.orange,
+                    expired: DOT.orange,
                   };
-                  const pc = pcMap[pp.settlement_status || ''];
+                  const dc3 = sDotMap3[pp.settlement_status || ''] || DOT.gray;
                   return (
                     <div>
-                      <div style={rowStyle}><span style={rlabel}>정산 상태</span>{pc ? <span style={sChip(pc.bg, pc.fg)}>{sd.label}</span> : <span style={{ ...rvalue, color: colors.textSecondary, fontWeight: 400 }}>{sd.label}</span>}</div>
+                      <div style={rowStyle}><span style={rlabel}>정산 상태</span><span style={dotWrap}><span style={dot(dc3)} /><span style={dotTxt}>{sd.label}</span></span></div>
                       <div style={rowStyle}><span style={rlabel}>고료 (세전)</span><span style={rvalue}>{fmtKRW(pp.fee)}</span></div>
                       <div style={rowStyle}><span style={rlabel}>정산 정보</span><span style={rvalue}>{pp.settlement_status === 'docs_submitted' ? '회수 완료' : pp.settlement_status === 'docs_requested' ? '발송됨' : '미발송'}</span></div>
                       {pp.planned_payment_date && (() => {

@@ -440,23 +440,22 @@ export default function SettlementsClient() {
 
   /* ── Evidence helper ─────────────────────────────────── */
 
+  const dotWS: React.CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: 7 };
+  const dotS = (c: string): React.CSSProperties => ({ width: 7, height: 7, borderRadius: '50%', background: c, flex: 'none' });
+  const dotTS: React.CSSProperties = { fontSize: 12, fontWeight: 400, color: colors.textPrimary, whiteSpace: 'nowrap' };
+  const DOTS = { green: '#86C9A8', blue: '#8FAEE0', teal: '#7FC4CE', orange: '#F0B86E', gray: '#CDD2D8' };
+
   const EvidenceCell = ({ r }: { r: SettlementRow }) => {
     if (isInvoiceType(r.tax_type)) {
-      return (
-        <span style={{
-          display: 'inline-block', padding: '2px 8px', borderRadius: 4, fontSize: 11, fontWeight: 500,
-          color: invoiceStatusColor(r.invoice_status),
-          background: r.invoice_status === 'verified' ? '#F0FDF4' : r.invoice_status === 'received' ? '#F0F4FA' : '#FFFBEB',
-        }}>
-          {r.invoice_status ? INVOICE_STATUS_LABELS[r.invoice_status] ?? r.invoice_status : '대기'}
-        </span>
-      );
+      const dc = r.invoice_status === 'verified' ? DOTS.green : r.invoice_status === 'received' ? DOTS.teal : DOTS.orange;
+      const label = r.invoice_status ? INVOICE_STATUS_LABELS[r.invoice_status] ?? r.invoice_status : '대기';
+      return <span style={dotWS}><span style={dotS(dc)} /><span style={dotTS}>{label}</span></span>;
     }
     if (r.tax_type === 'business_income') {
       if (r.has_identity_doc) {
-        return <span style={{ fontSize: 11.5, color: '#22C55E', fontWeight: 500 }}>제출됨</span>;
+        return <span style={dotWS}><span style={dotS(DOTS.green)} /><span style={dotTS}>제출됨</span></span>;
       }
-      return <span style={{ fontSize: 11.5, color: '#D97706', fontWeight: 500 }}>⚠ 미제출</span>;
+      return <span style={dotWS}><span style={dotS(DOTS.orange)} /><span style={dotTS}>미제출</span></span>;
     }
     return <span style={{ fontSize: 11, color: colors.textMuted }}>-</span>;
   };
@@ -667,13 +666,11 @@ export default function SettlementsClient() {
               <div style={detailRowStyle}>
                 <span style={detailLbl}>{r.tax_type === 'tax_invoice' ? '세금계산서' : '계산서'} 상태</span>
                 <span style={{ ...detailVal, display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{
-                    display: 'inline-block', padding: '2px 8px', borderRadius: 4, fontSize: 11.5, fontWeight: 500,
-                    color: invoiceStatusColor(r.invoice_status),
-                    background: r.invoice_status === 'verified' ? '#F0FDF4' : r.invoice_status === 'received' ? '#F0F4FA' : '#FFFBEB',
-                  }}>
-                    {r.invoice_status ? INVOICE_STATUS_LABELS[r.invoice_status] ?? r.invoice_status : '발행 대기'}
-                  </span>
+                  {(() => {
+                    const dc = r.invoice_status === 'verified' ? DOTS.green : r.invoice_status === 'received' ? DOTS.teal : DOTS.orange;
+                    const label = r.invoice_status ? INVOICE_STATUS_LABELS[r.invoice_status] ?? r.invoice_status : '발행 대기';
+                    return <span style={dotWS}><span style={dotS(dc)} /><span style={dotTS}>{label}</span></span>;
+                  })()}
                   <select
                     style={{ ...btnSmall, padding: '2px 8px', fontSize: 11 }}
                     value={r.invoice_status ?? 'pending'}
