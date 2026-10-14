@@ -1,18 +1,19 @@
 'use client';
 
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import AppShell from '@/components/AppShell';
 
 /* Types & Constants */
-import type { Props, PurchaseOrder, InboundRequest, EzadminItem } from './types';
+import type { Props, PurchaseOrder, InboundRequest, EzadminItem, OptionRow } from './types';
 
 /* Components */
 import { buildTasks, TodaysTasks } from './components/TodaysTasks';
-import { StockComparisonTable, OptionDetailSection, UnmappedSkuSection } from './components/StockSection';
+import { InventoryTable } from './components/InventoryTable';
+import { UnmappedSkuSection } from './components/StockSection';
 import { ActiveItemsSection } from './components/ActiveItemsSection';
 
 /* ------------------------------------------------------------------ */
-/*  Main Component — 3 sections: 오늘 할 일 / 재고 / 진행 중            */
+/*  Main Component — 운영형 대시보드                                    */
 /* ------------------------------------------------------------------ */
 
 export default function InventoryClient({
@@ -103,7 +104,7 @@ export default function InventoryClient({
       const res = await fetch('/api/ezadmin/upload', { method: 'POST', body: formData });
       const data = await res.json();
       if (res.ok) {
-        setUploadResult({ ok: true, message: `업로드 완료 · ${data.upserted}건 반영` });
+        setUploadResult({ ok: true, message: `업로드 완료 / ${data.upserted}건 반영` });
         setTimeout(() => window.location.reload(), 1500);
       } else {
         setUploadResult({ ok: false, message: data.error || '업로드 실패' });
@@ -112,10 +113,10 @@ export default function InventoryClient({
     finally { setUploading(false); e.target.value = ''; }
   };
 
-  // Data freshness — 2일+ orange, 7일+ red
+  // Data freshness
   const latestEzadminUpdate = ezadminItems.length > 0 ? ezadminItems[0].updatedAt : null;
   const ezadminFreshness = (() => {
-    if (!latestEzadminUpdate) return { label: '업로드 필요', color: '#D9534F', bg: '#FBE9E8', tooltip: '이지어드민 파일을 업로드하세요' };
+    if (!latestEzadminUpdate) return { label: '업로드 필요', color: '#E8A0B4', tooltip: '이지어드민 파일을 업로드하세요' };
     const updAt = new Date(latestEzadminUpdate);
     const daysAgo = (Date.now() - updAt.getTime()) / 86_400_000;
     const mm = String(updAt.getMonth() + 1).padStart(2, '0');
@@ -124,9 +125,9 @@ export default function InventoryClient({
     const mi = String(updAt.getMinutes()).padStart(2, '0');
     const dateTimeLabel = `${mm}/${dd} ${hh}:${mi}`;
     const fullTooltip = `판매자배송 3PL(이지어드민): ${updAt.getFullYear()}.${mm}.${dd} ${hh}:${mi} 업로드 기준`;
-    if (daysAgo < 2) return { label: dateTimeLabel, color: '#565D64', bg: 'transparent', tooltip: fullTooltip };
-    if (daysAgo < 7) return { label: `${Math.round(daysAgo)}일 전 기준 · 업데이트 필요`, color: '#A8712A', bg: '#FDF4E7', tooltip: fullTooltip };
-    return { label: `${Math.round(daysAgo)}일 전 기준 · 업데이트 필요`, color: '#B03F3B', bg: '#FBE9E8', tooltip: fullTooltip };
+    if (daysAgo < 2) return { label: dateTimeLabel, color: '#565D64', tooltip: fullTooltip };
+    if (daysAgo < 7) return { label: `${Math.round(daysAgo)}일 전 기준`, color: '#8FAEE0', tooltip: fullTooltip };
+    return { label: `${Math.round(daysAgo)}일 전 기준`, color: '#E8A0B4', tooltip: fullTooltip };
   })();
 
   // Unmapped SKUs
@@ -148,7 +149,7 @@ export default function InventoryClient({
         }),
       });
       if (res.ok) {
-        showToast(`${sku.productCode} → ${product} · ${option} 매핑 완료`);
+        showToast(`${sku.productCode} → ${product} / ${option} 매핑 완료`);
         setTimeout(() => window.location.reload(), 1000);
       } else {
         const err = await res.json();
@@ -157,6 +158,49 @@ export default function InventoryClient({
     } catch { showToast('매핑 저장 중 네트워크 오류'); }
     finally { setMapSaving(false); }
   };
+
+  /* ---------------------------------------------------------------- */
+  /*  Option-level rows for warehouse cards                            */
+  /* ---------------------------------------------------------------- */
+
+  const optionRows: OptionRow[] = useMemo(() => {
+    const rows: OptionRow[] = [];
+    for (const r of rocketItems) {
+      if (r.product === '분류 필요') continue;
+      if (r.unitStock === 0 && r.sales30d === 0) continue;
+      const daysLeft30 = r.dailyAvg30 > 0 ? Math.floor(r.unitStock / r.dailyAvg30) : null;
+      rows.push({
+        product: r.product, option: r.option, vendorItemId: r.vendorItemId,
+        unitStock: r.unitStock, daysLeft30, dailyAvg30: r.dailyAvg30, sales30d: r.sales30d,
+        ezDomesticStock: 0,
+        status: 'stable', actionLabel: '—', transferable: false,
+      });
+    }
+    const ezByProduct = new Map<string, number>();
+    for (const e of ezadminItems) {
+      if (!e.mapped || e.stockType !== 'finished' || e.variantType !== 'domestic') continue;
+      ezByProduct.set(e.product, (ezByProduct.get(e.product) ?? 0) + e.availableStock);
+    }
+    for (const row of rows) {
+      row.ezDomesticStock = ezByProduct.get(row.product) ?? 0;
+      row.transferable = row.ezDomesticStock >= row.sales30d && row.ezDomesticStock > 0;
+
+      if (row.unitStock === 0 || row.daysLeft30 === 0) {
+        row.status = 'critical';
+        row.actionLabel = row.transferable ? '이관 등록' : '발주 등록';
+      } else if (row.daysLeft30 !== null && row.daysLeft30 <= 14) {
+        row.status = row.transferable ? 'transfer_ok' : 'shortage';
+        row.actionLabel = row.transferable ? '이관 등록' : '발주 등록';
+      } else if (row.daysLeft30 !== null && row.daysLeft30 <= 30) {
+        row.status = 'warning';
+        row.actionLabel = row.transferable ? '이관 준비' : '발주 검토';
+      } else {
+        row.status = 'stable';
+        row.actionLabel = '—';
+      }
+    }
+    return rows;
+  }, [rocketItems, ezadminItems]);
 
   return (
     <AppShell showFilter={false}>
@@ -167,12 +211,9 @@ export default function InventoryClient({
           {/* EZAdmin freshness */}
           <span
             title={ezadminFreshness.tooltip}
-            style={{
-              fontSize: 12, fontWeight: 450, padding: '4px 10px', borderRadius: 6,
-              color: ezadminFreshness.color, background: ezadminFreshness.bg, cursor: 'default',
-            }}
+            style={{ fontSize: 12, fontWeight: 400, color: ezadminFreshness.color, cursor: 'default' }}
           >
-            이지어드민 재고: {ezadminFreshness.label}
+            이지어드민: {ezadminFreshness.label}
           </span>
           {/* EZAdmin upload */}
           <input ref={fileInputRef} type="file" accept=".csv,.tsv,.txt,.xls,.xlsx"
@@ -182,14 +223,14 @@ export default function InventoryClient({
             disabled={uploading}
             style={{
               height: 36, padding: '0 14px', fontSize: 13, fontWeight: 500,
-              background: uploading ? '#E4E8EC' : '#F2F4F7', color: uploading ? '#8A9199' : '#565D64',
+              background: uploading ? '#E4E8EC' : '#F2F4F7', color: uploading ? '#CDD2D8' : '#565D64',
               border: '1px solid #E4E8EC', borderRadius: 8, cursor: uploading ? 'default' : 'pointer',
             }}
           >
             {uploading ? '업로드 중...' : '이지어드민 업로드'}
           </button>
           {uploadResult && (
-            <span style={{ fontSize: 11, color: uploadResult.ok ? '#1A7F37' : '#D9534F' }}>
+            <span style={{ fontSize: 12, color: uploadResult.ok ? '#86C9A8' : '#E8A0B4' }}>
               {uploadResult.message}
             </span>
           )}
@@ -199,7 +240,7 @@ export default function InventoryClient({
             disabled={syncing}
             style={{
               height: 36, padding: '0 14px', fontSize: 13, fontWeight: 500,
-              background: syncing ? '#E4E8EC' : '#F2F4F7', color: syncing ? '#8A9199' : '#565D64',
+              background: syncing ? '#E4E8EC' : '#F2F4F7', color: syncing ? '#CDD2D8' : '#565D64',
               border: '1px solid #E4E8EC', borderRadius: 8, cursor: syncing ? 'default' : 'pointer',
               display: 'flex', alignItems: 'center', gap: 4,
             }}
@@ -210,23 +251,28 @@ export default function InventoryClient({
         </div>
       </div>
 
-      {/* Section 1: 오늘 할 일 */}
-      <TodaysTasks
-        tasks={buildTasks(productSummaries, inboundRequests, ezadminItems).slice(0, 8)}
-        onInboundClick={(product, qty) => setPendingInboundCreate({ product, quantity: qty })}
-        onScrollToSection={(id) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-      />
+      {/* 1. 지금 할 일 — 요약 카운트 + 액션 목록 */}
+      <div style={{ marginBottom: 16 }}>
+        <TodaysTasks
+          tasks={buildTasks(productSummaries, inboundRequests, ezadminItems, optionRows)}
+          optionRows={optionRows}
+          inboundRequests={inboundRequests}
+          onInboundClick={(product, qty) => setPendingInboundCreate({ product, quantity: qty })}
+          onOrderClick={() => document.getElementById('section-active')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+          onScrollToSection={(id) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+        />
+      </div>
 
-      {/* Section 2: 제품별 재고 운영표 */}
-      <StockComparisonTable
-        rocketItems={rocketItems}
-        ezadminItems={ezadminItems}
-        productSummaries={productSummaries}
-        inboundRequests={inboundRequests}
-        onInboundClick={(product, qty) => setPendingInboundCreate({ product, quantity: qty })}
-      />
+      {/* 2. 재고 현황 — 통합 테이블 */}
+      <div style={{ marginBottom: 16 }}>
+        <InventoryTable
+          rows={optionRows}
+          onInboundClick={(product, qty) => setPendingInboundCreate({ product, quantity: qty })}
+          onOrderClick={() => document.getElementById('section-active')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+        />
+      </div>
 
-      {/* Section 3: 진행 중 입고·이관 */}
+      {/* 3. 진행 중 */}
       <ActiveItemsSection
         inboundRequests={inboundRequests}
         orders={orders}
@@ -238,15 +284,7 @@ export default function InventoryClient({
         showToast={showToast}
       />
 
-      {/* Section 4: 옵션별 상세 (접힘) */}
-      <OptionDetailSection
-        rocketItems={rocketItems}
-        ezadminItems={ezadminItems}
-        productSummaries={productSummaries}
-        inboundRequests={inboundRequests}
-      />
-
-      {/* Section 5: 미매핑 SKU (접힘) */}
+      {/* Unmapped SKU — collapsed */}
       <UnmappedSkuSection
         unmappedSkus={unmappedSkus}
         onSaveMapping={handleSaveMapping}

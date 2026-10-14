@@ -23,9 +23,9 @@ export const CHART_COLORS: Record<string, string> = {
 export const ORDER_TYPE_LABELS: Record<string, string> = { production: '생산', transfer: '이관' };
 export const DEST_LABELS: Record<string, string> = { easyadmin: '판매자배송 3PL(이지어드민)', rocketgrowth: '로켓그로스' };
 export const STATUS_LABELS: Record<string, { text: string; color: string; bg: string }> = {
-  ordered: { text: '입고 대기', color: '#A8712A', bg: '#FDF6EC' },
-  arrived: { text: '입고 완료', color: '#6E767E', bg: '#F2F4F7' },
-  cancelled: { text: '취소', color: '#8A9199', bg: '#F2F4F7' },
+  ordered: { text: '입고 대기', color: '#8FAEE0', bg: 'transparent' },
+  arrived: { text: '입고 완료', color: '#6E767E', bg: 'transparent' },
+  cancelled: { text: '취소', color: '#CDD2D8', bg: 'transparent' },
 };
 
 export const INBOUND_STEP_LABELS = ['이지어드민 발주', '송장번호 입력', '판매개시 확인'];
@@ -79,19 +79,28 @@ export const INBOUND_PRODUCT_OPTIONS: InboundProductOption[] = [
   { value: '93993063704', label: '세럼 단품', vid: '93993063704', product: '세럼', option: '단품', unitCount: 1 },
 ];
 
-export const INBOUND_STATUS_BADGE: Record<string, { text: string; color: string; bg: string }> = {
-  order_needed: { text: '발주 필요', color: '#B03F3B', bg: '#FBE9E8' },
-  tracking_needed: { text: '송장 입력 필요', color: '#A8712A', bg: '#FDF4E7' },
-  waiting: { text: '입고 대기', color: '#6E767E', bg: '#F1F3F6' },
-  done: { text: '완료', color: '#6E767E', bg: '#F1F3F6' },
-  cancelled: { text: '취소', color: '#8A9199', bg: 'transparent' },
+export const INBOUND_STATUS_BADGE: Record<string, { text: string; color: string }> = {
+  order_needed: { text: '발주 필요', color: '#E8A0B4' },
+  tracking_needed: { text: '송장 입력 필요', color: '#8FAEE0' },
+  waiting: { text: '입고 대기', color: '#8FAEE0' },
+  done: { text: '완료', color: '#86C9A8' },
+  cancelled: { text: '취소', color: '#CDD2D8' },
 };
 
-export const GAUGE_MAX_DAYS = 90;
-export const TICK_14 = 14 / GAUGE_MAX_DAYS;
-export const TICK_30 = 30 / GAUGE_MAX_DAYS;
+/** SKU 상태 뱃지 설정 */
+export const SKU_STATUS_CONFIG: Record<string, { text: string; color: string }> = {
+  critical:    { text: '긴급',     color: '#E8A0B4' },
+  warning:     { text: '주의',     color: '#8FAEE0' },
+  shortage:    { text: '부족',     color: '#E8A0B4' },
+  transfer_ok: { text: '이관 가능', color: '#86C9A8' },
+  stable:      { text: '안정',     color: '#CDD2D8' },
+};
+
 export const SAFETY_DAYS: Record<string, number> = { '클렌징밤': 21, '클렌징폼': 21, '세럼': 21 };
 export const DEFAULT_SAFETY_DAYS = 21;
+
+/** 창고 카드 색상 순환 — 새 창고 추가 시 다음 색상 사용 */
+export const WAREHOUSE_SWATCH_CYCLE = ['#8FAEE0', '#7FC4CE', '#86C9A8', '#C3A9DE'];
 
 /* ------------------------------------------------------------------ */
 /*  Utility functions                                                  */
@@ -102,11 +111,11 @@ export function getSafetyDays(product: string): number {
 }
 
 export function statusLabel(days: number | null, _safetyDays?: number): { text: string; color: string; bg: string } {
-  if (days === null) return { text: '판매 없음', color: '#9AA2AA', bg: 'transparent' };
-  if (days === 0) return { text: '품절', color: '#D9534F', bg: '#FBE9E8' };
-  if (days <= 10) return { text: '긴급', color: '#D9534F', bg: '#FBE9E8' };
-  if (days <= 21) return { text: '발주 필요', color: '#A8712A', bg: '#FDF6EC' };
-  return { text: '정상', color: '#9AA2AA', bg: 'transparent' };
+  if (days === null) return { text: '판매 없음', color: '#CDD2D8', bg: 'transparent' };
+  if (days === 0) return { text: '품절', color: '#E8A0B4', bg: 'transparent' };
+  if (days <= 14) return { text: '긴급', color: '#E8A0B4', bg: 'transparent' };
+  if (days <= 30) return { text: '주의', color: '#8FAEE0', bg: 'transparent' };
+  return { text: '정상', color: '#CDD2D8', bg: 'transparent' };
 }
 
 export function gaugeColor(days: number | null, safetyDays: number): string {

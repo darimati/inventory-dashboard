@@ -38,9 +38,9 @@ function getDDay(dl: string | null): { text: string; color: string; urgent: bool
   const dlDate = new Date(dl + 'T00:00:00'); dlDate.setHours(0, 0, 0, 0);
   const diff = Math.round((dlDate.getTime() - todayKst.getTime()) / 86_400_000);
   if (diff >= 3) return { text: `D-${diff}`, color: '#565D64', urgent: false, overdue: false, diff };
-  if (diff >= 1) return { text: `D-${diff}`, color: '#A8712A', urgent: true, overdue: false, diff };
-  if (diff === 0) return { text: '오늘 마감', color: '#B03F3B', urgent: true, overdue: false, diff };
-  return { text: `${Math.abs(diff)}일 초과`, color: '#B03F3B', urgent: true, overdue: true, diff };
+  if (diff >= 1) return { text: `D-${diff}`, color: '#8FAEE0', urgent: true, overdue: false, diff };
+  if (diff === 0) return { text: '오늘 마감', color: '#E8A0B4', urgent: true, overdue: false, diff };
+  return { text: `${Math.abs(diff)}일 초과`, color: '#E8A0B4', urgent: true, overdue: true, diff };
 }
 
 function deriveStatus(req: InboundRequest): keyof typeof INBOUND_STATUS_BADGE {
@@ -440,10 +440,10 @@ export function ActiveItemsSection({
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', borderBottom: '1px solid var(--border-light)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <h2 style={{ fontSize: 14.5, fontWeight: 600, color: '#1F2328', margin: 0 }}>진행 중</h2>
+          <h2 style={{ fontSize: 15, fontWeight: 600, color: '#1F2328', margin: 0 }}>진행 중</h2>
           <span style={{ fontSize: 12, color: '#6E767E' }}>
             입고 {activeInbound.length}건
-            {activeOrders.length > 0 && ` · 발주 ${activeOrders.length}건`}
+            {activeOrders.length > 0 && ` / 발주 ${activeOrders.length}건`}
           </span>
           <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#6E767E', cursor: 'pointer', marginLeft: 8 }}>
             <input type="checkbox" checked={showHistory} onChange={e => setShowHistory(e.target.checked)} style={{ margin: 0 }} />
@@ -452,11 +452,11 @@ export function ActiveItemsSection({
         </div>
         <div style={{ display: 'flex', gap: 6 }}>
           <button onClick={openInboundModal} style={{
-            height: 36, padding: '0 14px', fontSize: 13, fontWeight: 550,
+            height: 36, padding: '0 14px', fontSize: 13, fontWeight: 600,
             background: '#1A1D21', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer',
           }}>+ 입고 등록</button>
           <button onClick={openOrderModal} style={{
-            height: 36, padding: '0 14px', fontSize: 13, fontWeight: 550,
+            height: 36, padding: '0 14px', fontSize: 13, fontWeight: 600,
             background: '#F2F4F7', color: '#565D64', border: '1px solid #E4E8EC', borderRadius: 8, cursor: 'pointer',
           }}>+ 발주 등록</button>
         </div>
@@ -471,7 +471,7 @@ export function ActiveItemsSection({
           })}
         </div>
       ) : (
-        <div style={{ padding: '32px 20px', textAlign: 'center', color: '#6E767E', fontSize: 13, fontWeight: 450 }}>
+        <div style={{ padding: '32px 20px', textAlign: 'center', color: '#6E767E', fontSize: 13, fontWeight: 400 }}>
           진행 중인 입고·발주 건이 없습니다
         </div>
       )}
@@ -572,7 +572,7 @@ export function ActiveItemsSection({
               )}
             </div>
 
-            {cfError && <div style={{ fontSize: 12, color: '#B03F3B', marginBottom: 8 }}>{cfError}</div>}
+            {cfError && <div style={{ fontSize: 12, color: '#E8A0B4', marginBottom: 8 }}>{cfError}</div>}
 
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
               <button onClick={() => setShowInboundModal(false)} style={poCancelBtnStyle}>취소</button>
@@ -650,7 +650,7 @@ export function ActiveItemsSection({
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
               <button onClick={() => setCancelTarget(null)} style={poCancelBtnStyle}>닫기</button>
               <button onClick={handleCancelInbound} disabled={!cancelReason || saving}
-                style={{ ...poSaveBtnStyle, background: '#B03F3B', opacity: (!cancelReason || saving) ? 0.5 : 1 }}>
+                style={{ ...poSaveBtnStyle, background: '#E8A0B4', opacity: (!cancelReason || saving) ? 0.5 : 1 }}>
                 취소 확정
               </button>
             </div>
@@ -713,7 +713,7 @@ export function ActiveItemsSection({
                     style={{ ...poInputStyle, flex: 1, borderRadius: 8, height: 38, border: '1px solid #E4E8EC' }} min="1" />
                   {createItems.length > 1 && (
                     <button onClick={() => setCreateItems(prev => prev.filter((_, i) => i !== idx))}
-                      style={{ background: 'none', border: 'none', color: '#D9534F', cursor: 'pointer', fontSize: 16, padding: '0 4px' }}>×</button>
+                      style={{ background: 'none', border: 'none', color: '#E8A0B4', cursor: 'pointer', fontSize: 16, padding: '0 4px' }}>×</button>
                   )}
                 </div>
               ))}
@@ -725,7 +725,7 @@ export function ActiveItemsSection({
               <input value={createMemo} onChange={e => setCreateMemo(e.target.value)} placeholder=""
                 style={{ ...poInputStyle, borderRadius: 8, height: 38, border: '1px solid #E4E8EC' }} />
             </div>
-            {createError && <div style={{ fontSize: 12, color: '#D9534F', marginBottom: 12 }}>{createError}</div>}
+            {createError && <div style={{ fontSize: 12, color: '#E8A0B4', marginBottom: 12 }}>{createError}</div>}
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
               <button onClick={() => setShowOrderModal(false)} style={poCancelBtnStyle}>취소</button>
               <button onClick={handleCreateOrder} disabled={createSaving}
@@ -769,7 +769,7 @@ export function ActiveItemsSection({
               <button onClick={() => setArriveItems(prev => prev.map(i => ({ ...i, input: String(i.quantity - i.arrived_quantity) })))}
                 style={{ ...poCancelBtnStyle, fontSize: 12 }}>전체 입고</button>
             </div>
-            {arriveError && <div style={{ fontSize: 12, color: '#D9534F', marginBottom: 12 }}>{arriveError}</div>}
+            {arriveError && <div style={{ fontSize: 12, color: '#E8A0B4', marginBottom: 12 }}>{arriveError}</div>}
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
               <button onClick={() => setArriveOrder(null)} style={poCancelBtnStyle}>취소</button>
               <button onClick={handleArriveSave} disabled={arriveSaving} style={{ ...poSaveBtnStyle, opacity: arriveSaving ? 0.5 : 1 }}>
@@ -796,7 +796,7 @@ export function ActiveItemsSection({
     const dday = getDDay(req.coupang_deadline);
     const prodInfo = req.vendor_item_id ? getProductInfo(req.vendor_item_id) : null;
     const unitCount = prodInfo?.unitCount || 1;
-    const rowOpacity = (isTerminal || allDone) ? 0.55 : 1;
+    const rowOpacity = 1;
     const isMenuOpen = menuId === `inb-${req.id}`;
 
     // Build detail line parts
@@ -822,23 +822,21 @@ export function ActiveItemsSection({
       >
         {/* Line 1: type badge + product + inbound ID + status badge + ⋯ */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{
-            fontSize: 11.5, fontWeight: 550, padding: '2px 8px', borderRadius: 6,
-            color: '#565D64', background: '#F1F3F6', flexShrink: 0,
-          }}>이관</span>
-          <span style={{ fontSize: 13.5, fontWeight: 600, color: '#1A1D21' }}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
+            <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#8FAEE0' }} />
+            <span style={{ fontSize: 12, fontWeight: 500, color: '#565D64' }}>이관</span>
+          </span>
+          <span style={{ fontSize: 14, fontWeight: 600, color: '#1A1D21' }}>
             {reqProductLabel(req)}
           </span>
           {req.coupang_inbound_id && (
             <span style={{ fontSize: 12, color: '#9AA2AA', fontVariantNumeric: 'tabular-nums' }}>
-              {req.coupang_inbound_id}
+              {req.coupang_inbound_id.length > 8 ? `...${req.coupang_inbound_id.slice(-8)}` : req.coupang_inbound_id}
             </span>
           )}
-          <span style={{
-            fontSize: 11.5, fontWeight: 550, padding: '2px 8px', borderRadius: 6,
-            color: badge.color, background: badge.bg, whiteSpace: 'nowrap', marginLeft: 'auto', flexShrink: 0,
-          }}>
-            {badge.text}
+          <span style={{ display: 'flex', alignItems: 'center', gap: 4, marginLeft: 'auto', flexShrink: 0, whiteSpace: 'nowrap' }}>
+            <span style={{ width: 7, height: 7, borderRadius: '50%', background: badge.color }} />
+            <span style={{ fontSize: 12, fontWeight: 500, color: '#565D64' }}>{badge.text}</span>
           </span>
           {/* ⋯ menu */}
           {!isTerminal && !allDone && (
@@ -854,7 +852,7 @@ export function ActiveItemsSection({
                   minWidth: 100, padding: '4px 0',
                 }}>
                   <button onClick={() => openEdit(req)} style={{ display: 'block', width: '100%', padding: '8px 14px', fontSize: 13, color: '#565D64', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}>수정</button>
-                  <button onClick={() => { setCancelTarget(req); setCancelReason(''); setMenuId(null); }} style={{ display: 'block', width: '100%', padding: '8px 14px', fontSize: 13, color: '#B03F3B', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}>취소</button>
+                  <button onClick={() => { setCancelTarget(req); setCancelReason(''); setMenuId(null); }} style={{ display: 'block', width: '100%', padding: '8px 14px', fontSize: 13, color: '#E8A0B4', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}>취소</button>
                   <button onClick={() => handleDeleteInbound(req.id)} style={{ display: 'block', width: '100%', padding: '8px 14px', fontSize: 13, color: '#9AA2AA', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}>삭제</button>
                 </div>
               )}
@@ -863,10 +861,10 @@ export function ActiveItemsSection({
         </div>
 
         {/* Line 2: detail */}
-        <div style={{ fontSize: 12.5, fontWeight: 450, color: '#6E767E', marginTop: 4 }}>
-          {detailParts.join(' · ')}
+        <div style={{ fontSize: 13, fontWeight: 400, color: '#6E767E', marginTop: 4 }}>
+          {detailParts.join(' / ')}
           {dday && !isTerminal && !allDone && (dday.overdue || dday.diff === 0) && (
-            <span style={{ fontWeight: 550, color: '#B03F3B', marginLeft: 4 }}>{dday.text}</span>
+            <span style={{ fontWeight: 600, color: '#E8A0B4', marginLeft: 4 }}>{dday.text}</span>
           )}
         </div>
 
@@ -877,16 +875,15 @@ export function ActiveItemsSection({
               const checked = isStepChecked(req, i);
               const dateStr = getCheckedDate(req, i);
               return (
-                <label key={i} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12.5, cursor: saving ? 'default' : 'pointer' }}>
+                <label key={i} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 13, cursor: saving ? 'default' : 'pointer' }}>
                   <input
                     type="checkbox" checked={checked} disabled={isTerminal || saving}
                     onChange={() => handleToggle(req.id, i)}
-                    style={{ margin: 0, accentColor: '#1A7F37', width: 14, height: 14 }}
+                    style={{ margin: 0, accentColor: '#86C9A8', width: 14, height: 14 }}
                   />
                   <span style={{
                     color: checked ? '#9AA2AA' : '#1F2328',
                     fontWeight: !checked ? 500 : 400,
-                    textDecoration: checked ? 'line-through' : 'none',
                   }}>{label}</span>
                   {checked && dateStr && <span style={{ fontSize: 11, color: '#C4CAD1' }}>{dateStr}</span>}
                 </label>
@@ -930,9 +927,9 @@ export function ActiveItemsSection({
 
             {/* Rejected info */}
             {req.status === 'rejected' && req.reject_reason && (
-              <div style={{ fontSize: 12, color: '#B03F3B' }}>
+              <div style={{ fontSize: 12, color: '#E8A0B4' }}>
                 반송: {REJECT_REASON_LABELS[req.reject_reason] || req.reject_reason}
-                {req.reject_memo && ` · ${req.reject_memo}`}
+                {req.reject_memo && ` / ${req.reject_memo}`}
               </div>
             )}
           </div>
@@ -963,43 +960,43 @@ export function ActiveItemsSection({
       <div
         key={`ord-${order.id}`}
         style={{
-          padding: '14px 20px', opacity: order.status === 'cancelled' ? 0.55 : 1,
+          padding: '14px 20px',
           borderBottom: isLast ? 'none' : '1px solid #F2F4F7',
         }}
       >
         {/* Line 1: type badge + items + order type + status badge + buttons */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{
-            fontSize: 11.5, fontWeight: 550, padding: '2px 8px', borderRadius: 6,
-            color: '#A8712A', background: '#FDF4E7', flexShrink: 0,
-          }}>발주</span>
-          <span style={{ fontSize: 13.5, fontWeight: 600, color: '#1A1D21' }}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
+            <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#8FAEE0' }} />
+            <span style={{ fontSize: 12, fontWeight: 500, color: '#565D64' }}>발주</span>
+          </span>
+          <span style={{ fontSize: 14, fontWeight: 600, color: '#1A1D21' }}>
             {itemSummary}
           </span>
           <span style={{ fontSize: 12, color: '#9AA2AA' }}>
             {ORDER_TYPE_LABELS[order.order_type]}
           </span>
-          <span style={{
-            fontSize: 11.5, fontWeight: 550, padding: '2px 8px', borderRadius: 6,
-            color: st.color, background: st.bg, whiteSpace: 'nowrap', marginLeft: 'auto', flexShrink: 0,
-          }}>{st.text}</span>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 4, marginLeft: 'auto', flexShrink: 0, whiteSpace: 'nowrap' }}>
+            <span style={{ width: 7, height: 7, borderRadius: '50%', background: st.color }} />
+            <span style={{ fontSize: 12, fontWeight: 500, color: '#565D64' }}>{st.text}</span>
+          </span>
         </div>
 
         {/* Line 2: detail */}
-        <div style={{ fontSize: 12.5, fontWeight: 450, color: '#6E767E', marginTop: 4 }}>
-          {detailParts.join(' · ')}
+        <div style={{ fontSize: 13, fontWeight: 400, color: '#6E767E', marginTop: 4 }}>
+          {detailParts.join(' / ')}
         </div>
 
         {/* Line 3: action buttons for active orders */}
         {order.status === 'ordered' && (
           <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
             <button onClick={() => openArriveModal(order)} style={{
-              height: 32, padding: '0 12px', fontSize: 12, fontWeight: 550,
+              height: 32, padding: '0 12px', fontSize: 12, fontWeight: 600,
               background: '#1A1D21', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer',
             }}>입고</button>
             <button onClick={() => handleCancelOrder(order)} style={{
-              height: 32, padding: '0 12px', fontSize: 12, fontWeight: 550,
-              background: '#F2F4F7', color: '#B03F3B', border: 'none', borderRadius: 8, cursor: 'pointer',
+              height: 32, padding: '0 12px', fontSize: 12, fontWeight: 600,
+              background: '#F2F4F7', color: '#E8A0B4', border: 'none', borderRadius: 8, cursor: 'pointer',
             }}>취소</button>
           </div>
         )}

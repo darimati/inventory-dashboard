@@ -116,6 +116,24 @@ export interface InboundProductOption {
   unitCount: number;
 }
 
+/** SKU 상태 */
+export type SkuStatus = 'critical' | 'warning' | 'shortage' | 'transfer_ok' | 'stable';
+
+/** 옵션 레벨 행 (통합 테이블용) */
+export interface OptionRow {
+  product: string;
+  option: string;
+  vendorItemId: string;
+  unitStock: number;
+  daysLeft30: number | null;
+  dailyAvg30: number;
+  sales30d: number;
+  ezDomesticStock: number;
+  status: SkuStatus;
+  actionLabel: string;
+  transferable: boolean;
+}
+
 export interface Props {
   rocketItems: RocketItem[];
   ezadminItems: EzadminItem[];
